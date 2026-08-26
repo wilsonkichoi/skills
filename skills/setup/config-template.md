@@ -14,7 +14,7 @@ test_command: "npm test"                    # run before handing work back
 # Project development conventions
 
 Drop any field above that does not apply to this project. The `prd_file`, `spec_file`, and
-`roadmap_file` paths are where those documents belong; `research`, `architect`, and `plan` create
+`roadmap_file` paths are where those documents belong; the `research`, `architect`, and `plan` skills create
 them later, so they can point at files that do not exist yet.
 
 ## Conventions
