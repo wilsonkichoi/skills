@@ -14,7 +14,7 @@ disable-model-invocation: true
   the tracker or bring an older config up to the current fields.
 - **Dependencies:** `git`. `gh` for the GitHub tracker, the Linear MCP server for the Linear
   tracker, neither for the local tracker.
-- **How to call it:** Claude Code `/setup`, Codex `$setup`.
+- **How to call it:** Claude Code `/setup`, Codex `$setup`, Kiro CLI `/setup`.
 - **Input:** the current repository, plus the user's answers to the interview.
 - **Output:** `docs/dev-agents/config.md`, `docs/dev-agents/rules/`, one reference line in the
   project's context file, and any one-time tracker setup.

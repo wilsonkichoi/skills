@@ -26,6 +26,10 @@ This repository ships as plain skill directories, installed with the
 Adding one of those is a decision to maintain a second copy of every skill, so do not add one
 without a written reason.
 
+The installer copy and symlink the same directory into whichever harness the user has: `.claude/skills/`
+for Claude Code, `.agents/skills/` for Codex, `.kiro/skills/` for Kiro CLI. One source tree, no
+per-harness variants.
+
 ## Skills
 
 Each skill is a directory under `skills/<skill-name>/`:
@@ -37,17 +41,18 @@ skills/<skill-name>/
   <supporting>.md       # templates and references, linked relatively from SKILL.md
 ```
 
-Skills in this project are only triggered manually. Both files carry that setting, because each
-harness reads its own:
+Skills in this project are only triggered manually. Every harness reads its own setting, so each
+skill carries all of them:
 - claude code: `SKILL.md` frontmatter `disable-model-invocation: true`
 - codex cli: `agents/openai.yaml` -> `policy: allow_implicit_invocation: false`
+- kiro cli: no setting exists yet 
 
 Every `SKILL.md` body opens with a doc block, one short line per item:
 
 - **What it does**
 - **When to use it**
 - **Dependencies**: other skills, CLIs, MCP servers, config fields it reads
-- **How to call it**: the harness invocations, e.g. `/setup` and `$setup`
+- **How to call it**: every harness invocation, e.g. `/setup` on Claude Code and Kiro CLI, `$setup` on Codex
 - **Input**: what the user or the calling skill supplies
 - **Output**: files written, tracker state changed, what the next skill can expect
 
@@ -91,12 +96,12 @@ order.
    canonical-repository permission boundaries, version migration sections, tuning knobs like
    `work_in_progress_limit` and `max_fix_attempts`. Something re-earns its place only when its
    absence breaks the skill.
-4. **Apply the conventions above**: doc block, both invocation settings, `agents/openai.yaml`.
+4. **Apply the conventions above**: doc block, every invocation setting, `agents/openai.yaml`.
 5. **Feed the contract back into `setup`.** A new config field means editing
    `skills/setup/config-template.md` and the setup interview in the same pull request. No skill
    reads a field `setup` never writes.
 6. **Validate by hand** in a throwaway repo: install with the installer, run the skill on Claude
-   Code and on Codex, read the output.
+   Code, on Codex, and on Kiro CLI, read the output.
 7. **Run the pre-commit checklist**, then branch, push, and open the pull request.
 
 Renaming a skill or adding one that is not on the roster is expected. Update the `README.md` roster

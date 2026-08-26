@@ -3,6 +3,7 @@
 Skills for an AI software development lifecycle: research, architecture, planning, ticketing,
 implementation, review, and release. They are small, hand-maintainable markdown files rather than a
 framework. Nothing here fires on its own; every skill runs only when you invoke it by name.
+note: Kiro has no setting to suppress automatic activation.
 
 ## Install
 
@@ -17,7 +18,7 @@ npx skills@latest add wilsonkichoi/skills@v0.0.2
 ```
 
 The installer writes the skills into your repo as ordinary files you own and can edit. It supports
-Claude Code, Codex, and other agents. Tags come from the release process in
+Claude Code, Codex, Kiro CLI, and other agents. Tags come from the release process in
 [CONTRIBUTING.md](./CONTRIBUTING.md).
 
 ## Quickstart
@@ -28,6 +29,7 @@ Run `setup` once per repository:
 |---|---|
 | Claude Code | `/setup` |
 | Codex | `$setup` |
+| Kiro CLI | `/setup` (2.1 or later) |
 
 It interviews you about your issue tracker and your product docs, writes
 `docs/dev-agents/config.md`, and adds one reference line to your `AGENTS.md` or `CLAUDE.md` so
