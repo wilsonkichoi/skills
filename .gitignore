@@ -1,0 +1,30 @@
+# macOS
+.DS_Store
+
+# local settings
+.claude/settings.local.json
+.claude/skills/
+.agents/skills/
+
+# Editor
+*.swp
+*.swo
+*~
+
+# Node (in case MCP servers added later)
+node_modules/
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+
+# Environment
+.env
+.env.local
+
+# Local workspace state (never commit)
+.local/
+.kiro/
+
+.playwright-mcp/
