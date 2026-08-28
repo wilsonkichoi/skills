@@ -1,8 +1,6 @@
 ---
 name: skill-name
-description: >
-  What it does, one sentence.
-  When to use it, in the words someone would actually type.
+description: What it does, one sentence. When to use it, in the words someone would actually type.
 disable-model-invocation: true
 metadata:
   allow_implicit_invocation: "false"

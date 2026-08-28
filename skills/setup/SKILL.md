@@ -1,8 +1,6 @@
 ---
 name: setup
-description: >
-  Configure this project to utilize skills for AI-SDLC.
-  Scaffolds the project layout, selects the tracker backend, and writes docs/dev-agents/config.md
+description: Configure this project to utilize skills for AI-SDLC. Scaffolds the project layout, selects the tracker backend, and writes docs/dev-agents/config.md
 disable-model-invocation: true
 metadata:
   allow_implicit_invocation: "false"
