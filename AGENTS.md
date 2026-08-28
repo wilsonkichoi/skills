@@ -15,6 +15,8 @@ For now, use patch for everything including new features. Save minor/major bumps
 A version becomes a release when it is tagged `X.Y.Z` at its merged commit and published as a GitHub Release.
 
 A tag marks a release for people reading the history, and it is what a pinned install points at.
+A pushed `v*` tag cannot be moved or deleted, so a bad release costs a new patch version, never a
+re-tag.
 Pinning takes the full git URL with a `#ref`, quoted:
 `npx skills@latest add 'https://github.com/wilsonkichoi/skills.git#v0.0.3'`. A missing ref fails
 loudly. The `owner/repo@v0.0.3` shorthand is not a pin, because `@` selects a skill name there.
@@ -102,8 +104,8 @@ Never commit or push directly to `main`, on any harness, even with admin rights.
 3. Keep the branch current: merge or rebase `origin/main` in whenever GitHub reports it out of date.
 
 Merging is a human decision. An AI agent may prepare the branch and the pull request, but must not
-merge to `main` unless the human explicitly asks. The branch protection that would enforce this is
-not applied yet; `CONTRIBUTING.md` holds the one-time maintainer setup that applies it.
+merge to `main` unless the human explicitly asks. GitHub enforces the pull request step: a direct
+push to `main` is rejected with `GH013`, for the owner too. `CONTRIBUTING.md` records the rulesets.
 
 ## Porting a skill from agent-toolkit
 
