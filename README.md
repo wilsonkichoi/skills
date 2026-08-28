@@ -7,14 +7,24 @@ note: Kiro has no setting to suppress automatic activation.
 
 ## Install
 
+Name the agents you want with `-a`, and create their project directories first:
+
 ```
-npx skills@latest add wilsonkichoi/skills
+mkdir -p .claude .kiro
+npx skills@latest add wilsonkichoi/skills -a claude-code -a codex -a kiro-cli
 ```
+
+Both halves are needed. A project-scope install skips the symlink for any non-universal agent whose
+directory does not already exist in the repo, even when you selected that agent by hand, and it
+reports success either way ([vercel-labs/skills#2071](https://github.com/vercel-labs/skills/issues/2071)).
+Codex is unaffected because it reads the universal `.agents/skills/`, and `.claude/` is exempt by
+name in the installer, so in practice `.kiro/` is the one that has to exist beforehand. A global
+install (`-g`) skips the gate entirely.
 
 Pin a version instead of tracking the tip:
 
 ```
-npx skills@latest add wilsonkichoi/skills@v0.0.2
+npx skills@latest add wilsonkichoi/skills@v0.0.2 -a claude-code -a codex -a kiro-cli
 ```
 
 The installer writes the skills into your repo as ordinary files you own and can edit. It supports
@@ -69,4 +79,23 @@ Plus one line in your `AGENTS.md` or `CLAUDE.md` pointing at `config.md`. `PRD.m
 `ROADMAP.md` live wherever you tell `setup` they live, and are written by `research`, `architect`,
 and `plan` rather than by `setup`.
 
-Uninstalling is deleting `docs/dev-agents/` and that one reference line.
+## Uninstall
+
+Name the skills and the agents you installed to:
+
+```
+npx skills@latest remove setup -a claude-code -a codex -a kiro-cli
+```
+
+The other forms are documented under
+[`skills remove`](https://github.com/vercel-labs/skills#skills-remove). Then delete what `setup`
+wrote: `docs/dev-agents/` and the one reference line it added to your `AGENTS.md` or `CLAUDE.md`.
+
+Do not run `npx skills remove --all`, and do not leave `-a` off, inside a repository that keeps its
+own skills in a top-level `skills/` directory. OpenClaw's project path is a bare `skills/`, so a
+removal that sweeps every agent resolves to `<repo>/skills/<name>` and deletes the real source,
+untracked files included, even for skills that were never installed for that agent
+([vercel-labs/skills#1771](https://github.com/vercel-labs/skills/issues/1771)). Against skills
+1.5.23 both `remove --all` and `remove setup` with no `-a` destroy `skills/setup/`, while the
+explicit `-a` list above leaves it alone. A project that only consumes skills is unaffected; this
+repository and any other skill-authoring repository are exactly the layout that gets hit.
