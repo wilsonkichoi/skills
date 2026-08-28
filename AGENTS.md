@@ -58,6 +58,8 @@ skill carries all of them:
 Every `SKILL.md` body opens with the same doc block, so a reader knows what a skill needs and what
 it leaves behind before reading any step. The skeleton is in [Skill template](#skill-template).
 
+`description` goes on one unquoted physical line, however long.
+
 No scripts unless a skill genuinely cannot be written as prose. Script sprawl and the build steps
 around it are the main reason the previous toolkit became unmaintainable.
 

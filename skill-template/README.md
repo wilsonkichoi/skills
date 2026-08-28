@@ -20,7 +20,7 @@ Then, in the copy:
 
 1. Set `name` in the frontmatter to `<skill-name>`, matching the directory exactly.
 2. Rewrite `description`. Two sentences: what it does, and when to use it in the words someone would
-   actually type. This is the only part a harness loads at startup, so it is what gets matched.
+   actually type. Keep it on one physical line, unquoted.
 3. Fill in the six doc-block lines. Delete none of them; "none" is a fine answer for
    **Dependencies**, **Input**.
 4. Replace the numbered sections with the real run order, ending in a report step.
@@ -38,7 +38,7 @@ Getting these wrong breaks the install, so they are not negotiable.
 | Field | Required | Constraint |
 |---|---|---|
 | `name` | yes | 1 to 64 characters, lowercase letters, digits, and hyphens only. No leading or trailing hyphen, no `--`. Must match the parent directory name. |
-| `description` | yes | 1 to 1024 characters. Covers what the skill does and when to use it. |
+| `description` | yes | 1 to 1024 characters. Covers what the skill does and when to use it. One physical line, unquoted. |
 | `license` | no | Not used here; the repository `LICENSE` covers it. |
 | `compatibility` | no | Not used here. Max 500 characters. Put environment requirements on the **Dependencies** line instead. |
 | `metadata` | no | Used here for `allow_implicit_invocation`, see [Manual invocation](#manual-invocation). A map of string keys to string values, so quote anything that would otherwise parse as a boolean or a number. |
