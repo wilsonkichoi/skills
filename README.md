@@ -21,22 +21,17 @@ Codex is unaffected because it reads the universal `.agents/skills/`, and `.clau
 name in the installer, so in practice `.kiro/` is the one that has to exist beforehand. A global
 install (`-g`) skips the gate entirely.
 
-You cannot pin a version. Against skills 1.5.23 the installer has no `--ref`, `--tag`, or `--branch`
-option, and the `@` in `owner/repo@name` selects a skill, not a git ref, which is why
-`add wilsonkichoi/skills@v0.0.3` exits with "No matching skills found for: v0.0.3". Adding `-s setup`
-makes that command succeed, but it installs from the default branch and the version is ignored: a
-nonexistent `@v9.9.9` installs just as happily. `skills-lock.json` records a content hash rather than
-a commit, so `experimental_install` restores files, not a version.
-
-To install a specific release, clone the tag and copy the skill in by hand:
+Tracking the tip is fine for now. To pin a version, pass the full git URL with a `#ref`, quoted
+because `#` starts a comment in most shells:
 
 ```
-git clone --branch v0.0.3 --depth 1 https://github.com/wilsonkichoi/skills /tmp/skills-v003
-cp -r /tmp/skills-v003/skills/setup .claude/skills/setup
+npx skills@latest add 'https://github.com/wilsonkichoi/skills.git#v0.0.3' -a claude-code -a codex -a kiro-cli
 ```
 
-The tags and releases in [CONTRIBUTING.md](./CONTRIBUTING.md) exist for that, and for reading what
-changed between versions. They do nothing for `npx skills add`.
+A ref that does not exist fails loudly, which is how you know the pin took effect. The
+`wilsonkichoi/skills@v0.0.3` shorthand is not a pin: `@` selects a skill name there, so it either
+errors with "No matching skills found for: v0.0.3" or, once you add `-s`, quietly installs from the
+default branch. Tags come from the release process in [CONTRIBUTING.md](./CONTRIBUTING.md).
 
 The installer writes the skills into your repo as ordinary files you own and can edit. It supports
 Claude Code, Codex, Kiro CLI, and other agents. Tags come from the release process in

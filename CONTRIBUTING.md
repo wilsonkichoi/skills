@@ -75,6 +75,7 @@ git push origin "v$(cat VERSION)"
 gh release create "v$(cat VERSION)" --title "v$(cat VERSION)" --notes "$(grep -m1 "^$(cat VERSION) " CHANGELOG.md)"
 ```
 
-The tag records which commit a version refers to, so `git clone --branch vX.Y.Z` reaches it and the
-release notes give a readable history. It does not enable a pinned install: skills 1.5.23 has no ref
-option and treats `owner/repo@vX.Y.Z` as a skill selector. See the install section in `README.md`.
+The tag is what a pinned install points at:
+`npx skills@latest add 'https://github.com/wilsonkichoi/skills.git#vX.Y.Z'`, quoted because `#`
+starts a shell comment. The `owner/repo@vX.Y.Z` shorthand does not pin, since `@` selects a skill
+name. See the install section in `README.md`.
