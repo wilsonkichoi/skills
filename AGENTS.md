@@ -20,15 +20,19 @@ Tags are what make pinned installs possible. Adopters install the tip with
 
 ## Distribution
 
-This repository ships as plain skill directories, installed with the
-[vercel-labs/skills](https://github.com/vercel-labs/skills) installer. There is no
-`.claude-plugin/`, no `marketplace.json`, no per-harness distribution tree, and no build step.
-Adding one of those is a decision to maintain a second copy of every skill, so do not add one
-without a written reason.
+This repository ships as plain skill directories, installed with one command:
 
-The installer copy and symlink the same directory into whichever harness the user has: `.claude/skills/`
-for Claude Code, `.agents/skills/` for Codex, `.kiro/skills/` for Kiro CLI. One source tree, no
-per-harness variants.
+```
+npx skills add wilsonkichoi/skills -a claude-code -a codex -a kiro-cli
+```
+
+There is no `.claude-plugin/`, no `marketplace.json`, no per-harness distribution tree, and no
+build step. Adding one of those is a decision to maintain a second copy of every skill, so do not
+add one without a written reason.
+
+The installer copies and symlinks the same directory into whichever harness the user named:
+`.claude/skills/` for Claude Code, `.agents/skills/` for Codex, `.kiro/skills/` for Kiro CLI. One
+source tree, no per-harness variants.
 
 ## Skills
 
@@ -45,16 +49,12 @@ Skills in this project are only triggered manually. Every harness reads its own 
 skill carries all of them:
 - claude code: `SKILL.md` frontmatter `disable-model-invocation: true`
 - codex cli: `agents/openai.yaml` -> `policy: allow_implicit_invocation: false`
-- kiro cli: no setting exists yet 
+- kiro cli: no documented setting exists. `SKILL.md` frontmatter carries
+  `metadata: allow_implicit_invocation: "false"` in case a harness starts reading it. Nothing is
+  known to read it today, so a Kiro user can still trigger a skill by conversation alone.
 
-Every `SKILL.md` body opens with a doc block, one short line per item:
-
-- **What it does**
-- **When to use it**
-- **Dependencies**: other skills, CLIs, MCP servers, config fields it reads
-- **How to call it**: every harness invocation, e.g. `/setup` on Claude Code and Kiro CLI, `$setup` on Codex
-- **Input**: what the user or the calling skill supplies
-- **Output**: files written, tracker state changed, what the next skill can expect
+Every `SKILL.md` body opens with the same doc block, so a reader knows what a skill needs and what
+it leaves behind before reading any step. The skeleton is in [Skill template](#skill-template).
 
 No scripts unless a skill genuinely cannot be written as prose. Script sprawl and the build steps
 around it are the main reason the previous toolkit became unmaintainable.
@@ -62,10 +62,25 @@ around it are the main reason the previous toolkit became unmaintainable.
 Inputs and outputs between skills stay loose. A skill states what it expects and what it produces,
 but does not reject work over formatting. Following rigid steps for ceremony is not the point.
 
+## Skill template
+
+[`skill-template/`](./skill-template/) holds the copyable skeleton: `SKILL.md`, `agents/openai.yaml`,
+and a `README.md` that writes out the Agent Skills specification rules in full, so working in this
+repository never requires fetching the spec. Read it when creating a skill, checking an existing
+one, or porting one in. Do not read it unless knowing the spec and folder structure is needed;
+that is the point of it being a separate folder.
+
+```
+cp -r skill-template skills/<skill-name>
+```
+Follow the instructions from `skill-template/README.md` 
+`skill-template/` is authoring material, not a shipped skill. The installer reads `skills/`, so
+nothing in it reaches a consumer.
+
 ## Prose
 
 - No em-dash. Use a comma, a period, a colon, or parentheses.
-- Plain words: "use" not "utilize", "start" not "initiate", "before" not "prior to".
+- Write the way you would explain it to the person sitting next to you.
 - Keep skills short. A `SKILL.md` past roughly 150 lines is usually carrying policy that belongs
   to the project, not to the skill.
 
@@ -96,7 +111,8 @@ order.
    canonical-repository permission boundaries, version migration sections, tuning knobs like
    `work_in_progress_limit` and `max_fix_attempts`. Something re-earns its place only when its
    absence breaks the skill.
-4. **Apply the conventions above**: doc block, every invocation setting, `agents/openai.yaml`.
+4. **Apply the conventions above**: the [Skill template](#skill-template), every invocation setting,
+   `agents/openai.yaml`.
 5. **Feed the contract back into `setup`.** A new config field means editing
    `skills/setup/config-template.md` and the setup interview in the same pull request. No skill
    reads a field `setup` never writes.

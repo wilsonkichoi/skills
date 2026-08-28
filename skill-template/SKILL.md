@@ -1,0 +1,37 @@
+---
+name: skill-name
+description: >
+  What it does, one sentence.
+  When to use it, in the words someone would actually type.
+disable-model-invocation: true
+metadata:
+  allow_implicit_invocation: "false"
+---
+
+# Skill name
+
+- **What it does:** one line
+- **When to use it:** one line, including when to re-run it
+- **Dependencies:** other skills, CLIs, MCP servers, config fields it reads. "none" is a fine answer.
+- **How to call it:** Claude Code `/skill-name`, Codex `$skill-name`, Kiro CLI `/skill-name`.
+- **Input:** what the user or the calling skill supplies
+- **Output:** files written, tracker state changed, what the next skill can expect
+
+One line of standing behaviour that applies to every step, when the skill has any. `setup` uses
+"Idempotent: safe to re-run; never overwrite existing files without asking." Delete this paragraph
+when it does not.
+
+## 1. First step
+
+Numbered sections in the order the skill runs, one job each. Say what to read before deciding
+anything, so the skill does not guess.
+
+## 2. Next step
+
+Keep going until the work is done. Renumber freely; the numbers are the run order, not a promise
+about how many steps there are.
+
+## N. Report
+
+What to tell the user at the end: what changed, what was skipped, what they still have to do
+themselves.
