@@ -21,11 +21,17 @@ Codex is unaffected because it reads the universal `.agents/skills/`, and `.clau
 name in the installer, so in practice `.kiro/` is the one that has to exist beforehand. A global
 install (`-g`) skips the gate entirely.
 
-Pin a version instead of tracking the tip:
+Tracking the tip is fine for now. To pin a version, pass the full git URL with a `#ref`, quoted
+because `#` starts a comment in most shells:
 
 ```
-npx skills@latest add wilsonkichoi/skills@v0.0.2 -a claude-code -a codex -a kiro-cli
+npx skills@latest add 'https://github.com/wilsonkichoi/skills.git#v0.0.3' -a claude-code -a codex -a kiro-cli
 ```
+
+A ref that does not exist fails loudly, which is how you know the pin took effect. The
+`wilsonkichoi/skills@v0.0.3` shorthand is not a pin: `@` selects a skill name there, so it either
+errors with "No matching skills found for: v0.0.3" or, once you add `-s`, quietly installs from the
+default branch. Tags come from the release process in [CONTRIBUTING.md](./CONTRIBUTING.md).
 
 The installer writes the skills into your repo as ordinary files you own and can edit. It supports
 Claude Code, Codex, Kiro CLI, and other agents. Tags come from the release process in

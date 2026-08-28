@@ -1,7 +1,10 @@
 # Skill template
 
 Read this when you are creating a skill, checking an existing one, or porting one in. It is not
-part of the shipped skill set: the installer reads `skills/`, so nothing in here reaches a consumer.
+part of the shipped skill set. The installer discovers a skill by finding a `SKILL.md` anywhere in
+the repository, not by looking under `skills/`, which is why the skeleton here is named
+`SKILL.md.template`. Rename that file and this folder becomes an installable skill called
+`skill-name`.
 
 Everything the Agent Skills specification requires is written out below, so you never have to fetch
 the spec to work in this repository.
@@ -10,6 +13,7 @@ the spec to work in this repository.
 
 ```
 cp -r skill-template skills/<skill-name>
+mv skills/<skill-name>/SKILL.md.template skills/<skill-name>/SKILL.md
 ```
 
 Then, in the copy:
@@ -23,6 +27,9 @@ Then, in the copy:
 5. Update `agents/openai.yaml`: `display_name` becomes `<skill-name>`, `short_description`
    becomes the first sentence of the description.
 6. Delete this `README.md` from the copy.
+
+Check with `npx skills add <gh-handle>/<skills-repo> -l`, which lists what the repository exposes. A
+new skill should appear once, and nothing named `skill-name` should ever appear.
 
 ## What the spec requires
 

@@ -14,9 +14,11 @@ All version fields use semver (`major.minor.patch`). Always use the minimum incr
 For now, use patch for everything including new features. Save minor/major bumps for after the plugin has real consumers.
 A version becomes a release when it is tagged `X.Y.Z` at its merged commit and published as a GitHub Release.
 
-Tags are what make pinned installs possible. Adopters install the tip with
-`npx skills@latest add wilsonkichoi/skills`, or a pinned version with
-`npx skills@latest add wilsonkichoi/skills@v0.0.2`.
+A tag marks a release for people reading the history, and it is what a pinned install points at.
+Pinning takes the full git URL with a `#ref`, quoted:
+`npx skills@latest add 'https://github.com/wilsonkichoi/skills.git#v0.0.3'`. A missing ref fails
+loudly. The `owner/repo@v0.0.3` shorthand is not a pin, because `@` selects a skill name there.
+Adopters who want the tip use `npx skills@latest add wilsonkichoi/skills`.
 
 ## Distribution
 
@@ -72,10 +74,15 @@ that is the point of it being a separate folder.
 
 ```
 cp -r skill-template skills/<skill-name>
+mv skills/<skill-name>/SKILL.md.template skills/<skill-name>/SKILL.md
 ```
-Follow the instructions from `skill-template/README.md` 
-`skill-template/` is authoring material, not a shipped skill. The installer reads `skills/`, so
-nothing in it reaches a consumer.
+
+Follow the instructions from `skill-template/README.md`.
+
+`skill-template/` is authoring material, not a shipped skill. The installer finds skills by looking
+for `SKILL.md` anywhere in the repository, not by reading `skills/`, so the skeleton is named
+`SKILL.md.template` to stay out of the install. Verify with
+`npx skills add <gh-handle>/<skills-repo> -l`: nothing named `skill-name` may appear in that list.
 
 ## Prose
 

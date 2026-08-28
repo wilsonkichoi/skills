@@ -75,5 +75,7 @@ git push origin "v$(cat VERSION)"
 gh release create "v$(cat VERSION)" --title "v$(cat VERSION)" --notes "$(grep -m1 "^$(cat VERSION) " CHANGELOG.md)"
 ```
 
-The tag is what makes `npx skills@latest add wilsonkichoi/skills@vX.Y.Z` resolve to a fixed
-version.
+The tag is what a pinned install points at:
+`npx skills@latest add 'https://github.com/wilsonkichoi/skills.git#vX.Y.Z'`, quoted because `#`
+starts a shell comment. The `owner/repo@vX.Y.Z` shorthand does not pin, since `@` selects a skill
+name. See the install section in `README.md`.
