@@ -75,5 +75,5 @@ git push origin "v$(cat VERSION)"
 gh release create "v$(cat VERSION)" --title "v$(cat VERSION)" --notes "$(grep -m1 "^$(cat VERSION) " CHANGELOG.md)"
 ```
 
-The tag is what makes `npx skills@latest add wilsonkichoi/skills@vX.Y.Z` resolve to a fixed
+The tag is what makes `npx skills@latest add wilsonkichoi/skills@vX.Y.Z -s <skill>` resolve to a fixed
 version.

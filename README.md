@@ -21,10 +21,12 @@ Codex is unaffected because it reads the universal `.agents/skills/`, and `.clau
 name in the installer, so in practice `.kiro/` is the one that has to exist beforehand. A global
 install (`-g`) skips the gate entirely.
 
-Pin a version instead of tracking the tip:
+Pin a version instead of tracking the tip. Name the skills with `-s`, because the installer reads
+the `@v0.0.3` as both a git ref and a skill filter, and with nothing to override the filter it exits
+with "No matching skills found for: v0.0.3" against skills 1.5.23:
 
 ```
-npx skills@latest add wilsonkichoi/skills@v0.0.2 -a claude-code -a codex -a kiro-cli
+npx skills@latest add wilsonkichoi/skills@v0.0.3 -s setup -a claude-code -a codex -a kiro-cli
 ```
 
 The installer writes the skills into your repo as ordinary files you own and can edit. It supports

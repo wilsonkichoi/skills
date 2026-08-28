@@ -16,7 +16,8 @@ A version becomes a release when it is tagged `X.Y.Z` at its merged commit and p
 
 Tags are what make pinned installs possible. Adopters install the tip with
 `npx skills@latest add wilsonkichoi/skills`, or a pinned version with
-`npx skills@latest add wilsonkichoi/skills@v0.0.2`.
+`npx skills@latest add wilsonkichoi/skills@v0.0.3 -s setup`. The `-s` is not optional: the installer
+reads the `@ref` as a skill filter as well as a git ref.
 
 ## Distribution
 
@@ -72,10 +73,15 @@ that is the point of it being a separate folder.
 
 ```
 cp -r skill-template skills/<skill-name>
+mv skills/<skill-name>/SKILL.md.template skills/<skill-name>/SKILL.md
 ```
-Follow the instructions from `skill-template/README.md` 
-`skill-template/` is authoring material, not a shipped skill. The installer reads `skills/`, so
-nothing in it reaches a consumer.
+
+Follow the instructions from `skill-template/README.md`.
+
+`skill-template/` is authoring material, not a shipped skill. The installer finds skills by looking
+for `SKILL.md` anywhere in the repository, not by reading `skills/`, so the skeleton is named
+`SKILL.md.template` to stay out of the install. Verify with
+`npx skills add <gh-handle>/<skills-repo> -l`: nothing named `skill-name` may appear in that list.
 
 ## Prose
 
