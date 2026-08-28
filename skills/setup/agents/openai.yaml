@@ -1,0 +1,5 @@
+interface:
+  display_name: "skills setup"
+  short_description: "Configure this project to utilize skills for AI-SDLC"
+policy:
+  allow_implicit_invocation: false
