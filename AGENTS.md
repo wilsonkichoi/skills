@@ -14,10 +14,13 @@ All version fields use semver (`major.minor.patch`). Always use the minimum incr
 For now, use patch for everything including new features. Save minor/major bumps for after the plugin has real consumers.
 A version becomes a release when it is tagged `X.Y.Z` at its merged commit and published as a GitHub Release.
 
-Tags are what make pinned installs possible. Adopters install the tip with
-`npx skills@latest add wilsonkichoi/skills`, or a pinned version with
-`npx skills@latest add wilsonkichoi/skills@v0.0.3 -s setup`. The `-s` is not optional: the installer
-reads the `@ref` as a skill filter as well as a git ref.
+A tag marks a release for people reading the history, and lets someone clone a known commit with
+`git clone --branch vX.Y.Z`. It does not make a pinned install possible. Against skills 1.5.23 the
+installer has no ref option and reads the `@` in `owner/repo@name` as a skill selector, so
+`npx skills@latest add wilsonkichoi/skills@v0.0.3` fails while `@v9.9.9 -s setup` installs from the
+default branch without complaint. Adopters install the tip with
+`npx skills@latest add wilsonkichoi/skills`; `README.md` holds the clone-and-copy workaround for
+anyone who needs an exact version.
 
 ## Distribution
 
