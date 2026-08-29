@@ -107,6 +107,10 @@ Merging is a human decision. An AI agent may prepare the branch and the pull req
 merge to `main` unless the human explicitly asks. GitHub enforces the pull request step: a direct
 push to `main` is rejected with `GH013`, for the owner too. `CONTRIBUTING.md` records the rulesets.
 
+A merged branch is not a dead branch. GitHub does not delete it on merge, on purpose, because
+merging is sometimes what triggers the check you are waiting on. Delete it once the work is
+verified, not as part of merging.
+
 ## Porting a skill from agent-toolkit
 
 The skills come from `wilsonkichoi/agent-toolkit` one at a time, one pull request each, so every

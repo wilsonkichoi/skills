@@ -27,7 +27,7 @@ Run the pre-commit checklist in [AGENTS.md](./AGENTS.md#pre-commit-checklist). I
 `VERSION` bump, the `CHANGELOG.md` entry, and the `README.md` roster row. Do not restate it here;
 one copy only.
 
-## Rulesets
+## Rulesets and settings
 
 Two repository rulesets are applied and active, both with an empty `bypass_actors`, so they bind the
 owner too. Recorded here so the configuration is readable without opening GitHub settings, and
@@ -96,6 +96,14 @@ There is no CI in this repository and no validation workflow. Adding one is a de
 it; the previous toolkit died of exactly that. Note that a `required_status_checks` rule naming a
 job that never reports would leave every pull request unmergeable, with no bypass actor to rescue
 it, so a check gets added to a ruleset only after its workflow has run green on a real pull request.
+
+Two plain repository settings, which live in GitHub's Settings page rather than in a ruleset:
+
+- **Automatically delete head branches** (`delete_branch_on_merge`) is off, deliberately. A merge is
+  sometimes what triggers the thing you are verifying, and the branch has to survive until that
+  verification comes back. Delete it yourself once you are done, and do not reach for
+  `gh pr merge --delete-branch` as a reflex.
+- **Wikis** (`has_wiki`) is off. Unused surface on a public repository.
 
 ## Releasing
 
