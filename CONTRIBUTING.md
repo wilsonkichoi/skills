@@ -27,11 +27,13 @@ Run the pre-commit checklist in [AGENTS.md](./AGENTS.md#pre-commit-checklist). I
 `VERSION` bump, the `CHANGELOG.md` entry, and the `README.md` roster row. Do not restate it here;
 one copy only.
 
-## One-time maintainer setup
+## Rulesets
 
-**Not applied yet.** The branch protection described in `AGENTS.md` is a convention today, not an
-enforced rule: `gh api repos/wilsonkichoi/skills/rulesets` currently returns an empty list, so a
-direct push to `main` would succeed. To apply it, run:
+Two repository rulesets are applied and active, both with an empty `bypass_actors`, so they bind the
+owner too. Recorded here so the configuration is readable without opening GitHub settings, and
+reproducible if the repository is ever recreated.
+
+`main pull request gate`, target branch `~DEFAULT_BRANCH`:
 
 ```
 gh api repos/wilsonkichoi/skills/rulesets -X POST --input - <<'JSON'
@@ -58,11 +60,42 @@ gh api repos/wilsonkichoi/skills/rulesets -X POST --input - <<'JSON'
 JSON
 ```
 
-An empty `bypass_actors` means the rule applies to the owner too. Once this is applied, update the
-Git workflow section of `AGENTS.md` to say the gate is enforced.
+Zero required approvals, so you can open a pull request and merge it yourself. The gate is on using
+a pull request at all, not on getting a review. GitHub adds
+`require_extra_approval_for_unattributed_changes: true` to the payload on its own; it is their
+default and it does nothing at zero approvals.
+
+`Immutable release tags`, target tag `refs/tags/v*`:
+
+```
+gh api repos/wilsonkichoi/skills/rulesets -X POST --input - <<'JSON'
+{
+  "name": "Immutable release tags",
+  "target": "tag",
+  "enforcement": "active",
+  "bypass_actors": [],
+  "conditions": { "ref_name": { "include": ["refs/tags/v*"], "exclude": [] } },
+  "rules": [
+    { "type": "deletion" },
+    { "type": "non_fast_forward" },
+    { "type": "update" }
+  ]
+}
+JSON
+```
+
+No `creation` rule, so a release tag can be pushed but never moved or deleted afterwards. That is
+what makes a pinned install a pin.
+
+Verify enforcement by attempting the thing that should fail, not by trusting that the POST returned
+201. A direct push to `main` gets `GH013 ... Changes must be made through a pull request`, a
+`git push --force` at an existing `v*` tag gets `Cannot update this protected ref`, and
+`git push origin :refs/tags/vX.Y.Z` gets `Cannot delete this tag`.
 
 There is no CI in this repository and no validation workflow. Adding one is a decision to maintain
-it; the previous toolkit died of exactly that.
+it; the previous toolkit died of exactly that. Note that a `required_status_checks` rule naming a
+job that never reports would leave every pull request unmergeable, with no bypass actor to rescue
+it, so a check gets added to a ruleset only after its workflow has run green on a real pull request.
 
 ## Releasing
 
@@ -79,3 +112,6 @@ The tag is what a pinned install points at:
 `npx skills@latest add 'https://github.com/wilsonkichoi/skills.git#vX.Y.Z'`, quoted because `#`
 starts a shell comment. The `owner/repo@vX.Y.Z` shorthand does not pin, since `@` selects a skill
 name. See the install section in `README.md`.
+
+The tag ruleset blocks moving or deleting it once pushed, so read `VERSION` and the `CHANGELOG.md`
+line before the `git push origin`. A wrong release is fixed by cutting the next patch version.
