@@ -50,15 +50,18 @@ skills/<skill-name>/
   README.md             # optional, only when the skill needs explaining beyond SKILL.md
 ```
 
-Documentation about a skill lives in that skill's directory, not in a new top-level directory. When
-`SKILL.md` cannot carry an explanation without growing past its own length budget, the answer is
-`skills/<skill-name>/README.md`, not a folder at the repository root. Adding a top-level directory
-is a decision about the shape of the repository, so it is the maintainer's call and not a thing to
-do in passing.
+Documentation *about* a skill lives in that skill's directory. When `SKILL.md` cannot carry an
+explanation without growing past its own length budget, the answer is `skills/<skill-name>/README.md`.
+Be deliberate about one: the installer copies the **whole skill directory** into every consumer, so
+a README ships with it. Write it for someone using the skill. Anything written for someone changing
+the skill belongs in this file instead.
 
-Be deliberate about a skill `README.md`: the installer copies the **whole skill directory** into
-every consumer, so a README ships with it and costs the adopter the bytes. Write it for someone
-using the skill. Anything written for someone changing the skill belongs in this file instead.
+The one thing that does not live there is the skill's validation runbook, which is big, goes stale
+on its own schedule, and is of no use to an adopter. Runbooks live in [`validation/`](./validation/),
+one file per skill, named after it.
+
+Adding any *other* top-level directory is a decision about the shape of the repository. It is the
+maintainer's call and not a thing to do in passing.
 
 Skills in this project are only triggered manually. Every harness reads its own setting, so each
 skill carries all of them:
@@ -97,7 +100,12 @@ Follow the instructions from `skill-template/README.md`.
 `skill-template/` is authoring material, not a shipped skill. The installer finds skills by looking
 for `SKILL.md` anywhere in the repository, not by reading `skills/`, so the skeleton is named
 `SKILL.md.template` to stay out of the install. Verify with
-`npx skills add <gh-handle>/<skills-repo> -l`: nothing named `skill-name` may appear in that list.
+`npx skills add <gh-handle>/<skills-repo> -l`: nothing named `skill-name` may appear in that list,
+and the count must equal the number of shipped skills.
+
+That rule is why `validation/` is safe as a sibling of `skills/`: its files are named after the
+skill, never `SKILL.md`, so nothing there is discovered or installed. Any future top-level
+directory has to clear the same check before it is added.
 
 ## Prose
 
@@ -142,17 +150,18 @@ and the order.
 5. **Feed the contract back into `setup`.** A new config field means editing
    `skills/setup/config-template.md` and the setup interview in the same pull request. No skill
    reads a field `setup` never writes.
-6. **Validate** in a throwaway repo: install with the installer, then work through a runbook for the
-   skill on Codex, on Claude Code, and on Kiro CLI. A runbook is a numbered list of cases, each with
-   an independent check that decides PASS or FAIL, ending in a report. A case that could not run is
-   SKIP and never PASS: an untested claim recorded as a pass is how a defect reaches a user. Cases
-   needing a second terminal, a second account, or a service with no credentials here are marked
-   `[MANUAL]` and are expected to be skipped on an unattended run.
+6. **Validate** in a throwaway repo: install with the installer, then work through the skill's
+   runbook at `validation/<skill-name>.md` on Codex, on Claude Code, and on Kiro CLI. A runbook is a
+   numbered list of cases, each with an independent check that decides PASS or FAIL, ending in a
+   report. A case that could not run is SKIP and never PASS: an untested claim recorded as a pass is
+   how a defect reaches a user. Cases needing a second terminal, a second account, or a service with
+   no credentials here are marked `[MANUAL]` and are expected to be skipped on an unattended run.
+   Write one for every skill that gets ported.
 
-   **A runbook is not repository content.** It belongs to the pull request that ports the skill, as
-   a comment, and is kept locally under `.local/` while that work is in flight. It is scaffolding
-   for one review, it goes stale the moment a verb changes, and a stale runbook is worse than none
-   because it reports PASS. Nothing under `skills/` and no top-level directory exists to hold it.
+   Runbooks are tracked and public on purpose. A reviewer can read what the skill was tested against
+   without installing anything, and disagree with the coverage rather than only with the code. The
+   cost is that a runbook rots like any other checked-in file, which is what pre-commit item 5 is
+   for: a stale runbook is worse than none, because it reports PASS.
 7. **Run the pre-commit checklist**, then branch, push, and open the pull request.
 
 Renaming a skill or adding one that is not on the roster is expected. Update the `README.md` roster
@@ -166,7 +175,7 @@ Before any commit that adds, removes, or modifies files under `skills/`:
 2. Append short summary to `CHANGELOG.md` using this format `{version} {ISO 8601 standard with local time offset e.g. 2026-08-21T17:16:30-07:00} {change summary}`
 3. `README.md` (repo root) and `AGENTS.md` updated if skill behavior/description changed
 4. `README.md` roster row added or updated when a skill is added, renamed, or removed
-5. The open pull request's runbook updated when a verb, a command, or a guarantee changed. A runbook
+5. `validation/<skill-name>.md` updated when a verb, a command, or a guarantee changed. A runbook
    that still tests the old behaviour is worse than none, because it reports PASS
 
 Do not commit skill changes without completing this checklist. Read the checklist, don't rely on memory.
