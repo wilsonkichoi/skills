@@ -71,7 +71,8 @@ There is no `blocked` status. Anything that blocks a ticket, whether that is oth
 decision only a human can make, becomes its own ticket with a `link` edge pointing at it. A
 decision ticket sits in `backlog`, unassigned, with the question in its body, and `list backlog` is
 what shows a human what is waiting on them. The blocked ticket keeps its own status and drops off
-the frontier on its own, because it now has an open blocker.
+the frontier on its own, because it now has an open blocker. The **frontier** is the set of tickets
+that could be started right now, and `next` is the verb that returns it.
 
 ## 3. Read, write, verify
 
