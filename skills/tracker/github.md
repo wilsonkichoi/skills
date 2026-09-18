@@ -175,7 +175,10 @@ refused because a ticket also had `bug` on it would refuse every claim in a real
 
 The re-read must show exactly one status label, `in-progress`, and exactly one assignee, you. Any
 other set of status labels is the inconsistent case: a human moved the ticket while you were
-writing. Report it and write nothing further. More than one assignee means the login that sorts
+writing. Remove your own assignment and report, leaving their status alone. Do not hold a ticket
+that now carries someone else's status, for the same reason the losing racer below stands down.
+
+More than one assignee means the login that sorts
 first, compared case-insensitively because GitHub logins are, keeps the ticket; if that is not you,
 remove only your own assignment:
 
@@ -193,13 +196,22 @@ being removed.
 
 ```
 gh issue view <n> --repo <owner/repo> --json state,stateReason,assignees,labels
-gh issue edit <n> --repo <owner/repo> --remove-label <each status label found> --add-label <new>
+gh issue edit <n> --repo <owner/repo> --remove-label <every status label found except the new one> --add-label <new>
 ```
 
-`<old>` is every status label the read found, not one guessed name. Usually that is one label; on an
-issue a human left carrying two, removing all of them and adding the new one is also the repair, so
-`move` is how an inconsistent ticket gets fixed rather than something that refuses to touch it.
-Topic labels are never removed.
+The removal list is every status label the read found **minus the target**, never one guessed name
+and never the target itself. `gh` sends the additions and the removals as two concurrent GraphQL
+mutations with no ordering between them, so a label named in both lists ends in whichever mutation
+lands last. Measured against `gh` 2.97.0, `--remove-label ready --add-label ready` on a `ready`
+ticket stripped the label in eight runs out of eight, exit 0, leaving an unlabelled issue that reads
+as `backlog`. That is the most common move a skill makes, a no-op `move <id> ready` on a ticket
+already there, so keep the two lists disjoint and do not fold them back together.
+
+Subtracting the target also makes the repair fall out: an issue a human left carrying `backlog` and
+`ready` that is moved to `ready` removes `backlog` and adds `ready`, so `move` is how an
+inconsistent ticket gets fixed rather than something that refuses to touch it. Adding a label the
+issue already carries is a no-op, so the re-run is a bare `--add-label`. Topic labels are never
+removed.
 
 A closed issue on that first read is in a terminal state: refuse the move and report. Moving to
 `backlog` clears every assignee, so pass `--remove-assignee` once per login found on the read, not
