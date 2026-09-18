@@ -114,8 +114,8 @@ verified, not as part of merging.
 ## Porting a skill from agent-toolkit
 
 The skills come from `wilsonkichoi/agent-toolkit` one at a time, one pull request each, so every
-one gets read and validated by hand before the next starts. `README.md` holds the roster and the
-order.
+one gets read and validated against its runbook before the next starts. `README.md` holds the roster
+and the order.
 
 1. **Read the source** `SKILL.md` and list its dependencies: runtime contracts, `scripts/*.py`,
    subagent definitions, `assets/`.
@@ -151,5 +151,7 @@ Before any commit that adds, removes, or modifies files under `skills/`:
 2. Append short summary to `CHANGELOG.md` using this format `{version} {ISO 8601 standard with local time offset e.g. 2026-08-21T17:16:30-07:00} {change summary}`
 3. `README.md` (repo root) and `AGENTS.md` updated if skill behavior/description changed
 4. `README.md` roster row added or updated when a skill is added, renamed, or removed
+5. The skill's runbook under `validation/` updated when a verb, a command, or a guarantee changed.
+   A runbook that still tests the old behaviour is worse than none, because it reports PASS
 
 Do not commit skill changes without completing this checklist. Read the checklist, don't rely on memory.

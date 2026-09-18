@@ -111,10 +111,12 @@ Check: `gh issue view <B> --repo <R> --json assignees,labels`
 Expect `bug` and `in-progress`, one assignee, you. A refusal here means the pre-read counts topic
 labels as status labels.
 
-**A7 multi-status issue never reaches a result.**
+**A7 multi-status issue never reaches a result, and all three verbs agree.**
 `gh issue create --repo <R> --title "two statuses" --body x --label ready --label in-progress`
-then `$tracker next` and `$tracker list ready`.
-Expect that issue in neither result, and named as inconsistent in both.
+then `$tracker next`, `$tracker list ready`, `$tracker list backlog`, and `$tracker show <that id>`.
+Expect the issue in none of the three result sets, named as inconsistent by all four verbs, and both
+labels named by `show`. A verb that reports it as `ready`, as `backlog`, or not at all is a FAIL:
+one shared status test is supposed to make disagreement impossible.
 
 **A8 multi-status issue is repairable.** `$tracker move <that id> ready`.
 Check: `gh issue view <that id> --repo <R> --json labels --jq '[.labels[].name]|sort'`
