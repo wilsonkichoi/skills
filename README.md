@@ -51,6 +51,8 @@ It interviews you about your issue tracker and your product docs, writes
 `docs/dev-agents/config.md`, and adds one reference line to your `AGENTS.md` or `CLAUDE.md` so
 every session loads that config. Every other skill reads the same file.
 
+Then run `/tracker list` to confirm the backend answers.
+
 ## Skills
 
 The roster below is the plan, not a promise. Skills arrive one at a time so each one gets read and
@@ -59,7 +61,7 @@ validated before the next starts. See [AGENTS.md](./AGENTS.md) for how a skill i
 | Skill | What it does | Status |
 |---|---|---|
 | [`setup`](./skills/setup/SKILL.md) | Configure a repository to use these skills | shipped |
-| `tracker` | Read and write issues against GitHub, Linear, or local markdown | next |
+| [`tracker`](./skills/tracker/SKILL.md) | Read and write issues against GitHub, Linear, or local markdown | shipped |
 | `research` | Gather raw material, transcripts, and prior art into notes | planned |
 | `architect` | Turn product intent into `SPEC.md` | planned |
 | `plan` | Break a spec into milestones and tasks with dependencies | planned |
@@ -90,7 +92,7 @@ and `plan` rather than by `setup`.
 Name the skills and the agents you installed to:
 
 ```
-npx skills@latest remove setup -a claude-code -a codex -a kiro-cli
+npx skills@latest remove setup tracker -a claude-code -a codex -a kiro-cli
 ```
 
 The other forms are documented under

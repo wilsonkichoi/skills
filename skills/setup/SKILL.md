@@ -57,7 +57,8 @@ already settled it.
 - **Linear**: issues live in linear.app (uses the Linear MCP server). Ask for the team key and the
   project name; both go in the config.
 - **Local markdown**: issues live as files under `docs/dev-agents/issues/` in this repo (good for
-  solo projects or repos without a remote)
+  solo projects or repos without a remote). One session at a time: a claim made on a branch is
+  invisible from `main` until that branch merges
 - **Other** (Jira, GitLab, etc.): ask the user to describe the workflow in one paragraph; record it
   as freeform text in the config body and set `issue_tracker: other`
 
@@ -130,10 +131,12 @@ may be in use, also ensure `CLAUDE.md` contains an `@AGENTS.md` import line: cre
 One-time work for the chosen backend. Report what you did; do not treat a failure here as a reason
 to abandon the rest of setup.
 
-- **github:** confirm `gh auth status` succeeds and the repo has a GitHub remote. Create the status
-  labels with `gh label create`, skipping any that already exist: `backlog`, `ready`,
-  `in-progress`, `in-review`, `done`, `cancel`, `duplicate`. If the authenticated user cannot write
-  to the repository, create nothing and report the exact commands a maintainer needs to run.
+- **github:** confirm `gh auth status` succeeds and the repo has a GitHub remote. Create the four
+  status labels with `gh label create`, skipping any that already exist: `backlog`, `ready`,
+  `in-progress`, `in-review`. There is no label for `done`, `cancel`, or `duplicate`; those three
+  are GitHub close reasons, which is what `tracker` reads and writes. If the authenticated user
+  cannot write to the repository, create nothing and report the exact commands a maintainer needs
+  to run.
 - **linear:** confirm the Linear MCP server is connected. If it is not, tell the user how to add it
   and stop before writing Linear fields into the config.
 - **local:** create `docs/dev-agents/issues/.gitkeep`.
@@ -156,3 +159,5 @@ task branches need.
 
 Then summarize: mode, tracker backend, files created, one-time tracker setup performed, and
 anything the user still has to do themselves.
+
+Next step: run `/tracker list` to confirm the backend responds.
