@@ -175,8 +175,18 @@ refused because a ticket also had `bug` on it would refuse every claim in a real
 
 The re-read must show exactly one status label, `in-progress`, and exactly one assignee, you. Any
 other set of status labels is the inconsistent case: a human moved the ticket while you were
-writing. Remove your own assignment and report, leaving their status alone. Do not hold a ticket
-that now carries someone else's status, for the same reason the losing racer below stands down.
+writing. Take back exactly what you added and nothing else, then report:
+
+```
+gh issue edit <n> --repo <owner/repo> --remove-assignee @me --remove-label in-progress
+```
+
+`in-progress` is yours, added two commands ago, so leaving it behind would hand the next reader a
+two-label ticket that `claim` created and `move` has to repair. Whatever label the human set is
+theirs and stays. The command is safe in all three shapes the re-read can return, `in-progress`
+beside their label, their label alone because they stripped yours, or no status label at all,
+because removing a label an issue does not carry exits 0 and changes nothing. It has no add side,
+so it cannot hit the concurrent-mutation race that `move` has to work around.
 
 More than one assignee means the login that sorts
 first, compared case-insensitively because GitHub logins are, keeps the ticket; if that is not you,
