@@ -2,6 +2,9 @@
 issue_tracker: github                       # github / linear / local / other
 linear_team: "TEAM"                         # only for issue_tracker: linear
 linear_project: "Project name"              # only for issue_tracker: linear
+linear_states:                              # only for issue_tracker: linear, and only where the
+  in-progress: "In Progress"                # state type does not identify one state on its own.
+  in-review: "In Review"                    # tracker asks rather than guessing, and records here.
 context_file: AGENTS.md                     # project entry point for coding agents: AGENTS.md or CLAUDE.md
 rules_dir: docs/dev-agents/rules/           # promoted learnings, one file per rule
 issues_dir: docs/dev-agents/issues/         # only for issue_tracker: local

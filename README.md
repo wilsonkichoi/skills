@@ -41,17 +41,21 @@ Claude Code, Codex, Kiro CLI, and other agents. Tags come from the release proce
 
 Run `setup` once per repository:
 
-| Harness | Invocation |
-|---|---|
-| Claude Code | `/setup` |
-| Codex | `$setup` |
-| Kiro CLI | `/setup` (2.1 or later) |
+| Harness | `setup` | Any other skill |
+|---|---|---|
+| Claude Code | `/setup` | `/tracker list` |
+| Codex | `$setup` | `$tracker list` |
+| Kiro CLI | `/setup` (2.1 or later) | `/tracker list` |
+
+Codex uses `$name`, not `/name`. Every example below is written for Claude Code; substitute the
+prefix for your harness.
 
 It interviews you about your issue tracker and your product docs, writes
 `docs/dev-agents/config.md`, and adds one reference line to your `AGENTS.md` or `CLAUDE.md` so
 every session loads that config. Every other skill reads the same file.
 
-Then run `/tracker list` to confirm the backend answers.
+Then run `tracker list` in your harness, with the prefix from the table above, to confirm the
+backend answers.
 
 ## Skills
 

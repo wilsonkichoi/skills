@@ -6,8 +6,20 @@ typically `list_issues`, `get_issue`, `create_issue`, `update_issue`, `create_co
 in the list. Scope every call with `linear_team` and `linear_project` from
 `docs/dev-agents/config.md`.
 
-This backend has not been run end to end. Treat the first session on a new workspace as the
-validation, and report anything that does not match what is written here.
+## What has actually been tested
+
+Nothing in this file has been run against a live Linear workspace. Be precise about what that means,
+because the three sources here are not equally reliable:
+
+| Part | Status |
+|---|---|
+| The two findings under "Three findings to respect" | Observed in a real dogfood run of the predecessor toolkit. Trust these. |
+| `list_issues` pagination | Carried over from the same source by analogy, not observed here. |
+| Everything else: tool names, state types, relation tools, the verb mapping | **Written from the Linear API's documented shape and never executed.** Treat as a first draft. |
+
+The first session on a real workspace is the validation, not a smoke test. Expect tool names to be
+wrong and expect at least one mapping to need correcting, and report what you find rather than
+working around it silently.
 
 ## Resolve the workflow states first
 
@@ -18,8 +30,8 @@ seven names onto them **by state type**, not by state name:
 |---|---|---|
 | `backlog` | `triage` and `backlog` | Triage, Backlog |
 | `ready` | `unstarted` | Todo |
-| `in-progress` | `started`, first in workflow order | In Progress |
-| `in-review` | `started`, second in workflow order | In Review |
+| `in-progress` | `started` | In Progress |
+| `in-review` | `started` | In Review |
 | `done` | `completed` | Done |
 | `cancel` | `canceled` | Canceled |
 | `duplicate` | `canceled`, the team's duplicate state if it has one | Duplicate |
@@ -27,6 +39,43 @@ seven names onto them **by state type**, not by state name:
 Name matching is what breaks first. A team that renamed Done to `Released` or Todo to `Up next` is
 normal, and reading by name would report those tickets as `backlog`. Read by type and keep the
 resolved names for the rest of the session.
+
+## Ambiguity is a hard stop
+
+A write needs exactly one target state. When the type does not identify one, **stop and ask**. Do
+not pick by position, by name similarity, or by which one looks likeliest. A status written to the
+wrong state is invisible: the call succeeds, the ticket moves somewhere nobody is looking, and the
+next `list` simply does not return it.
+
+Resolve each write target by counting the states of its type:
+
+- **Exactly one:** that is the mapping. Continue.
+- **None:** stop. Name the status that cannot be mapped and the types the team does have.
+- **More than one:** stop. List every candidate with its Linear name and type, and ask which one
+  this status means.
+
+`started` is the type that will actually hit this, because `in-progress` and `in-review` share it.
+Two `started` states is the common shape and still needs confirming once, since nothing in the API
+says which is which. Order in the workflow is a convention, not a guarantee, and a team with a third
+`started` state such as QA makes position meaningless.
+
+The answer is recorded in `docs/dev-agents/config.md`, not re-derived every session:
+
+```yaml
+linear_states:
+  in-progress: 'In Progress'
+  in-review: 'In Review'
+  duplicate: 'Duplicate'
+```
+
+Only the statuses that were ambiguous need a line. On the next session, a state named there is used
+directly and no question is asked. A name in that map that no longer exists in the team's workflow
+is itself a hard stop: report it rather than falling back to type resolution, because a renamed
+state is exactly the case where guessing goes wrong quietly.
+
+Reads are different from writes. `backlog` deliberately reads from every `triage` and `backlog`
+state at once, and that is a union, not an ambiguity. Ambiguity only blocks the verb that has to
+choose one state to write.
 
 `backlog` is the one status that reads as more than one state. A team with a triage inbox lands new
 issues there, including the ones a human files by hand, so `list backlog` queries every state of
@@ -42,9 +91,10 @@ the status filters. Folding it into `backlog` would make `show` call it `backlog
 Two cases need a human rather than a substitute, because workflow edits are a human decision:
 
 - Only one state of type `started`: ask for an In Review state instead of picking one.
-- No duplicate state: fall back to the `canceled` state plus a comment naming the original, and say
-  in the report that is what happened. Those tickets then read back under `list cancel`, not
-  `list duplicate`, because the backend has nowhere else to record the distinction.
+- No state of type `canceled` at all: stop. `cancel` and `duplicate` both have nowhere to go, and
+  neither is a status to approximate. A team whose duplicate handling is only a `canceled` state
+  plus a comment is a supported shape, recorded through `linear_states` above; a team with no
+  `canceled` state is not.
 
 ## Dependencies
 
@@ -69,9 +119,13 @@ that reads or writes them. Check the tool list at session start:
 | `next` | `list_issues` filtered to the resolved `ready` state and unassigned, then drop anything with an open "blocked by" relation, lowest issue number first |
 | `create` | `create_issue` into the configured team and project at the resolved `backlog` state, then one relation per `## Blocked by` entry, then move it to the requested state |
 | `claim` | `get_issue` and require the `ready` state with no assignee; `update_issue` setting assignee to self and state to `in-progress`; `get_issue` again and require that the assignee is you. See below |
-| `comment` | `create_comment` |
+| `comment` | `create_comment`, then `list_comments` and find the exact body |
 | `move` | `get_issue` first and refuse any move out of `done`, `cancel`, or `duplicate`; otherwise `update_issue` with the exact resolved state name, then `get_issue` to confirm. Moving to `backlog` also clears the assignee; moving to `duplicate` sets the native duplicate relation to the original |
-| `link` | A native "blocked by" issue relation |
+| `link` | A native "blocked by" issue relation, then re-read the relations and find the blocker |
+
+Every mutating row ends in a read, and on this backend that read is not a formality. A status write
+with a state name that is not exact returns success and changes nothing, so the verification read is
+the only thing that distinguishes a write that landed from one that did not.
 
 ## Claiming, where Linear differs
 

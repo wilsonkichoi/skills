@@ -138,7 +138,12 @@ to abandon the rest of setup.
   cannot write to the repository, create nothing and report the exact commands a maintainer needs
   to run.
 - **linear:** confirm the Linear MCP server is connected. If it is not, tell the user how to add it
-  and stop before writing Linear fields into the config.
+  and stop before writing Linear fields into the config. Then list the team's workflow states and
+  map the seven statuses onto them by state **type**, not by name. Where a type identifies exactly
+  one state, say so and move on. Where it does not, ask: two states of type `started` is the normal
+  shape and nothing in the API says which is `in-progress` and which is `in-review`. Record only the
+  answers you had to ask for, under `linear_states`. Never guess by position or by name similarity;
+  a status written to the wrong state succeeds silently and the ticket goes somewhere nobody looks.
 - **local:** create `docs/dev-agents/issues/.gitkeep`.
 - **other:** nothing to set up. The workflow the user described is the contract.
 
@@ -160,4 +165,5 @@ task branches need.
 Then summarize: mode, tracker backend, files created, one-time tracker setup performed, and
 anything the user still has to do themselves.
 
-Next step: run `/tracker list` to confirm the backend responds.
+Next step: confirm the backend responds, using this project's harness. Claude Code `/tracker list`,
+Codex `$tracker list`, Kiro CLI `/tracker list`.

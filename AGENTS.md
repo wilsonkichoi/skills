@@ -131,8 +131,13 @@ order.
 5. **Feed the contract back into `setup`.** A new config field means editing
    `skills/setup/config-template.md` and the setup interview in the same pull request. No skill
    reads a field `setup` never writes.
-6. **Validate by hand** in a throwaway repo: install with the installer, run the skill on Claude
-   Code, on Codex, and on Kiro CLI, read the output.
+6. **Validate** in a throwaway repo: install with the installer, then work through the skill's
+   runbook under [`validation/`](./validation/) on Codex, on Claude Code, and on Kiro CLI. A runbook
+   is a numbered list of cases, each with an independent check that decides PASS or FAIL, ending in
+   a report. A case that could not run is SKIP and never PASS: an untested claim recorded as a pass
+   is how a defect reaches a user. Cases needing a second terminal, a second account, or a service
+   with no credentials here are marked `[MANUAL]` and are expected to be skipped on an unattended
+   run. Write one for every skill that gets ported.
 7. **Run the pre-commit checklist**, then branch, push, and open the pull request.
 
 Renaming a skill or adding one that is not on the roster is expected. Update the `README.md` roster

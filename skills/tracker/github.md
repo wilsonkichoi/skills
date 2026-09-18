@@ -26,13 +26,57 @@ Reading a status back:
 
 - open with one status label: that status.
 - open with no status label: `backlog`. Every human-created and every reopened issue lands here.
-- open with two or more status labels: inconsistent. Report it and do not guess which one wins.
+- open with two or more status labels: inconsistent. It has no status, and no query returns it as
+  though it did.
 - closed: read `stateReason`. A closed issue carries no status label.
 
 Why close reasons rather than seven labels: a `done` label on an issue closed as `not planned` is
 two sources of truth that will eventually disagree, and GitHub already stores the reason natively.
 This is a deliberate departure from a flat seven-label scheme, and it is reversible for the cost of
 three `gh label create` lines.
+
+## Status validation
+
+Those four rules are written once, as a `jq` prelude, and every query below prepends it. Do not
+re-implement the test inline: a second copy is how `list` and `next` came to disagree about what
+`ready` means.
+
+```
+def STATUS: ["backlog","ready","in-progress","in-review"];
+def status_labels: [.labels[].name] - ([.labels[].name] - STATUS);
+def status: status_labels
+  | if length > 1 then "inconsistent"
+    elif length == 0 then "backlog"
+    else .[0] end;
+```
+
+`status_labels` is the intersection of the issue's labels with the four status names, so `bug`,
+`enhancement`, and every other topic label a repository carries are invisible to it. `status` turns
+that into exactly one of the four names, or `inconsistent`.
+
+Every query then filters with `select(status == "<wanted>")` and reports the inconsistent issues
+separately in the same pass:
+
+```
+--jq '<prelude> {rows: length,
+       tickets: [.[] | select(status == "ready")],
+       inconsistent: [.[] | select(status == "inconsistent") | .number]}'
+```
+
+Three properties this buys, and all three are the point:
+
+- **An issue with two status labels is never returned as a ticket.** `--label ready` matches an
+  issue carrying `ready` and `in-progress` both, so the server-side filter alone would hand
+  `next` a ticket whose status nobody can name.
+- **It is never silently dropped either.** `inconsistent` carries its number, so the caller can say
+  so and `move <id> <status>` is the repair.
+- **`list backlog` stops being a special case.** `status` already resolves an unlabelled issue to
+  `backlog`, so the same expression serves all four open statuses.
+
+Verified against the eight label shapes a repository actually produces: no labels, `backlog` alone,
+`ready` alone, a topic label alone, a topic label beside `backlog`, `backlog` with `ready`, `ready`
+with `in-progress` and a topic label, and `in-review` alone. The first five resolve to a status, the
+two multi-status shapes resolve to `inconsistent`, and no shape returns the wrong name.
 
 ## Truncation
 
@@ -50,41 +94,31 @@ issues, which are the lowest-numbered ones. Two rules:
 
 ## Per verb
 
-**list.** Open tickets by default.
+**list.** One shape for all four open statuses, `backlog` included. Always list every open issue and
+let `status` do the filtering: `--label <status>` would miss the unlabelled issues that read as
+`backlog`, and would over-match the inconsistent ones.
 
 ```
 gh issue list --repo <owner/repo> --state open --limit 200 \
-  --json number,title,state,stateReason,assignees,labels,milestone,blockedBy
+  --json number,title,state,stateReason,assignees,labels,milestone,blockedBy \
+  --jq '<prelude> {rows: length,
+         tickets: [.[] | select(status == "<wanted>")],
+         inconsistent: [.[] | select(status == "inconsistent") | .number]}'
 ```
 
-Add `--label <status>` for `ready`, `in-progress`, or `in-review`, and `--milestone <title>` to
-scope.
+Add `--milestone <title>` to scope. With no status argument, drop the `select` and return every open
+issue, still reporting `inconsistent`.
 
 For a terminal status, query `--state closed` and filter on `stateReason`, which is on the list
 payload, so `list done`, `list cancel`, and `list duplicate` each read back in one call with no
-per-issue fan-out. `COMPLETED` is `done`, `NOT_PLANNED` is `cancel`, `DUPLICATE` is `duplicate`:
+per-issue fan-out. `COMPLETED` is `done`, `NOT_PLANNED` is `cancel`, `DUPLICATE` is `duplicate`.
+Status labels do not apply to a closed issue, so there is no `inconsistent` bucket here:
 
 ```
 gh issue list --repo <owner/repo> --state closed --limit 200 \
   --json number,title,stateReason,assignees,labels \
   --jq '{rows: length, tickets: [.[] | select(.stateReason == "COMPLETED")]}'
 ```
-
-`list backlog` is the exception and must not use `--label backlog`. An open issue with no status
-label reads as `backlog`, and those unlabelled issues are exactly the human-created and reopened
-ones that `list backlog` exists to surface. List every open issue and keep the ones carrying either
-no status label or the `backlog` label:
-
-```
-gh issue list --repo <owner/repo> --state open --limit 200 --json number,title,labels,assignees \
-  --jq '{rows: length,
-         backlog: [.[] | select([.labels[].name]
-           | map(select(. == "backlog" or . == "ready" or . == "in-progress" or . == "in-review"))
-           | length == 0 or . == ["backlog"])]}'
-```
-
-An issue carrying two status labels, say `backlog` and `ready`, is dropped here rather than
-reported. That is the inconsistent case above, and `show` is what names it.
 
 **show.**
 
@@ -94,9 +128,9 @@ gh issue view <n> --repo <owner/repo> \
   --json number,title,body,state,stateReason,assignees,labels,milestone,blockedBy
 ```
 
-`show` is the one verb that reports an open issue carrying two or more status labels as
-inconsistent. The list and frontier queries cannot: one drops such an issue, the other includes it
-because `--label ready` matches.
+Resolve the status with the same `status` definition, so `show` and `list` can never disagree about
+one issue. An issue carrying two status labels reports as inconsistent here, naming both labels, and
+`move <id> <status>` is how it gets repaired.
 
 **next.** The whole frontier is one command. `no:assignee` and `sort:created-asc` do the assignee
 filter and the ordering on the server.
@@ -104,36 +138,46 @@ filter and the ordering on the server.
 ```
 gh issue list --repo <owner/repo> --state open --label ready \
   --search "no:assignee sort:created-asc" --limit 100 \
-  --json number,title,assignees,blockedBy \
-  --jq '{rows: length,
+  --json number,title,assignees,labels,blockedBy \
+  --jq '<prelude> {rows: length,
          frontier: [.[]
            | if .blockedBy == null
              then error("blockedBy is null: this host does not expose issue dependencies")
              else . end
+           | select(status == "ready")
            | select(.blockedBy.totalCount == (.blockedBy.nodes | length))
-           | select([.blockedBy.nodes[] | select(.state == "OPEN")] | length == 0)]}'
+           | select([.blockedBy.nodes[] | select(.state == "OPEN")] | length == 0)],
+         inconsistent: [.[] | select(status == "inconsistent") | .number]}'
 ```
 
-Four things that query is doing on purpose:
+`--label ready` is a server-side prefilter and nothing more. It can only over-include, because an
+issue whose status is `ready` must carry that label, so narrowing it further with `select(status ==
+"ready")` is safe and necessary: without it an issue carrying `ready` and `in-progress` both would
+enter the frontier and get claimed, and `claim`'s pre-read would then refuse it.
 
-1. **The `error()` is the guard for a host without dependency support**, and it has to be written
+Five things that query is doing on purpose:
+
+1. **`select(status == "ready")` is the shared status test**, the same one `list` uses, and it is
+   what keeps an inconsistent issue out of the frontier. The server-side `--label ready` cannot do
+   this on its own.
+2. **The `error()` is the guard for a host without dependency support**, and it has to be written
    out. It cannot be left implicit in the filters below it: `null.totalCount` is `null` and
    `null.nodes | length` is `0` in `jq`, so a null row compares false against the 50-node check and
    is dropped silently, exit 0. On a host with no dependencies every row is null, the frontier comes
    back empty, and `next` is wrong forever with nothing to show for it. Let the error through, and
    never patch it with `?` or `// []` for the same reason.
-2. **It filters on `blockedBy.nodes[].state`, never on `blockedBy.totalCount`.** Verified
+3. **It filters on `blockedBy.nodes[].state`, never on `blockedBy.totalCount`.** Verified
    2026-09-18 against `gh` 2.97.0: `totalCount` counts closed blockers too and stays at 1 after the
    blocker is closed, so a `totalCount == 0` filter would keep every unblocked ticket off the
    frontier forever. The GraphQL schema says the same thing: `issueDependenciesSummary` carries
    both `blockedBy`, which is open blockers only, and `totalBlockedBy`, documented as "open and
    closed".
-3. **The `totalCount` comparison is the 50-node guard.** `gh` caps `blockedBy.nodes` at 50, so a
+4. **The `totalCount` comparison is the 50-node guard.** `gh` caps `blockedBy.nodes` at 50, so a
    `totalCount` above the number of nodes returned means the list is truncated and an open blocker
    may be hidden. Such a ticket is held off the frontier rather than trusted. This is a query, not a
    note, because an unattended run will not compare the two counts by hand. Use `show <id>` to
    inspect a ticket held back this way.
-4. **`rows` is the pre-filter count**, and it is the only thing the truncation rule can read. A page
+5. **`rows` is the pre-filter count**, and it is the only thing the truncation rule can read. A page
    of 100 `ready` tickets that are all blocked yields an empty `frontier`, which is indistinguishable
    from a repository with no `ready` tickets unless `rows` is there to say otherwise.
 
@@ -157,6 +201,17 @@ Create it with no status label, which reads as `backlog`. Then run `link` once p
 ticket's `## Blocked by` section. Only then apply the requested status label. Labelling `ready`
 before the edges exist puts the ticket on the frontier unblocked, where another session can claim
 it.
+
+Verify by number, not from the URL `gh issue create` printed:
+
+```
+gh issue view <n> --repo <owner/repo> --json number,title,body,labels,blockedBy
+```
+
+The body must match what you sent, every `## Blocked by` entry must appear in `blockedBy.nodes`, and
+the status label must be the one requested. A filtered `gh issue list` is not a verification here,
+because the search API is eventually consistent and a ticket created seconds ago can be missing from
+it. Read it by number.
 
 **claim.** Read, edit, re-read. The read is not optional: `--remove-label` on a label the issue does
 not carry exits 0 and changes nothing, so a blind claim on an `in-review` ticket would add
@@ -244,19 +299,40 @@ The order is load bearing. A failed strip leaves a closed issue carrying a stale
 open-state query sees. The other order would leave an open, unlabelled issue, and that now reads as
 `backlog`.
 
-**comment.**
+**Verifying either kind of move.** One read, after the write, whatever the exit codes said:
+
+```
+gh issue view <n> --repo <owner/repo> --json state,stateReason,assignees,labels
+```
+
+For an open-state move, expect exactly one status label and that label the target. For a terminal
+move, expect `CLOSED`, the `stateReason` you asked for, and no status label at all. A `stateReason`
+that is not the one you passed means the issue was already closed and `gh` kept the original reason,
+which it does at exit 0.
+
+**comment.** Write, then read the comments back and find yours.
 
 ```
 gh issue comment <n> --repo <owner/repo> --body-file <file>
+gh issue view <n> --repo <owner/repo> --json comments --jq '[.comments[].body]'
 ```
 
+The exact body must be in that list. Comments are append-only, so a duplicate on a retry is worse
+than a missing one: check before re-posting, since the first attempt may have landed and only the
+response been lost.
+
 **link.** The endpoint takes the blocker's numeric database id, which is not the `#number` and not
-the `node_id`.
+the `node_id`. Read both ids, POST, then read the edge back.
 
 ```
 gh api repos/<owner>/<repo>/issues/<blocker number> --jq .id
 gh api --method POST repos/<owner>/<repo>/issues/<n>/dependencies/blocked_by -F issue_id=<that id>
+gh issue view <n> --repo <owner/repo> --json blockedBy --jq '[.blockedBy.nodes[].number]'
 ```
+
+The blocker's number must be in that list. This verification is what `create` depends on: a ticket
+whose edge silently failed goes to `ready` and onto the frontier as though nothing blocked it, which
+is the one wrong answer `next` must never give.
 
 ## Consistent reads
 

@@ -11,14 +11,14 @@ this when the user picks local.
 
 ```markdown
 ---
-id: "012"
-title: CSV export endpoint
-status: ready          # backlog | ready | in-progress | in-review | done | cancel | duplicate
-assignee: ""           # git config user.name, or empty
-blocked_by: ["010", "011"]
-duplicate_of: ""       # only when status is duplicate
-milestone: ""
-created: 2026-09-18
+id: '012'
+title: 'CSV export endpoint'
+status: 'ready'        # backlog | ready | in-progress | in-review | done | cancel | duplicate
+assignee: ''           # git config user.name, or empty
+blocked_by: ['010', '011']
+duplicate_of: ''       # only when status is duplicate
+milestone: ''
+created: '2026-09-18'
 ---
 
 ## What to build
@@ -40,6 +40,41 @@ created: 2026-09-18
 Comments are append-only, newest last, one `### <date> <author>` heading each. The author is the
 skill that wrote it, or `tracker` when a person invoked this skill directly.
 ```
+
+## Quoting
+
+**Every string value in the frontmatter is single-quoted, always, with no exceptions for values that
+look safe.** To quote a value, wrap it in `'` and double every `'` already inside it. That is the
+whole rule, and it is the entire YAML escaping story for single-quoted scalars: nothing else inside
+them is special.
+
+```
+title: 'It''s a "mixed" quote: 100% and 日本語 ✅'
+```
+
+Quote unconditionally rather than case by case, because the values that break are the ones that look
+harmless:
+
+| Written unquoted | What a YAML parser returns |
+|---|---|
+| `id: 0123` | `83`, parsed as octal |
+| `status: null` | a null, not the string |
+| `assignee: true` | a boolean |
+| `created: 2026-09-18` | a date object, not the string |
+| `title: Fix: colon in title` | parse error |
+| `title: - leading dash` | parse error |
+| `title: [bracketed] {braced}` | parse error |
+| `title: 'trailing spaces   '` unquoted | trailing whitespace stripped |
+
+A title is one line. Strip any newline out of it before writing, since a multi-line value needs a
+block scalar and nothing here needs one. Unicode needs no escaping at all: the file is UTF-8 and
+single quotes carry it through unchanged.
+
+Round-tripped through a YAML parser across 23 titles covering colons, hashes, `@`, apostrophes,
+double quotes, percent signs, leading dashes and question marks, brackets and braces, leading and
+trailing spaces, backslashes, pipes, angle brackets, tabs, anchors and aliases, the bare words
+`null` and `true`, a leading-zero number, a date, CJK, accented Latin, an emoji, and a mixed case
+combining several at once. All 23 came back byte-identical.
 
 **The frontmatter is the state.** `blocked_by` is the only dependency list any verb reads. The
 `## Blocked by` section in the body is there for a human reading the file: `create` writes it, and
@@ -76,12 +111,31 @@ and do not reformat what is there.
 | `create` | Write a new file with `status: backlog`, the ticket shape, and `blocked_by`, then apply the requested status last |
 | `claim` | Read the file and require `status: ready` with an empty `assignee`; set `status: in-progress` and `assignee`; re-read to confirm |
 | `comment` | Append under `## Comments` |
-| `move` | Read `status` first and refuse any move out of `done`, `cancel`, or `duplicate`; otherwise edit `status`. Moving to `backlog` also sets `assignee: ""`; moving to `duplicate` sets `duplicate_of` |
+| `move` | Read `status` first and refuse any move out of `done`, `cancel`, or `duplicate`; otherwise edit `status`. Moving to `backlog` also sets `assignee: ''`; moving to `duplicate` sets `duplicate_of` |
 | `link` | Add the blocker id to `blocked_by`. Rewrite the `## Blocked by` section to match when the file has one, and leave the body alone when it does not |
 
 For `next`, "in a terminal status" means `done`, `cancel`, or `duplicate`. A `blocked_by` id with no
 file behind it is an open blocker: the ticket stays off the frontier and the report names the
 missing id.
+
+## Verifying a write
+
+A file write has no exit code worth trusting either. After every mutating verb, re-read the file
+from disk and parse its frontmatter again. Checking the string you were about to write is not a
+verification; the failure this catches is a value that did not survive the round trip, which is
+exactly what the quoting rule above exists to prevent and exactly what a naive check would miss.
+
+| Verb | What the re-read must show |
+|---|---|
+| `create` | the file exists at the new id, `status` is what was asked for, and `blocked_by` holds every entry from `## Blocked by` |
+| `link` | the blocker id is in `blocked_by` |
+| `claim` | `status: 'in-progress'` and `assignee` holding your name |
+| `comment` | the comment body is under `## Comments` |
+| `move` | `status` is the target, and `assignee` is empty after a move to `backlog` |
+
+Re-parse rather than re-read as text. A `title` that comes back as `83`, `None`, or a date object
+means the value was written unquoted, and the ticket is now lying about itself in a way no string
+comparison against the original will catch.
 
 ## The tracker does not commit
 

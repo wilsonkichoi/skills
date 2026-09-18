@@ -20,8 +20,8 @@ metadata:
 - **Input:** one verb and its arguments.
 - **Output:** the tickets asked for, or the changed ticket state plus its URL or file path.
 
-Read, write, then re-read. A zero exit code from `gh`, an MCP call, or a file write is not proof
-the state changed, and several of these commands succeed while doing nothing.
+Every mutating verb is read, write, verify. A zero exit code is not proof the state changed, and
+several of these commands succeed while doing nothing.
 
 ## 1. Resolve the backend
 
@@ -61,20 +61,51 @@ that is a human decision.
 A ticket with no recorded status is `backlog`. That covers every human-created ticket and every
 reopened one, so `list backlog` has to find them whether or not anyone labelled them.
 
+A ticket the backend records as being in two statuses at once has **no** status. `list` and `next`
+never return it as though it did, and never silently drop it either: they name it as inconsistent
+alongside their results, and `move <id> <status>` is the repair. Each backend resolves status
+through one shared test used by every verb, so `show`, `list`, and `next` cannot disagree about the
+same ticket.
+
 There is no `blocked` status. Anything that blocks a ticket, whether that is other work or a
 decision only a human can make, becomes its own ticket with a `link` edge pointing at it. A
 decision ticket sits in `backlog`, unassigned, with the question in its body, and `list backlog` is
 what shows a human what is waiting on them. The blocked ticket keeps its own status and drops off
 the frontier on its own, because it now has an open blocker.
 
-## 3. Verbs
+## 3. Read, write, verify
+
+`create`, `claim`, `comment`, `move`, and `link` all mutate, and all five run the same three steps.
+`list`, `show`, and `next` read only and skip it.
+
+1. **Read.** Fetch the current state and check the precondition this verb needs. A verb whose
+   precondition fails writes nothing at all and says why.
+2. **Write.** One command where possible, so there is no half-applied state to reason about.
+3. **Verify.** A *separate* read, and this is the step that matters. Check the postcondition against
+   what the backend now says, never against what the write returned. The write's own exit code, its
+   printed URL, and its response body are all things that come back looking correct when nothing
+   changed. Three `gh` commands in this skill do exactly that.
+
+When verification fails, report the verb, the ticket, what you expected, what the backend actually
+says, and what you did about it. A verb that cannot confirm its own write has failed, whatever its
+exit code said.
+
+| Verb | Precondition read | Verification read |
+|---|---|---|
+| `create` | none | the ticket exists by id, with the body and the status intended |
+| `link` | both tickets exist | the edge appears on the blocked ticket's dependency list |
+| `claim` | status is `ready`, no assignee | status is `in-progress` and the only assignee is you |
+| `comment` | the ticket exists | the comment body is present on the ticket |
+| `move` | current status, and it is not terminal | the new status is what the backend reports |
+
+## 4. Verbs
 
 | Verb | Semantics |
 |---|---|
 | `list [status] [milestone]` | Tickets with id, title, status, assignee, and blockers. Both arguments are optional filters, and an argument that is not one of the seven status names is a milestone. With no status, open tickets only. |
 | `show <id>` | One ticket in full: body, comments, labels, blockers, assignee. |
 | `next` | The frontier. See below. |
-| `create <ticket> [status]` | One ticket from the shape in section 4, plus its dependency edges. The status is one of the four open ones and defaults to `backlog`. See below. |
+| `create <ticket> [status]` | One ticket from the shape in section 5, plus its dependency edges. The status is one of the four open ones and defaults to `backlog`. See below. |
 | `claim <id>` | Take the ticket. See below. |
 | `comment <id> <body>` | Append a comment. Never edit or delete an existing one. |
 | `move <id> <status> [original]` | Transition, including the terminal close with its reason. See below. |
@@ -95,21 +126,18 @@ the frontier and gets claimed as though nothing blocked it. A failure partway le
 at `backlog` with some of its edges, so report the id, which edges landed, and that the status was
 not applied.
 
-**`claim`** is three steps and every one matters.
+**`claim`** runs section 3's three steps, and its own detail is what happens when they disagree.
 
-1. Read the ticket. Claim only when the status is exactly `ready` with no assignee. Anything else
-   means someone got there first, so stop and report without writing anything. Do not skip this
-   read: on GitHub, removing a label the ticket does not carry still succeeds, so a blind claim on
-   an `in-review` ticket would quietly add `in-progress` beside it.
-2. Assign self and move `ready` → `in-progress`.
-3. Re-read. Expect exactly `in-progress` and exactly one assignee, you. Any other status means a
-   human moved the ticket while you were writing, which the backend file covers: take back what
-   you wrote and report. More than one assignee means another session raced you, and the assignee
-   whose login sorts first, compared without regard to case, keeps the ticket. If that is not you,
-   remove your own assignment, leave the status alone, and report. On a backend with a single
-   assignee field there is nothing to compare: the re-read simply has to name you. The tie-break is
-   deterministic so a race ends with one owner instead of none, and the status stays put because
-   the winner really is working on it.
+Claim only from `ready` with no assignee. Anything else means someone got there first: stop and
+write nothing.
+
+On the verification read, any status other than `in-progress` means a human moved the ticket while
+you were writing. Take back exactly what you wrote and report; the backend file gives the command.
+More than one assignee means another session raced you, and the assignee whose login sorts first,
+compared without regard to case, keeps the ticket. If that is not you, remove your own assignment,
+leave the status alone, and report. On a backend with a single assignee field there is nothing to
+compare: the read simply has to name you. The tie-break is deterministic so a race ends with one
+owner instead of none, and the status stays put because the winner really is working on it.
 
 The tie-break does not care whether the other assignee is a session or a person: a human who
 assigns themselves by hand and sorts first simply wins. Two sessions authenticated as the same
@@ -121,7 +149,7 @@ guards the terminal states. Refuse any move out of `done`, `cancel`, or `duplica
 `move <id> duplicate <original>` needs the id of the ticket it duplicates. `move <id> backlog`
 clears every assignee, not only yours, which is what puts the ticket back in front of a human.
 
-## 4. Ticket shape
+## 5. Ticket shape
 
 The body `create` writes and `show` expects:
 
@@ -144,7 +172,7 @@ This is loose on purpose. Other skills may add sections, and no verb rejects a t
 formatting. A human-written ticket that is one line long is valid input: `implement` drafts what it
 needs and asks, which is that skill's problem and not a gate here.
 
-## 5. Rules
+## 6. Rules
 
 - A closed ticket is done. `done` never means "merged soon".
 - The tracker owns state. Never keep a parallel status file, no `PLAN.md` checkboxes, no
@@ -152,7 +180,7 @@ needs and asks, which is that skill's problem and not a gate here.
 - The product docs (`prd_file`, `spec_file`, `roadmap_file`) own intent. The tracker owns state
   only.
 
-## 6. Report
+## 7. Report
 
 Say what you read or changed, with the ticket URL for `github` and `linear` or the file path for
 `local`. On a write that only half landed, say which half, and what state the ticket is in now. On
