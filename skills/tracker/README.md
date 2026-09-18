@@ -126,12 +126,21 @@ One to three sentences on what exists when this is done.
 ## Blocked by
 - #12
 
+## Related
+- #31
+
 ## Notes
 Spec references, with the load-bearing excerpt inlined.
 ```
 
 This is loose on purpose. Add sections if you want them. No verb rejects a ticket over formatting,
 and a one-line ticket a teammate typed in a hurry is valid input.
+
+`## Blocked by` and `## Related` look alike and are not. Blockers become real dependency edges,
+because `next` computes on them and has to be right. Related is a note to a human: nothing reads it,
+nothing acts on it, and it exists because tickets often touch each other without one waiting on the
+other. On GitHub and Linear, writing the id there also makes each ticket show up in the other's
+timeline, which is most of the value for none of the machinery.
 
 ## What each backend does underneath
 

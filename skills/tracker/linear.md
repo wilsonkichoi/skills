@@ -15,7 +15,7 @@ because the three sources here are not equally reliable:
 |---|---|
 | The two findings under "Three findings to respect" | Observed in a real dogfood run of the predecessor toolkit. Trust these. |
 | `list_issues` pagination | Carried over from the same source by analogy, not observed here. |
-| Everything else: tool names, state types, relation tools, the verb mapping | **Written from the Linear API's documented shape and never executed.** Treat as a first draft. |
+| Everything else: tool names, state types, relation tools, project milestones, the verb mapping | **Written from the Linear API's documented shape and never executed.** Treat as a first draft. |
 
 The first session on a real workspace is the validation, not a smoke test. Expect tool names to be
 wrong and expect at least one mapping to need correcting, and report what you find rather than
@@ -96,6 +96,21 @@ Two cases need a human rather than a substitute, because workflow edits are a hu
   plus a comment is a supported shape, recorded through `linear_states` above; a team with no
   `canceled` state is not.
 
+## Milestones
+
+A milestone in this skill's vocabulary is a **project milestone** inside the configured
+`linear_project`, not a cycle. Cycles are time boxes that move on their own schedule; a milestone
+here names a body of work and does not expire, which is the same thing GitHub milestones and the
+`local` backend's `milestone` field mean.
+
+`create` sets it, `list <milestone>` scopes by it. A name that matches no milestone in the project
+is a stop, not a silent unscoped list: returning every ticket in the project when the caller asked
+for a subset is the kind of wrong answer that looks like a right one.
+
+If the MCP server exposes no way to read or set project milestones, say so once and carry on without
+them. Unlike dependencies, nothing computes on a milestone, so losing it degrades the answer rather
+than corrupting it.
+
 ## Dependencies
 
 Dependencies are native "blocked by" issue relations. The official MCP server may expose no tool
@@ -114,7 +129,7 @@ that reads or writes them. Check the tool list at session start:
 
 | Verb | Linear |
 |---|---|
-| `list` | `list_issues` with an explicit state filter, one call per state. `list backlog` covers every `triage` and `backlog` state, so it is one call per state and the results are merged |
+| `list` | `list_issues` with an explicit state filter, one call per state, scoped by milestone when one was given. `list backlog` covers every `triage` and `backlog` state, so it is one call per state and the results are merged |
 | `show` | `get_issue`, plus `list_comments` |
 | `next` | `list_issues` filtered to the resolved `ready` state and unassigned, then drop anything with an open "blocked by" relation, lowest issue number first |
 | `create` | `create_issue` into the configured team and project at the resolved `backlog` state, then one relation per `## Blocked by` entry, then move it to the requested state |

@@ -31,6 +31,9 @@ created: '2026-09-18'
 - 010
 - 011
 
+## Related
+- 031
+
 ## Notes
 …
 
@@ -81,6 +84,9 @@ combining several at once. All 23 came back byte-identical.
 `link` keeps it in step when the file has one, but nothing ever reads it back. Two readers of one
 fact is exactly what the skill's own rules forbid, so there is one reader. A file with no such
 section is not missing anything, and no verb adds one to a body a human wrote.
+
+`## Related` has no frontmatter field and needs none. Nothing computes on it, so there is nothing to
+keep in step: `create` writes whatever the ticket gave it and every other verb leaves it alone.
 
 **Identity.** There is no user account on this backend, so `assignee` is the value of
 `git config user.name`. When that is unset, stop and say so rather than claiming with an empty

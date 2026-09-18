@@ -164,9 +164,17 @@ One to three sentences on what exists when this is done.
 - #12
 - #14
 
+## Related
+- #31
+
 ## Notes
 Spec references, with the load-bearing excerpt inlined so nobody has to go fetch it.
 ```
+
+`## Blocked by` and `## Related` are not the same kind of thing. `create` turns every `## Blocked by`
+entry into a real dependency edge, because `next` computes on it and a lossy copy would make the
+frontier wrong. `## Related` is a reference for whoever reads the ticket: nothing parses it, no verb
+writes it, and no query uses it. Write the ids plainly and let the backend render them.
 
 This is loose on purpose. Other skills may add sections, and no verb rejects a ticket over
 formatting. A human-written ticket that is one line long is valid input: `implement` drafts what it
