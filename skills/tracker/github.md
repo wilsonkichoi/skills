@@ -58,9 +58,17 @@ gh issue list --repo <owner/repo> --state open --limit 200 \
 ```
 
 Add `--label <status>` for `ready`, `in-progress`, or `in-review`, and `--milestone <title>` to
-scope. For a terminal status, query `--state closed` and filter on `stateReason`. That field is on
-the list payload, so `list done`, `list cancel`, and `list duplicate` each read back in one call
-with no per-issue fan-out.
+scope.
+
+For a terminal status, query `--state closed` and filter on `stateReason`, which is on the list
+payload, so `list done`, `list cancel`, and `list duplicate` each read back in one call with no
+per-issue fan-out. `COMPLETED` is `done`, `NOT_PLANNED` is `cancel`, `DUPLICATE` is `duplicate`:
+
+```
+gh issue list --repo <owner/repo> --state closed --limit 200 \
+  --json number,title,stateReason,assignees,labels \
+  --jq '{rows: length, tickets: [.[] | select(.stateReason == "COMPLETED")]}'
+```
 
 `list backlog` is the exception and must not use `--label backlog`. An open issue with no status
 label reads as `backlog`, and those unlabelled issues are exactly the human-created and reopened
@@ -160,9 +168,15 @@ gh issue edit <n> --repo <owner/repo> --add-assignee @me --remove-label ready --
 gh issue view <n> --repo <owner/repo> --json assignees,labels
 ```
 
-The first read must show an open issue, exactly the `ready` label, and no assignee. Anything else,
-stop and write nothing. The re-read must show exactly `in-progress` and exactly one assignee, you.
-More than one assignee means the login that sorts first keeps the ticket; if that is not you,
+The first read must show an open issue, exactly one status label and that label `ready`, and no
+assignee. Anything else, stop and write nothing. Only the four status labels count here: `bug`,
+`enhancement`, and every other topic label a repository carries are ignored, and a claim that
+refused because a ticket also had `bug` on it would refuse every claim in a real repository.
+
+The re-read must show exactly one status label, `in-progress`, and exactly one assignee, you. Any
+other set of status labels is the inconsistent case: a human moved the ticket while you were
+writing. Report it and write nothing further. More than one assignee means the login that sorts
+first, compared case-insensitively because GitHub logins are, keeps the ticket; if that is not you,
 remove only your own assignment:
 
 ```
@@ -179,8 +193,13 @@ being removed.
 
 ```
 gh issue view <n> --repo <owner/repo> --json state,stateReason,assignees,labels
-gh issue edit <n> --repo <owner/repo> --remove-label <old> --add-label <new>
+gh issue edit <n> --repo <owner/repo> --remove-label <each status label found> --add-label <new>
 ```
+
+`<old>` is every status label the read found, not one guessed name. Usually that is one label; on an
+issue a human left carrying two, removing all of them and adding the new one is also the repair, so
+`move` is how an inconsistent ticket gets fixed rather than something that refuses to touch it.
+Topic labels are never removed.
 
 A closed issue on that first read is in a terminal state: refuse the move and report. Moving to
 `backlog` clears every assignee, so pass `--remove-assignee` once per login found on the read, not
@@ -196,7 +215,7 @@ Close first, strip the leftover label second.
 gh issue close <n> --repo <owner/repo> --reason "completed"
 gh issue close <n> --repo <owner/repo> --reason "not planned"
 gh issue close <n> --repo <owner/repo> --reason "duplicate" --duplicate-of <original number>
-gh issue edit <n> --repo <owner/repo> --remove-label <whichever status label the read found>
+gh issue edit <n> --repo <owner/repo> --remove-label <each status label the read found>
 ```
 
 The order is load bearing. A failed strip leaves a closed issue carrying a stale label, which no

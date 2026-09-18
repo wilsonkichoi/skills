@@ -103,8 +103,10 @@ not applied.
    an `in-review` ticket would quietly add `in-progress` beside it.
 2. Assign self and move `ready` → `in-progress`.
 3. Re-read. Expect exactly `in-progress` and exactly one assignee, you. More than one assignee
-   means another session raced you, and the assignee whose login sorts first keeps the ticket. If
-   that is not you, remove your own assignment, leave the status alone, and report. The tie-break
+   means another session raced you, and the assignee whose login sorts first, compared without
+   regard to case, keeps the ticket. If that is not you, remove your own assignment, leave the
+   status alone, and report. On a backend with a single assignee field there is nothing to compare:
+   the re-read simply has to name you. The tie-break
    is deterministic so that a race ends with one owner instead of none, and the status stays put
    because the winner really is working on it.
 

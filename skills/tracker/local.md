@@ -42,9 +42,10 @@ skill that wrote it, or `tracker` when a person invoked this skill directly.
 ```
 
 **The frontmatter is the state.** `blocked_by` is the only dependency list any verb reads. The
-`## Blocked by` section in the body is there for a human reading the file: `create` and `link`
-write it to match, and nothing ever reads it back. Two readers of one fact is exactly what the
-skill's own rules forbid, so there is one reader.
+`## Blocked by` section in the body is there for a human reading the file: `create` writes it, and
+`link` keeps it in step when the file has one, but nothing ever reads it back. Two readers of one
+fact is exactly what the skill's own rules forbid, so there is one reader. A file with no such
+section is not missing anything, and no verb adds one to a body a human wrote.
 
 **Identity.** There is no user account on this backend, so `assignee` is the value of
 `git config user.name`. When that is unset, stop and say so rather than claiming with an empty
@@ -76,7 +77,7 @@ and do not reformat what is there.
 | `claim` | Read the file and require `status: ready` with an empty `assignee`; set `status: in-progress` and `assignee`; re-read to confirm |
 | `comment` | Append under `## Comments` |
 | `move` | Read `status` first and refuse any move out of `done`, `cancel`, or `duplicate`; otherwise edit `status`. Moving to `backlog` also sets `assignee: ""`; moving to `duplicate` sets `duplicate_of` |
-| `link` | Add the blocker id to `blocked_by`, then rewrite the `## Blocked by` section to match |
+| `link` | Add the blocker id to `blocked_by`. Rewrite the `## Blocked by` section to match when the file has one, and leave the body alone when it does not |
 
 For `next`, "in a terminal status" means `done`, `cancel`, or `duplicate`. A `blocked_by` id with no
 file behind it is an open blocker: the ticket stays off the frontier and the report names the

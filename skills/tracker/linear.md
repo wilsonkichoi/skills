@@ -34,7 +34,10 @@ type `triage` and every state of type `backlog`. Reading only the `backlog`-type
 the human-filed decision tickets that `list backlog` exists to surface. `create` still writes the
 `backlog`-type state explicitly.
 
-A state that resolves to none of the seven reads as `backlog`.
+A state that resolves to none of the seven, a third `started` state named QA for instance, is not
+folded into `backlog`. Report such a ticket by its Linear state name and type and leave it out of
+the status filters. Folding it into `backlog` would make `show` call it `backlog` while
+`list backlog` never returned it, which is the inconsistency this file exists to avoid.
 
 Two cases need a human rather than a substitute, because workflow edits are a human decision:
 
@@ -51,8 +54,11 @@ that reads or writes them. Check the tool list at session start:
 - No relation tool: `link` stops and reports that this workspace cannot record dependencies through
   MCP, and `next` stops with the same hard error the GitHub backend raises on a missing `blockedBy`.
   It does not fall back to a `Blocked by` line in the description, and it does not return a frontier
-  it could not verify. `list`, `show`, `create`, `claim`, `comment`, and `move` still work.
-- A relation tool is present: use it for `link`, and for the edges `create` writes.
+  it could not verify. `list`, `show`, `create`, `claim`, `comment`, and `move` still work, except
+  that `move <id> duplicate <original>` cannot set the native duplicate relation either and falls
+  back to the same comment naming the original.
+- A relation tool is present: use it for `link`, for the edges `create` writes, and for the
+  duplicate relation.
 
 ## Per verb
 
@@ -62,10 +68,22 @@ that reads or writes them. Check the tool list at session start:
 | `show` | `get_issue`, plus `list_comments` |
 | `next` | `list_issues` filtered to the resolved `ready` state and unassigned, then drop anything with an open "blocked by" relation, lowest issue number first |
 | `create` | `create_issue` into the configured team and project at the resolved `backlog` state, then one relation per `## Blocked by` entry, then move it to the requested state |
-| `claim` | `get_issue` and require the `ready` state with no assignee; `update_issue` setting assignee to self and state to `in-progress`; `get_issue` again to confirm |
+| `claim` | `get_issue` and require the `ready` state with no assignee; `update_issue` setting assignee to self and state to `in-progress`; `get_issue` again and require that the assignee is you. See below |
 | `comment` | `create_comment` |
 | `move` | `get_issue` first and refuse any move out of `done`, `cancel`, or `duplicate`; otherwise `update_issue` with the exact resolved state name, then `get_issue` to confirm. Moving to `backlog` also clears the assignee; moving to `duplicate` sets the native duplicate relation to the original |
 | `link` | A native "blocked by" issue relation |
+
+## Claiming, where Linear differs
+
+A Linear issue has one assignee, not a list, so the "more than one assignee" race check in
+`SKILL.md` can never fire here. Two sessions that write the field both succeed and the last write
+wins. The check that replaces it: the re-read has to name **you**. A different name means you lost
+the race, so leave the issue alone, report it, and take another ticket. Do not write anything back.
+
+That check is weaker than the GitHub one, and honestly so. A write that lands between your write and
+your re-read is invisible, and both sessions can report success with only one of them holding the
+issue. It is the same class of blind spot as two sessions authenticated as the same user, and the
+branch and the open pull request are the real collision signal.
 
 `create_issue` lands in the team's default state when no state is given, and on many teams that is
 Triage rather than Backlog. Always pass the resolved `backlog` state explicitly.
