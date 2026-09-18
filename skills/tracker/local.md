@@ -14,8 +14,9 @@ this when the user picks local.
 id: "012"
 title: CSV export endpoint
 status: ready          # backlog | ready | in-progress | in-review | done | cancel | duplicate
-assignee: ""
+assignee: ""           # git config user.name, or empty
 blocked_by: ["010", "011"]
+duplicate_of: ""       # only when status is duplicate
 milestone: ""
 created: 2026-09-18
 ---
@@ -39,12 +40,22 @@ created: 2026-09-18
 Comments are append-only, newest last, one `### <date> <skill>` heading each.
 ```
 
-`blocked_by` in the frontmatter is what the verbs read. The `## Blocked by` section in the body is
-what a human reads; `create` writes both from the same list, and `link` updates both.
+**The frontmatter is the state.** `blocked_by` is the only dependency list any verb reads. The
+`## Blocked by` section in the body is there for a human reading the file: `create` and `link`
+write it to match, and nothing ever reads it back. Two readers of one fact is exactly what the
+skill's own rules forbid, so there is one reader.
 
-A ticket whose frontmatter has no `status` reads as `backlog`. A file a human wrote by hand with no
-frontmatter at all is still a valid ticket: treat its filename number as the id and its status as
-`backlog`.
+**Identity.** There is no user account on this backend, so `assignee` is the value of
+`git config user.name`. When that is unset, stop and say so rather than claiming with an empty
+name.
+
+**Ids.** Compare ids numerically. `12`, `012`, and `#12` are the same ticket, in an argument, in
+`blocked_by`, and in the body section. Write them as the zero-padded three-digit form. A new id is
+the highest existing number plus one.
+
+**Missing fields.** A ticket with no `status` reads as `backlog`. A file a human wrote by hand with
+no frontmatter at all is still a valid ticket: its id is the leading number of the filename and its
+status is `backlog`.
 
 ## Per verb
 
@@ -53,14 +64,15 @@ frontmatter at all is still a valid ticket: treat its filename number as the id 
 | `list` | Read the frontmatter of every file in `issues_dir` and filter |
 | `show` | Read the one file whole |
 | `next` | Read every frontmatter; keep `status: ready` with an empty `assignee` and every `blocked_by` id in a terminal status; sort by id |
-| `create` | New id is the highest existing number plus one, zero-padded to three. Write the file with the ticket shape and the `blocked_by` list |
-| `claim` | Set `status: in-progress` and `assignee`, then re-read the file to confirm |
+| `create` | Write a new file with `status: backlog`, the ticket shape, and `blocked_by`, then apply the requested status last |
+| `claim` | Read the file and require `status: ready` with an empty `assignee`; set `status: in-progress` and `assignee`; re-read to confirm |
 | `comment` | Append under `## Comments` |
-| `move` | Edit `status`. Moving to `backlog` also sets `assignee: ""` |
-| `link` | Add the blocker id to `blocked_by` and to the `## Blocked by` section |
+| `move` | Read `status` first and refuse any move out of `done`, `cancel`, or `duplicate`; otherwise edit `status`. Moving to `backlog` also sets `assignee: ""`; moving to `duplicate` sets `duplicate_of` |
+| `link` | Add the blocker id to `blocked_by`, then rewrite the `## Blocked by` section to match |
 
-For `next`, "in a terminal status" means `done`, `cancel`, or `duplicate`. A blocker file that does
-not exist is an open blocker: the ticket stays off the frontier and the report names the missing id.
+For `next`, "in a terminal status" means `done`, `cancel`, or `duplicate`. A `blocked_by` id with no
+file behind it is an open blocker: the ticket stays off the frontier and the report names the
+missing id.
 
 ## The tracker does not commit
 

@@ -3,9 +3,9 @@
 `gh` CLI, no MCP. Resolve `OWNER/REPO` once from the configured remote and pass `--repo` on every
 command, so nothing depends on the working directory.
 
-Native issue dependencies are required, not optional. `gh` 2.97.0 or later exposes them as the
-`blockedBy` JSON field. If `blockedBy` comes back `null` on any issue, this host does not have
-them: stop and report that, and use the `local` backend instead. There is no fallback to parsing
+Native issue dependencies are required, not optional. Tested with `gh` 2.97.0, which exposes them
+as the `blockedBy` JSON field. If `blockedBy` comes back `null`, this host does not have them: stop
+and report that, and use the `local` backend instead. There is no fallback to parsing
 `Blocked by #N` out of issue bodies. Nothing in this skill set writes that text, so a fallback
 would make `next` wrong rather than degraded.
 
@@ -24,8 +24,9 @@ The three terminal states are close reasons, not labels:
 
 Reading a status back:
 
-- open with a status label: that status.
+- open with one status label: that status.
 - open with no status label: `backlog`. Every human-created and every reopened issue lands here.
+- open with two or more status labels: inconsistent. Report it and do not guess which one wins.
 - closed: read `stateReason`. A closed issue carries no status label.
 
 Why close reasons rather than seven labels: a `done` label on an issue closed as `not planned` is
@@ -33,19 +34,42 @@ two sources of truth that will eventually disagree, and GitHub already stores th
 This is a deliberate departure from a flat seven-label scheme, and it is reversible for the cost of
 three `gh label create` lines.
 
+## Truncation
+
+`--limit` defaults to 30 and `gh` returns newest first, so a plain list silently drops the oldest
+issues, which are the lowest-numbered ones. Two rules:
+
+- Whenever the number of rows returned equals `--limit`, the result is incomplete. Raise the limit
+  and run it again before trusting it. Never report a filtered list or an empty frontier from a
+  result that hit its own limit.
+- Push the ordering to the server with `--search "sort:created-asc"` whenever lowest id first is
+  what you want. Issue numbers are handed out in creation order, so that is ascending issue number,
+  and it means truncation drops the tickets `next` cares about least rather than the ones it needs.
+
 ## Per verb
 
-**list.** Add `--label <status>` for one open status and `--milestone <title>` to scope. `--limit`
-defaults to 30, so pass one high enough for the repository.
+**list.** Open tickets by default.
 
 ```
 gh issue list --repo <owner/repo> --state open --limit 200 \
   --json number,title,state,stateReason,assignees,labels,milestone,blockedBy
 ```
 
-For a terminal status, query `--state closed` and filter on `stateReason`. That field is on the
-list payload, so `list done`, `list cancel`, and `list duplicate` each read back in one call with
-no per-issue fan-out.
+Add `--label <status>` for `ready`, `in-progress`, or `in-review`, and `--milestone <title>` to
+scope. For a terminal status, query `--state closed` and filter on `stateReason`. That field is on
+the list payload, so `list done`, `list cancel`, and `list duplicate` each read back in one call
+with no per-issue fan-out.
+
+`list backlog` is the exception and must not use `--label backlog`. An open issue with no status
+label reads as `backlog`, and those unlabelled issues are exactly the human-created and reopened
+ones that `list backlog` exists to surface. List every open issue and keep the ones carrying either
+no status label or the `backlog` label:
+
+```
+gh issue list --repo <owner/repo> --state open --limit 200 --json number,title,labels,assignees \
+  --jq '[.[] | select([.labels[].name] | map(select(. == "backlog" or . == "ready"
+        or . == "in-progress" or . == "in-review")) | length == 0 or . == ["backlog"])]'
+```
 
 **show.**
 
@@ -55,65 +79,91 @@ gh issue view <n> --repo <owner/repo> \
   --json number,title,body,state,stateReason,assignees,labels,milestone,blockedBy
 ```
 
-**next.** The whole frontier is one command.
+**next.** The whole frontier is one command. `no:assignee` and `sort:created-asc` do the assignee
+filter and the ordering on the server.
 
 ```
-gh issue list --repo <owner/repo> --label ready --state open --limit 200 \
+gh issue list --repo <owner/repo> --state open --label ready \
+  --search "no:assignee sort:created-asc" --limit 100 \
   --json number,title,assignees,blockedBy \
-  --jq '[.[] | select((.assignees|length)==0)
-             | select([.blockedBy.nodes[] | select(.state=="OPEN")] | length == 0)]
-        | sort_by(.number)'
+  --jq '[.[] | select(.blockedBy.totalCount == (.blockedBy.nodes | length))
+             | select([.blockedBy.nodes[] | select(.state == "OPEN")] | length == 0)]'
 ```
 
-Three guards before you trust that output:
+Three things that query is doing on purpose:
 
-1. A `null` `blockedBy` on any element means the host does not expose dependencies. Stop and report
-   it. The `select` would silently match nothing, and `next` must never report an empty frontier
-   because the query could not see the edges.
-2. Filter on `blockedBy.nodes[].state`, never on `blockedBy.totalCount`. Verified 2026-09-18
-   against `gh` 2.97.0: `totalCount` counts closed blockers too, so it stays at 1 after the blocker
-   is closed, and a `totalCount == 0` filter would keep every unblocked ticket off the frontier
-   forever. The GraphQL schema says the same thing: `issueDependenciesSummary` carries both
-   `blockedBy`, which is open blockers only, and `totalBlockedBy`, which is documented as "open and
+1. **It filters on `blockedBy.nodes[].state`, never on `blockedBy.totalCount`.** Verified
+   2026-09-18 against `gh` 2.97.0: `totalCount` counts closed blockers too and stays at 1 after the
+   blocker is closed, so a `totalCount == 0` filter would keep every unblocked ticket off the
+   frontier forever. The GraphQL schema says the same thing: `issueDependenciesSummary` carries
+   both `blockedBy`, which is open blockers only, and `totalBlockedBy`, documented as "open and
    closed".
-3. `gh` caps `blockedBy.nodes` at 50. When `totalCount` is larger than the number of nodes returned
-   the list is truncated and an open blocker may be hidden, so treat that ticket as blocked and say
-   why rather than putting it on the frontier.
+2. **The first `select` is the 50-node guard.** `gh` caps `blockedBy.nodes` at 50, so a `totalCount`
+   above the number of nodes returned means the list is truncated and an open blocker may be
+   hidden. Such a ticket is held off the frontier rather than trusted. This is a query, not a note,
+   because an unattended run will not compare the two counts by hand. Use `show <id>` to inspect a
+   ticket held back this way.
+3. **A `null` `blockedBy` makes the `jq` fail**, with `Cannot iterate over null` and exit 5. That
+   error is the guard for a host without dependency support, so let it through. Never patch it with
+   `?` or `// []`: that turns a loud stop into a permanently empty frontier, which is the one
+   failure this skill must not have.
+
+Results come back in ascending issue number, so do not re-sort. If the row count reaches `--limit`,
+the frontier's head is still correct because the ordering is ascending, but say that the list was
+truncated rather than presenting it as the whole frontier.
 
 **create.** Use `--body-file` or a heredoc; a multi-line body does not survive `--body`.
 
 ```
-gh issue create --repo <owner/repo> --title "<title>" --body-file <file> \
-  [--label ready] [--milestone "<title>"]
+gh issue create --repo <owner/repo> --title "<title>" --body-file <file> [--milestone "<title>"]
 ```
 
-Then run `link` once per entry in the ticket's `## Blocked by` section.
+Create it with no status label, which reads as `backlog`. Then run `link` once per entry in the
+ticket's `## Blocked by` section. Only then apply the requested status label. Labelling `ready`
+before the edges exist puts the ticket on the frontier unblocked, where another session can claim
+it.
 
-**claim.** One edit, then a re-read.
+**claim.** Read, edit, re-read. The read is not optional: `--remove-label` on a label the issue does
+not carry exits 0 and changes nothing, so a blind claim on an `in-review` ticket would add
+`in-progress` beside `in-review` and report success.
 
 ```
+gh issue view <n> --repo <owner/repo> --json state,assignees,labels
 gh issue edit <n> --repo <owner/repo> --add-assignee @me --remove-label ready --add-label in-progress
 gh issue view <n> --repo <owner/repo> --json assignees,labels
 ```
 
-More than one assignee on the re-read means another session won the race. Remove yourself, move the
-ticket back to `ready`, and report.
-
-**move, open state to open state.** One edit.
+The first read must show an open issue, exactly the `ready` label, and no assignee. Anything else,
+stop and write nothing. The re-read must show exactly `in-progress` and exactly one assignee, you.
+More than one assignee means the login that sorts first keeps the ticket; if that is not you:
 
 ```
+gh issue edit <n> --repo <owner/repo> --remove-assignee @me --remove-label in-progress --add-label ready
+```
+
+**move, open state to open state.** Read the current status first, because the edit names the label
+being removed.
+
+```
+gh issue view <n> --repo <owner/repo> --json state,stateReason,assignees,labels
 gh issue edit <n> --repo <owner/repo> --remove-label <old> --add-label <new>
 ```
 
-Moving to `backlog` adds `--remove-assignee @me` to the same edit.
+A closed issue on that first read is in a terminal state: refuse the move and report. Moving to
+`backlog` clears every assignee, so pass `--remove-assignee` once per login found on the read, not
+just `@me`.
 
-**move, open state to a terminal state.** Close first, strip the leftover label second.
+**move, open state to a terminal state.** The same read comes first, and it is the only guard there
+is. `gh issue close` on an already-closed issue prints "is already closed", **exits 0, and leaves
+the existing reason untouched**, so a second terminal move reports success while changing nothing.
+
+Close first, strip the leftover label second.
 
 ```
 gh issue close <n> --repo <owner/repo> --reason "completed"
 gh issue close <n> --repo <owner/repo> --reason "not planned"
 gh issue close <n> --repo <owner/repo> --reason "duplicate" --duplicate-of <original number>
-gh issue edit <n> --repo <owner/repo> --remove-label <whichever status label remains>
+gh issue edit <n> --repo <owner/repo> --remove-label <whichever status label the read found>
 ```
 
 The order is load bearing. A failed strip leaves a closed issue carrying a stale label, which no
