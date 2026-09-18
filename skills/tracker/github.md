@@ -41,7 +41,9 @@ issues, which are the lowest-numbered ones. Two rules:
 
 - Whenever the number of rows returned equals `--limit`, the result is incomplete. Raise the limit
   and run it again before trusting it. Never report a filtered list or an empty frontier from a
-  result that hit its own limit.
+  result that hit its own limit. Every `--jq` below that filters rows also emits `rows`, the count
+  before filtering, because that is the only number this rule can be applied to. A filter that
+  collapses a full page to `[]` looks identical to an empty repository without it.
 - Push the ordering to the server with `--search "sort:created-asc"` whenever lowest id first is
   what you want. Issue numbers are handed out in creation order, so that is ascending issue number,
   and it means truncation drops the tickets `next` cares about least rather than the ones it needs.
@@ -67,9 +69,14 @@ no status label or the `backlog` label:
 
 ```
 gh issue list --repo <owner/repo> --state open --limit 200 --json number,title,labels,assignees \
-  --jq '[.[] | select([.labels[].name] | map(select(. == "backlog" or . == "ready"
-        or . == "in-progress" or . == "in-review")) | length == 0 or . == ["backlog"])]'
+  --jq '{rows: length,
+         backlog: [.[] | select([.labels[].name]
+           | map(select(. == "backlog" or . == "ready" or . == "in-progress" or . == "in-review"))
+           | length == 0 or . == ["backlog"])]}'
 ```
+
+An issue carrying two status labels, say `backlog` and `ready`, is dropped here rather than
+reported. That is the inconsistent case above, and `show` is what names it.
 
 **show.**
 
@@ -79,6 +86,10 @@ gh issue view <n> --repo <owner/repo> \
   --json number,title,body,state,stateReason,assignees,labels,milestone,blockedBy
 ```
 
+`show` is the one verb that reports an open issue carrying two or more status labels as
+inconsistent. The list and frontier queries cannot: one drops such an issue, the other includes it
+because `--label ready` matches.
+
 **next.** The whole frontier is one command. `no:assignee` and `sort:created-asc` do the assignee
 filter and the ordering on the server.
 
@@ -86,31 +97,47 @@ filter and the ordering on the server.
 gh issue list --repo <owner/repo> --state open --label ready \
   --search "no:assignee sort:created-asc" --limit 100 \
   --json number,title,assignees,blockedBy \
-  --jq '[.[] | select(.blockedBy.totalCount == (.blockedBy.nodes | length))
-             | select([.blockedBy.nodes[] | select(.state == "OPEN")] | length == 0)]'
+  --jq '{rows: length,
+         frontier: [.[]
+           | if .blockedBy == null
+             then error("blockedBy is null: this host does not expose issue dependencies")
+             else . end
+           | select(.blockedBy.totalCount == (.blockedBy.nodes | length))
+           | select([.blockedBy.nodes[] | select(.state == "OPEN")] | length == 0)]}'
 ```
 
-Three things that query is doing on purpose:
+Four things that query is doing on purpose:
 
-1. **It filters on `blockedBy.nodes[].state`, never on `blockedBy.totalCount`.** Verified
+1. **The `error()` is the guard for a host without dependency support**, and it has to be written
+   out. It cannot be left implicit in the filters below it: `null.totalCount` is `null` and
+   `null.nodes | length` is `0` in `jq`, so a null row compares false against the 50-node check and
+   is dropped silently, exit 0. On a host with no dependencies every row is null, the frontier comes
+   back empty, and `next` is wrong forever with nothing to show for it. Let the error through, and
+   never patch it with `?` or `// []` for the same reason.
+2. **It filters on `blockedBy.nodes[].state`, never on `blockedBy.totalCount`.** Verified
    2026-09-18 against `gh` 2.97.0: `totalCount` counts closed blockers too and stays at 1 after the
    blocker is closed, so a `totalCount == 0` filter would keep every unblocked ticket off the
    frontier forever. The GraphQL schema says the same thing: `issueDependenciesSummary` carries
    both `blockedBy`, which is open blockers only, and `totalBlockedBy`, documented as "open and
    closed".
-2. **The first `select` is the 50-node guard.** `gh` caps `blockedBy.nodes` at 50, so a `totalCount`
-   above the number of nodes returned means the list is truncated and an open blocker may be
-   hidden. Such a ticket is held off the frontier rather than trusted. This is a query, not a note,
-   because an unattended run will not compare the two counts by hand. Use `show <id>` to inspect a
-   ticket held back this way.
-3. **A `null` `blockedBy` makes the `jq` fail**, with `Cannot iterate over null` and exit 5. That
-   error is the guard for a host without dependency support, so let it through. Never patch it with
-   `?` or `// []`: that turns a loud stop into a permanently empty frontier, which is the one
-   failure this skill must not have.
+3. **The `totalCount` comparison is the 50-node guard.** `gh` caps `blockedBy.nodes` at 50, so a
+   `totalCount` above the number of nodes returned means the list is truncated and an open blocker
+   may be hidden. Such a ticket is held off the frontier rather than trusted. This is a query, not a
+   note, because an unattended run will not compare the two counts by hand. Use `show <id>` to
+   inspect a ticket held back this way.
+4. **`rows` is the pre-filter count**, and it is the only thing the truncation rule can read. A page
+   of 100 `ready` tickets that are all blocked yields an empty `frontier`, which is indistinguishable
+   from a repository with no `ready` tickets unless `rows` is there to say otherwise.
 
-Results come back in ascending issue number, so do not re-sort. If the row count reaches `--limit`,
-the frontier's head is still correct because the ordering is ascending, but say that the list was
-truncated rather than presenting it as the whole frontier.
+Results come back in ascending issue number, so do not re-sort. When `rows` reaches `--limit`, the
+frontier's head is still correct because the ordering is ascending, but say the list was truncated
+rather than presenting it as the whole frontier.
+
+The frontier is a list of candidates, not a set of facts. `--search` goes through the eventually
+consistent search API, so a ticket claimed seconds ago can still appear here and a ticket just moved
+to `ready` can be missing. `claim`'s pre-read is what settles it: a refusal on the first candidate
+right after `next` is the system working, so take the next candidate rather than retrying the same
+one.
 
 **create.** Use `--body-file` or a heredoc; a multi-line body does not survive `--body`.
 
@@ -135,11 +162,17 @@ gh issue view <n> --repo <owner/repo> --json assignees,labels
 
 The first read must show an open issue, exactly the `ready` label, and no assignee. Anything else,
 stop and write nothing. The re-read must show exactly `in-progress` and exactly one assignee, you.
-More than one assignee means the login that sorts first keeps the ticket; if that is not you:
+More than one assignee means the login that sorts first keeps the ticket; if that is not you,
+remove only your own assignment:
 
 ```
-gh issue edit <n> --repo <owner/repo> --remove-assignee @me --remove-label in-progress --add-label ready
+gh issue edit <n> --repo <owner/repo> --remove-assignee @me
 ```
+
+Do not touch the labels on the way out. The winner is working on that ticket and `in-progress` is
+theirs. Stripping it back to `ready` would leave the ticket assigned to the winner but reading as
+unclaimed, off the frontier and wrong for whoever reads it next, and with three racers it would be
+flipped twice.
 
 **move, open state to open state.** Read the current status first, because the edit names the label
 being removed.

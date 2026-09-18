@@ -74,7 +74,7 @@ the frontier on its own, because it now has an open blocker.
 | `list [status] [milestone]` | Tickets with id, title, status, assignee, and blockers. Both arguments are optional filters, and an argument that is not one of the seven status names is a milestone. With no status, open tickets only. |
 | `show <id>` | One ticket in full: body, comments, labels, blockers, assignee. |
 | `next` | The frontier. See below. |
-| `create <ticket> [status]` | One ticket from the shape in section 4, plus its dependency edges. Defaults to `backlog`. See below. |
+| `create <ticket> [status]` | One ticket from the shape in section 4, plus its dependency edges. The status is one of the four open ones and defaults to `backlog`. See below. |
 | `claim <id>` | Take the ticket. See below. |
 | `comment <id> <body>` | Append a comment. Never edit or delete an existing one. |
 | `move <id> <status> [original]` | Transition, including the terminal close with its reason. See below. |
@@ -88,11 +88,12 @@ blocker, lowest id first. When the frontier is empty, return nothing and say so.
 cannot report blockers at all, stop with an error naming that. An empty frontier is never inferred
 from a query that could not see the dependency edges, nor from a result that came back truncated.
 
-**`create`** writes the ticket at `backlog` unless a status is given, then writes one `link` edge
-per entry in its `## Blocked by` section, then moves it to the requested status last. That order is
-the point: a ticket that reaches `ready` before its edges exist sits on the frontier and gets
-claimed as though nothing blocked it. Report any edge that failed and leave the ticket at `backlog`
-when one does.
+**`create`** writes the ticket at `backlog` unless one of the four open statuses is given, then
+writes one `link` edge per entry in its `## Blocked by` section, then moves it to the requested
+status last. That order is the point: a ticket that reaches `ready` before its edges exist sits on
+the frontier and gets claimed as though nothing blocked it. A failure partway leaves a real ticket
+at `backlog` with some of its edges, so report the id, which edges landed, and that the status was
+not applied.
 
 **`claim`** is three steps and every one matters.
 
@@ -103,12 +104,14 @@ when one does.
 2. Assign self and move `ready` → `in-progress`.
 3. Re-read. Expect exactly `in-progress` and exactly one assignee, you. More than one assignee
    means another session raced you, and the assignee whose login sorts first keeps the ticket. If
-   that is not you, remove yourself, strip `in-progress`, move the ticket back to `ready`, and
-   report. The tie-break is deterministic on purpose: without it both sessions back off and the
-   ticket is left for neither.
+   that is not you, remove your own assignment, leave the status alone, and report. The tie-break
+   is deterministic so that a race ends with one owner instead of none, and the status stays put
+   because the winner really is working on it.
 
-Two sessions authenticated as the same tracker user cannot be told apart here. The branch and the
-open pull request are the collision signal, and the skill doing the work owns that check.
+The tie-break does not care whether the other assignee is a session or a person: a human who
+assigns themselves by hand and sorts first simply wins. Two sessions authenticated as the same
+tracker user cannot be told apart at all, and there the branch and the open pull request are the
+collision signal, which the skill doing the work owns.
 
 **`move`** reads the current status first, because the write needs it and because nothing else
 guards the terminal states. Refuse any move out of `done`, `cancel`, or `duplicate`.

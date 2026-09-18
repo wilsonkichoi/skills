@@ -16,10 +16,10 @@ seven names onto them **by state type**, not by state name:
 
 | Status | Linear state type | Usual name |
 |---|---|---|
-| `backlog` | `backlog` | Backlog |
+| `backlog` | `triage` and `backlog` | Triage, Backlog |
 | `ready` | `unstarted` | Todo |
-| `in-progress` | `started` | In Progress |
-| `in-review` | `started`, the one after In Progress | In Review |
+| `in-progress` | `started`, first in workflow order | In Progress |
+| `in-review` | `started`, second in workflow order | In Review |
 | `done` | `completed` | Done |
 | `cancel` | `canceled` | Canceled |
 | `duplicate` | `canceled`, the team's duplicate state if it has one | Duplicate |
@@ -28,13 +28,20 @@ Name matching is what breaks first. A team that renamed Done to `Released` or To
 normal, and reading by name would report those tickets as `backlog`. Read by type and keep the
 resolved names for the rest of the session.
 
-Two cases need a human rather than a substitute, because workflow edits are a human decision:
-
-- No state of type `started` beyond In Progress: ask for an In Review state instead of picking one.
-- No duplicate state: fall back to the `canceled` state plus a comment naming the original, and say
-  in the report that is what happened.
+`backlog` is the one status that reads as more than one state. A team with a triage inbox lands new
+issues there, including the ones a human files by hand, so `list backlog` queries every state of
+type `triage` and every state of type `backlog`. Reading only the `backlog`-type state hides exactly
+the human-filed decision tickets that `list backlog` exists to surface. `create` still writes the
+`backlog`-type state explicitly.
 
 A state that resolves to none of the seven reads as `backlog`.
+
+Two cases need a human rather than a substitute, because workflow edits are a human decision:
+
+- Only one state of type `started`: ask for an In Review state instead of picking one.
+- No duplicate state: fall back to the `canceled` state plus a comment naming the original, and say
+  in the report that is what happened. Those tickets then read back under `list cancel`, not
+  `list duplicate`, because the backend has nowhere else to record the distinction.
 
 ## Dependencies
 
@@ -51,7 +58,7 @@ that reads or writes them. Check the tool list at session start:
 
 | Verb | Linear |
 |---|---|
-| `list` | `list_issues` with an explicit state filter, one call per status |
+| `list` | `list_issues` with an explicit state filter, one call per state. `list backlog` covers every `triage` and `backlog` state, so it is one call per state and the results are merged |
 | `show` | `get_issue`, plus `list_comments` |
 | `next` | `list_issues` filtered to the resolved `ready` state and unassigned, then drop anything with an open "blocked by" relation, lowest issue number first |
 | `create` | `create_issue` into the configured team and project at the resolved `backlog` state, then one relation per `## Blocked by` entry, then move it to the requested state |

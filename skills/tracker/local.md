@@ -37,7 +37,8 @@ created: 2026-09-18
 ## Comments
 
 ### 2026-09-18 implement
-Comments are append-only, newest last, one `### <date> <skill>` heading each.
+Comments are append-only, newest last, one `### <date> <author>` heading each. The author is the
+skill that wrote it, or `tracker` when a person invoked this skill directly.
 ```
 
 **The frontmatter is the state.** `blocked_by` is the only dependency list any verb reads. The
@@ -51,11 +52,18 @@ name.
 
 **Ids.** Compare ids numerically. `12`, `012`, and `#12` are the same ticket, in an argument, in
 `blocked_by`, and in the body section. Write them as the zero-padded three-digit form. A new id is
-the highest existing number plus one.
+the highest existing number plus one. Two files sharing a leading number is a repository someone
+merged badly: report both paths and do not pick one.
+
+**Filenames.** The slug is the title, lowercased, with every run of non-alphanumeric characters
+collapsed to a single hyphen and no leading or trailing hyphen, cut at roughly 50 characters on a
+word boundary. It is decoration. Nothing reads it, and renaming a file does not change the ticket.
 
 **Missing fields.** A ticket with no `status` reads as `backlog`. A file a human wrote by hand with
 no frontmatter at all is still a valid ticket: its id is the leading number of the filename and its
-status is `backlog`.
+status is `backlog`. A write verb on such a file adds a frontmatter block with only the fields that
+verb sets, leaving the body exactly as the human wrote it. Do not backfill the rest of the shape,
+and do not reformat what is there.
 
 ## Per verb
 
