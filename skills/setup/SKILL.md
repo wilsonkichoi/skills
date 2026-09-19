@@ -54,9 +54,9 @@ explainer only when the choice genuinely branches; skip the section entirely whe
 already settled it.
 
 **Offer the choices, do not make the user type them.** Use a structured question tool only when
-the active harness and mode show its options for direct selection. In Codex Plan mode,
-`request_user_input` does this. For Section A, call it with one question and three options. This
-example is for a repository without a GitHub remote:
+the active harness exposes a direct picker. In Codex, use `request_user_input` whenever the active
+session permits it, including Default mode with the feature enabled. For Section A, call it with
+one question and three options. This example is for a repository without a GitHub remote:
 
 ```
 request_user_input({
@@ -74,10 +74,18 @@ request_user_input({
 ```
 
 For a GitHub remote, put GitHub first and mark it `(Recommended)` instead. The Codex picker adds a
-free-form choice for Other. In Codex Default mode, `request_user_input_async` queues the question
-behind `⌥ + ↑ to answer`; use the text fallback below. Use that fallback in any harness or mode
-without a direct picker. Show all four options, state the recommended default, and accept one digit
-as the answer. Never ask anyone to retype a path already on screen: show it and accept a bare yes.
+free-form choice for Other. Do not use `request_user_input_async` as a substitute: it queues the
+question behind `⌥ + ↑ to answer`. In Codex CLI, if the direct tool is unavailable, show this
+launch command. It enables the direct picker in Default mode, verified with CLI 0.155.1:
+
+```
+codex --enable default_mode_request_user_input
+```
+
+Do not change the user's mode or configuration automatically. If continuing without a direct
+picker, use the text fallback below. Show all four options, state the recommended default, and
+accept one digit as the answer. Never ask anyone to retype a path already on screen: show it and
+accept a bare yes.
 
 **Stop at each question.** A text question ends the turn: no tool call after it and no work started
 while it is outstanding. A direct picker waits for its answer within the tool call. One section,

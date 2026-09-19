@@ -55,6 +55,14 @@ every session loads that config. Every other skill reads the same file.
 The interview shows a direct picker when the active harness offers one. Otherwise, it gives
 numbered choices with a default; one digit is enough to answer.
 
+For a direct picker in Codex CLI Default mode, start Codex with the feature enabled:
+
+```
+codex --enable default_mode_request_user_input
+```
+
+Verified with Codex CLI 0.155.1. This feature is marked under development in that version.
+
 Then run `tracker list` in your harness, with the prefix from the table above, to confirm the
 backend answers.
 

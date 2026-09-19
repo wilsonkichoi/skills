@@ -387,12 +387,14 @@ Run the same one command from one install on each harness available.
 **D3 [MANUAL] Kiro CLI.** `/tracker list`, and check the slash-command menu renders the one-line
 description correctly rather than truncating it at a colon or showing `>`.
 
-**D4 setup offers a direct choice.** Run `$setup` and stop at Section A. In Codex Plan mode, inspect
+**D4 setup offers a direct choice.** Run `$setup` and stop at Section A. In Codex Plan mode, and in
+Default mode launched with `codex --enable default_mode_request_user_input`, inspect
 the session log for a `request_user_input` call with three backend options; check that the picker
-shows the options and accepts a selection. In Codex Default mode, expect a numbered text prompt
-with all four options, a stated default, and a one-digit answer. Check that it did not call
-`request_user_input_async`, which queues the question in this mode. On Claude Code and Kiro CLI,
-expect a direct picker only if the active mode offers one; otherwise expect the same text fallback.
+shows the options and accepts a selection. In Codex Default mode without the feature, expect a
+numbered text prompt with all four options, a stated default, and a one-digit answer. Check that it
+did not call `request_user_input_async`, which queues the question. It must also explain the launch
+option for enabling the direct picker. On Claude Code and Kiro CLI, expect a direct picker only if
+the active mode offers one; otherwise expect the same text fallback.
 In each case, check that a repository without a GitHub remote recommends Local markdown, and a
 repository with one recommends GitHub. A bullet list without a stated default or one-digit answer
 is a FAIL.

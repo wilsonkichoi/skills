@@ -84,9 +84,10 @@ but does not reject work over formatting. Following rigid steps for ceremony is 
 
 A skill that asks the user something stops work at the question. Use a structured question tool
 only when the active harness and mode show its options for direct selection. An asynchronous
-question queue is not a direct picker. Otherwise, number the options, state the default, and accept
-a single digit. Do not continue work while a question is outstanding. Every skill on the
-roster interviews somebody, so this rule applies to all of them.
+question queue is not a direct picker. Check the active tool's availability before choosing a
+fallback; do not assume a mode name rules out a picker. Otherwise, number the options, state the
+default, and accept a single digit. Do not continue work while a question is outstanding. Every
+skill on the roster interviews somebody, so this rule applies to all of them.
 
 ## Skill template
 
