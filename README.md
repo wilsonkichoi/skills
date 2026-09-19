@@ -52,6 +52,8 @@ prefix for your harness.
 It interviews you about your issue tracker and your product docs, writes
 `docs/dev-agents/config.md`, and adds one reference line to your `AGENTS.md` or `CLAUDE.md` so
 every session loads that config. Every other skill reads the same file.
+The interview shows a direct picker when the active harness offers one. Otherwise, it gives
+numbered choices with a default; one digit is enough to answer.
 
 Then run `tracker list` in your harness, with the prefix from the table above, to confirm the
 backend answers.

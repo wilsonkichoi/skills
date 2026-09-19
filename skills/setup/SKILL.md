@@ -53,15 +53,35 @@ Lead each section with the recommended answer so the user can accept it in a wor
 explainer only when the choice genuinely branches; skip the section entirely when exploration
 already settled it.
 
-**Offer the choices, do not make the user type them.** Where the harness has a native option
-picker, use it, so answering is a keypress. Where it has none, number the options and say a number
-is a valid answer. Never ask anyone to retype a path that is already on screen: show the default and
-take a bare yes.
+**Offer the choices, do not make the user type them.** Use a structured question tool only when
+the active harness and mode show its options for direct selection. In Codex Plan mode,
+`request_user_input` does this. For Section A, call it with one question and three options. This
+example is for a repository without a GitHub remote:
 
-**A question ends the turn.** Ask it and stop: no tool call after it, no work started while it is
-outstanding, nothing that keeps the turn open. A harness that is still working cannot simply take
-the answer, and Codex parks it behind `⌥ + ↑ to answer`, a keystroke the user has to discover
-before they can reply at all. One section, one question, one turn.
+```
+request_user_input({
+  questions: [{
+    header: "Tracker",
+    id: "tracker",
+    question: "Where should issues live?",
+    options: [
+      { label: "Local markdown (Recommended)", description: "Store issue files in this repo." },
+      { label: "GitHub", description: "Use GitHub Issues." },
+      { label: "Linear", description: "Use Linear." }
+    ]
+  }]
+})
+```
+
+For a GitHub remote, put GitHub first and mark it `(Recommended)` instead. The Codex picker adds a
+free-form choice for Other. In Codex Default mode, `request_user_input_async` queues the question
+behind `⌥ + ↑ to answer`; use the text fallback below. Use that fallback in any harness or mode
+without a direct picker. Show all four options, state the recommended default, and accept one digit
+as the answer. Never ask anyone to retype a path already on screen: show it and accept a bare yes.
+
+**Stop at each question.** A text question ends the turn: no tool call after it and no work started
+while it is outstanding. A direct picker waits for its answer within the tool call. One section,
+one question, one answer.
 
 **Section A: Issue tracker.**
 
@@ -77,6 +97,18 @@ before they can reply at all. One section, one question, one turn.
   invisible from `main` until that branch merges
 - **Other** (Jira, GitLab, etc.): ask the user to describe the workflow in one paragraph; record it
   as freeform text in the config body and set `issue_tracker: other`
+
+With no direct picker, ask Section A in this form. Replace the default with the backend supported
+by the existing config or repository; use GitHub for a GitHub remote and Local markdown otherwise.
+Put that backend first, so `1` always accepts the default.
+
+```
+Where should issues live? Default: 1 (GitHub). Reply with one digit.
+1. GitHub: GitHub Issues.
+2. Linear: linear.app.
+3. Local markdown: files in docs/dev-agents/issues/.
+4. Other: describe your tracker.
+```
 
 **Settle the backend's prerequisites here, before Section B.** A missing prerequisite is a question
 to ask now, not a fact to report at the end of the run. The user just chose this backend and is

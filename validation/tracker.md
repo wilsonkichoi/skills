@@ -387,12 +387,17 @@ Run the same one command from one install on each harness available.
 **D3 [MANUAL] Kiro CLI.** `/tracker list`, and check the slash-command menu renders the one-line
 description correctly rather than truncating it at a colon or showing `>`.
 
-**D4 setup asks the way the harness allows.** Run `$setup` and stop at Section A.
-Expect a native option picker where the harness has one, and a numbered list where it does not, so
-the answer is never a word the user has to spell. A harness with no picker that still prints bare
-prose options is a FAIL against the skill, not against the harness.
+**D4 setup offers a direct choice.** Run `$setup` and stop at Section A. In Codex Plan mode, inspect
+the session log for a `request_user_input` call with three backend options; check that the picker
+shows the options and accepts a selection. In Codex Default mode, expect a numbered text prompt
+with all four options, a stated default, and a one-digit answer. Check that it did not call
+`request_user_input_async`, which queues the question in this mode. On Claude Code and Kiro CLI,
+expect a direct picker only if the active mode offers one; otherwise expect the same text fallback.
+In each case, check that a repository without a GitHub remote recommends Local markdown, and a
+repository with one recommends GitHub. A bullet list without a stated default or one-digit answer
+is a FAIL.
 
-**D5 the question ends the turn.** Watch the harness while Section A is on screen.
-Expect it to be idle and waiting, so the answer is typed straight in. Codex showing `Working` or
-`Queued follow-up inputs ... ⌥ + ↑ to answer` is a FAIL: the skill asked and then kept going, and
-the reply is now behind a keystroke the user has to discover.
+**D5 the question stops work.** Watch the harness while Section A is on screen. With a text
+question, expect the turn to end and the answer to enter directly. With a direct picker, expect
+the tool to wait for a selection. A queued question behind `⌥ + ↑ to answer`, or work continuing
+after the question, is a FAIL. Do not count `Working` alone as a failure while a direct picker waits.
