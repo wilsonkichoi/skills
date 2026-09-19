@@ -399,13 +399,16 @@ with a `### <date> <author>` heading.
 
 **B11 the tracker never commits.** This one needs a committed baseline, or it cannot fail. Take
 setup's step 7 offer to commit the scaffold, or commit it by hand, so the repository has at least
-one commit and a clean tree. Then run one mutating verb, `$tracker comment <A> "commit probe"`, and
+one commit and a clean tree. Then run one mutating verb, `$tracker comment <B> "commit probe"`, and
 check:
 
 ```
 git log --oneline
 git status --porcelain -uall
 ```
+
+Use `<B>`, which is `ready` and live at this point. A is `done` by now, and while commenting on a
+terminal ticket is legal, this case is about git and does not need the question.
 
 Expect the commit count unchanged by the verb, and that ticket file listed as ` M` modified. `-uall`
 is not optional: plain `--porcelain` collapses untracked files into `?? docs/`, so it would report a
