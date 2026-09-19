@@ -22,13 +22,17 @@ The three terminal states are close reasons, not labels:
 | `cancel` | closed, `stateReason: NOT_PLANNED` |
 | `duplicate` | closed, `stateReason: DUPLICATE`, with `--duplicate-of` naming the original |
 
-Reading a status back:
+Reading a status back. Read `state` first, and only then the labels or the reason. A reopened issue
+is `OPEN` carrying `stateReason: REOPENED`, so anything that switches on `stateReason` without
+looking at `state` reads a live ticket as terminal.
 
 - open with one status label: that status.
-- open with no status label: `backlog`. Every human-created and every reopened issue lands here.
+- open with no status label: `backlog`. Every human-created and every reopened issue lands here. A
+  reopened one still reports `stateReason: REOPENED`, which is not a status and is ignored.
 - open with two or more status labels: inconsistent. It has no status, and no query returns it as
   though it did.
-- closed: read `stateReason`. A closed issue carries no status label.
+- closed: read `stateReason`, one of `COMPLETED`, `NOT_PLANNED`, or `DUPLICATE`. A closed issue
+  carries no status label.
 
 Why close reasons rather than seven labels: a `done` label on an issue closed as `not planned` is
 two sources of truth that will eventually disagree, and GitHub already stores the reason natively.
@@ -106,8 +110,27 @@ gh issue list --repo <owner/repo> --state open --limit 200 \
          inconsistent: [.[] | select(status == "inconsistent") | .number]}'
 ```
 
-Add `--milestone <title>` to scope. With no status argument, drop the `select` and return every open
-issue, still reporting `inconsistent`.
+With no status argument, drop the `select` and return every open issue, still reporting
+`inconsistent`.
+
+**Scoping to a milestone: resolve the title to a number first, and pass the number.** Both ways this
+goes wrong are silent, both verified against `gh` 2.97.0:
+
+- `--milestone <title>` for a title no milestone has exits 0 with an empty list and nothing on
+  stderr, so a typo reads back as "no tickets".
+- `--milestone <title>` for a **closed** milestone returns an empty list too, at exit 0, while
+  `--milestone <its number>` returns that milestone's tickets. Titles resolve against open
+  milestones only.
+
+```
+gh api 'repos/<owner>/<repo>/milestones?state=all' --jq '.[] | select(.title == "<title>") | .number'
+```
+
+`state=all` is required: the endpoint returns open milestones by default, which would make a closed
+milestone look like a name that does not exist. Empty output is a stop, not an empty list. Say the
+milestone does not exist and name the ones that do, from the same call with `--jq '.[].title'`.
+Otherwise add `--milestone <that number>` to the query above. Milestone titles are unique per
+repository, so a match is exactly one number.
 
 For a terminal status, query `--state closed` and filter on `stateReason`, which is on the list
 payload, so `list done`, `list cancel`, and `list duplicate` each read back in one call with no
@@ -209,9 +232,18 @@ gh issue view <n> --repo <owner/repo> --json number,title,body,labels,blockedBy
 ```
 
 The body must match what you sent, every `## Blocked by` entry must appear in `blockedBy.nodes`, and
-the status label must be the one requested. A filtered `gh issue list` is not a verification here,
-because the search API is eventually consistent and a ticket created seconds ago can be missing from
-it. Read it by number.
+the status label must be the one requested. Compare the body against the file you sent, with `jq`:
+
+```
+gh issue view <n> --repo <owner/repo> --json body | jq --rawfile sent <file> -e '.body == $sent'
+```
+
+`true` at exit 0 is the pass. Do not compare by eye, and do not route the body through the shell
+first: both obvious ways of doing that report a difference on a byte-identical body, because
+`--jq .body > file` appends a newline and `"$(...)"` strips the trailing one.
+
+A filtered `gh issue list` is not a verification here, because the search API is eventually
+consistent and a ticket created seconds ago can be missing from it. Read it by number.
 
 **claim.** Read, edit, re-read. The read is not optional: `--remove-label` on a label the issue does
 not carry exits 0 and changes nothing, so a blind claim on an `in-review` ticket would add
@@ -268,9 +300,11 @@ The removal list is every status label the read found **minus the target**, neve
 and never the target itself. `gh` sends the additions and the removals as two concurrent GraphQL
 mutations with no ordering between them, so a label named in both lists ends in whichever mutation
 lands last. Measured against `gh` 2.97.0, `--remove-label ready --add-label ready` on a `ready`
-ticket stripped the label in eight runs out of eight, exit 0, leaving an unlabelled issue that reads
-as `backlog`. That is the most common move a skill makes, a no-op `move <id> ready` on a ticket
-already there, so keep the two lists disjoint and do not fold them back together.
+ticket usually strips it, exit 0 either way, leaving an unlabelled issue that reads as `backlog`. It
+is a race with no ordering guarantee, not a deterministic strip: 8 of 8 trials in one session and 4
+of 5 in another, so a single trial has a real chance of keeping the label and reading as safe. That
+is the most common move a skill makes, a no-op `move <id> ready` on a ticket already there, so keep
+the two lists disjoint and do not fold them back together.
 
 Subtracting the target also makes the repair fall out: an issue a human left carrying `backlog` and
 `ready` that is moved to `ready` removes `backlog` and adds `ready`, so `move` is how an

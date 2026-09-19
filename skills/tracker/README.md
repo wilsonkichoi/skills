@@ -65,7 +65,8 @@ tracker link <id> blocked-by <id>
 
 **`list`** shows tickets with their id, title, status, assignee, and blockers. Both arguments are
 optional filters. `list ready` narrows by status, `list "Milestone 2"` narrows by milestone, and
-`list` on its own gives you every open ticket.
+`list` on its own gives you every open ticket. A milestone name nothing matches stops and tells you
+the ones that exist, rather than handing you an empty list that looks like a finished milestone.
 
 **`show`** is one ticket in full: the body, its comments, its labels, who has it, and what is
 blocking it.

@@ -117,9 +117,18 @@ Expect `backlog`, `in-progress`, `in-review`, and `ready` present, and `done` an
 created through the web UI already has one before setup runs. What matters is that setup did not
 create it and that nothing reads it as a status, which A11 covers.
 
-**A5 create writes the ticket.** `$tracker create` with ticket A.
-Check: `gh issue view <A> --repo <R> --json title,body,labels`
-Expect the body as sent and no status label, since `create` defaults to `backlog`.
+**A5 create writes the ticket.** `$tracker create` with ticket A, from a body file you keep.
+Check the labels with `gh issue view <A> --repo <R> --json title,labels`, and the body with a byte
+comparison rather than by eye:
+
+```
+gh issue view <A> --repo <R> --json body | jq --rawfile sent <the body file> -e '.body == $sent'
+```
+
+Expect no status label, since `create` defaults to `backlog`, and `true` at exit 0 from the
+comparison. Do not substitute `--jq .body > file` or `"$(...)"` for that command: the first appends
+a newline and the second strips one, so both report a difference on a byte-identical body and score
+a correct `create` as FAIL.
 
 **A6 create writes the edge.** `$tracker create` with ticket B naming `#<A>` under `## Blocked by`.
 Check: `gh issue view <B> --repo <R> --json blockedBy --jq '[.blockedBy.nodes[].number]'`
@@ -212,8 +221,18 @@ Expect the exact body present exactly once.
 **A23 a milestone scopes the list.** `gh api repos/<R>/milestones -f title=M1`, put one `ready`
 ticket in it with `gh issue edit <id> --repo <R> --milestone M1`, then `$tracker list ready M1`.
 Expect only that ticket, with the second argument read as a milestone rather than rejected as an
-unknown status. Then `$tracker list ready no-such-milestone`: expect a stop, not the whole `ready`
-list unscoped.
+unknown status. Then `$tracker list ready no-such-milestone`: expect a stop naming the milestones
+that do exist, not the whole `ready` list unscoped and not an empty list at exit 0.
+
+**A23b a closed milestone still scopes the list.** `gh api repos/<R>/milestones -f title=M2`, put
+another `ready` ticket in it with `gh issue edit <id> --repo <R> --milestone M2`, close the
+milestone with `gh api --method PATCH repos/<R>/milestones/<its number> -f state=closed`, then
+`$tracker list ready M2`.
+Expect that ticket. This is the half a title lookup cannot do: `gh issue list --milestone M2`
+returns `[]` at exit 0 once the milestone is closed, while `--milestone <its number>` returns the
+ticket, so a skill that passes the title straight through reports "no tickets" for a milestone that
+has them. An empty result here and a stop here are both FAIL, and they are different bugs: empty
+means the title was passed through, a stop means the resolver read open milestones only.
 
 **A24 [MANUAL] claim race.** Two terminals, one `ready` unassigned ticket, `$tracker claim <id>` in
 both at once. Expect the loser to remove only its own assignment, leave `in-progress` alone, and
@@ -296,6 +315,13 @@ that verb sets, with the prose untouched.
 
 **B13 id forms are interchangeable.** `$tracker show 99`, `$tracker show 099`, `$tracker show '#99'`.
 Expect the same ticket three times.
+
+**B14 an unknown milestone is a stop here too.** Give one ticket `milestone: 'M1'`, then
+`$tracker list ready M1` and `$tracker list ready no-such-milestone`.
+Expect the ticket from the first, and a stop naming `M1` from the second. There is no milestone
+registry in this backend, so the set of milestones is whatever the files carry; an empty list for a
+name nothing carries is the same wrong answer GitHub gives, in a place where the whole set was
+already read.
 
 ---
 
@@ -392,6 +418,206 @@ Expect numbered options with the recommended one first and a digit accepted as t
 harness's own picker where it has one a skill can invoke. Codex has none, so numbered text is the
 correct result there and not a failure. An unnumbered prose list is a FAIL.
 
-**D5 the question ends the turn.** Watch the harness while Section A is on screen.
+**D5 sections are not batched into one picker.** On a harness whose picker takes several questions,
+Claude Code included, run `$setup` in a directory with no `.git` and watch the first prompt.
+Expect the `git init` offer on its own, then Section A with its prerequisites resolved, and only
+then Section B. A single picker carrying `git init` plus Sections A to D is a FAIL even though every
+question in it is individually correct: the backend answer decides whether the later answers mean
+anything, and a missing remote has to be resolved before Section B is on screen.
+
+**D6 the question ends the turn.** Watch the harness while Section A is on screen.
 Expect it idle and waiting, so the answer is typed straight in. A harness still reporting work, or
 holding the reply as a queued input, is a FAIL: the skill asked and then kept going.
+
+---
+
+## Run log
+
+Newest first. One entry per run. The runbook above is the reusable procedure and is not edited by a
+run; everything a run learned goes here.
+
+### 2026-09-18 GitHub leg, Claude Code
+
+```
+TRACKER VALIDATION
+backend: github                  harness: claude-code
+date: 2026-09-18                 skill ref: a415ff2 (feat/tracker)
+
+PASS  20
+FAIL  2
+SKIP  3
+
+failures:
+  A2   expected the missing remote resolved inside Section A   actual resolved after Sections B, C and D were answered
+  A23  expected a stop on an unknown milestone name            actual empty list, exit 0, empty stderr
+skipped:
+  A3   needs a fresh clone of a repository that already has a remote; this run was the A1/A2 shape
+  A24  [MANUAL] claim race, needs a second terminal and ideally a second account
+  A25  [MANUAL] needs a GitHub Enterprise host without issue dependencies
+
+VERDICT: RED
+```
+
+Scope: leg A, cases A1 to A25. `S1` and `S2` also ran and passed: the install carries `SKILL.md`,
+`README.md`, `github.md`, `linear.md`, `local.md` and `agents`, and both `.claude/` and `.kiro/`
+resolve `github.md` to `# Backend: GitHub Issues`. `S3` was not run. Legs B, C and D were not run.
+
+Environment: `gh` 2.97.0, repository `wilsonkichoi/tracker-gh`, private and empty at the start. The
+installed skill was byte-identical to repo HEAD across all five files, so every finding below is
+against current source rather than a stale copy.
+
+| Case | Verdict | Evidence |
+|---|---|---|
+| A1 | PASS | `git rev-parse --git-dir` succeeded before setup reported. Offer was made. See deviation D-1. |
+| A2 | FAIL | `git remote -v` and the config are correct, but the question came too late. Finding F2. |
+| A3 | SKIP | Not this run's starting state. |
+| A4 | PASS | `backlog in-progress in-review ready` present, `done` and `cancel` absent. `duplicate` predates setup: it was in the label list before any label was created. |
+| A5 | PASS | #1 body 642 chars, matching the 642-byte file sent, labels `[]`. See finding F4 for how that was actually compared. |
+| A6 | PASS | #2 `blockedBy.nodes` = `[1]`, written by `create`'s second call. |
+| A7 | PASS | #3 `blockedBy.nodes` = `[1]`. Database id was `5508320896`, not `3`. |
+| A8 | PASS | #4 carries `## Related` in the body with `blockedBy.nodes` empty. |
+| A9 | PASS | frontier `[1]`, #2 excluded on its open blocker, `rows: 2`. |
+| A10 | PASS | frontier `[2]` after #1 closed. Hand check: #2 `totalCount: 1` with `node_states: ["CLOSED"]`. |
+| A11 | PASS | Claim on #2 carrying `bug` and `duplicate` succeeded: `["bug","duplicate","in-progress"]`, one assignee. |
+| A12 | PASS | #5 with `ready`+`in-progress` absent from `next`, `list ready` and `list backlog`, reported `inconsistent: [5]` by all three, both labels named by `show`. |
+| A13 | PASS | `move 5 ready` with removal list `in-progress` left exactly `["ready"]`. |
+| A14 | PASS | `move 2 in-progress` on a ticket already there kept `["bug","duplicate","in-progress"]`. |
+| A15 | PASS | #2 `CLOSED`/`COMPLETED`, no status label, `bug` and `duplicate` retained. |
+| A16 | PASS | #7 `stateReason: DUPLICATE`. |
+| A17 | PASS | Pre-read saw `CLOSED`/`DUPLICATE` and refused. Probe confirms why it is the only guard: `gh issue close 7 --reason completed` on the closed issue printed "is already closed", exited 0, and left `DUPLICATE` in place. |
+| A18 | PASS | #6 reads `backlog`, present in `list backlog`, absent from `next`. See deviation D-2. |
+| A19 | PASS | #1 reopened reads `backlog`. Note `stateReason` became `REOPENED`, finding F6. |
+| A20 | PASS | #5 claimed then moved to `backlog`: assignees `[]`. |
+| A21 | PASS | #8 closed while still carrying `ready` appeared in neither `list ready` nor `next`. |
+| A22 | PASS | `runbook note` present on #3 exactly once. |
+| A23 | FAIL | `list ready M1` returned only `[3]` correctly, but `--milestone no-such-milestone` returned `[]` at exit 0. Finding F1. |
+| A24 | SKIP | [MANUAL] |
+| A25 | SKIP | [MANUAL] |
+
+Deviations from the runbook as written, neither of which changes a verdict:
+
+- **D-1.** A1's `git init` offer was presented in the same picker as Sections A, B and C rather than
+  before them. This is the cause of the A2 failure and is finding F3.
+- **D-2.** A18 says to create the issue in the web UI. It was created with `gh issue create` and no
+  label instead. The stored record is identical, so the case still tests what it exists to test:
+  how the skill reads a ticket nobody labelled.
+
+Cases the run strengthened rather than merely passed:
+
+- **A10 is the case that earns the frontier's design.** `blockedBy.totalCount` stayed at `1` after
+  the blocker was closed, with the node reading `CLOSED`. A `totalCount == 0` filter would hold #2
+  off the frontier permanently. This is the behaviour `github.md` records, reproduced.
+- **A14's hazard is live.** Running the wrong form, `--remove-label ready --add-label ready`, on a
+  `ready` ticket stripped the label in **4 of 5 trials**, all at exit 0. See finding F5.
+
+## Findings
+
+Numbered, newest run first. A finding is a defect in a skill file unless it says otherwise.
+
+**F1. `github.md`: `list <status> <milestone>` cannot stop on an unknown milestone. (A23, real defect.)**
+`gh issue list --milestone no-such-milestone` exits 0 with `[]` on stdout and nothing on stderr,
+verified against `gh` 2.97.0 with only `M1` existing. `github.md` says only "Add `--milestone
+<title>` to scope" and gives the skill nothing to validate the name against, so the skill cannot
+produce the stop the runbook asks for. The user who typos a milestone gets a confident "no tickets"
+rather than an error, which is the wrong answer shaped like a right one.
+This is asymmetric across backends, which is what makes it a defect rather than a missing feature:
+`linear.md` states the rule outright, that "a milestone name that matches nothing in the project is
+a stop, not a silently unscoped list", while `github.md` is silent. The same verb gives a stop on
+Linear and a silent empty list on GitHub.
+Note the GitHub failure mode is quieter than the one Linear's rule guards against. It is not an
+unscoped list; it is an empty one, so a caller cannot notice it by seeing too much.
+Fix: resolve the name before querying and stop when it matches nothing.
+
+**Fixed in 0.0.10**, and the fix is larger than the finding was. Resolving the title against
+`repos/<owner>/<repo>/milestones` alone would have been wrong twice over. That endpoint returns open
+milestones by default, so `?state=all` is required or a closed milestone reads as a name that does
+not exist. And `gh issue list --milestone <title>` returns `[]` at exit 0 for a **closed** milestone
+that has tickets, while `--milestone <its number>` returns them, so the title is resolved to a
+number and the number is what the query gets. All three behaviours measured against `gh` 2.97.0 on
+`wilsonkichoi/tracker-gh`. `github.md` now carries the resolve-then-query rule, `SKILL.md` states
+the stop as a cross-backend guarantee, and `local.md` says what the milestone set is where there is
+no registry. Runbook: A23 tightened, A23b and B14 added.
+
+```
+gh api 'repos/<owner>/<repo>/milestones?state=all' --jq '.[] | select(.title == "<title>") | .number'
+```
+
+**F2. `setup`: the GitHub prerequisites were resolved after Sections B, C and D. (A2.)**
+0.0.9 records this as fixed by moving the checks into Section A. On this run the remote question was
+asked in a second round, after the context file, the product-doc paths and the test command had been
+answered. The mechanical check passes, since `git remote -v` names the remote and the config records
+`wilsonkichoi/tracker-gh` rather than an intention, but the behaviour the case exists to catch
+happened: three sections were answered without knowing whether `github` would work.
+Cause is F3 rather than a lost fix in `SKILL.md`. **Fixed in 0.0.10** by way of F3.
+
+**F3. `setup/SKILL.md`: "one section, one answer" and "use the harness's own picker" conflict where the picker is multi-question.**
+Step 2 says to take the sections in order, "One section, one answer, then the next", and also to use
+the harness's own picker where it has one. Claude Code's picker accepts up to four questions in a
+single call, so the two instructions pull in opposite directions, and resolving it by batching is
+what produced F2. Codex, which the runbook is written for, has no picker, so the conflict cannot
+appear there and the file reads as consistent.
+Fix: say what a multi-question picker may batch. Section A's prerequisites have to be resolved
+before any later section is presented, whether or not the harness could show them together.
+
+**Fixed in 0.0.10.** Step 2 now says a multi-question picker is a way to ask one section faster and
+never a way to put Sections A to D on screen together, and that only questions from the same section
+whose answers cannot change each other may share a call. Step 1 says the same for the `git init`
+offer, which D-1 shows was batched with the interview. Runbook: D5 added to test it directly.
+
+**F4. `github.md`: `create`'s verification asks for a body comparison and names no method, and both obvious methods are wrong.**
+The file says "The body must match what you sent". Measured against a 642-byte body on #1:
+
+| Method | Bytes | Verdict |
+|---|---|---|
+| the file that was sent | 642 | truth |
+| `--json body --jq .body` per the API | 642 | correct |
+| `gh issue view --json body --jq .body > file` | 643 | appends a newline |
+| `printf '%s' "$(gh issue view ... --jq .body)"` | 641 | command substitution strips the trailing newline |
+
+A `diff` of the sent file against either redirect reports a difference on a byte-identical body, so
+a correct `create` scores FAIL. This run hit it and had to rule it out by hand. Runbook case A5 has
+the same gap, since "Expect the body as sent" names no method either.
+Fix, exact in both directions, verified `true`/exit 0 on the real body and `false`/exit 1 on a
+tampered one:
+
+```
+gh issue view <n> --repo <owner/repo> --json body | jq --rawfile sent <file> -e '.body == $sent'
+```
+
+**Fixed in 0.0.10** in both places: `github.md` gives the command under `create`'s verification, and
+runbook case A5 gives it as the check with the two wrong methods named.
+
+**F5. `github.md`: the overlapping-label hazard is a race, and the file implies it is deterministic. (Low severity, documentation.)**
+The file records that `--remove-label ready --add-label ready` "stripped the label in eight runs out
+of eight". Measured here on `gh` 2.97.0: 4 of 5 trials stripped it, one kept it, every trial exit 0.
+The rule is correct and unchanged; only the characterisation is off. It matters because someone
+verifying a fix with a single trial has a 1-in-5 chance of concluding the overlapping form is safe.
+Fix: call it a race with no ordering guarantee, which is what the `editable_http.go` reasoning
+already says, rather than quoting a count that reads as deterministic.
+
+**Fixed in 0.0.10.** `github.md` now names it a race, keeps both measurements, 8 of 8 and 4 of 5,
+and says a single trial can read as safe.
+
+**F6. `github.md`: `stateReason: REOPENED` is undocumented. (Low severity, documentation.)**
+The status table covers `COMPLETED`, `NOT_PLANNED` and `DUPLICATE`, and the reading rules say
+"closed: read `stateReason`". A reopened issue is `OPEN` with `stateReason: REOPENED`, observed on
+#1. Harmless as the file is written, because an open issue resolves through its labels, but the
+value is real and unnamed, so anything that switched on `stateReason` without checking `state` first
+would misread a reopened ticket as terminal. A19 is exactly the path that produces it.
+Fix: name `REOPENED` where the other three are named, and say that `state` is read first.
+
+**Fixed in 0.0.10.** The reading rules in `github.md` open with "read `state` first", name
+`REOPENED` on the open path, and list the three closed reasons where the rule says to read
+`stateReason`.
+
+### Not a defect
+
+The `jq` precedence error hit during this run was in an ad-hoc debug field this session invented,
+`body_sha: (.body | @base64d? // .body | tostring | length)`, and not in anything a skill file
+prescribes. `//` binds tighter than `|`, so it parses as `.body | (@base64d? // .body) | ...`; the
+input to that group is already the body string, `@base64d?` fails and is suppressed, `//` falls
+through to `.body`, and indexing a string errors with `Cannot index string with string "body"`. The
+`@base64d` was meaningless there in the first place, since an issue body is not base64.
+`github.md` prescribes no such construct. Its only mention of either operator instructs the reader
+not to use them, in the note that the frontier's `error()` must never be patched with `?` or
+`// []`. The shared status prelude uses neither. No fix needed.

@@ -42,7 +42,8 @@ Also read, before asking anything:
 **No git repository is the first thing to settle.** Offer `git init` before the interview starts.
 Every backend ends at step 7 offering a commit, and the `github` backend cannot have a remote
 without a repository to attach it to, so discovering this three sections later means unwinding the
-interview.
+interview. Ask it on its own, before Section A is on screen and never as one slot in a picker that
+also carries the interview: Section A's GitHub check needs the repository to exist already.
 
 ## 2. Interview
 
@@ -59,6 +60,12 @@ it is outstanding. A harness that is still working cannot take a plain reply.
 enough. Use the harness's own picker where it has one; most have none, and numbered text is the
 right answer there rather than a fallback to apologise for. Never ask for a path already on screen:
 show it and take a bare yes.
+
+**A multi-question picker does not reorder the interview.** Claude Code's takes four in one call,
+which asks one section faster and never puts Sections A to D on screen together. Section A and every
+prerequisite in its table are settled before Section B appears, on every harness: that answer
+decides whether the backend works at all, and the sections after it are wasted if it does not. Batch
+only questions from one section whose answers cannot change each other.
 
 **Section A: Issue tracker.**
 

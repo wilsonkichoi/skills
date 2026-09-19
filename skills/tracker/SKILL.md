@@ -115,6 +115,10 @@ exit code said.
 Ticket ids are compared numerically and written however the backend writes them. Accept `12`,
 `012`, and `#12` as the same ticket.
 
+A milestone argument that matches no milestone is a stop on every backend, never an empty list and
+never the whole set unscoped. Resolve the name against the backend's own list of milestones before
+querying with it: an answer shaped like a right one is the failure this rule exists to prevent.
+
 **`next`** returns the frontier: every ticket that is `ready`, has no assignee, and has no open
 blocker, lowest id first. When the frontier is empty, return nothing and say so. When the backend
 cannot report blockers at all, stop with an error naming that. An empty frontier is never inferred

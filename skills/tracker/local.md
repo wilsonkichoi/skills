@@ -124,6 +124,10 @@ For `next`, "in a terminal status" means `done`, `cancel`, or `duplicate`. A `bl
 file behind it is an open blocker: the ticket stays off the frontier and the report names the
 missing id.
 
+There is no milestone registry here, so the milestones are the distinct non-empty `milestone` values
+across the files. `list <status> <milestone>` reads them all anyway, so collect that set in the same
+pass: a name not in it is a stop naming the milestones that exist, never an empty list.
+
 ## Verifying a write
 
 A file write has no exit code worth trusting either. After every mutating verb, re-read the file

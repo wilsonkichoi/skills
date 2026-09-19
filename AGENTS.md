@@ -88,6 +88,11 @@ too: numbered options with the recommended one first, and a digit accepted. Use 
 picker only where it has one that a skill can actually invoke, which most do not. Every skill on
 the roster interviews somebody, so this belongs to all of them rather than to `setup`.
 
+A picker that takes several questions at once, as Claude Code's does, does not reorder the
+interview. It asks one step faster; it does not turn a sequence of questions into one screen. Only
+questions whose answers cannot change each other share a call, and a question that decides whether
+the later ones are worth asking is settled before they are presented.
+
 ## Skill template
 
 [`skill-template/`](./skill-template/) holds the copyable skeleton: `SKILL.md`, `agents/openai.yaml`,
