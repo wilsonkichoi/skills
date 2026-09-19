@@ -61,7 +61,7 @@ cases are all skipped is still GREEN, and the skipped list is what tells you wha
 
 ```
 mkdir -p ~/tmp/tracker-val && cd ~/tmp/tracker-val
-git init && mkdir -p .claude .kiro
+git init
 npx skills@latest add 'https://github.com/wilsonkichoi/skills.git#feat/tracker' -a claude-code -a codex -a kiro-cli
 ```
 
@@ -71,6 +71,9 @@ copies the whole skill directory, so the human-facing explainer ships to every c
 
 **S2 sibling resolution.** Check: `head -1 .claude/skills/tracker/github.md` and the same under
 `.kiro/`. Expect `# Backend: GitHub Issues` from both.
+Both directories have to have been created by the installer, since nothing here pre-creates them.
+A missing `.kiro/` is [vercel-labs/skills#2071](https://github.com/vercel-labs/skills/issues/2071)
+returning, and it needs skills 1.5.26 or later.
 
 **S3 one skill per name.** Check:
 `npx skills@latest add 'https://github.com/wilsonkichoi/skills.git#feat/tracker' -l`.

@@ -7,19 +7,18 @@ note: Kiro has no setting to suppress automatic activation.
 
 ## Install
 
-Name the agents you want with `-a`, and create their project directories first:
+Name the agents you want with `-a`:
 
 ```
-mkdir -p .claude .kiro
 npx skills@latest add wilsonkichoi/skills -a claude-code -a codex -a kiro-cli
 ```
 
-Both halves are needed. A project-scope install skips the symlink for any non-universal agent whose
-directory does not already exist in the repo, even when you selected that agent by hand, and it
-reports success either way ([vercel-labs/skills#2071](https://github.com/vercel-labs/skills/issues/2071)).
-Codex is unaffected because it reads the universal `.agents/skills/`, and `.claude/` is exempt by
-name in the installer, so in practice `.kiro/` is the one that has to exist beforehand. A global
-install (`-g`) skips the gate entirely.
+The installer creates each agent's directory itself. It did not always: a project-scope install
+used to skip the symlink for any non-universal agent whose directory did not already exist in the
+repo, even when you selected that agent by hand, and reported success either way
+([vercel-labs/skills#2071](https://github.com/vercel-labs/skills/issues/2071)). That is fixed in
+skills 1.5.26, verified both ways: 1.5.25 leaves no `.kiro/` at all, 1.5.26 creates it with the
+symlink. Pinned below 1.5.26, run `mkdir -p .kiro` first or upgrade.
 
 Tracking the tip is fine for now. To pin a version, pass the full git URL with a `#ref`, quoted
 because `#` starts a comment in most shells:
