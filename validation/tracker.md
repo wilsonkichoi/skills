@@ -64,6 +64,17 @@ mkdir -p ~/tmp/tracker-val && cd ~/tmp/tracker-val
 npx skills@latest add 'https://github.com/wilsonkichoi/skills.git#feat/tracker' -a claude-code -a codex -a kiro-cli
 ```
 
+**Invoking the skill during a run.** Every skill here carries `disable-model-invocation: true`, so
+no harness invokes one on its own and each `$tracker ...` has to be typed. That is the shipped
+behaviour, not a defect, and a leading space is enough to stop a slash command firing, so check that
+an invocation actually fired before scoring what came back.
+
+For a leg that would otherwise be hundreds of hand-typed commands, delete that one line from the
+**installed** `SKILL.md` and restart the harness. Then say so in the report as a deviation, and say
+from which case onward, because the file under test now differs from the commit by that line. It
+changes no verb, and it is still not nothing. Restore it or reinstall before the run ends, and never
+edit the source tree to get it.
+
 **S1 install layout.** Check: `ls .agents/skills/tracker/`. Expect `SKILL.md`, `README.md`,
 `github.md`, `linear.md`, `local.md`, `agents`. The `README.md` is there on purpose: the installer
 copies the whole skill directory, so the human-facing explainer ships to every consumer.
@@ -302,12 +313,23 @@ is the FAIL: `gh issue view <n> --comments` prints **nothing at all at exit 0** 
 comments, because the flag replaces the issue with its comments rather than adding them. The
 `--json ...,comments` field returns `[]` instead, which is why `show` is one call and not two.
 
-**A29b reserving a ticket is not the same as losing it.** `$tracker assign <a ready ticket> octocat`
-against a collaborator this time, or on `local` any name, then `$tracker next`.
-Expect the ticket absent from the frontier, present in `list ready`, and named with its holder by
-`show`. A reserved ticket leaving the frontier is the intended behaviour and not the A29 bug: the
-difference is that somebody put the name there on purpose. **[MANUAL]** on GitHub, which needs a
-second collaborator; runnable as written on `local` as part of B15.
+**A29b reserving a ticket is not the same as losing it.** `$tracker assign <a ready ticket> <who>`,
+where `<who>` may be **your own login**, then `$tracker next`, `$tracker list ready` and
+`$tracker show <it>`.
+Expect the ticket absent from the frontier, present in `list ready`, still `ready` rather than
+`in-progress`, and named with its holder by `show`. A reserved ticket leaving the frontier is
+intended behaviour and not the A29 bug: the difference is that somebody put the name there on
+purpose. What this case discriminates is the **verb form**, not the identity, so the caller's own
+login exercises all of it: a fix that overreached and cleared the name would fail this exactly the
+same way. Whatever name you use has to have push access, or A27 happens instead and you score an
+empty `assignees` as the reservation failing.
+
+**A29c [MANUAL] reserving for somebody else.** The same case with `<who>` a second collaborator.
+Expect the assignment to land, `show` to name them, and `$tracker assign <it> me` to refuse until it
+names them with `from`. This is the half a one-account machine cannot reach, and it is the same
+missing identity that keeps A24 and half of A28 unrunnable: without it, nothing proves an assignment
+lands for anybody but the caller, and A27 shows that is not academic, since a login without push
+access is dropped at exit 0.
 
 Tear down: delete the issues and the four labels, or delete the repository with
 `gh repo delete <R>` if the run created it. Do not delete a repository you already had; A3 is
@@ -520,6 +542,157 @@ Newest first, by the timestamp in each entry's heading: ISO 8601 with the local 
 shape `CHANGELOG.md` uses, so two runs on one day stay distinguishable. One entry per run. The
 runbook above is the reusable procedure and is not edited by a run; everything a run learned goes
 here.
+
+### 2026-09-19T01:40-07:00 GitHub assignee delta, Claude Code
+
+```
+TRACKER VALIDATION
+backend: github                  harness: claude-code
+date: 2026-09-19T01:40-07:00     skill ref: 713f017 (feat/tracker)
+
+PASS  7
+FAIL  0
+SKIP  1
+
+failures:
+  none
+skipped:
+  A24  [MANUAL] the tie-break needs two accounts with push access; this machine has one GitHub login
+
+VERDICT: GREEN
+```
+
+Delta run against `713f017`, which replaced the `claim` verb with a four-form `assign` and gave
+`move` an assignee rule. Scope: A11 and A20, which the rename rewrote; A27, A28, A29, A29b and A30,
+which are new and had never run; A24, rewritten into a two-account procedure; and one `next`, one
+`list` and one `show` as regression reads. Every case in scope passed on its first read. One new
+finding, F10, which is against this runbook rather than against a skill and produced no FAIL.
+
+**Leg B has never been run at all, on any commit.** B15 and B16 are the local-backend half of this
+exact change, the explicit `assign` forms with their `from` check and the clear-on-handback rule,
+and nothing here covers them: they need their own directory with `issue_tracker: local`. The
+`local.md` side of `713f017` is therefore unverified, and so is the whole of leg C. What this entry
+establishes is the GitHub half and nothing wider.
+
+Environment: `gh` 2.97.0, `wilsonkichoi/tracker-gh`, working directory `/Users/wchoi/tmp/tracker-gh`.
+No `setup` run and no new checkout, since no case in scope needs one. The repository was **not**
+emptied: it carried open issues 9, 11, 12, 13, 14, 22 and 23 from the previous two runs, with #23
+the inconsistent ticket, plus milestones M1 open, M2 closed, M3 closed and M4 open. Seven fresh
+fixtures, #25 to #31, were created so no case collided with the tickets already there, and the
+inconsistent #23 stayed inconsistent throughout and was named as such by `next`, `list` and
+`list ready` every time they ran.
+
+Install verified byte-identical to the **committed** `713f017` before scoring, with
+`git archive 713f017 skills/tracker skills/setup | tar -x` and `diff -r` against `.agents/skills/`,
+over both skill directories. The source working tree at `/Users/wchoi/src/skills` was not used for
+the comparison, for the reason the previous entry gives. `.claude/skills/` and `.kiro/skills/` are
+symlinks to `.agents/skills/`, so all three harnesses resolved the same bytes. The install was
+re-checked after the last case and differed by exactly the one line deviation D-1 describes.
+
+Two traps were confirmed armed on this repository and this `gh` before anything was scored, on a
+throwaway #32 that was closed afterwards:
+
+- A27: `gh issue edit 32 --add-assignee octocat` printed the issue URL, **exited 0**, and left
+  `assignees: []`, while `--add-assignee no-such-login-zzz9` exited 1 with `Could not resolve to a
+  user or bot with the login`. `repos/<R>/collaborators/octocat` returns 404, so `octocat` is a real
+  account without push access, which is the shape the case needs.
+- A30: `gh issue view 30 --comments` printed **nothing at all at exit 0** on the zero-comment
+  fixture, and after the comment landed it printed the comment block alone with no number, title or
+  body. F9's mechanism reproduced exactly, in both directions.
+
+| Case | Verdict | Evidence |
+|---|---|---|
+| A11 | PASS | #31 carrying `bug`, `duplicate` and `ready`, unassigned. Pre-read resolved `status_labels: ["ready"]`, so both topic labels were invisible to the precondition and the pull was allowed. After one write: `assignees: ["wilsonkichoi"]`, labels `["bug","duplicate","in-progress"]`. `duplicate` survived untouched and never read as a status, which is the sharp half of the case. |
+| A20 | PASS | #25 pulled bare to `in-progress` with one assignee, then `move 25 backlog` with removal list `in-progress` and `--remove-assignee wilsonkichoi`. Independent check: `{"assignees":[]}`, labels `["backlog"]`. |
+| A24 | SKIP | [MANUAL]. One GitHub login on this machine. With a single login in `assignees` each session reads it as its own and the tie-break cannot fire at all, so two terminals would not have been a partial run. Still never observed. |
+| A27 | PASS | `assign 26 octocat`. The write printed the URL and exited 0; the verification read returned `[]`, and the verb reported that the assignment did not land, naming what the issue actually carries. Independent check: `assignees: []`, labels unchanged. Reporting success here is the FAIL the case exists for, and it did not happen. |
+| A28 | PASS | #27 assigned to `@me` with `gh` first. `assign 27 none from octocat` refused on the pre-read, named `wilsonkichoi` as the actual holder, and **wrote nothing**: independent check still `["wilsonkichoi"]`. Then the bare `assign 27 none` removed it: `assignees: []`, labels untouched. The real-holder-who-is-not-you half stays [MANUAL]. |
+| A29 | PASS | **First read, no retry.** #28 pulled bare to `in-progress` with one assignee, then `move 28 ready` in one write carrying `--remove-assignee wilsonkichoi`. Independent check: `assignees: []`, labels exactly `["ready"]`. The `next` immediately after returned frontier `[12,13,22,28,29]` with `rows: 14`, #28 present on the first attempt. |
+| A29b | PASS | Ran with a deviation, D-2. `assign 29 wilsonkichoi`, the explicit `<who>` form, left the status alone: `assignees: ["wilsonkichoi"]`, labels `["ready"]`. The next `next` returned `[12,13,22,28]`, #29 gone; `list ready` returned it with its holder; `show 29` named the holder and the `ready` status. So the A29 fix did not overreach: `move … ready` clears and `assign … <who>` reserves, and the pair survives side by side. |
+| A30 | PASS | `show 30` on a zero-comment ticket returned the number, title, body, state, labels, milestone, blockers and `comments: []` from **one** call. After `comment 30 "show probe"`, verified as `["show probe"]` exactly once, the second `show 30` returned the whole ticket again with one comment carrying its author and `createdAt`. Neither read was silent and neither reported the ticket as unreadable. |
+
+The regression reads the run was asked for are the ones inside those cases and are not counted
+again: the `next` in A29 was the first of two, `list ready` returned all six `ready` tickets with
+`rows: 14` and `inconsistent: [23]`, and `show` ran three times across A29b and A30. Nothing outside
+the assignee change moved: #11 stayed off the frontier on its open blocker #9, #22 stayed on it with
+its blocker #21 `CLOSED`, and #23 was named inconsistent by every verb that ran.
+
+Deviations from the runbook as written:
+
+- **D-1. The skill was model-invoked for fifteen of its sixteen calls, and the installed `SKILL.md`
+  was edited mid-run to allow it.** `713f017` carries `disable-model-invocation: true`, so Claude
+  Code's Skill tool refuses the skill and an unattended leg is impossible as the skill is declared.
+  One call, `/tracker assign 31`, which is A11, was typed by hand and fired under the unmodified
+  install. Two earlier attempts fired nothing and scored nothing: a sixteen-line paste, which the
+  harness takes as text rather than as sixteen commands, and a line with two leading spaces, which
+  stops the slash command. The operator then deleted `disable-model-invocation: true` from the
+  installed `SKILL.md` and restarted with `claude --continue`, since the skill registry is read at
+  session start and an in-session edit does not reach it. The remaining fifteen calls were invoked
+  through the Skill tool. The installed tracker skill therefore differed from committed `713f017` by
+  that one line for A20 onward, verified by `diff -r` at the end to be the only difference in either
+  skill directory. No verb reads the flag, so the behaviour under test is the commit's; the identity
+  claim is not, and that is why it is written here rather than glossed. An earlier operator edit in
+  the same session removed `metadata.allow_implicit_invocation` from `SKILL.md` and
+  `policy.allow_implicit_invocation` from `agents/openai.yaml`, which are the Codex-side policy and
+  not the Claude Code block; both were restored from the commit before scoring resumed.
+- **D-2. A29b ran against the caller's own login rather than a second collaborator.** The case is
+  [MANUAL] on GitHub for exactly that reason. `assign 29 wilsonkichoi` is still the explicit
+  `<who>` form and not the bare form, so the verb-form distinction the case is about was exercised,
+  and a fix that overreached by clearing the name would have failed it. What was not tested is the
+  second identity: reserving a ticket for somebody else, and the holder-naming path that goes with
+  it. See F10.
+- **D-3. Every fixture was made with `gh`, not through the skill.** #25 to #31 were created with
+  `gh issue create`, #27's starting assignment with `gh issue edit --add-assignee @me`, which is what
+  A28 says to do, and #32 was a throwaway for arming A27's trap. Recorded so the boundary is
+  explicit: the skill wrote nothing in this run except through `assign`, `move` and `comment`.
+
+#### Notes from the environment, neither a defect nor a verdict
+
+- The seven fixtures were left open rather than torn down, in the state the table describes: #25
+  `backlog`, #26 and #27 unlabelled and unassigned, #28 `ready` unassigned, #29 `ready` held by
+  `wilsonkichoi`, #30 unlabelled with one comment, #31 `in-progress` held by `wilsonkichoi` with
+  `bug` and `duplicate`. #32 is closed `not planned`. A later run should either use them knowingly
+  or create its own again.
+- Nothing external mutated a ticket under this run, unlike the previous one.
+
+#### Findings
+
+Numbered on from F9.
+
+**F10. `validation/tracker.md`: A29b is marked [MANUAL] on GitHub with no fallback, and most of it does not need a second collaborator. (A29b, runbook defect, not a skill defect.)**
+A29b reads "`$tracker assign <a ready ticket> octocat` against a collaborator this time, or on
+`local` any name", and is marked **[MANUAL]** on GitHub "which needs a second collaborator". Taken
+literally that makes the case unrunnable on a one-account machine, which is the ordinary case, and
+it is what would have left the newer half of the `assign` rework unobserved on GitHub for a second
+run running.
+Most of what the case tests does not need a second identity. The discriminator is the **verb form**,
+not the holder: `assign <id> <who>` must leave the status alone and reserve, where `move <id> ready`
+must clear. Running it with the caller's own login as the explicit target exercises that, and an
+overreaching fix that cleared the name would fail it just the same. This run did that and it passed:
+`assign 29 wilsonkichoi` left `["ready"]` and `["wilsonkichoi"]`, `next` dropped #29, `list ready`
+kept it, and `show` named the holder.
+What genuinely needs a second collaborator is narrower and is worth stating separately, because it
+is the part A24 and A28 also want: a holder who is not the caller, which is what makes the
+`from <holder>` refusal reachable from `assign <id> <who>` rather than only from `assign <id> none`,
+and what proves the assignment lands for somebody else at all. A27 shows that last one is not
+academic: a login without push access is dropped silently at exit 0.
+Note also that the case's own example argument, `octocat`, is the account A27 uses precisely
+*because* it has no push access, so a reader following A29b literally on a repository they own would
+assign nobody and then score the resulting empty `assignees` as the reservation failing.
+Fix, in this file: split A29b into the part that runs anywhere and the part that does not. Keep the
+frontier, `list` and `show` checks as a non-manual case, say the explicit target may be the caller's
+own login and that this tests the verb form rather than the second identity, and mark only the
+second-collaborator half [MANUAL]. Drop `octocat` from the example, or say in the case that the name
+has to be a real collaborator and that A27 is what happens when it is not.
+
+**Fixed as prescribed.** A29b now runs anywhere, takes any login with push access including the
+caller's own, adds the `still ready rather than in-progress` check, and says outright that the
+discriminator is the verb form rather than the identity. `octocat` is gone from it, with a line
+saying what happens if the name cannot be assigned. The second-identity half is A29c, [MANUAL], and
+it names the same gap that keeps A24 and half of A28 unrunnable on one account. The setup section
+also now carries the invocation workaround this run improvised, so deleting
+`disable-model-invocation: true` from the installed copy is a documented step with a restore rather
+than an undeclared edit. Runbook-only change, so no `VERSION` bump: nothing under `skills/` moved.
 
 ### 2026-09-19T01:12-07:00 GitHub leg delta, Claude Code
 
