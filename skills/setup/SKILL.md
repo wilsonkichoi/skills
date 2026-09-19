@@ -32,11 +32,17 @@ Also read, before asking anything:
 
 - An existing `docs/dev-agents/config.md`. It keeps the choices the project already made; the
   interview only fills what is missing.
+- `git rev-parse --git-dir`, to know whether this is a git repository at all.
 - `git remote -v`, to know whether there is a GitHub remote.
 - `AGENTS.md` and `CLAUDE.md` at the root, to know which context file already exists.
 - Any product-intent docs already present (`docs/PRD.md`, `docs/product/`, a spec in `AGENTS.md`).
 - The project's test command, from its manifest (`package.json` scripts, `pyproject.toml`,
   `Makefile`).
+
+**No git repository is the first thing to settle.** Offer `git init` before the interview starts.
+Every backend ends at step 7 offering a commit, and the `github` backend cannot have a remote
+without a repository to attach it to, so discovering this three sections later means unwinding the
+interview.
 
 ## 2. Interview
 
@@ -46,6 +52,11 @@ answer, then the next.
 Lead each section with the recommended answer so the user can accept it in a word. Give a one-line
 explainer only when the choice genuinely branches; skip the section entirely when exploration
 already settled it.
+
+**Offer the choices, do not make the user type them.** Where the harness has a native option
+picker, use it, so answering is a keypress. Where it has none, number the options and say a number
+is a valid answer. Never ask anyone to retype a path that is already on screen: show the default and
+take a bare yes.
 
 **Section A: Issue tracker.**
 
@@ -61,6 +72,20 @@ already settled it.
   invisible from `main` until that branch merges
 - **Other** (Jira, GitLab, etc.): ask the user to describe the workflow in one paragraph; record it
   as freeform text in the config body and set `issue_tracker: other`
+
+**Settle the backend's prerequisites here, before Section B.** A missing prerequisite is a question
+to ask now, not a fact to report at the end of the run. The user just chose this backend and is
+sitting right there; carrying the problem to step 5 means they answer three more sections without
+knowing whether the first one will work.
+
+| Backend | Check | When it is missing |
+|---|---|---|
+| `github` | `gh auth status`, and a GitHub remote in `git remote -v` | Ask which repository, and offer both answers: an existing one is `git remote add origin <url>`, a new one is `gh repo create <name> --private --source=. --remote=origin`. Creating a repository is the user's call, so offer it and wait for an answer. |
+| `linear` | the Linear MCP server answers `list_teams` | Stop. Say how to connect it, and write no Linear fields into the config until it answers. |
+| `local` | nothing | |
+
+Write the resolved `OWNER/REPO`, or the resolved team and project, into the config. Never record an
+intention to set one up later.
 
 **Section B: Product-intent documents.** Where do the product requirements, the spec, and the
 roadmap live? These paths go into the config so later skills read the right files. Defaults are
@@ -131,14 +156,13 @@ may be in use, also ensure `CLAUDE.md` contains an `@AGENTS.md` import line: cre
 One-time work for the chosen backend. Report what you did; do not treat a failure here as a reason
 to abandon the rest of setup.
 
-- **github:** confirm `gh auth status` succeeds and the repo has a GitHub remote. Create the four
-  status labels with `gh label create`, skipping any that already exist: `backlog`, `ready`,
+- **github:** the remote and `gh auth status` were settled in Section A. Create the four status
+  labels with `gh label create`, skipping any that already exist: `backlog`, `ready`,
   `in-progress`, `in-review`. There is no label for `done`, `cancel`, or `duplicate`; those three
   are GitHub close reasons, which is what `tracker` reads and writes. If the authenticated user
   cannot write to the repository, create nothing and report the exact commands a maintainer needs
   to run.
-- **linear:** confirm the Linear MCP server is connected. If it is not, tell the user how to add it
-  and stop before writing Linear fields into the config. Then check the team's statuses with
+- **linear:** the MCP connection was settled in Section A. Check the team's statuses with
   `list_issue_statuses`, which are per team and shared by every project in it. Seven are required,
   each with the category shown:
 
