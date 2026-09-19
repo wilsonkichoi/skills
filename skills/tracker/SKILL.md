@@ -122,7 +122,10 @@ querying with it: an answer shaped like a right one is the failure this rule exi
 **`next`** returns the frontier: every ticket that is `ready`, has no assignee, and has no open
 blocker, lowest id first. When the frontier is empty, return nothing and say so. When the backend
 cannot report blockers at all, stop with an error naming that. An empty frontier is never inferred
-from a query that could not see the dependency edges, nor from a result that came back truncated.
+from a query that could not see the dependency edges, nor from a result that came back truncated,
+nor from a read that is not the backend's authoritative one. A backend whose fast query lags behind
+its own writes cannot answer this verb: a ticket made `ready` a second ago is exactly the ticket
+`next` exists to return, so read the store that already knows about it.
 
 **`create`** writes the ticket at `backlog` unless one of the four open statuses is given, then
 writes one `link` edge per entry in its `## Blocked by` section, then moves it to the requested

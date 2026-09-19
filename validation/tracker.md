@@ -224,15 +224,15 @@ Expect only that ticket, with the second argument read as a milestone rather tha
 unknown status. Then `$tracker list ready no-such-milestone`: expect a stop naming the milestones
 that do exist, not the whole `ready` list unscoped and not an empty list at exit 0.
 
-**A23b a closed milestone still scopes the list.** `gh api repos/<R>/milestones -f title=M2`, put
-another `ready` ticket in it with `gh issue edit <id> --repo <R> --milestone M2`, close the
+**A23b a closed milestone is not an unknown milestone.** `gh api repos/<R>/milestones -f title=M2`,
+put another `ready` ticket in it with `gh issue edit <id> --repo <R> --milestone M2`, close the
 milestone with `gh api --method PATCH repos/<R>/milestones/<its number> -f state=closed`, then
 `$tracker list ready M2`.
-Expect that ticket. This is the half a title lookup cannot do: `gh issue list --milestone M2`
-returns `[]` at exit 0 once the milestone is closed, while `--milestone <its number>` returns the
-ticket, so a skill that passes the title straight through reports "no tickets" for a milestone that
-has them. An empty result here and a stop here are both FAIL, and they are different bugs: empty
-means the title was passed through, a stop means the resolver read open milestones only.
+Expect that ticket. A stop is the FAIL this case exists for, and it is a resolver bug rather than a
+query bug: `gh api repos/<R>/milestones` returns open milestones only, so without `?state=all` the
+skill reports a milestone that is right there, holding tickets, as a name nothing matches. Confirm
+the trap is armed before scoring: `gh api repos/<R>/milestones --jq '[.[].title]'` must omit `M2`
+while `gh api 'repos/<R>/milestones?state=all' --jq '[.[].title]'` lists it.
 
 **A24 [MANUAL] claim race.** Two terminals, one `ready` unassigned ticket, `$tracker claim <id>` in
 both at once. Expect the loser to remove only its own assignment, leave `in-progress` alone, and
@@ -241,6 +241,17 @@ report. Needs a second terminal, and ideally a second GitHub account.
 **A25 [MANUAL] host without issue dependencies.** Run `$tracker next` against a GitHub Enterprise
 host that does not expose `blockedBy`. Expect a loud stop, never an empty frontier. Needs such a
 host.
+
+**A26 a write is visible to the very next read.** `$tracker move <a backlog ticket> ready`, then
+`$tracker next` **once**. Expect that ticket in the frontier on the first attempt, with no retry and
+no pause. Then `gh issue edit <it> --repo <R> --milestone M1` and `$tracker list ready M1` once, and
+expect it there too.
+This is the case that catches a verb reading GitHub's search index instead of the primary store.
+Measured by hand against `gh` 2.97.0: an issue created with `--label ready` was in the unfiltered
+`gh issue list --state open` on 3 of 3 trials immediately and missing from `gh issue list --label
+ready` on all 3, and one trial later that index was still two tickets behind.
+**A retry is a FAIL here, not a PASS.** Scoring this on a second read hides the exact defect the case
+exists to find, and an empty frontier reported to a user is indistinguishable from a real one.
 
 Tear down: delete the issues and the four labels, or delete the repository with
 `gh repo delete <R>` if the run created it. Do not delete a repository you already had; A3 is
@@ -433,15 +444,198 @@ holding the reply as a queued input, is a FAIL: the skill asked and then kept go
 
 ## Run log
 
-Newest first. One entry per run. The runbook above is the reusable procedure and is not edited by a
-run; everything a run learned goes here.
+Newest first, by the timestamp in each entry's heading: ISO 8601 with the local offset, the same
+shape `CHANGELOG.md` uses, so two runs on one day stay distinguishable. One entry per run. The
+runbook above is the reusable procedure and is not edited by a run; everything a run learned goes
+here.
 
-### 2026-09-18 GitHub leg, Claude Code
+### 2026-09-19T00:41-07:00 GitHub leg, Claude Code
 
 ```
 TRACKER VALIDATION
 backend: github                  harness: claude-code
-date: 2026-09-18                 skill ref: a415ff2 (feat/tracker)
+date: 2026-09-19T00:41-07:00     skill ref: e01f335 (feat/tracker)
+
+PASS  30
+FAIL  0
+SKIP  2
+
+failures:
+  none
+skipped:
+  A24  [MANUAL] claim race, needs a second terminal and ideally a second GitHub account
+  A25  [MANUAL] needs a GitHub Enterprise host that does not expose blockedBy
+
+VERDICT: GREEN
+```
+
+Both failures from the 2026-09-18 run now pass. A2 resolves the remote inside Section A, and A23
+stops on an unknown milestone and names the ones that exist. A5's new comparison method works, and
+A23b passes. Two new findings are recorded below; neither produced a FAIL, and F7 is the one that
+would have, had the run scored on a first attempt.
+
+Scope: S1, S2, S3; leg A A1 to A25 including A23b; leg D D4, D5, D6. Legs B and C were not run, and
+D1 to D3 were out of scope.
+
+Environment: `gh` 2.97.0, `wilsonkichoi/tracker-gh` emptied to 0 issues and 0 milestones before the
+leg began, four status labels already present from the previous run. Installed skills verified
+byte-identical to the branch in all three working directories before scoring, with
+`diff -r` over both `tracker` and `setup`, because the branch was force-pushed.
+
+Working directories, three rather than the two the runbook implies:
+
+- `~/tmp/tracker-val-2`, no `.git` at install time, for A1, A2, D4, D5 and D6. A2 took the
+  `gh repo create` path and created `wilsonkichoi/tracker-val-2`, private, which is a new repository
+  this run made and teardown may delete.
+- `~/tmp/tracker-val-a3`, a fresh clone of `wilsonkichoi/tracker-gh`, for A3. Needed because
+  `/Users/wchoi/tmp/tracker-gh` still carried the previous run's `docs/dev-agents/config.md`, and
+  `setup` treats an existing config as choices already made, so A3's "Section A asks for the backend
+  and nothing else" could not have been observed there.
+- `/Users/wchoi/tmp/tracker-gh` itself was not used for a `setup` run. A4 onward ran against the
+  repository, not any one checkout.
+
+| Case | Verdict | Evidence |
+|---|---|---|
+| S1 | PASS | `.agents/skills/tracker/` holds `SKILL.md`, `README.md`, `github.md`, `linear.md`, `local.md`, `agents`. |
+| S2 | PASS | Both `.claude/` and `.kiro/` resolve `github.md` to `# Backend: GitHub Issues`; the installer created both. |
+| S3 | PASS | `-l` reports exactly 2 skills, `setup` and `tracker`. Nothing named `skill-name`, nothing from `validation/`. |
+| A1 | PASS | The `git init` offer was the only question on screen, before Section A. `git rev-parse --git-dir` returned `.git` afterwards. |
+| A2 | PASS | **Fix confirmed.** The remote question came inside Section A, immediately after the `github` answer and before Section B was asked. `git remote -v` names `git@github.com:wilsonkichoi/tracker-val-2.git`; the config records `github_repo: wilsonkichoi/tracker-val-2` with no intention-to-add language. |
+| A3 | PASS | Section A asked the backend and nothing else: `gh auth status` and the existing remote both satisfied, so no follow-up was generated. `git remote -v` byte-identical before and after by `diff`; config names `wilsonkichoi/tracker-gh`. |
+| A4 | PASS | `backlog in-progress in-review ready` all present, `done` and `cancel` both absent. Setup reported all four as already existing and created none. |
+| A5 | PASS | **Fix confirmed.** #9 labels `[]`. Body compared with `gh issue view 9 --json body \| jq --rawfile sent <file> -e '.body == $sent'`: `true` at exit 0. |
+| A6 | PASS | #10 `blockedBy.nodes` = `[9]`, written by `create`'s second call. |
+| A7 | PASS | #11 `blockedBy.nodes` = `[9]`. Blocker database id was `5508545108`, not `9`. |
+| A8 | PASS | #12 carries `## Related` with `- #9` in the body and `blockedBy.nodes` empty. |
+| A9 | PASS | frontier `[9]`, #10 excluded on its open blocker, `rows: 2`. **Took two attempts:** the first returned `rows: 0`. See F7. |
+| A10 | PASS | frontier `[10]` after #9 closed. Hand check: #10 `totalCount: 1` with `node_states: ["CLOSED"]`, reproducing the behaviour the frontier query is built around. |
+| A11 | PASS | Claim on #10 carrying `bug` and `duplicate` succeeded. Pre-read showed `status_labels: ["ready"]` against `all_labels: ["bug","duplicate","ready"]`. After: `["bug","duplicate","in-progress"]`, one assignee. |
+| A12 | PASS | #13 absent from `next`, `list ready` and `list backlog`, named `inconsistent: [13]` by all three, and `show` reported `status: inconsistent` with `status_labels: ["in-progress","ready"]`. **`next` took two attempts**; the first returned `rows: 0` and named nothing. See F7. |
+| A13 | PASS | `move 13 ready` with removal list `in-progress` and target `ready` left exactly `["ready"]`. |
+| A14 | PASS | `move 10 in-progress` on a ticket already there, removal list empty, kept `["bug","duplicate","in-progress"]`. |
+| A15 | PASS | #10 `CLOSED`/`COMPLETED`, no status label, `bug` and `duplicate` both retained. |
+| A16 | PASS | #15 `stateReason: DUPLICATE`. |
+| A17 | PASS | Pre-read saw `CLOSED`/`DUPLICATE`, the move was refused, and #15 was unchanged afterwards. |
+| A18 | PASS | #14 reads `backlog`, present in `list backlog` as `[14,12,11]`, absent from the frontier `[13]`. See deviation D-2. |
+| A19 | PASS | #9 reopened: `state: OPEN`, `stateReason: REOPENED`, `status: backlog`. Confirms the `REOPENED` handling added in `e01f335`. |
+| A20 | PASS | #13 claimed, then moved to `backlog`: `assignees: []`, `labels: ["backlog"]`. |
+| A21 | PASS | #16 closed while still carrying `ready` appeared in neither `list ready` nor `next`. |
+| A22 | PASS | `runbook note` present on #11 exactly once. |
+| A23 | PASS | **Fix confirmed.** `M1` resolved to number 3 via `milestones?state=all`; query by number returned `[11]` only. The unknown name returned empty from the resolver, which stopped and named the milestones that exist, `M1` and `M2`. Not an empty list at exit 0. |
+| A23b | PASS | `M2`, closed, resolved to number 4 with `state=all`; query returned `[12]`. Neither empty nor a stop. But the case's stated mechanism did not reproduce: see F8. |
+| A24 | SKIP | [MANUAL] |
+| A25 | SKIP | [MANUAL] |
+| D4 | PASS | Claude Code's own picker was used for every question, recommended option first and labelled `(Recommended)`. |
+| D5 | PASS | **Fix confirmed.** Six questions, six turns, in order: `git init` alone; Section A backend; Section A's remote prerequisite; Section B; Section C; Section D. At no point were `git init` and the interview, or two interview sections, in one picker. |
+| D6 | PASS | Every question was the last thing in its turn. No tool call followed a question and no work ran while one was outstanding. |
+
+Deviations from the runbook as written:
+
+- **D-1.** A3 ran in a third directory, a fresh clone, for the reason given under Working
+  directories. The runbook's leg A text assumes the A3 checkout is also where A4 onward runs; here
+  A4 onward ran against the repository directly, which the checks do not depend on.
+- **D-2.** A18 says to create the issue in the web UI. #14 was created with `gh issue create` and no
+  label. The stored record is identical, so the case still tests how the skill reads a ticket nobody
+  labelled. Same deviation as the previous run.
+- **D-3.** A9 and A12 were scored on a second read of the same query, with no state change in
+  between. The runbook does not authorise a retry. `github.md` does describe the frontier as a
+  candidate list subject to eventual consistency, so the retry is within how the skill is meant to be
+  used, but a single-attempt unattended run would have scored both FAIL. F7 is that finding.
+
+#### Findings
+
+Numbered on from the previous run's F1 to F6, all of which `e01f335` addressed.
+
+**F7. `tracker`: an empty filtered read straight after a write is reported as an empty result, with nothing to distinguish index lag from a genuinely empty frontier. (A9, A12, real defect.)**
+Every filtered `gh issue list` goes through GitHub's search API, which `github.md` already records as
+eventually consistent. What neither file does is tell a verb what to do about it. Measured three
+times this run, each with the primary store confirming the write had landed:
+
+| Query | First read | Second read |
+|---|---|---|
+| `next` after `move 9 ready` and `move 10 ready` | `rows: 0`, frontier `[]` | `rows: 2`, frontier `[9]` |
+| `next` after creating #13 with two status labels | `rows: 0`, `inconsistent: []` | `rows: 1`, `inconsistent: [13]` |
+| `--milestone M4` after assigning #13 to M4 | `[]` | `[13]` |
+
+`SKILL.md` says an empty frontier is never inferred from a truncated result or from a host without
+dependency support, and `github.md` says a missing ticket is never proof a `create` failed and must
+be re-read by number. Neither covers this: a ticket made `ready` seconds ago yields `rows: 0`, which
+passes every guard the skill has, and `next` then says the frontier is empty. That is a wrong answer
+shaped like a right one, which is the failure mode the milestone rule was just written to prevent.
+
+**Fixed in 0.0.11, and the mechanism is now known rather than inferred.** `gh issue list` has two
+backends and the flags pick which one, shown by `GH_DEBUG=api` on `gh` 2.97.0: no filter,
+`--assignee` and `--state` send `query IssueList` over the repository's own issues, which is the
+primary store, while `--label`, `--milestone` and `--search` send a search query
+(`label:ready repo:<owner/repo> state:open type:issue`) to the index. `--milestone <number>` is no
+escape either: `gh` resolves it back to the title and sends `milestone:<title>` to the same index.
+Measured three times in a row: an issue created with `--label ready` was in the primary-store read
+immediately on 3 of 3 trials and missing from `--label ready` on 3 of 3, still two tickets behind one
+trial later. So the fix is not a retry or a pause. `next` drops `--label ready` and
+`--search "no:assignee sort:created-asc"` and reads the same unfiltered page `list` already reads,
+doing the status test, the assignee test and the ordering in `jq`; `list <status> <milestone>` drops
+`--milestone` and filters on `.milestone.title`, which the payload already carries. `github.md` gains
+a **Which reads are authoritative** section stating the rule, and the truncation rule loses its
+advice to sort on the server, since that was what pushed the read onto the index in the first place.
+`SKILL.md` states it for every backend: an empty frontier is never inferred from a read that is not
+the backend's authoritative one. Runbook: A26 added, and it fails on a retry rather than passing on
+one, which is what D-3 shows this run could not do.
+It also makes the runbook fragile. A9 and A12 run `next` immediately after a write and would score
+FAIL on a first attempt, which is how a correct skill gets recorded as broken.
+Fix: `rows: 0` from a filtered read taken within seconds of a write is not evidence of an empty
+result. Re-read before reporting, and say the read was retried. The existing `rows` field is what
+this can be keyed on, so no new query shape is needed.
+
+**F8. `github.md`: the stated reason for resolving a milestone title to a number is false, and A23b cannot discriminate what it claims to. (A23b, documentation defect.)**
+`github.md` states, as verified against `gh` 2.97.0, that "`--milestone <title>` for a **closed**
+milestone returns an empty list too, at exit 0, while `--milestone <its number>` returns that
+milestone's tickets. Titles resolve against open milestones only." That did not reproduce. Against
+the same `gh` 2.97.0:
+
+- `M2`, closed, with #12 in it: `--milestone M2` returned `[12]` on 3 of 3 trials.
+- `M3`, freshly created and **open**, with #14 in it: `--milestone M3` returned `[]`, then `[14]`
+  after it was closed, which looks like the documented behaviour inverted.
+- `M4`, left **open**, with #13 just assigned: `--milestone M4` returned `[]` and
+  `--milestone 6` returned `[]` too, in the same breath, while `gh issue view 13` confirmed the
+  milestone. One read later both returned `[13]`.
+
+The number form lags identically to the title form, so the distinction the file draws does not
+exist. The mechanism is F7's search index lag, tracking write recency rather than milestone state.
+The earlier measurement was almost certainly a closed milestone queried by title immediately after
+the write, then by number a moment later once the index had caught up.
+What survives: resolving the title is still right, and `state=all` is still required, but for the
+existence check rather than for the query. `gh api repos/<R>/milestones` returns open milestones
+only, so without `state=all` the resolver reports a closed milestone that has tickets as a name that
+does not exist, which is the stop A23b names as a FAIL. That much was confirmed:
+`gh api repos/<R>/milestones --jq '[.[].title]'` returned `["M1"]` while `M2` existed and held #12.
+Fix, two places:
+
+- `github.md`: drop the claim that titles resolve against open milestones only. Keep the resolver,
+  and justify `state=all` by the existence check it protects. Note that both query forms are subject
+  to the search index lag of F7.
+- `validation/tracker.md`: A23b's discriminator does not hold. "Empty means the title was passed
+  through" is not true, since a passed-through title returns the tickets, and an empty result means
+  the read was taken too soon. Rewrite the case to check the resolver against a closed milestone
+  directly, which is the real guarantee, rather than inferring it from the query's shape.
+
+**Confirmed and fixed in 0.0.11.** Reproduced independently: with the index settled, all four
+milestones on `wilsonkichoi/tracker-gh`, two of them closed, returned identical results by title and
+by number. `GH_DEBUG=api` then showed why the distinction was never real: `--milestone <number>` is
+translated by `gh` into `milestone:<title>` before it is sent, so both forms are the same search
+query. The 2026-09-18 measurement was a closed milestone queried by title seconds after the write
+and by number a minute later, which is F7 and not a milestone-state effect. The false claim is out
+of `github.md`, `--milestone` is gone entirely with the scoping now done in `jq`, and `state=all`
+stays with its real justification, the existence check: `gh api repos/<R>/milestones --jq '[.[].title]'`
+returned `["M1"]` while `M2` existed, was closed, and held #12, so a resolver without it stops on a
+milestone that is right there. A23b is rewritten to check that, and to confirm the trap is armed
+before scoring.
+
+### 2026-09-18T23:29-07:00 GitHub leg, Claude Code
+
+```
+TRACKER VALIDATION
+backend: github                  harness: claude-code
+date: 2026-09-18T23:29-07:00     skill ref: a415ff2 (feat/tracker)
 
 PASS  20
 FAIL  2
@@ -461,6 +655,10 @@ VERDICT: RED
 Scope: leg A, cases A1 to A25. `S1` and `S2` also ran and passed: the install carries `SKILL.md`,
 `README.md`, `github.md`, `linear.md`, `local.md` and `agents`, and both `.claude/` and `.kiro/`
 resolve `github.md` to `# Backend: GitHub Issues`. `S3` was not run. Legs B, C and D were not run.
+
+Timestamp backfilled on 2026-09-19 from commit `7fb14b7` in `wilsonkichoi/tracker-gh`, which this
+run's step 7 created at `2026-09-18T23:29:53-07:00`. The entry recorded only a date, so the time is
+evidence from inside the run rather than a reading taken at the time.
 
 Environment: `gh` 2.97.0, repository `wilsonkichoi/tracker-gh`, private and empty at the start. The
 installed skill was byte-identical to repo HEAD across all five files, so every finding below is

@@ -69,9 +69,9 @@ separately in the same pass:
 
 Three properties this buys, and all three are the point:
 
-- **An issue with two status labels is never returned as a ticket.** `--label ready` matches an
-  issue carrying `ready` and `in-progress` both, so the server-side filter alone would hand
-  `next` a ticket whose status nobody can name.
+- **An issue with two status labels is never returned as a ticket.** `--label ready` would match an
+  issue carrying `ready` and `in-progress` both, which is one of the two reasons no query here uses
+  it. The `jq` test is what keeps `next` from being handed a ticket whose status nobody can name.
 - **It is never silently dropped either.** `inconsistent` carries its number, so the caller can say
   so and `move <id> <status>` is the repair.
 - **`list backlog` stops being a special case.** `status` already resolves an unlabelled issue to
@@ -92,15 +92,44 @@ issues, which are the lowest-numbered ones. Two rules:
   result that hit its own limit. Every `--jq` below that filters rows also emits `rows`, the count
   before filtering, because that is the only number this rule can be applied to. A filter that
   collapses a full page to `[]` looks identical to an empty repository without it.
-- Push the ordering to the server with `--search "sort:created-asc"` whenever lowest id first is
-  what you want. Issue numbers are handed out in creation order, so that is ascending issue number,
-  and it means truncation drops the tickets `next` cares about least rather than the ones it needs.
+- Sort in `jq`, never on the server. `--search "sort:created-asc"` would order the page for you, but
+  it moves the whole read onto the search index, which the next section says never to do. The page
+  therefore arrives newest first, so truncation drops the lowest-numbered issues, which are the ones
+  `next` wants most. Raising `--limit` is the answer; sorting on the server is not.
+
+## Which reads are authoritative
+
+`gh issue list` has two backends and the flags pick which one. Verified with `GH_DEBUG=api` on
+`gh` 2.97.0:
+
+| Invocation | What it sends | Consistency |
+|---|---|---|
+| no filter, `--assignee`, `--state` | `query IssueList` over the repository's issues | primary store, immediate |
+| `--label`, `--milestone`, `--search` | a search query, `label:ready repo:<owner/repo> state:open type:issue` | search index, seconds behind or worse |
+| `gh issue view <n>` | the issue by number | primary store, immediate |
+
+`--milestone <number>` is not a way around it: `gh` resolves the number back to the title and sends
+`milestone:<title>` to the search index just the same.
+
+Measured three times in a row: an issue created with `--label ready` was in the primary-store read
+immediately on all three trials and missing from `--label ready` on all three, and one trial later
+the search index was still two tickets behind.
+
+**No verb decides a result from the search index, and least of all an empty one.** Every query below
+reads the primary store and filters in `jq`. A `--label ready` result that comes back empty is
+indistinguishable from a repository with no `ready` tickets, so a frontier built on it reports
+nothing to do exactly when a session has just moved tickets to `ready`, which is the ordinary case
+and not a rare one. The same goes for `--milestone`: a milestone scoped that way looks empty for the
+first seconds of its life.
+
+`gh issue view <n>` is the primary store, which is why every verb verifies its own write by number
+rather than by looking for the ticket in a list.
 
 ## Per verb
 
 **list.** One shape for all four open statuses, `backlog` included. Always list every open issue and
 let `status` do the filtering: `--label <status>` would miss the unlabelled issues that read as
-`backlog`, and would over-match the inconsistent ones.
+`backlog`, would over-match the inconsistent ones, and is the other reason, the search index.
 
 ```
 gh issue list --repo <owner/repo> --state open --limit 200 \
@@ -113,24 +142,31 @@ gh issue list --repo <owner/repo> --state open --limit 200 \
 With no status argument, drop the `select` and return every open issue, still reporting
 `inconsistent`.
 
-**Scoping to a milestone: resolve the title to a number first, and pass the number.** Both ways this
-goes wrong are silent, both verified against `gh` 2.97.0:
-
-- `--milestone <title>` for a title no milestone has exits 0 with an empty list and nothing on
-  stderr, so a typo reads back as "no tickets".
-- `--milestone <title>` for a **closed** milestone returns an empty list too, at exit 0, while
-  `--milestone <its number>` returns that milestone's tickets. Titles resolve against open
-  milestones only.
+**Scoping to a milestone: resolve the title first, then filter the payload.** Never add
+`--milestone`, which moves the whole read onto the search index.
 
 ```
 gh api 'repos/<owner>/<repo>/milestones?state=all' --jq '.[] | select(.title == "<title>") | .number'
 ```
 
-`state=all` is required: the endpoint returns open milestones by default, which would make a closed
-milestone look like a name that does not exist. Empty output is a stop, not an empty list. Say the
-milestone does not exist and name the ones that do, from the same call with `--jq '.[].title'`.
-Otherwise add `--milestone <that number>` to the query above. Milestone titles are unique per
-repository, so a match is exactly one number.
+`state=all` is required. The endpoint returns open milestones by default, so without it a closed
+milestone that still holds tickets reads as a name nothing matches, and the caller is stopped over a
+milestone that is right there. Empty output is the stop: `gh issue list --milestone no-such-name`
+exits 0 with an empty list and nothing on stderr, so a typo would otherwise read back as "no
+tickets". Say the milestone does not exist and name the ones that do, from the same call with
+`--jq '.[].title'`.
+
+A name that resolves is then one more `jq` filter on the query above, which already carries
+`milestone` in its `--json`:
+
+```
+select(.milestone.title == "<title>")
+```
+
+Writing a milestone is the other direction and behaves differently: `gh issue create --milestone`
+and `gh issue edit --milestone` take the title of an **open** milestone only and exit 1 with
+`'<title>' not found` on a closed one. That is a real limit, and it is a loud one, so it needs no
+guard here.
 
 For a terminal status, query `--state closed` and filter on `stateReason`, which is on the list
 payload, so `list done`, `list cancel`, and `list duplicate` each read back in one call with no
@@ -155,12 +191,13 @@ Resolve the status with the same `status` definition, so `show` and `list` can n
 one issue. An issue carrying two status labels reports as inconsistent here, naming both labels, and
 `move <id> <status>` is how it gets repaired.
 
-**next.** The whole frontier is one command. `no:assignee` and `sort:created-asc` do the assignee
-filter and the ordering on the server.
+**next.** The whole frontier is one command, the same unfiltered read `list` uses, with every filter
+in `jq`. Nothing is pushed to the server: `--label ready` and `--search "no:assignee
+sort:created-asc"` would each move the read onto the search index, where a ticket made `ready`
+seconds ago is missing and the frontier comes back short or empty.
 
 ```
-gh issue list --repo <owner/repo> --state open --label ready \
-  --search "no:assignee sort:created-asc" --limit 100 \
+gh issue list --repo <owner/repo> --state open --limit 200 \
   --json number,title,assignees,labels,blockedBy \
   --jq '<prelude> {rows: length,
          frontier: [.[]
@@ -168,21 +205,19 @@ gh issue list --repo <owner/repo> --state open --label ready \
              then error("blockedBy is null: this host does not expose issue dependencies")
              else . end
            | select(status == "ready")
+           | select((.assignees | length) == 0)
            | select(.blockedBy.totalCount == (.blockedBy.nodes | length))
-           | select([.blockedBy.nodes[] | select(.state == "OPEN")] | length == 0)],
+           | select([.blockedBy.nodes[] | select(.state == "OPEN")] | length == 0)]
+           | sort_by(.number),
          inconsistent: [.[] | select(status == "inconsistent") | .number]}'
 ```
 
-`--label ready` is a server-side prefilter and nothing more. It can only over-include, because an
-issue whose status is `ready` must carry that label, so narrowing it further with `select(status ==
-"ready")` is safe and necessary: without it an issue carrying `ready` and `in-progress` both would
-enter the frontier and get claimed, and `claim`'s pre-read would then refuse it.
-
-Five things that query is doing on purpose:
+Six things that query is doing on purpose:
 
 1. **`select(status == "ready")` is the shared status test**, the same one `list` uses, and it is
-   what keeps an inconsistent issue out of the frontier. The server-side `--label ready` cannot do
-   this on its own.
+   what keeps an inconsistent issue out of the frontier. An issue carrying `ready` and `in-progress`
+   both would otherwise enter the frontier and get claimed, and `claim`'s pre-read would then refuse
+   it.
 2. **The `error()` is the guard for a host without dependency support**, and it has to be written
    out. It cannot be left implicit in the filters below it: `null.totalCount` is `null` and
    `null.nodes | length` is `0` in `jq`, so a null row compares false against the 50-node check and
@@ -201,18 +236,21 @@ Five things that query is doing on purpose:
    note, because an unattended run will not compare the two counts by hand. Use `show <id>` to
    inspect a ticket held back this way.
 5. **`rows` is the pre-filter count**, and it is the only thing the truncation rule can read. A page
-   of 100 `ready` tickets that are all blocked yields an empty `frontier`, which is indistinguishable
+   of 200 `ready` tickets that are all blocked yields an empty `frontier`, which is indistinguishable
    from a repository with no `ready` tickets unless `rows` is there to say otherwise.
+6. **The assignee test is `jq` too.** The primary-store read has no unassigned filter, and the one
+   that exists, `--search "no:assignee"`, is the search index again. One `select` costs nothing and
+   the page was already being read in full.
 
-Results come back in ascending issue number, so do not re-sort. When `rows` reaches `--limit`, the
-frontier's head is still correct because the ordering is ascending, but say the list was truncated
-rather than presenting it as the whole frontier.
+`sort_by(.number)` is what puts the frontier in ascending issue number, since the page arrives
+newest first. When `rows` reaches `--limit`, raise it and read again: the page is the newest issues,
+so the tickets `next` wants most are the ones truncation drops. Never report a frontier from a
+result that hit its own limit.
 
-The frontier is a list of candidates, not a set of facts. `--search` goes through the eventually
-consistent search API, so a ticket claimed seconds ago can still appear here and a ticket just moved
-to `ready` can be missing. `claim`'s pre-read is what settles it: a refusal on the first candidate
-right after `next` is the system working, so take the next candidate rather than retrying the same
-one.
+The frontier is a list of candidates, not a set of facts, and the read being immediately consistent
+does not change that: another session can claim a ticket between your read and your claim. `claim`'s
+pre-read is what settles it, so a refusal on the first candidate right after `next` is the system
+working, and the answer is to take the next candidate rather than retrying the same one.
 
 **create.** Use `--body-file` or a heredoc; a multi-line body does not survive `--body`.
 
@@ -367,12 +405,5 @@ gh issue view <n> --repo <owner/repo> --json blockedBy --jq '[.blockedBy.nodes[]
 The blocker's number must be in that list. This verification is what `create` depends on: a ticket
 whose edge silently failed goes to `ready` and onto the frontier as though nothing blocked it, which
 is the one wrong answer `next` must never give.
-
-## Consistent reads
-
-Every filtered `gh issue list` (`--label`, `--milestone`, `--search`) goes through GitHub's search
-API, which is eventually consistent. An issue created or edited seconds earlier can be missing from
-the result. A missing ticket in a list is never proof the create failed: re-read it by number with
-`gh issue view`, which hits the primary store.
 
 No sub-issues. Nothing in this skill set creates them until `plan` is ported; add the endpoint then.

@@ -103,6 +103,12 @@ because a query failed: if the backend cannot tell it what is blocking what, it 
 instead. An empty answer and an unanswerable question look identical from the outside, and only one
 of them means you have nothing to do.
 
+The same care goes into which read it uses. GitHub has a fast search index and a primary store, and
+the index runs seconds behind: the ticket you made `ready` a moment ago is exactly the one it has
+not caught up with, and exactly the one you are asking for. `next` reads the store that already
+knows, and sorts and filters locally, so asking straight after a write gives you the ticket rather
+than an empty frontier.
+
 ## There is no `blocked` status
 
 Because "blocked" is not a state of the work, it is a relationship between two tickets.
