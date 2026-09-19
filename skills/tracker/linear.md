@@ -10,13 +10,15 @@ than doing it itself.
 
 ## What has been tested
 
-Verified 2026-09-18 against a live workspace, one team with seven statuses:
+Verified 2026-09-19 against two live workspaces: one established team with seven statuses, and one
+freshly created sandbox team. Read and write paths were both executed.
 
 | Part | Status |
 |---|---|
-| Tool names, status shapes, relation shapes, milestones, filtering by name and by category | Read directly from a live server. Trust these. |
-| The two findings under "Findings to respect" | Observed in a real dogfood run of the predecessor toolkit. |
-| Every write path: `save_issue`, `save_comment`, claiming, the silent bad-state-name failure | **Not executed.** Read paths only were exercised. |
+| Tool names, status and relation shapes, milestones, filtering by name and by category | Read from a live server. |
+| `save_issue` create and update, status writes, claiming, relations, the duplicate transition | Executed against the sandbox. Findings below. |
+| `save_comment` and `list_comments` | **Not executed.** |
+| Two sessions racing a claim | **Not executed.** Needs two identities. |
 
 ## Statuses
 
@@ -34,10 +36,18 @@ match without changing anything:
 | `cancel` | Canceled | `canceled` |
 | `duplicate` | Duplicate | `duplicate` |
 
+**A new Linear team does not have all seven.** A team created from Linear's default template has
+six statuses and no **In Review**, verified on a team created the same day. So the missing-status
+stop below is the ordinary first run, not an edge case: expect most adopters to add In Review by
+hand before `setup` will write the Linear config.
+
 **Operate by name.** `state` on `save_issue` and `list_issues` accepts a type, a name, or an id.
-Always pass the name from this table. It is exact, it is unambiguous, and it never needs a
-tie-break: `in-progress` and `in-review` share the category `started`, so the category cannot tell
-them apart and the name can.
+Always pass the name from this table. It is unambiguous, and it never needs a tie-break:
+`in-progress` and `in-review` share the category `started`, so the category cannot tell them apart
+and the name can.
+
+Name matching is case-insensitive: `in progress` resolves to `In Progress`. A name that matches
+nothing is a loud error, `Could not find state "<name>"`, not a silent no-op.
 
 **The category is for validation, not for operating.** `setup` checks it once, because the category
 is the only way to notice a status this table does not cover. A team with a second `completed`
@@ -76,11 +86,15 @@ order.
 | `list` | `list_issues` with `state` set to the status name, plus `project` and `milestone` to scope |
 | `show` | `get_issue` with `includeRelations: true`, plus `list_comments` |
 | `next` | See below |
-| `create` | `save_issue` with `team`, `title`, `description`, and `state: 'Backlog'`; then the blocker relations; then `save_issue` again to set the requested status |
+| `create` | One `save_issue` with `team`, `title`, `description`, `state`, and `blockedBy`. Relations apply on create here, unlike GitHub, so the edges and the status land together |
 | `claim` | See below |
 | `comment` | `save_comment`, then `list_comments` and find the exact body |
-| `move` | `get_issue` first and refuse any move out of `done`, `cancel`, or `duplicate`; otherwise `save_issue` with the exact status name, then `get_issue` to confirm. Moving to `backlog` also sets `assignee: null`; moving to `duplicate` sets `duplicateOf` |
+| `move` | `get_issue` first and refuse any move out of `done`, `cancel`, or `duplicate`; otherwise `save_issue` with the status name, then `get_issue` to confirm. Moving to `backlog` also sets `assignee: null`. Moving to `duplicate` is its own shape, above |
 | `link` | `save_issue` with `blockedBy`, then `get_issue` with `includeRelations: true` to confirm the edge |
+
+`create` needs no second call to apply the requested status. GitHub's create-link-then-label order
+exists because a GitHub edge is a separate API call that can fail after the label lands; here both
+go in one request, so a ticket never sits on the frontier without its edges.
 
 `save_issue` creates and updates, so a verification read after a write is not optional here: the
 same call shape does both, and its result is not evidence that the state changed.
@@ -108,6 +122,9 @@ Never report an empty frontier from a page that came back full, and never from a
 
 ## Claiming, where Linear differs
 
+Claiming is one call, verified: `save_issue` with `state: 'In Progress'` and `assignee: 'me'` sets
+both. `assignee: null` clears it, which is what `move <id> backlog` uses.
+
 A Linear issue has one assignee, not a list, so the "more than one assignee" race check in
 `SKILL.md` cannot fire here. Two sessions that write the field both succeed and the last write
 wins. The check that replaces it: the verification read has to name **you**. A different name means
@@ -128,17 +145,45 @@ expire, which is what GitHub milestones and the `local` backend's `milestone` fi
 matches nothing in the project is a stop, not a silently unscoped list: returning every ticket in
 the project when the caller asked for a subset is a wrong answer shaped like a right one.
 
+## The duplicate transition is destructive
+
+**Marking an issue as a duplicate silently clears its other relations.** Reproduced twice: an issue
+holding `relatedTo` came back with `relatedTo: []` after the duplicate transition, with no error and
+no mention of it in the response.
+
+Read the relations before the move, and report what was lost. If those edges matter, say so before
+doing it rather than after.
+
+`move <id> duplicate <original>` is one call, and not the call you would guess:
+
+```
+save_issue { id: <id>, duplicateOf: <original> }
+```
+
+Setting `duplicateOf` moves the status to Duplicate on its own. Do not pass `state` as well. Two
+things fail if you try:
+
+- Creating an issue directly in a duplicate state is rejected: `Cannot create an issue in a
+  duplicate state.`
+- Setting `state: 'Duplicate'` before the relation exists is rejected: `Issues can only be moved to
+  a duplicate state when a duplicate issue relation exists.`
+
+This is the reverse of GitHub, where the close carries the reason and the duplicate reference
+together.
+
 ## Findings to respect
 
-Both came out of running the predecessor for real. Each costs one extra call and each caught a bug
-that was otherwise invisible.
+- **An unfiltered `list_issues` can omit issues that a filtered call returns.** From a real dogfood
+  run of the predecessor. Always query with an explicit `state`, and confirm a specific issue with
+  `get_issue` rather than by its presence in a list result.
+- **`list_issues` paginates.** A full page is an incomplete answer, the same as hitting `--limit` on
+  GitHub: page through it with the returned cursor before reporting a list.
+- **The body does not round-trip.** Linear rewrites a plain `WKC-5` in a `## Blocked by` section
+  into a rich issue link. The frontmatter equivalent here is the relation, which is what every verb
+  reads, so this costs nothing. Do not compare a description you sent against the one that comes
+  back and call the difference a failure.
 
-- **A status write with a name that is not exact fails silently.** The call returns success and the
-  status does not change. Use only the names in the table above, and re-read after every
-  transition, not just after `claim`.
-- **An unfiltered `list_issues` can omit issues that a filtered call returns.** Always query with an
-  explicit `state`, and confirm a specific issue with `get_issue` rather than by its presence in a
-  list result.
-
-`list_issues` also paginates. A full page is an incomplete answer, the same as hitting `--limit` on
-GitHub: page through it with the returned cursor before reporting a list.
+The predecessor also recorded that a status write with an inexact name fails silently. **That did
+not reproduce.** This server errors loudly on an unknown name and matches case-insensitively. The
+verification read stays mandatory anyway, because the duplicate transition above loses data without
+saying so, which is the same class of failure arriving through a different door.

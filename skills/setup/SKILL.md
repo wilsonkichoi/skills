@@ -152,11 +152,14 @@ to abandon the rest of setup.
   | Canceled | `canceled` |
   | Duplicate | `duplicate` |
 
-  These are Linear's defaults, so most teams already match. **Any missing one is a stop.** There is
-  no MCP tool that creates or renames a status, so say exactly what to add or rename in the team's
-  settings and do not write the Linear fields into the config until it matches. Do not invent a
-  mapping onto whatever the team happens to have: a status written to the wrong place succeeds
-  silently and the ticket lands where nobody is looking.
+  **Expect In Review to be missing.** A team created from Linear's default template has six
+  statuses and no In Review, so this is the ordinary first run rather than an edge case. Say so
+  plainly instead of treating it as the user having done something wrong.
+
+  **Any missing one is a stop.** There is no MCP tool that creates or renames a status, so name
+  exactly what to add in the team's settings, under which category, and do not write the Linear
+  fields into the config until it matches. Do not invent a mapping onto whatever the team happens
+  to have: a ticket written to the wrong status lands where nobody is looking.
 
   **An extra status is a warning, not a stop.** Report it loudly, by name and category, and say that
   tickets parked there are invisible to the frontier and will be reported as unmapped. Then write it

@@ -239,10 +239,11 @@ you have access to; the cases that add or remove a status need Linear's settings
 Every write path in `linear.md` is still unexecuted, so treat a failure here as expected rather than
 surprising, and record what actually happened.
 
-**C1 setup accepts a default team.** Run `$setup` against a team with Linear's default statuses.
-Check: the seven required statuses are found, each in its category, and the Linear fields are
-written to the config.
-Expect no questions about status mapping. There is no mapping to configure.
+**C1 a fresh team is missing In Review.** Run `$setup` against a newly created Linear team.
+Check: `list_issue_statuses` returns six statuses, no In Review.
+Expect a stop naming In Review and the `started` category, and **no** Linear fields in the config.
+This is the ordinary first run, not an edge case: Linear's default template does not include it.
+Add In Review in team settings, re-run, and expect setup to complete with no mapping questions.
 
 **C2 [MANUAL] a missing status is a stop.** Rename or delete the team's `In Review`, then re-run
 `$setup`.
@@ -267,10 +268,12 @@ Expect a stop saying the workflow no longer matches the config and to re-run `$s
 finds `Released` by its `completed` category and writes to it anyway has absorbed a drift it should
 have surfaced.
 
-**C6 the silent bad-name write is caught.** Ask the session to write a status using a name that is
-close but not exact, for instance `in review` against `In Review`.
-Linear returns success and changes nothing. Expect the verification read to catch it and the report
-to say the write did not land.
+**C6 a bad status name errors rather than failing silently.** Write a status using a name no status
+has, for instance `in reviewww`.
+Expect `Could not find state "in reviewww"` and no change. Then write `in progress` in lower case:
+expect it to resolve to `In Progress`, since matching is case-insensitive.
+The predecessor recorded this as a silent failure. It did not reproduce; record what you see, since
+a regression either way matters.
 
 **C7 the frontier reads blocker statuses.** Create A and B with B blocked by A, both `Todo` and
 unassigned. `$tracker next`.
@@ -280,8 +283,14 @@ cannot have filtered correctly, even if the answer looks right on one sample.
 
 **C8 relations are native.** `$tracker link <B> blocked-by <A>`, then `get_issue` on B with
 `includeRelations: true`.
-Expect the edge under `relations.blockedBy`. Then `$tracker move <id> duplicate <original>` and
-expect `relations.duplicateOf` set, with the status `Duplicate` rather than `Canceled`.
+Expect the edge under `relations.blockedBy`.
+
+**C8b the duplicate transition destroys other relations.** Give a ticket a `relatedTo` edge, confirm
+it with `get_issue`, then `$tracker move <it> duplicate <original>` and read it again.
+Expect `duplicateOf` set, the status `Duplicate` rather than `Canceled`, and **`relatedTo` emptied**.
+Linear clears the other relations with no error and no mention in the response. Expect the skill to
+have read the relations first and to report what was lost. A run that reports a clean move is a
+FAIL: it means nothing looked.
 
 **C9 milestone scoping.** `$tracker list ready "<milestone name>"`.
 Expect only that milestone's issues. Then pass a milestone name that does not exist: expect a stop,
