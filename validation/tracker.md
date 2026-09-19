@@ -61,7 +61,6 @@ cases are all skipped is still GREEN, and the skipped list is what tells you wha
 
 ```
 mkdir -p ~/tmp/tracker-val && cd ~/tmp/tracker-val
-git init
 npx skills@latest add 'https://github.com/wilsonkichoi/skills.git#feat/tracker' -a claude-code -a codex -a kiro-cli
 ```
 
@@ -72,8 +71,6 @@ copies the whole skill directory, so the human-facing explainer ships to every c
 **S2 sibling resolution.** Check: `head -1 .claude/skills/tracker/github.md` and the same under
 `.kiro/`. Expect `# Backend: GitHub Issues` from both.
 Both directories have to have been created by the installer, since nothing here pre-creates them.
-A missing `.kiro/` is [vercel-labs/skills#2071](https://github.com/vercel-labs/skills/issues/2071)
-returning, and it needs skills 1.5.26 or later.
 
 **S3 one skill per name.** Check:
 `npx skills@latest add 'https://github.com/wilsonkichoi/skills.git#feat/tracker' -l`.
@@ -84,128 +81,151 @@ either.
 
 ## A. GitHub backend
 
-**A1 setup offers to create the git repository.** In a directory with no `.git`, run `$setup`.
+Setup has three starting states. A1 and A2 are the awkward ones and A3 is what most people actually
+have; the rest of the leg runs against A3's repository. The install block deliberately does not run
+`git init`, because the installer does not need one and because A1 has to find a directory without
+one.
+
+**A1 setup offers to create the git repository.** In this directory, which has no `.git`, run
+`$setup`.
 Expect it to say there is no git repository and offer `git init` before the interview reaches
 Section B. Nothing else in the run works without one: the `github` backend has nowhere to attach a
 remote, and step 7 has nothing to commit to.
 Check: `git rev-parse --git-dir` succeeds before setup reports.
 
-**A2 setup resolves a missing remote in Section A.** In a git repository with no remote, run
-`$setup` and answer `github`.
+**A2 setup resolves a missing remote in Section A.** Carry on from A1, whose repository has no
+remote, and answer `github`.
 Expect it to ask which repository right there, offering both an existing one and
 `gh repo create`. A run that notes the missing remote and moves on to Section B is a FAIL: the user
 answers three more sections without knowing whether the backend they picked will work at all.
 Check: `git remote -v` names a GitHub remote, and `docs/dev-agents/config.md` records the resolved
 repository rather than an intention to add one.
 
-Answer `github` and let setup finish before the cases below.
+**A3 an existing repository asks nothing.** In a fresh directory, clone a repository you already
+own, empty or not, install the skills into it, and run `$setup`. This is the ordinary case, and the
+two above are the edge cases.
+Expect Section A to ask for the backend and nothing else: the repository and the remote are already
+there, so there is nothing left to resolve.
+Check: `git remote -v` is unchanged by the run, and the config names that repository.
 
-**A3 four labels, not seven.**
+Run the rest of the leg here. `<R>` below is this repository's `OWNER/REPO`.
+
+**A4 four labels, not seven.**
 Check: `gh label list --repo <R> --json name --jq '[.[].name]|sort|join(" ")'`
-Expect `backlog`, `in-progress`, `in-review`, `ready` present; `done`, `cancel`, `duplicate` absent.
+Expect `backlog`, `in-progress`, `in-review`, and `ready` present, and `done` and `cancel` absent.
+`duplicate` proves nothing either way: it ships in GitHub's own default label set, so a repository
+created through the web UI already has one before setup runs. What matters is that setup did not
+create it and that nothing reads it as a status, which A11 covers.
 
-**A4 create writes the ticket.** `$tracker create` with ticket A.
+**A5 create writes the ticket.** `$tracker create` with ticket A.
 Check: `gh issue view <A> --repo <R> --json title,body,labels`
 Expect the body as sent and no status label, since `create` defaults to `backlog`.
 
-**A5 create writes the edge.** `$tracker create` with ticket B naming `#<A>` under `## Blocked by`.
+**A6 create writes the edge.** `$tracker create` with ticket B naming `#<A>` under `## Blocked by`.
 Check: `gh issue view <B> --repo <R> --json blockedBy --jq '[.blockedBy.nodes[].number]'`
 Expect `[<A>]`. This is the edge `create` writes as a second call; its own exit code says nothing
 about it.
 
-**A6 link is its own verb.** Create E with no blockers, then `$tracker link <E> blocked-by <A>`.
+**A7 link is its own verb.** Create E with no blockers, then `$tracker link <E> blocked-by <A>`.
 Check: `gh issue view <E> --repo <R> --json blockedBy --jq '[.blockedBy.nodes[].number]'`
 Expect `[<A>]`. The dependency endpoint takes the blocker's numeric **database** id, which is
 neither `#<A>` nor its `node_id`, so a skill that passed the issue number here either errors or
 writes an edge to some unrelated issue. Check which one you got.
 
-**A7 Related is a reference, not an edge.** `$tracker create` with ticket F naming `#<A>` under
+**A8 Related is a reference, not an edge.** `$tracker create` with ticket F naming `#<A>` under
 `## Related` and nothing under `## Blocked by`.
 Check: `gh issue view <F> --repo <R> --json body,blockedBy`
 Expect the `## Related` line present in the body and `blockedBy.nodes` **empty**. A `## Related`
 entry that became a dependency edge is a FAIL: it would drop F off the frontier over a reference
 nothing is supposed to compute on.
 
-**A8 frontier excludes the blocked ticket.** `$tracker move <A> ready`, `$tracker move <B> ready`,
+**A9 frontier excludes the blocked ticket.** `$tracker move <A> ready`, `$tracker move <B> ready`,
 then `$tracker next`.
 Expect A and not B.
 
-**A9 closed blocker releases the frontier.** `$tracker move <A> done`, then `$tracker next`.
+**A10 closed blocker releases the frontier.** `$tracker move <A> done`, then `$tracker next`.
 Expect B.
 Check the reason by hand:
 `gh issue list --repo <R> --state open --json number,blockedBy --jq '.[]|select(.number==<B>)'`
 Expect `blockedBy.totalCount` still `1` with the node `CLOSED`. A `next` that filtered on
 `totalCount` would never return this ticket.
 
-**A10 topic labels do not block a claim.**
-`gh issue edit <B> --repo <R> --add-label bug`, then `$tracker claim <B>`.
+**A11 topic labels do not block a claim, including one named after a status.**
+`gh issue edit <B> --repo <R> --add-label bug --add-label duplicate`, then `$tracker claim <B>`.
 Check: `gh issue view <B> --repo <R> --json assignees,labels`
-Expect `bug` and `in-progress`, one assignee, you. A refusal here means the pre-read counts topic
-labels as status labels.
+Expect `bug`, `duplicate`, and `in-progress`, one assignee, you. A refusal means the pre-read counts
+topic labels as status labels. `duplicate` is the sharp half: it is a GitHub default label and it
+shares a name with one of the seven statuses, but only the four open statuses are labels at all, so
+it has to read as an ordinary topic label and survive every write untouched.
 
-**A11 multi-status issue never reaches a result, and all three verbs agree.**
+**A12 multi-status issue never reaches a result, and all three verbs agree.**
 `gh issue create --repo <R> --title "two statuses" --body x --label ready --label in-progress`
 then `$tracker next`, `$tracker list ready`, `$tracker list backlog`, and `$tracker show <that id>`.
 Expect the issue in none of the three result sets, named as inconsistent by all four verbs, and both
 labels named by `show`. A verb that reports it as `ready`, as `backlog`, or not at all is a FAIL:
 one shared status test is supposed to make disagreement impossible.
 
-**A12 multi-status issue is repairable.** `$tracker move <that id> ready`.
+**A13 multi-status issue is repairable.** `$tracker move <that id> ready`.
 Check: `gh issue view <that id> --repo <R> --json labels --jq '[.labels[].name]|sort'`
 Expect exactly `ready`.
 
-**A13 the no-op move keeps its label.** `$tracker move <B> in-progress` on a ticket already there.
+**A14 the no-op move keeps its label.** `$tracker move <B> in-progress` on a ticket already there.
 Check: `gh issue view <B> --repo <R> --json labels --jq '[.labels[].name]|sort'`
-Expect `bug` and `in-progress` both. An empty result means the add and remove lists overlapped.
+Expect `bug`, `duplicate`, and `in-progress` all three. A missing `in-progress` means the add and
+remove lists overlapped; a missing topic label means the move touched labels that were not its own.
 
-**A14 terminal move records the reason and strips the label.** `$tracker move <B> done`.
+**A15 terminal move records the reason and strips the label.** `$tracker move <B> done`.
 Check: `gh issue view <B> --repo <R> --json state,stateReason,labels`
-Expect `CLOSED`, `COMPLETED`, no status label, `bug` retained.
+Expect `CLOSED`, `COMPLETED`, no status label, and both `bug` and `duplicate` retained. A ticket
+closed as `COMPLETED` while still carrying a `duplicate` label is correct: the label is a topic and
+the close reason is the status.
 
-**A15 duplicate records its original.** Create C and D, then `$tracker move <D> duplicate <C>`.
+**A16 duplicate records its original.** Create C and D, then `$tracker move <D> duplicate <C>`.
 Check: `gh issue list --repo <R> --state closed --json number,stateReason`
 Expect D as `DUPLICATE`.
 
-**A16 terminal is terminal.** `$tracker move <D> ready`.
+**A17 terminal is terminal.** `$tracker move <D> ready`.
 Expect a refusal. `gh issue close` on a closed issue exits 0 and keeps the old reason, so the
 pre-read is the only guard.
 
-**A17 human-made ticket reads as backlog.** Create an issue in the web UI, no label, one-line body.
+**A18 human-made ticket reads as backlog.** Create an issue in the web UI, no label, one-line body.
 `$tracker show <id>` expect `backlog`; `$tracker next` expect it absent; `$tracker list backlog`
 expect it present.
 
-**A18 reopened ticket reads as backlog.** Reopen a closed issue in the web UI.
+**A19 reopened ticket reads as backlog.** Reopen a closed issue in the web UI.
 `$tracker show <id>` expect `backlog`.
 
-**A19 backing off clears the assignee.** `$tracker claim <some ready ticket>`, then
+**A20 backing off clears the assignee.** `$tracker claim <some ready ticket>`, then
 `$tracker move <it> backlog`.
 Check: `gh issue view <it> --repo <R> --json assignees`
 Expect empty.
 
-**A20 stale label stays invisible.**
+**A21 stale label stays invisible.**
 `gh issue create --repo <R> --title stale --body x --label ready` then
 `gh issue close <it> --repo <R> --reason completed`.
 `$tracker list ready` and `$tracker next` expect it in neither.
 
-**A21 comment lands and is verified.** `$tracker comment <some id> "runbook note"`.
+**A22 comment lands and is verified.** `$tracker comment <some id> "runbook note"`.
 Check: `gh issue view <it> --repo <R> --json comments --jq '[.comments[].body]'`
 Expect the exact body present exactly once.
 
-**A22 a milestone scopes the list.** `gh api repos/<R>/milestones -f title=M1`, put one `ready`
+**A23 a milestone scopes the list.** `gh api repos/<R>/milestones -f title=M1`, put one `ready`
 ticket in it with `gh issue edit <id> --repo <R> --milestone M1`, then `$tracker list ready M1`.
 Expect only that ticket, with the second argument read as a milestone rather than rejected as an
 unknown status. Then `$tracker list ready no-such-milestone`: expect a stop, not the whole `ready`
 list unscoped.
 
-**A23 [MANUAL] claim race.** Two terminals, one `ready` unassigned ticket, `$tracker claim <id>` in
+**A24 [MANUAL] claim race.** Two terminals, one `ready` unassigned ticket, `$tracker claim <id>` in
 both at once. Expect the loser to remove only its own assignment, leave `in-progress` alone, and
 report. Needs a second terminal, and ideally a second GitHub account.
 
-**A24 [MANUAL] host without issue dependencies.** Run `$tracker next` against a GitHub Enterprise
+**A25 [MANUAL] host without issue dependencies.** Run `$tracker next` against a GitHub Enterprise
 host that does not expose `blockedBy`. Expect a loud stop, never an empty frontier. Needs such a
 host.
 
-Tear down: `gh repo delete <R>` (needs the `delete_repo` scope, or do it in the web UI).
+Tear down: delete the issues and the four labels, or delete the repository with
+`gh repo delete <R>` if the run created it. Do not delete a repository you already had; A3 is
+written so the leg can run against one you keep.
 
 ---
 
