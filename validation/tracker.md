@@ -451,6 +451,30 @@ then `$tracker show 99`. Expect `backlog` rather than an error.
 Then `$tracker move 99 ready` and check the file gained a frontmatter block carrying only the fields
 that verb sets, with the prose untouched.
 
+**B12b a partial block is read field by field.** Hand-write a file whose frontmatter is real but
+incomplete, omitting the two fields B12 cannot reach:
+
+```
+docs/dev-agents/issues/098-partial.md
+---
+id: '098'
+title: 'Partial frontmatter'
+milestone: 'M1'
+---
+
+## Notes
+No status and no assignee in the block above.
+```
+
+`$tracker show 98`: expect `backlog` and unassigned, from the absence of those keys rather than an
+error. `$tracker next` after `$tracker move 98 ready`: expect it on the frontier, which it can only
+reach if the missing `assignee` read as nobody. Then `$tracker assign 98 someone`: expect the file
+to gain `assignee` and keep `milestone`, with `id` and `title` untouched.
+`local.md` says a partial block is authoritative for what it contains and silent about the rest,
+never evidence that a field was cleared. B12 proves the filename fallback for a missing `id`, and
+this is the half B12 cannot reach, because a file with no frontmatter at all exercises the defaults
+by a different route.
+
 **B13 id forms are interchangeable.** `$tracker show 99`, `$tracker show 099`, `$tracker show '#99'`.
 Expect the same ticket three times.
 
