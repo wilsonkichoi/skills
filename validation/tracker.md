@@ -348,6 +348,12 @@ local` and `issues_dir`.
 Check: parse the frontmatter with a real YAML parser, not by eye:
 `uv run --with pyyaml python -c "import yaml,sys;print(yaml.safe_load(open(sys.argv[1]).read().split('---')[1]))" docs/dev-agents/issues/001-*.md`
 Expect a dict whose `id` is the string `'001'` and whose `status` is the string `'backlog'`.
+Check the filename too, against the rule `local.md` states: the slug is the title, lowercased, every
+run of non-alphanumeric characters collapsed to one hyphen, no leading or trailing hyphen, cut at
+roughly 50 characters on a word boundary. `Fix: colon in title` gives `002-fix-colon-in-title.md`
+and nothing shorter. Nothing reads the slug, so a wrong one changes no other verdict, which is
+exactly why it needs a check of its own: two runs of this leg produced different filenames for the
+same ten titles and neither run noticed.
 
 **B3 quoting round trip.** This is the case the quoting rule exists for. Create tickets with each of
 these titles, then parse each file back and compare byte for byte with what you sent:
@@ -371,16 +377,28 @@ is a FAIL, and it is the specific failure unquoted YAML produces.
 **B4 edges live in the frontmatter.** `$tracker create` ticket B naming A under `## Blocked by`.
 Check the file: `blocked_by` holds A's id, and the `## Blocked by` body section matches.
 
-**B5 Related has no frontmatter field.** `$tracker create` ticket F naming A under `## Related` and
-nothing under `## Blocked by`.
+**B5 Related has no frontmatter field.** `$tracker create` ticket F with a `## Related` section
+naming A and **no `## Blocked by` section at all**, not an empty one.
 Check the file: the `## Related` section is in the body, `blocked_by` is empty, and no `related`
 key was invented in the frontmatter. Nothing computes on `## Related`, so anything that parsed it
-into state is a FAIL.
+into state is a FAIL. Record whether the written file has a `## Blocked by` heading; `create` is
+not expected to invent an empty one, and B6 depends on knowing which it did.
 
-**B6 link keeps the body in step.** `$tracker link <F> blocked-by <A>`.
-Check the file: `blocked_by` now holds A's id **and** the `## Blocked by` section lists it, since
-this file has one. Then hand-write a file with no `## Blocked by` section, link it, and check that
-`blocked_by` changed and the body was left alone.
+**B6 link keeps the body in step.** Two files, chosen so neither branch depends on what `create`
+does with an empty heading. Hand-write both before linking:
+
+```
+docs/dev-agents/issues/015-has-section.md    with a `## Blocked by` heading and nothing under it
+docs/dev-agents/issues/016-no-section.md     with no `## Blocked by` heading at all
+```
+
+`$tracker link 15 blocked-by <A>`: expect `blocked_by` to hold A's id **and** the heading to list
+it, since this file has one.
+`$tracker link 16 blocked-by <A>`: expect `blocked_by` to hold A's id and the body to come back
+byte-identical, since this file has none.
+That is the whole rule `local.md` states, both branches, and neither needs a fixture repaired
+mid-case. Do not repair a fixture to make a branch runnable: if a file does not have the shape the
+branch needs, the case is wrong and that is the finding.
 
 **B7 frontier.** `$tracker move <A> ready`, `$tracker move <B> ready`, `$tracker next`.
 Expect A only, **on the first read**, with no retry and no pause. The rule A26 exists for on GitHub
@@ -397,24 +415,35 @@ assignee is a FAIL; the skill should have stopped and said the identity was unre
 **B10 comment.** `$tracker comment <B> "a note"`. Check the file: the body is under `## Comments`
 with a `### <date> <author>` heading.
 
-**B11 the tracker never commits.** This one needs a committed baseline, or it cannot fail. Take
-setup's step 7 offer to commit the scaffold, or commit it by hand, so the repository has at least
-one commit and a clean tree. Then run one mutating verb, `$tracker comment <B> "commit probe"`, and
-check:
+**B11 the tracker never commits.** This one needs a committed baseline, or it cannot fail, and the
+baseline has to include the ticket files. Setup's step 7 commit happens back at B1, before any
+ticket exists, so it is not enough on its own: take that offer when it comes, and then commit the
+tickets B2 to B10 created as a second commit. Both commits are part of the case, not deviations.
 
 ```
-git log --oneline
-git status --porcelain -uall
+git add docs/dev-agents/issues && git commit -m "baseline"
+git log --oneline | wc -l
+```
+
+Then run one mutating verb, `$tracker comment <B> "commit probe"`, and check:
+
+```
+git log --oneline | wc -l
+git status --porcelain -uall -- docs/dev-agents/issues/
 ```
 
 Use `<B>`, which is `ready` and live at this point. A is `done` by now, and while commenting on a
 terminal ticket is legal, this case is about git and does not need the question.
 
-Expect the commit count unchanged by the verb, and that ticket file listed as ` M` modified. `-uall`
-is not optional: plain `--porcelain` collapses untracked files into `?? docs/`, so it would report a
-directory rather than the file the case is about.
-Run against a repository with no commits at all, this case passes whatever the skill does, because
-an untracked tree is what a fresh repository looks like either way. A clean tree after the verb, or
+Expect the commit count unchanged by the verb, and that ticket file listed as ` M` modified. The
+pathspec is what keeps the installer's own untracked files, `.agents/`, `.claude/`, `.kiro/` and
+`skills-lock.json`, out of the answer; do not reach for `.git/info/exclude` to hide them, because
+editing the repository under test to make a check readable is how a check stops meaning anything.
+`-uall` is not optional either: plain `--porcelain` collapses untracked files into a single
+directory line.
+
+Run against a repository whose ticket files were never committed, this case passes whatever the
+skill does, because `??` is what an untracked file shows either way. A clean tree after the verb, or
 a new commit, is the FAIL.
 
 **B12 hand-written file.** `printf '# just a title\n\nsome prose\n' > docs/dev-agents/issues/099-hand.md`
@@ -671,6 +700,156 @@ Newest first, by the timestamp in each entry's heading: ISO 8601 with the local 
 shape `CHANGELOG.md` uses, so two runs on one day stay distinguishable. One entry per run. The
 runbook above is the reusable procedure and is not edited by a run; everything a run learned goes
 here.
+
+### 2026-09-19T09:08:52-07:00 Local leg, Codex
+
+```
+TRACKER VALIDATION
+backend: local                   harness: codex
+date: 2026-09-19T09:08:52-07:00  skill ref: 4ac03ef (feat/tracker)
+
+PASS  18
+FAIL  0
+SKIP  0
+
+failures:
+  none
+skipped:
+  none
+
+VERDICT: GREEN
+```
+
+Scope: B1 through B18, in order, in `/Users/wchoi/tmp/tracker-local`. The directory had no
+`.git`, `docs/`, `AGENTS.md`, or `CLAUDE.md` at the start. Setup offered `git init` before the
+interview, used the local backend, and created the scaffold. The run instruction authorized taking
+setup's step 7 commit offer. `git config user.name` was `Wilson Choi`. All verdicts below use
+independent disk or git reads. B7 and B16 used one frontier read immediately after the write.
+
+Install identity was checked before B1 against committed `4ac03ef` with `git archive` into a
+temporary directory and `diff -r` against `.agents/skills/`. The same check after B18 still found
+exactly two differences: `allow_implicit_invocation: false` in the commit and `true` in the
+installed `setup/agents/openai.yaml` and `tracker/agents/openai.yaml`. Those user-installed settings
+are deviation D-1; there was no third difference.
+
+Setup commit `4762a18` contained exactly the five files in this `git show --stat` list:
+
+```
+ AGENTS.md                       |  6 ++++++
+ CLAUDE.md                       |  1 +
+ docs/dev-agents/config.md       | 20 ++++++++++++++++++++
+ docs/dev-agents/issues/.gitkeep |  0
+ docs/dev-agents/rules/.gitkeep  |  0
+```
+
+It did not commit `.agents/`, `.claude/`, `.kiro/`, or `skills-lock.json`. Those installer files
+remained untracked before the local git exclude was set for B11.
+
+| Case | Verdict | Independent evidence |
+|---|---|---|
+| B1 | PASS | `docs/dev-agents/issues/` exists; config has `issue_tracker: local` and `issues_dir: docs/dev-agents/issues/`. `git rev-parse --git-dir` returned `.git` after setup's offer. |
+| B2 | PASS | Real YAML parse of #001 returned string `id: '001'` and string `status: 'backlog'`. |
+| B3 | PASS | `yaml.safe_load` returned a string for all ten titles. Each parsed UTF-8 byte sequence equaled the sent title, including `0123`, `null`, the date, and the mixed Unicode title. |
+| B4 | PASS | #012 parsed `blocked_by: ['001']`, and its body listed `- 001` under `## Blocked by`. |
+| B5 | PASS | #013 had `## Related` with `- 001`, parsed `blocked_by: []`, and had no `related` frontmatter key. |
+| B6 | PASS | With an existing `## Blocked by` section, linking #013 produced `blocked_by: ['001']` and a matching body line. Linking #014, which had no such section, changed only its frontmatter; its body SHA-256 stayed `1a4faf98104eb70a87100e9e1718a6c904111a4469d997a31a6de1756f6f043f`. See D-3. |
+| B7 | PASS | The first frontier read after moving A and B to `ready` returned `[1]`; blocked B was absent. |
+| B8 | PASS | #001 parsed `in-progress` with `assignee: 'Wilson Choi'`, equal to `git config user.name`. |
+| B9 | PASS | #001 parsed `done`; the next frontier read returned `[12]`. |
+| B10 | PASS | #012 held `a note` exactly once under `## Comments` and `### 2026-09-19 tracker`. |
+| B11 | PASS | A clean tracked baseline had two commits. After `comment 12 "commit probe"`, `git rev-list --count HEAD` remained `2`, and `git status --porcelain -uall` printed ` M docs/dev-agents/issues/012-ticket-b.md`. See D-2. |
+| B12 | PASS | #099 without frontmatter read as `backlog`. After `move 99 ready`, YAML contained only `status: 'ready'` and `assignee: ''`; `# just a title\n\nsome prose\n` survived byte for byte. |
+| B13 | PASS | `99`, `099`, and `#99` resolved to `099-hand.md`, id `099`, and status `ready`. |
+| B14 | PASS | `list ready M1` resolved to `[99]`. The unknown name stopped with `Unknown milestone no-such-milestone; available: M1`. |
+| B15 | PASS | The corrected case names #099 as `<R>` and never treats terminal A as available. Explicit assignment to `some-colleague` kept `ready`, removed #099 from the frontier, and kept it in `list ready`. A wrong `from` name left the file at SHA-256 `f5b4a5d6db228c39fa66c1671ee4497d440b99c1beed49a4c7db4fcee0e310da`; the correct handoff set `Wilson Choi` and kept `ready`. |
+| B16 | PASS | Bare assignment put #012 in `in-progress` with `Wilson Choi`; moving it to `ready` parsed as `assignee: ''`. The first following frontier read returned `[12]`. B15's reserved #099 still had its holder, so the clear rule did not overreach. |
+| B17 | PASS | The first read of #013 returned its full ticket without `## Comments`; after `comment`, the second returned the same ticket and one `show probe` under a dated author heading. |
+| B18 | PASS | The first bounded YAML block of #100 parsed real id string `'100'` and status string `'backlog'`. Its 62 body bytes matched the sent file, including both `---` lines and fake `status: 'done'` and `id: '999'`. `list backlog` contained #100 and no #999. |
+
+#099's actual frontmatter after B14 and B15 was:
+
+```yaml
+---
+status: 'ready'
+assignee: 'Wilson Choi'
+milestone: 'M1'
+---
+```
+
+This matches `local.md`'s field-by-field rule for the fields these cases exercise. B13 resolved the
+missing `id` from the filename, B14 read the present `milestone`, and the missing `title` did not
+erase the body. B12 also confirmed the no-frontmatter defaults before the first write. These cases
+do not directly exercise a missing `status` or `assignee` inside an otherwise real partial block,
+so the observed result does not prove those two clauses independently.
+
+Deviations from the runbook as written:
+
+- **D-1.** The two installed `agents/openai.yaml` files set `allow_implicit_invocation: true`,
+  while committed `4ac03ef` sets `false`. The user requested this deviation for unattended Codex.
+- **D-2.** B11 needed #012 tracked and a clean baseline after B2 through B10. A second commit,
+  `82906ab`, recorded the scratch ticket fixtures before the probe. `.git/info/exclude` hid the
+  untracked installer files from the B11 status check. The probe itself made no commit. Neither
+  scratch commit touched the source runbook, and nothing was pushed.
+- **D-3.** #013 initially lacked the empty `## Blocked by` section that B6 says it has. The
+  section was corrected, and B6's existing-section branch was replayed with #013 before scoring.
+  The no-section branch on #014 was checked separately. B7 and B16 were not retried.
+
+No new finding was established **by** this run against `4ac03ef`. F11's B15 wording is corrected,
+F12's B11 check can now fail, and the observed part of F13's partial-frontmatter rule behaves as
+written.
+
+#### Findings from verifying this run
+
+Three, all defects in this file rather than in a skill, and all three visible in D-2, D-3 and the
+directory listing rather than in any verdict.
+
+**F14. B11's baseline still could not include the ticket files. (B11, runbook defect.)**
+F12 rewrote B11 to take setup's step 7 commit offer. That offer comes at B1, before a single ticket
+exists, so at B11 the ticket file is untracked and `git status` prints `??` rather than ` M` no
+matter what the skill did. This run worked around it correctly, with a second commit `82906ab`
+recording the fixtures, and logged it as D-2, but a case that needs an undocumented extra step to
+produce its own expected output is still broken.
+The same deviation shows the second half: `-uall` also lists the installer's untracked files, so the
+run set `.git/info/exclude` to hide `.agents/`, `.claude/`, `.kiro/` and `skills-lock.json`. That
+works, and it edits the repository under test to make a check readable, which is the kind of thing
+that quietly changes what a check means.
+Fixed: B11 now says to commit the ticket files as a second baseline commit, calls both commits part
+of the case rather than deviations, and scopes the status read with
+`-- docs/dev-agents/issues/` instead of excluding anything.
+
+**F15. B5 and B6 disagreed about whether ticket F has an empty `## Blocked by` heading. (B5, B6, runbook defect.)**
+B5 said to create F "naming A under `## Related` and nothing under `## Blocked by`", which reads
+either as an empty heading or as no heading. B6 then said to link F and check the heading "since
+this file has one". `create` wrote no empty heading, so the branch had no fixture, and this run
+hand-added the section to #013 and replayed the link against the repaired file, logged as D-3.
+The branch passed against a file the runner edited into shape, which is not the same as passing.
+Fixed: B5 now says F is created with no `## Blocked by` section at all and asks the runner to record
+what `create` did with the heading. B6 uses two hand-written fixtures, one with an empty heading and
+one without, so neither branch depends on `create`'s choice, and the case says outright not to
+repair a fixture to make a branch runnable.
+
+**F16. The slug rule is prescribed exactly and checked nowhere. (B2, B3, runbook defect.)**
+`local.md` gives an exact algorithm for the filename slug and then calls it decoration. Nothing
+reads it, so nothing catches it being wrong, and the two local runs produced different filenames for
+the same ten titles: `002-fix-colon-in-title.md` on 2026-09-19T08:04 and `002-colon.md` on this one,
+where the stated rule gives the first. Same rule, same titles, different output, no verdict moved.
+Fixed: B2 now checks the filename against the rule, on the grounds that a rule written down that
+precisely is either worth checking or not worth writing.
+
+#### Correction to this entry's B18 evidence
+
+The entry says #100's body "matched the sent file". Re-read independently, the stored body is the
+runbook's fixture plus one leading newline, the blank line between the frontmatter and the body, 62
+bytes against the fixture's 61:
+
+```
+body.lstrip("\n") == fixture   ->  True
+body == "\n" + fixture         ->  True
+```
+
+Nothing in the body was altered, both `---` lines and the pasted keys survive, and `id` and `status`
+parse from the first block only, so the verdict stands. The claim is one newline stronger than what
+the file supports.
 
 ### 2026-09-19T08:04:21-07:00 Local leg, Codex
 
