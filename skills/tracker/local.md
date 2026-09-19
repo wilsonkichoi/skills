@@ -3,7 +3,7 @@
 One file per ticket under the configured `issues_dir`, named `NNN-slug.md`. No CLI, no server,
 nothing to authenticate.
 
-`local` is single session. A claim made on a branch is invisible from `main` until that branch
+`local` is single session. An assignment made on a branch is invisible from `main` until that branch
 merges, so two sessions working the same repository at once need `github` or `linear`. `setup` says
 this when the user picks local.
 
@@ -89,8 +89,9 @@ section is not missing anything, and no verb adds one to a body a human wrote.
 keep in step: `create` writes whatever the ticket gave it and every other verb leaves it alone.
 
 **Identity.** There is no user account on this backend, so `assignee` is the value of
-`git config user.name`. When that is unset, stop and say so rather than claiming with an empty
-name.
+`git config user.name`. When that is unset, stop and say so rather than writing an empty name. An
+explicit `assign <id> <who>` writes the name as given, since there is no account here to check it
+against and no way to tell a typo from a colleague who has never touched this repository.
 
 **Ids.** Compare ids numerically. `12`, `012`, and `#12` are the same ticket, in an argument, in
 `blocked_by`, and in the body section. Write them as the zero-padded three-digit form. A new id is
@@ -115,9 +116,9 @@ and do not reformat what is there.
 | `show` | Read the one file whole |
 | `next` | Read every frontmatter; keep `status: ready` with an empty `assignee` and every `blocked_by` id in a terminal status; sort by id |
 | `create` | Write a new file with `status: backlog`, the ticket shape, and `blocked_by`, then apply the requested status last |
-| `claim` | Read the file and require `status: ready` with an empty `assignee`; set `status: in-progress` and `assignee`; re-read to confirm |
+| `assign` | Bare: require `status: ready` with an empty `assignee`, then set `status: in-progress` and `assignee` in the same write. Explicit: set `assignee` only, refuse a terminal status, and refuse an existing holder the caller did not name with `from` |
 | `comment` | Append under `## Comments` |
-| `move` | Read `status` first and refuse any move out of `done`, `cancel`, or `duplicate`; otherwise edit `status`. Moving to `backlog` also sets `assignee: ''`; moving to `duplicate` sets `duplicate_of` |
+| `move` | Read `status` first and refuse any move out of `done`, `cancel`, or `duplicate`; otherwise edit `status`. Moving to `backlog` or to `ready` also sets `assignee: ''`; moving to `duplicate` sets `duplicate_of` |
 | `link` | Add the blocker id to `blocked_by`. Rewrite the `## Blocked by` section to match when the file has one, and leave the body alone when it does not |
 
 For `next`, "in a terminal status" means `done`, `cancel`, or `duplicate`. A `blocked_by` id with no
@@ -139,9 +140,9 @@ exactly what the quoting rule above exists to prevent and exactly what a naive c
 |---|---|
 | `create` | the file exists at the new id, `status` is what was asked for, and `blocked_by` holds every entry from `## Blocked by` |
 | `link` | the blocker id is in `blocked_by` |
-| `claim` | `status: 'in-progress'` and `assignee` holding your name |
+| `assign` | `assignee` holding exactly the name asked for, and `status: 'in-progress'` as well on the bare form |
 | `comment` | the comment body is under `## Comments` |
-| `move` | `status` is the target, and `assignee` is empty after a move to `backlog` |
+| `move` | `status` is the target, and `assignee` is empty after a move to `backlog` or to `ready` |
 
 Re-parse rather than re-read as text. A `title` that comes back as `83`, `None`, or a date object
 means the value was written unquoted, and the ticket is now lying about itself in a way no string
@@ -152,5 +153,5 @@ comparison against the original will catch.
 Edit the files and stop there. Never run `git add`, `git commit`, or `git push` from this skill.
 The edit lands with whatever commit the session makes next, alongside the work it describes.
 
-Committing the claim on `main` before branching, which is what the predecessor did, is a direct
+Committing the assignment on `main` before branching, which is what the predecessor did, is a direct
 push to `main` and a pull-request-gated repository rejects it. Do not reach for it.

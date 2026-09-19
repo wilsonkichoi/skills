@@ -57,7 +57,7 @@ tracker list [status] [milestone]
 tracker show <id>
 tracker next
 tracker create <ticket> [status]
-tracker claim <id>
+tracker assign <id> [who] [from <holder>]
 tracker comment <id> <body>
 tracker move <id> <status> [original]
 tracker link <id> blocked-by <id>
@@ -78,13 +78,26 @@ four open statuses. If the body has a `## Blocked by` section, `create` writes t
 edges too, and it writes them *before* applying the status, so a new ticket never appears as
 workable during the second it has no blockers recorded yet.
 
-**`claim`** takes a ticket: assigns it to you and moves it `ready` to `in-progress`. It claims only
-from `ready`, so if someone beat you to it, it stops and tells you rather than stealing it.
+**`assign`** says who holds a ticket. Bare, `tracker assign 42`, it takes the ticket for you: it
+requires `ready` with nobody on it, and sets the assignee and `in-progress` together. That is the
+one form that changes status, because a ticket that is assigned but still `ready` belongs to nobody
+and shows up in nobody's queue.
+
+The other forms only move the name. `tracker assign 42 wilson` hands it over, `tracker assign 42
+none` clears it, and taking a ticket away from whoever has it needs them named:
+`tracker assign 42 me from alex`. That last one is deliberate. Picking up free work and taking work
+out of someone's hands are different acts, and the second should have to be spelled out.
+
+Handing a `ready` ticket to someone reserves it: it drops off the frontier, so nobody else picks it
+up, and it waits for them. That is the one case where `ready` and an assignee go together on
+purpose.
 
 **`comment`** appends to a ticket. It never edits or deletes an existing comment.
 
-**`move`** changes status, including closing. Moving to `backlog` also clears the assignee, which is
-how you hand work back when you cannot finish it. Marking a duplicate takes the original's id:
+**`move`** changes status, including closing. Moving to `backlog` or to `ready` also clears the
+assignee, which is how you hand work back when you cannot finish it, or take it off someone who
+did half of it. `ready` has to clear it: `next` looks for `ready` with nobody assigned, so a
+`ready` ticket with a name still on it is invisible to the frontier and to that person both. Marking a duplicate takes the original's id:
 `tracker move 42 duplicate 17`.
 
 **`link`** records that one ticket is blocked by another: `tracker link 42 blocked-by 17`.
@@ -166,7 +179,7 @@ it was completed, not planned, or a duplicate. Two sources of truth for one fact
 disagree, so there is only one.
 
 The `local` backend edits files and never commits them. Your changes land with whatever commit you
-make next, alongside the work they describe. It also means a claim made on a branch is invisible
+make next, alongside the work they describe. It also means an assignment made on a branch is invisible
 from `main` until you merge, which is why it is single-session: use `github` or `linear` if two
 people or two agents share the repository.
 
@@ -186,7 +199,7 @@ says, and what it did about it.
 ## Things it will not do
 
 - Reopen a terminal ticket. Terminal is terminal.
-- Guess. If two sessions race a claim, or a Linear workflow has two states it could plausibly mean,
-  it stops and says so instead of picking.
+- Guess. If two sessions race for the same free ticket, or a Linear workflow has two states it
+  could plausibly mean, it stops and says so instead of picking.
 - Keep a second copy of status anywhere. No `PLAN.md` checkboxes, no `PROGRESS.md`.
 - Commit anything, on any backend.

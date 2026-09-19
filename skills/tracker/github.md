@@ -181,10 +181,21 @@ gh issue list --repo <owner/repo> --state closed --limit 200 \
 
 **show.**
 
+One command, comments included as a field:
+
 ```
-gh issue view <n> --repo <owner/repo> --comments
 gh issue view <n> --repo <owner/repo> \
-  --json number,title,body,state,stateReason,assignees,labels,milestone,blockedBy
+  --json number,title,body,state,stateReason,assignees,labels,milestone,blockedBy,comments
+```
+
+Not `--comments`, which does not add the comments to the view: it **replaces** the issue with them.
+On a ticket that has none it prints nothing at all at exit 0, which is indistinguishable from a
+ticket that does not exist or a read that failed. As a `--json` field, no comments is `[]`, and the
+ticket comes back whole either way. Render them with the author and the body:
+
+```
+--jq '{number, title, state, labels: [.labels[].name],
+       comments: [.comments[] | {author: .author.login, createdAt, body}]}'
 ```
 
 Resolve the status with the same `status` definition, so `show` and `list` can never disagree about
@@ -216,8 +227,8 @@ Six things that query is doing on purpose:
 
 1. **`select(status == "ready")` is the shared status test**, the same one `list` uses, and it is
    what keeps an inconsistent issue out of the frontier. An issue carrying `ready` and `in-progress`
-   both would otherwise enter the frontier and get claimed, and `claim`'s pre-read would then refuse
-   it.
+   both would otherwise enter the frontier and be picked up, and `assign`'s pre-read would then
+   refuse it.
 2. **The `error()` is the guard for a host without dependency support**, and it has to be written
    out. It cannot be left implicit in the filters below it: `null.totalCount` is `null` and
    `null.nodes | length` is `0` in `jq`, so a null row compares false against the 50-node check and
@@ -248,9 +259,9 @@ so the tickets `next` wants most are the ones truncation drops. Never report a f
 result that hit its own limit.
 
 The frontier is a list of candidates, not a set of facts, and the read being immediately consistent
-does not change that: another session can claim a ticket between your read and your claim. `claim`'s
-pre-read is what settles it, so a refusal on the first candidate right after `next` is the system
-working, and the answer is to take the next candidate rather than retrying the same one.
+does not change that: another session can take a ticket between your read and your write.
+`assign`'s pre-read is what settles it, so a refusal on the first candidate right after `next` is
+the system working, and the answer is to take the next candidate rather than retrying the same one.
 
 **create.** Use `--body-file` or a heredoc; a multi-line body does not survive `--body`.
 
@@ -260,8 +271,8 @@ gh issue create --repo <owner/repo> --title "<title>" --body-file <file> [--mile
 
 Create it with no status label, which reads as `backlog`. Then run `link` once per entry in the
 ticket's `## Blocked by` section. Only then apply the requested status label. Labelling `ready`
-before the edges exist puts the ticket on the frontier unblocked, where another session can claim
-it.
+before the edges exist puts the ticket on the frontier unblocked, where another session can pick it
+up.
 
 Verify by number, not from the URL `gh issue create` printed:
 
@@ -283,9 +294,9 @@ first: both obvious ways of doing that report a difference on a byte-identical b
 A filtered `gh issue list` is not a verification here, because the search API is eventually
 consistent and a ticket created seconds ago can be missing from it. Read it by number.
 
-**claim.** Read, edit, re-read. The read is not optional: `--remove-label` on a label the issue does
-not carry exits 0 and changes nothing, so a blind claim on an `in-review` ticket would add
-`in-progress` beside `in-review` and report success.
+**assign, the bare form.** Read, edit, re-read. The read is not optional: `--remove-label` on a
+label the issue does not carry exits 0 and changes nothing, so a blind pull on an `in-review` ticket
+would add `in-progress` beside `in-review` and report success.
 
 ```
 gh issue view <n> --repo <owner/repo> --json state,assignees,labels
@@ -295,8 +306,8 @@ gh issue view <n> --repo <owner/repo> --json assignees,labels
 
 The first read must show an open issue, exactly one status label and that label `ready`, and no
 assignee. Anything else, stop and write nothing. Only the four status labels count here: `bug`,
-`enhancement`, and every other topic label a repository carries are ignored, and a claim that
-refused because a ticket also had `bug` on it would refuse every claim in a real repository.
+`enhancement`, and every other topic label a repository carries are ignored, and a pull that refused
+because a ticket also had `bug` on it would refuse every pull in a real repository.
 
 The re-read must show exactly one status label, `in-progress`, and exactly one assignee, you. Any
 other set of status labels is the inconsistent case: a human moved the ticket while you were
@@ -307,7 +318,7 @@ gh issue edit <n> --repo <owner/repo> --remove-assignee @me --remove-label in-pr
 ```
 
 `in-progress` is yours, added two commands ago, so leaving it behind would hand the next reader a
-two-label ticket that `claim` created and `move` has to repair. Whatever label the human set is
+two-label ticket that `assign` created and `move` has to repair. Whatever label the human set is
 theirs and stays. The command is safe in all three shapes the re-read can return, `in-progress`
 beside their label, their label alone because they stripped yours, or no status label at all,
 because removing a label an issue does not carry exits 0 and changes nothing. It has no add side,
@@ -325,6 +336,38 @@ Do not touch the labels on the way out. The winner is working on that ticket and
 theirs. Stripping it back to `ready` would leave the ticket assigned to the winner but reading as
 unclaimed, off the frontier and wrong for whoever reads it next, and with three racers it would be
 flipped twice.
+
+GitHub is the backend where the tie-break can actually fire: `assignees` is a list, so both writes
+survive and both sessions read the same two logins and pick the same winner. It cannot fire when
+both sessions authenticate as the same account, because there is one login in the list and each
+session reads it as its own.
+
+**assign, the explicit forms.** `assign <id> <who>`, `assign <id> <who> from <holder>`, and
+`assign <id> none` set the assignee and never touch a label.
+
+```
+gh issue view <n> --repo <owner/repo> --json state,assignees,labels
+gh issue edit <n> --repo <owner/repo> --remove-assignee <each holder found except the target> --add-assignee <who>
+gh issue view <n> --repo <owner/repo> --json assignees
+```
+
+A closed issue on the first read is terminal: refuse and report. Every assignee the read found other
+than the target must be named by `from`, matched case-insensitively; an unnamed holder is a refusal
+and not a silent removal. The removal list is then every assignee found **minus the target**, never
+the target itself, for the reason the labels have: `gh` sends the additions and the removals as two
+concurrent mutations with no ordering, so a name in both lists ends in whichever lands last.
+
+**The verification read is what catches the failure this verb actually has.** Measured on `gh`
+2.97.0:
+
+| `--add-assignee` argument | Exit | What happened |
+|---|---|---|
+| a login that does not exist | 1 | `Could not resolve to a user or bot with the login '<x>'`, nothing written |
+| a real user without push access | **0** | the issue URL is printed and **nobody is assigned** |
+
+The second row is the ordinary mistake, a teammate who was never added to the repository, and it
+reports success. The re-read must name exactly the target and nobody else; anything else, say what
+the issue actually carries now and that the assignment did not land.
 
 **move, open state to open state.** Read the current status first, because the edit names the label
 being removed.
@@ -350,9 +393,13 @@ inconsistent ticket gets fixed rather than something that refuses to touch it. A
 issue already carries is a no-op, so the re-run is a bare `--add-label`. Topic labels are never
 removed.
 
-A closed issue on that first read is in a terminal state: refuse the move and report. Moving to
-`backlog` clears every assignee, so pass `--remove-assignee` once per login found on the read, not
-just `@me`.
+A closed issue on that first read is in a terminal state: refuse the move and report.
+
+Moving to `backlog` **or to `ready`** clears every assignee, so pass `--remove-assignee` once per
+login found on the read, not just `@me`. `ready` is the one that matters: `next` filters on
+`ready` and no assignee both, so a `ready` ticket that kept an assignee is off the frontier and off
+that person's queue at the same time. Moving to `in-progress` or `in-review` leaves the assignees
+alone and reports them, and a terminal move keeps them as the record of who did the work.
 
 **move, open state to a terminal state.** The same read comes first, and it is the only guard there
 is. `gh issue close` on an already-closed issue prints "is already closed", **exits 0, and leaves

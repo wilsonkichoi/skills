@@ -1,6 +1,6 @@
 ---
 name: tracker
-description: Read and write ticket state in this project's issue tracker, whether that is GitHub Issues, Linear, or local markdown files. Use it to list, show, create, claim, comment on, move, or link a ticket, and to ask what to work on next.
+description: Read and write ticket state in this project's issue tracker, whether that is GitHub Issues, Linear, or local markdown files. Use it to list, show, create, assign, comment on, move, or link a ticket, and to ask what to work on next.
 disable-model-invocation: true
 metadata:
   allow_implicit_invocation: "false"
@@ -45,7 +45,7 @@ Seven names. Every skill in this set speaks these, whatever the backend calls th
 |---|---|---|
 | `backlog` | Captured, not committed to. | a human, or any skill filing something for later |
 | `ready` | Committed to and groomed. Safe to pick up. | `plan`, `create-ticket`, a human |
-| `in-progress` | One session is implementing it. | `claim` |
+| `in-progress` | One session is implementing it. | `assign` |
 | `in-review` | The work is up and waiting on review. | `implement`, once the pull request is open |
 | `done` | Merged and verified. | `verify` |
 | `cancel` | Deliberately not doing it. | a human, or a skill on instruction |
@@ -76,7 +76,7 @@ that could be started right now, and `next` is the verb that returns it.
 
 ## 3. Read, write, verify
 
-`create`, `claim`, `comment`, `move`, and `link` all mutate, and all five run the same three steps.
+`create`, `assign`, `comment`, `move`, and `link` all mutate, and all five run the same three steps.
 `list`, `show`, and `next` read only and skip it.
 
 1. **Read.** Fetch the current state and check the precondition this verb needs. A verb whose
@@ -95,7 +95,7 @@ exit code said.
 |---|---|---|
 | `create` | none | the ticket exists by id, with the body and the status intended |
 | `link` | both tickets exist | the edge appears on the blocked ticket's dependency list |
-| `claim` | status is `ready`, no assignee | status is `in-progress` and the only assignee is you |
+| `assign` | not terminal; the bare form also needs `ready` with no assignee, and any other holder has to be named | the only assignee is the one asked for, and on the bare form the status is `in-progress` too |
 | `comment` | the ticket exists | the comment body is present on the ticket |
 | `move` | current status, and it is not terminal | the new status is what the backend reports |
 
@@ -107,7 +107,7 @@ exit code said.
 | `show <id>` | One ticket in full: body, comments, labels, blockers, assignee. |
 | `next` | The frontier. See below. |
 | `create <ticket> [status]` | One ticket from the shape in section 5, plus its dependency edges. The status is one of the four open ones and defaults to `backlog`. See below. |
-| `claim <id>` | Take the ticket. See below. |
+| `assign <id> [who] [from <holder>]` | Set who holds the ticket. Bare, it takes the ticket off the frontier. See below. |
 | `comment <id> <body>` | Append a comment. Never edit or delete an existing one. |
 | `move <id> <status> [original]` | Transition, including the terminal close with its reason. See below. |
 | `link <id> blocked-by <id>` | Record that the first ticket is blocked by the second. |
@@ -130,32 +130,72 @@ its own writes cannot answer this verb: a ticket made `ready` a second ago is ex
 **`create`** writes the ticket at `backlog` unless one of the four open statuses is given, then
 writes one `link` edge per entry in its `## Blocked by` section, then moves it to the requested
 status last. That order is the point: a ticket that reaches `ready` before its edges exist sits on
-the frontier and gets claimed as though nothing blocked it. A failure partway leaves a real ticket
+the frontier and gets picked up as though nothing blocked it. A failure partway leaves a real ticket
 at `backlog` with some of its edges, so report the id, which edges landed, and that the status was
 not applied.
 
-**`claim`** runs section 3's three steps, and its own detail is what happens when they disagree.
+**`assign`** has four forms, and only the first one touches the status:
 
-Claim only from `ready` with no assignee. Anything else means someone got there first: stop and
-write nothing.
+| Form | What it does |
+|---|---|
+| `assign <id>`, `assign <id> me` | Pull off the frontier: requires `ready` with no assignee, and sets `in-progress` and you **in one write**. |
+| `assign <id> <who>` | Hand the ticket to someone. Status untouched. |
+| `assign <id> <who> from <holder>` | Take it out of `<holder>`'s hands. Status untouched. |
+| `assign <id> none` | Unassign. Needs `from <holder>` unless the holder is you. |
 
-On the verification read, any status other than `in-progress` means a human moved the ticket while
-you were writing. Take back exactly what you wrote and report; the backend file gives the command.
-More than one assignee means another session raced you, and the assignee whose login sorts first,
-compared without regard to case, keeps the ticket. If that is not you, remove your own assignment,
-leave the status alone, and report. On a backend with a single assignee field there is nothing to
-compare: the read simply has to name you. The tie-break is deterministic so a race ends with one
-owner instead of none, and the status stays put because the winner really is working on it.
+The bare form sets the status and the assignee in one write because it is the only form racing
+anybody, and two writes would leave a gap where the ticket is off the frontier and nobody has
+started. The other forms say who holds a ticket and nothing more, because handing work over is not a
+claim that it has started.
 
-The tie-break does not care whether the other assignee is a session or a person: a human who
-assigns themselves by hand and sorts first simply wins. Two sessions authenticated as the same
-tracker user cannot be told apart at all, and there the branch and the open pull request are the
-collision signal, which the skill doing the work owns.
+**A `ready` ticket with an assignee is reserved, not lost.** `assign <id> <who>` on a `ready` ticket
+is how you say this one is theirs whenever they get to it: it leaves the frontier deliberately, so
+no other session picks it up, and `show` and `list` name the holder. That is a different thing from
+a name left behind on work that stopped, which is what the `move` rule below clears, and the verb is
+what tells them apart. `assign` names a holder on purpose; moving a ticket into `ready` says nobody
+holds it.
+
+**A holder who is not you has to be named.** Any form that would displace an existing assignee
+refuses unless `from <holder>` names them, matched without regard to case. This is the whole reason
+the verb is not just "assign to me": taking a ticket out of someone's hands is a different act from
+picking up a free one, and it should read differently in the log. The write then removes every
+assignee the read found except the one being set, the same subtract-the-target shape `move` uses on
+labels, and any holder the caller did not name is a refusal rather than a silent removal.
+
+The tie-break applies to the bare form only. On the verification read, any status other than
+`in-progress` means a human moved the ticket while you were writing: take back exactly what you
+wrote and report, and the backend file gives the command. More than one assignee means another
+session wrote at the same time, and the assignee whose login sorts first, compared without regard to
+case, keeps the ticket; if that is not you, remove your own assignment, leave the status alone, and
+report.
+
+Be clear about what that buys, because it is not mutual exclusion. Nothing stops two sessions
+passing the same precondition and both writing. The tie-break is what makes them agree afterwards on
+which one won, without talking to each other, so a race ends with one owner rather than none. It
+works on a backend that records a list of assignees and distinct identities. It cannot fire at all
+where both sessions authenticate as the same user, or where the backend keeps a single assignee
+field and the last write wins; the backend file says which case it is in. There, and on the explicit
+forms, the branch and the open pull request are the collision signal, which the skill doing the work
+owns.
 
 **`move`** reads the current status first, because the write needs it and because nothing else
 guards the terminal states. Refuse any move out of `done`, `cancel`, or `duplicate`.
-`move <id> duplicate <original>` needs the id of the ticket it duplicates. `move <id> backlog`
-clears every assignee, not only yours, which is what puts the ticket back in front of a human.
+`move <id> duplicate <original>` needs the id of the ticket it duplicates.
+
+`move` also owns the assignee wherever the status decides it:
+
+| Target | Assignees |
+|---|---|
+| `backlog`, `ready` | Cleared, every one of them, not only yours. |
+| `in-progress`, `in-review` | Left alone. Say who holds it when that is not you, and say so when nobody does. |
+| `done`, `cancel`, `duplicate` | Left alone. The assignee is the record of who did the work. |
+
+`ready` clears for the same reason `backlog` does, and it is the sharper of the two, because `next`
+requires `ready` **and** no assignee. Handing a half-finished ticket back while the last person's
+name is still on it leaves something no session will pick up and nobody is working on, which looks
+entirely healthy in `list`. Moving a ticket into `ready` is the statement that nobody holds it, so
+the write makes that true. Reserving a ticket for somebody is the opposite statement and has its own
+verb, `assign <id> <who>`, which is why this rule belongs to `move` and not to both.
 
 ## 5. Ticket shape
 

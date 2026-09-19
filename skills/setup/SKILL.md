@@ -76,7 +76,7 @@ only questions from one section whose answers cannot change each other.
 - **Linear**: issues live in linear.app (uses the Linear MCP server). Ask for the team key and the
   project name; both go in the config.
 - **Local markdown**: issues live as files under `docs/dev-agents/issues/` in this repo (good for
-  solo projects or repos without a remote). One session at a time: a claim made on a branch is
+  solo projects or repos without a remote). One session at a time: an assignment made on a branch is
   invisible from `main` until that branch merges.
 - **Other** (Jira, GitLab, etc.): ask the user to describe the workflow in one paragraph; record it
   as freeform text in the config body and set `issue_tracker: other`

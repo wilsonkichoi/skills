@@ -16,9 +16,9 @@ freshly created sandbox team. Read and write paths were both executed.
 | Part | Status |
 |---|---|
 | Tool names, status and relation shapes, milestones, filtering by name and by category | Read from a live server. |
-| `save_issue` create and update, status writes, claiming, relations, the duplicate transition | Executed against the sandbox. Findings below. |
+| `save_issue` create and update, status writes, assignment, relations, the duplicate transition | Executed against the sandbox. Findings below. |
 | `save_comment` and `list_comments` | **Not executed.** |
-| Two sessions racing a claim | **Not executed.** Needs two identities. |
+| Two sessions racing the bare `assign` | **Not executed.** Needs two identities. |
 
 ## Statuses
 
@@ -87,9 +87,9 @@ order.
 | `show` | `get_issue` with `includeRelations: true`, plus `list_comments` |
 | `next` | See below |
 | `create` | One `save_issue` with `team`, `title`, `description`, `state`, and `blockedBy`. Relations apply on create here, unlike GitHub, so the edges and the status land together |
-| `claim` | See below |
+| `assign` | See below |
 | `comment` | `save_comment`, then `list_comments` and find the exact body |
-| `move` | `get_issue` first and refuse any move out of `done`, `cancel`, or `duplicate`; otherwise `save_issue` with the status name, then `get_issue` to confirm. Moving to `backlog` also sets `assignee: null`. Moving to `duplicate` is its own shape, above |
+| `move` | `get_issue` first and refuse any move out of `done`, `cancel`, or `duplicate`; otherwise `save_issue` with the status name, then `get_issue` to confirm. Moving to `backlog` or to `ready` also sets `assignee: null`. Moving to `duplicate` is its own shape, above |
 | `link` | `save_issue` with `blockedBy`, then `get_issue` with `includeRelations: true` to confirm the edge |
 
 `create` needs no second call to apply the requested status. GitHub's create-link-then-label order
@@ -120,20 +120,25 @@ report rather than quietly taking a long time.
 
 Never report an empty frontier from a page that came back full, and never from a step that failed.
 
-## Claiming, where Linear differs
+## Assigning, where Linear differs
 
-Claiming is one call, verified: `save_issue` with `state: 'In Progress'` and `assignee: 'me'` sets
-both. `assignee: null` clears it, which is what `move <id> backlog` uses.
+The bare form is one call, verified: `save_issue` with `state: 'In Progress'` and `assignee: 'me'`
+sets both. `assignee: null` clears it, which is what `move <id> backlog` and `move <id> ready` use.
+The explicit forms are the same call with the assignee alone and no `state`.
 
-A Linear issue has one assignee, not a list, so the "more than one assignee" race check in
-`SKILL.md` cannot fire here. Two sessions that write the field both succeed and the last write
-wins. The check that replaces it: the verification read has to name **you**. A different name means
-you lost, so leave the issue alone, report it, and take another ticket. Write nothing back.
+A Linear issue has one assignee, not a list, so the tie-break in `SKILL.md` cannot fire here at all.
+Two sessions that write the field both succeed and the last write wins. The check that replaces it:
+the verification read has to name **whoever you set**. A different name means you lost, so leave the
+issue alone, report it, and take another ticket. Write nothing back.
 
 That check is weaker than the GitHub one, and honestly so. A write landing between your write and
 your read is invisible, and both sessions can report success while only one holds the issue. It is
 the same blind spot as two sessions on one account, and the branch and the open pull request are
 the real collision signal.
+
+The single field also makes the explicit forms cheaper than GitHub's: there is no set of holders to
+subtract, so `from <holder>` is purely the confirmation that the caller knows who is being
+displaced, checked against the read and never used to build the write.
 
 ## Milestones
 

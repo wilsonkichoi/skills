@@ -159,8 +159,8 @@ Check the reason by hand:
 Expect `blockedBy.totalCount` still `1` with the node `CLOSED`. A `next` that filtered on
 `totalCount` would never return this ticket.
 
-**A11 topic labels do not block a claim, including one named after a status.**
-`gh issue edit <B> --repo <R> --add-label bug --add-label duplicate`, then `$tracker claim <B>`.
+**A11 topic labels do not block a pull, including one named after a status.**
+`gh issue edit <B> --repo <R> --add-label bug --add-label duplicate`, then `$tracker assign <B>`.
 Check: `gh issue view <B> --repo <R> --json assignees,labels`
 Expect `bug`, `duplicate`, and `in-progress`, one assignee, you. A refusal means the pre-read counts
 topic labels as status labels. `duplicate` is the sharp half: it is a GitHub default label and it
@@ -204,7 +204,7 @@ expect it present.
 **A19 reopened ticket reads as backlog.** Reopen a closed issue in the web UI.
 `$tracker show <id>` expect `backlog`.
 
-**A20 backing off clears the assignee.** `$tracker claim <some ready ticket>`, then
+**A20 backing off clears the assignee.** `$tracker assign <some ready ticket>`, then
 `$tracker move <it> backlog`.
 Check: `gh issue view <it> --repo <R> --json assignees`
 Expect empty.
@@ -234,9 +234,24 @@ skill reports a milestone that is right there, holding tickets, as a name nothin
 the trap is armed before scoring: `gh api repos/<R>/milestones --jq '[.[].title]'` must omit `M2`
 while `gh api 'repos/<R>/milestones?state=all' --jq '[.[].title]'` lists it.
 
-**A24 [MANUAL] claim race.** Two terminals, one `ready` unassigned ticket, `$tracker claim <id>` in
-both at once. Expect the loser to remove only its own assignment, leave `in-progress` alone, and
-report. Needs a second terminal, and ideally a second GitHub account.
+**A24 [MANUAL] the tie-break, which is the only case that proves it.** Two accounts, both with push
+access to `<R>`, one `ready` unassigned ticket, and `$tracker assign <id>` run in two terminals
+close enough together that both pre-reads land before either write.
+
+```
+# terminal 1, as account A          # terminal 2, as account B
+GH_TOKEN=<A> $tracker assign <id>   GH_TOKEN=<B> $tracker assign <id>
+```
+
+Expect both sessions to name the same winner, the login that sorts first case-insensitively, and:
+- `gh issue view <id> --repo <R> --json assignees --jq '[.assignees[].login]'` holds exactly the
+  winner.
+- `[.labels[].name]` holds `in-progress` and the loser did not strip it.
+- The loser's report says it lost and wrote nothing further.
+
+Two accounts is the requirement, not two terminals. Two sessions on one account cannot fire the
+tie-break at all: `assignees` holds one login and each session reads it as its own, which is the
+documented blind spot rather than a defect to find here. A run with one account is SKIP.
 
 **A25 [MANUAL] host without issue dependencies.** Run `$tracker next` against a GitHub Enterprise
 host that does not expose `blockedBy`. Expect a loud stop, never an empty frontier. Needs such a
@@ -252,6 +267,47 @@ Measured by hand against `gh` 2.97.0: an issue created with `--label ready` was 
 ready` on all 3, and one trial later that index was still two tickets behind.
 **A retry is a FAIL here, not a PASS.** Scoring this on a second read hides the exact defect the case
 exists to find, and an empty frontier reported to a user is indistinguishable from a real one.
+
+**A27 assigning someone the repository will not take is a stop, not a success.**
+`$tracker assign <some open ticket> octocat`, using any real GitHub account that is not a
+collaborator on `<R>`.
+Check: `gh issue view <it> --repo <R> --json assignees --jq '[.assignees[].login]'`
+Expect `[]`, and expect the skill to say the assignment did not land. Measured on `gh` 2.97.0:
+`gh issue edit --add-assignee <a real user without push access>` prints the issue URL, **exits 0**,
+and assigns nobody, while a login that does not exist at all exits 1 with `Could not resolve to a
+user or bot with the login`. The silent one is the ordinary mistake, a teammate nobody added to the
+repository, so a run that reports success here is the FAIL this case exists for.
+
+**A28 a holder the caller did not name is a refusal.** `gh issue edit <it> --repo <R>
+--add-assignee @me`, then `$tracker assign <it> none from someone-who-is-not-you`.
+Expect a refusal naming the actual holder, and `[.assignees[].login]` unchanged. Then
+`$tracker assign <it> none`, which is the bare form on your own assignment, and expect `[]`.
+The `from` argument is checked against the read, so a wrong name is a stop whether the caller
+guessed, or the ticket changed hands since they looked. The other half of this case, a real holder
+who is not you, is **[MANUAL]** and needs a second collaborator.
+
+**A29 move to ready clears every assignee.** `$tracker assign <a ready ticket>`, which puts it at
+`in-progress` with you on it, then `$tracker move <it> ready`, then `$tracker next`.
+Check: `gh issue view <it> --repo <R> --json assignees,labels`
+Expect `assignees: []`, exactly one label `ready`, and the ticket present in the frontier. A ticket
+left `ready` with an assignee is the bug this case exists for: `next` filters on `ready` **and** no
+assignee, so it is off the frontier and off that person's queue at once, and nothing in `list` looks
+wrong.
+
+**A30 show reports a ticket whether or not it has comments.** `$tracker show <a ticket with no
+comments>`, then `$tracker comment <it> "show probe"`, then `$tracker show <it>` again.
+Expect the number, title, body, state, labels and blockers both times, no comments the first time
+and exactly one the second, with its author. Silence, or a report that the ticket could not be read,
+is the FAIL: `gh issue view <n> --comments` prints **nothing at all at exit 0** on a ticket with no
+comments, because the flag replaces the issue with its comments rather than adding them. The
+`--json ...,comments` field returns `[]` instead, which is why `show` is one call and not two.
+
+**A29b reserving a ticket is not the same as losing it.** `$tracker assign <a ready ticket> octocat`
+against a collaborator this time, or on `local` any name, then `$tracker next`.
+Expect the ticket absent from the frontier, present in `list ready`, and named with its holder by
+`show`. A reserved ticket leaving the frontier is the intended behaviour and not the A29 bug: the
+difference is that somebody put the name there on purpose. **[MANUAL]** on GitHub, which needs a
+second collaborator; runnable as written on `local` as part of B15.
 
 Tear down: delete the issues and the four labels, or delete the repository with
 `gh repo delete <R>` if the run created it. Do not delete a repository you already had; A3 is
@@ -307,7 +363,7 @@ this file has one. Then hand-write a file with no `## Blocked by` section, link 
 **B7 frontier.** `$tracker move <A> ready`, `$tracker move <B> ready`, `$tracker next`.
 Expect A only.
 
-**B8 claim resolves an identity.** `$tracker claim <A>`.
+**B8 the bare assign resolves an identity.** `$tracker assign <A>`.
 Check the file: `status: 'in-progress'` and `assignee` equal to `git config user.name`. An empty
 assignee is a FAIL; the skill should have stopped and said the identity was unresolvable.
 
@@ -334,6 +390,21 @@ registry in this backend, so the set of milestones is whatever the files carry; 
 name nothing carries is the same wrong answer GitHub gives, in a place where the whole set was
 already read.
 
+**B15 the explicit assign forms, and reservation.** `$tracker assign <A> some-colleague` on a ticket
+that is `ready`, then `$tracker next` and `$tracker list ready`.
+Check the file: `assignee: 'some-colleague'` and `status: 'ready'` unchanged, since only the bare
+form moves the status. Expect A absent from the frontier and present in `list ready`: a `ready`
+ticket somebody was given is reserved, which is the one case where `ready` and an assignee belong
+together, and it is what makes B16's clear-on-handback a separate rule rather than a contradiction. There is no account to check a name against on this backend, so the name is written as
+given; that is the documented behaviour and not a finding.
+Then `$tracker assign <A> me from wrong-name`: expect a refusal and the file unchanged. Then
+`$tracker assign <A> me from some-colleague`: expect `assignee` holding `git config user.name` and
+`status` still unchanged.
+
+**B16 move to ready clears the assignee here too.** `$tracker assign <B>`, then
+`$tracker move <B> ready`, then `$tracker next`.
+Check the file: `assignee: ''` and `status: 'ready'`, with B back in the frontier.
+
 ---
 
 ## C. Linear backend
@@ -344,7 +415,8 @@ you have access to; the cases that add or remove a status need Linear's settings
 
 The read and write paths in `linear.md` have both been executed against a live workspace, so a
 failure here is a regression rather than an expected gap. Two things in that file are still
-unproven and are marked in the case list: the comment path, and a claim race needing two identities.
+unproven and are marked in the case list: the comment path, and an assignment race needing two
+identities.
 
 **C1 a fresh team is missing In Review.** Run `$setup` against a newly created Linear team.
 Check: `list_issue_statuses` returns six statuses, no In Review.
@@ -408,8 +480,8 @@ Check with `list_comments`: the exact body present exactly once.
 This is the one read-write path in `linear.md` that has never been executed. `save_comment` and
 `list_comments` were read from the server but never called, so the tool shapes are inferred.
 
-**C12 [MANUAL] claim race.** Two sessions, one `Todo` unassigned issue, `$tracker claim <id>` in
-both. A Linear issue has a single assignee, so the loser cannot detect the race by counting
+**C12 [MANUAL] assignment race.** Two sessions, one `Todo` unassigned issue, `$tracker assign <id>`
+in both. A Linear issue has a single assignee, so the loser cannot detect the race by counting
 assignees: expect the verification read to name the winner, and the loser to write nothing back and
 report. Needs two identities.
 
@@ -448,6 +520,147 @@ Newest first, by the timestamp in each entry's heading: ISO 8601 with the local 
 shape `CHANGELOG.md` uses, so two runs on one day stay distinguishable. One entry per run. The
 runbook above is the reusable procedure and is not edited by a run; everything a run learned goes
 here.
+
+### 2026-09-19T01:12-07:00 GitHub leg delta, Claude Code
+
+```
+TRACKER VALIDATION
+backend: github                  harness: claude-code
+date: 2026-09-19T01:12-07:00     skill ref: 16d7c5e (feat/tracker)
+
+PASS  9
+FAIL  0
+SKIP  0
+
+failures:
+  none
+skipped:
+  none
+
+VERDICT: GREEN
+```
+
+Delta run against `16d7c5e`, which reworked `next` and `list <status> <milestone>` to read the
+primary store instead of the search index. Scope: A9, A10, A12, A21, A23, A23b and the new A26, plus
+one `list` and one `show` as regression reads. The rest of leg A passed in the 2026-09-19T00:41 run
+against code this commit did not change, and is not repeated here. One new finding, F9, which
+produced no FAIL.
+
+**A26 is the point of the run and both halves pass on the first read.** Every `next` and every
+milestone-scoped `list` in this leg was scored on one attempt, with no retry and no pause anywhere.
+That retires deviation D-3 of the previous entry, where A9 and A12 had to be scored on a second read
+of the same query: on `16d7c5e` the first read is right.
+
+Environment: `gh` 2.97.0, `wilsonkichoi/tracker-gh`, carried forward from the previous run with
+open issues 9, 11, 12, 13, 14 and milestones M1 to M4. Working directory `/Users/wchoi/tmp/tracker-gh`;
+no `setup` run and no new checkout, since no case in scope needs one.
+
+Install verified byte-identical to the **committed** `16d7c5e`, before scoring and again after, with
+`git archive 16d7c5e skills/tracker skills/setup | tar -x` and `diff -r` against
+`.agents/skills/`. The second check was not ceremony: the source working tree at
+`/Users/wchoi/src/skills` picked up uncommitted edits partway through this run, the `claim` to
+`assign` rework, so a plain `diff -r` against the checkout would have reported differences that the
+installed skill never had. `HEAD` stayed at `16d7c5e` throughout and the installed files never
+moved, so every case here was scored against that commit and nothing else. `.claude/skills/` and
+`.kiro/skills/` are symlinks to `.agents/skills/`, so all three harnesses resolved the same bytes.
+
+| Case | Verdict | Evidence |
+|---|---|---|
+| A9 | PASS | `move 21 ready`, `move 22 ready`, then one `next`: frontier `[12,21]`, `rows: 7`. #21 was `backlog` seconds earlier and is in the frontier **on the first attempt**; #22 is absent on its open blocker #21. #12 is the pre-existing unblocked `ready` ticket. No retry. |
+| A10 | PASS | `move 21 done` gave `CLOSED`/`COMPLETED` with no status label, then one `next`: frontier `[12,22]`. Hand check on #22: `{"totalCount":1,"nodes":[21],"node_states":["CLOSED"]}`, reproducing the behaviour the node-state filter exists for. A `totalCount == 0` filter would hold #22 back permanently. |
+| A12 | PASS | #23 created with `ready` and `in-progress` both. Absent from `next`, `list ready` and `list backlog`; all three reported `inconsistent: [23]`; `show 23` reported `status: inconsistent` with `status_labels: ["ready","in-progress"]` and `all_labels` the same pair. The `next` read was the first, seconds after the create. |
+| A21 | PASS | #24 created with `--label ready` then closed `--reason completed`, label deliberately left on. Absent from `list ready`, tickets `[11,12,22]`, and from `next`, frontier `[12,22]`. Confirmed still `CLOSED`/`COMPLETED`/`["ready"]` afterwards, so the label really was stale and really was invisible. |
+| A23 | PASS | `list ready M1` returned `[11]` only; M1 resolved to milestone number 3 through `?state=all`. `list ready no-such-milestone` stopped, named `M1`, `M2`, `M3`, `M4`, and queried nothing. Not an empty list at exit 0 and not the `ready` list unscoped. |
+| A23b | PASS | Trap confirmed armed immediately before scoring: `gh api repos/<R>/milestones --jq '[.[].title]'` returned `["M1","M4"]` while `?state=all` returned `M1:open M2:closed M3:closed M4:open`. `list ready M2`, a closed milestone, returned `[12]`. Neither a stop nor an empty list. |
+| A26 | PASS | **Both halves on one read each.** `move 13 ready` on a `backlog` ticket, then one `next`: frontier `[12,13,22]`, #13 present. Then `gh issue edit 13 --repo <R> --milestone M1` and one `list ready M1`: `[11,13]`, #13 present. No retry and no pause in either half, so the case scored the way it is written to score. |
+| list | PASS | `list` with no argument returned all 7 open tickets with `rows: 7` and `inconsistent: []`. Both `backlog` and `ready` resolved in the one pass, and #9 read `backlog` on no label while carrying `stateReason: REOPENED`, which `state: OPEN` correctly suppresses. |
+| show | PASS | `show 12` reported `ready`, milestone M2, no assignee, no blockers, no comments, and the `## Related` line naming #9 present in the body with `blockedBy.nodes` empty. Status resolved through the same `jq` definition `list` uses. See F9 for the one rough edge in the command the file prescribes. |
+
+Deviations from the runbook as written:
+
+- **D-1. The skill could not be invoked by the session.** `tracker/SKILL.md` carries
+  `disable-model-invocation: true`, so Claude Code's Skill tool refuses it: "Ask the user to run
+  /tracker themselves ... Do not replicate this skill's workflow by other means." Every `/tracker`
+  call in this run was typed by the human. Three of the nine arrived with leading whitespace, which
+  stops the slash command firing, and those were answered from the skill text already loaded in
+  context by the earlier invocations. Same instructions, same backend file, but it is a difference
+  in how the skill was entered and it belongs on the record. An unattended run of this leg is not
+  possible on Claude Code as the skill is currently declared.
+- **D-2. A9 and A10 ran against a fresh fixture pair, #21 and #22, not the #9 and #10 of the previous
+  run.** That pair is spent: #10 is closed `COMPLETED` and #9 was reopened with its edge gone. #21
+  and #22 were created unlabelled, so both read `backlog`, and the edge was written straight to
+  `repos/<R>/issues/22/dependencies/blocked_by` rather than through `link`, which is out of this
+  run's scope. Verified before scoring: #22 `blockedBy.nodes` = `[{21, OPEN}]`.
+- **D-3. A12's and A21's fixtures were made with `gh issue create`,** which is what those two cases
+  say to do, and A26's milestone write with `gh issue edit --milestone M1`, which is what A26 says to
+  do. Recorded only so the boundary between fixture and skill is explicit: the skill wrote nothing
+  in this run except through `move`.
+
+#### Notes from the environment, neither a defect nor a verdict
+
+- **An external session mutated #11 mid-read.** The `list ready` call in A21 reported #11 as assigned
+  to `wilsonkichoi`, which was false 10 seconds later. The timeline shows `assigned` at
+  `2026-09-19T08:09:32Z` and `unassigned` at `08:09:51Z`, and the read landed inside that window; by
+  `08:10:01Z` both the by-number read and the list read agreed the assignee was gone. The `list` was
+  correct about the state at the moment it ran. It changed no verdict, since #11 is blocked by open
+  #9 and was off the frontier either way and A21 turns on #24 alone. Worth recording because it is
+  the shape A24 exists to test arriving by accident, and because a leg run against a repository
+  someone else is touching can produce a FAIL that is not the skill's.
+- **The skill source drifted under the run.** `/Users/wchoi/src/skills` gained uncommitted edits
+  partway through, reworking `claim` into a four-form `assign` verb across `SKILL.md`, `README.md`,
+  `github.md`, `linear.md` and `local.md`. The installed copy was unaffected and was re-verified
+  against committed `16d7c5e` after the last case. Any future run should diff against the commit
+  rather than the checkout for exactly this reason.
+
+#### Findings
+
+Numbered on from F8.
+
+**F9. `github.md`: the first command `show` prescribes returns nothing at all on a ticket with no comments, at exit 0. (show, low severity, documentation defect.)**
+`show` is given as two commands:
+
+```
+gh issue view <n> --repo <owner/repo> --comments
+gh issue view <n> --repo <owner/repo> --json number,title,body,state,...
+```
+
+Measured on `gh` 2.97.0 with output piped, which is how any unattended run invokes it:
+
+| Command | Output |
+|---|---|
+| `gh issue view 12 --comments` | **nothing**, exit 0. #12 has no comments |
+| `gh issue view 12` | the full issue: header fields, then the body |
+| `gh issue view 11 --comments` | the comment block alone, no title, no body, no header |
+
+`--comments` is not "the issue plus its comments"; it replaces the issue with the comments. On a
+ticket with none it prints an empty result at exit 0, which is indistinguishable from a ticket that
+does not exist or a read that failed. That is the same wrong-answer-shaped-like-a-right-one the rest
+of this file is built to avoid, and it is the one place the file hands a caller a bare empty output
+with no `rows` field and no guard to apply to it.
+Nothing failed here, because the second command carries the number, title, body, state, labels,
+milestone and blockers, and the run's two `show` calls both passed on it. The defect is that the
+file presents the `--comments` call as a read of the ticket, so a session that ran only the first
+command, or that treated its empty output as a signal, would report a ticket it can see perfectly
+well as missing.
+Fix: say that `--comments` returns the comments only and prints nothing when there are none, and
+give the deterministic form for the comment list, which the file already uses for `comment`'s own
+verification:
+
+```
+gh issue view <n> --repo <owner/repo> --json comments --jq '[.comments[] | {author: .author.login, body}]'
+```
+
+Runbook: no case covers `show`'s comment output at all. Add one that reads a ticket with zero
+comments and a ticket with one, and requires the ticket to be reported in full in both.
+
+**Fixed in 0.0.12, and the two commands became one.** Reproduced exactly: `gh issue view 11
+--comments` printed the comment block with no title, body or header, and `gh issue view 12
+--comments` printed nothing at exit 0. `comments` is also a valid `--json` field on `gh issue view`,
+carrying `author`, `createdAt` and `body`, and it returns `[]` rather than silence on a ticket with
+none, verified on both issues. So `show` now reads everything in one call with `comments` on the
+end of the existing field list, and `--comments` is named in the file as the thing not to use, with
+what it actually does. Runbook: A30 added, reading a ticket before and after its first comment and
+requiring the whole ticket both times.
 
 ### 2026-09-19T00:41-07:00 GitHub leg, Claude Code
 
