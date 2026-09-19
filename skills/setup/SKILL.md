@@ -49,74 +49,30 @@ interview.
 Summarise what's present and what's missing. Then take the sections in order. One section, one
 answer, then the next.
 
-Lead each section with the recommended answer so the user can accept it in a word. Give a one-line
-explainer only when the choice genuinely branches; skip the section entirely when exploration
-already settled it.
+Give a one-line explainer only when the choice genuinely branches, and skip a section entirely when
+step 1 already settled it.
 
-**Offer the choices, do not make the user type them.** Use a structured question tool only when
-the active harness exposes a direct picker. In Codex, use `request_user_input` whenever the active
-session permits it, including Default mode with the feature enabled. For Section A, call it with
-one question and three options. This example is for a repository without a GitHub remote:
+**Ask, then stop.** A question is the last thing in its turn: no tool call after it, no work while
+it is outstanding. A harness that is still working cannot take a plain reply.
 
-```
-request_user_input({
-  questions: [{
-    header: "Tracker",
-    id: "tracker",
-    question: "Where should issues live?",
-    options: [
-      { label: "Local markdown (Recommended)", description: "Store issue files in this repo." },
-      { label: "GitHub", description: "Use GitHub Issues." },
-      { label: "Linear", description: "Use Linear." }
-    ]
-  }]
-})
-```
-
-For a GitHub remote, put GitHub first and mark it `(Recommended)` instead. The Codex picker adds a
-free-form choice for Other. Do not use `request_user_input_async` as a substitute: it queues the
-question behind `⌥ + ↑ to answer`. In Codex CLI, if the direct tool is unavailable, show this
-launch command. It enables the direct picker in Default mode, verified with CLI 0.155.1:
-
-```
-codex --enable default_mode_request_user_input
-```
-
-Do not change the user's mode or configuration automatically. If continuing without a direct
-picker, use the text fallback below. Show all four options, state the recommended default, and
-accept one digit as the answer. Never ask anyone to retype a path already on screen: show it and
-accept a bare yes.
-
-**Stop at each question.** A text question ends the turn: no tool call after it and no work started
-while it is outstanding. A direct picker waits for its answer within the tool call. One section,
-one question, one answer.
+**Make it cheap to answer.** Number the options, put the recommended one first, and say a digit is
+enough. Use the harness's own picker where it has one; most have none, and numbered text is the
+right answer there rather than a fallback to apologise for. Never ask for a path already on screen:
+show it and take a bare yes.
 
 **Section A: Issue tracker.**
 
-> Explainer: The "issue tracker" is where issues live for this repo. Most skills will use the
-> `tracker` skill to read from and write to it. Currently support `github` / `linear` / `local`.
-> Pick the place you actually track work for this repo.
+> Explainer: where issues live for this repo. Every other skill reads and writes them through
+> `tracker`. Pick the place you actually track work.
 
 - **GitHub**: issues live in the repo's GitHub Issues (uses the `gh` CLI)
 - **Linear**: issues live in linear.app (uses the Linear MCP server). Ask for the team key and the
   project name; both go in the config.
 - **Local markdown**: issues live as files under `docs/dev-agents/issues/` in this repo (good for
   solo projects or repos without a remote). One session at a time: a claim made on a branch is
-  invisible from `main` until that branch merges
+  invisible from `main` until that branch merges.
 - **Other** (Jira, GitLab, etc.): ask the user to describe the workflow in one paragraph; record it
   as freeform text in the config body and set `issue_tracker: other`
-
-With no direct picker, ask Section A in this form. Replace the default with the backend supported
-by the existing config or repository; use GitHub for a GitHub remote and Local markdown otherwise.
-Put that backend first, so `1` always accepts the default.
-
-```
-Where should issues live? Default: 1 (GitHub). Reply with one digit.
-1. GitHub: GitHub Issues.
-2. Linear: linear.app.
-3. Local markdown: files in docs/dev-agents/issues/.
-4. Other: describe your tracker.
-```
 
 **Settle the backend's prerequisites here, before Section B.** A missing prerequisite is a question
 to ask now, not a fact to report at the end of the run. The user just chose this backend and is
@@ -132,16 +88,13 @@ knowing whether the first one will work.
 Write the resolved `OWNER/REPO`, or the resolved team and project, into the config. Never record an
 intention to set one up later.
 
-**Section B: Product-intent documents.** Where do the product requirements, the spec, and the
-roadmap live? These paths go into the config so later skills read the right files. Defaults are
-`docs/dev-agents/PRD.md`, `docs/dev-agents/SPEC.md`, `docs/dev-agents/ROADMAP.md`. For some
-projects `AGENTS.md` or `CLAUDE.md` is the doc; point the field at it. Never guess a path into
-configuration.
+**Section B: Product-intent documents.** Where the requirements, the spec, and the roadmap live,
+so later skills read the right files. Defaults are `docs/dev-agents/PRD.md`, `SPEC.md`, and
+`ROADMAP.md`. Where `AGENTS.md` or `CLAUDE.md` is already the doc, point the field at it.
 
-**Section C: Context file.** Which file is this project's entry point for coding agents? Default
-`AGENTS.md`. Choose `CLAUDE.md` for a deliberately Claude-Code-only project. A project that already
-has a convention keeps it: set `context_file` to the file every harness ultimately reaches, and
-never invert an existing direction.
+**Section C: Context file.** The project's entry point for coding agents. Default `AGENTS.md`,
+or `CLAUDE.md` for a deliberately Claude-Code-only project. A project with a convention keeps it:
+point `context_file` at the file every harness ultimately reaches, and never invert that.
 
 **Section D: Test command.** Confirm the command inferred in step 1, or ask for it. It is what
 later skills run before handing work back.
@@ -161,23 +114,20 @@ docs/dev-agents/issues/               # only when issue_tracker: local
 Add `docs/dev-agents/rules/.gitkeep` so git tracks the directory before the first rule lands.
 
 Do not create empty `PRD.md`, `SPEC.md`, or `ROADMAP.md`. Their paths are recorded in the config;
-`research`, `architect`, and `plan` write them. The one exception is step 5, which writes a spec
+`research`, `architect`, and `plan` write them. The one exception is step 6, which writes a spec
 from an existing codebase.
 
-**Template:** write `docs/dev-agents/config.md` using
-[config-template.md](./config-template.md). Keep it simple, drop whatever is not useful, only add
-what is necessary. Every field must come from the interview or from step 1; never guess a path into
-configuration.
+**Template:** write `docs/dev-agents/config.md` from
+[config-template.md](./config-template.md), dropping the fields that do not apply. Every value comes
+from the interview or from step 1. Never guess a path into configuration.
 
 **Existing projects:** an existing `config.md` keeps the choices the project already made. Add the
 fields it is missing and report what changed; do not rewrite the body.
 
-**Ownership rule:** the project owns `AGENTS.md` and `CLAUDE.md`. Setup adds at most the single
-step 4 reference line there and never moves, consolidates, or rewrites project rules or
-context-file content. `rules_dir` defaults to `docs/dev-agents/rules/`; a project with an existing
-rules convention may point the field elsewhere instead (for example `.claude/rules/`, which Claude
-Code auto-loads natively). Respect the project's choice, and never migrate rule files between
-locations uninvited.
+**Ownership rule:** the project owns `AGENTS.md` and `CLAUDE.md`. Setup adds at most the step 4
+reference line and never moves, consolidates, or rewrites what is already there. `rules_dir`
+defaults to `docs/dev-agents/rules/`, and a project with its own convention may point it elsewhere,
+such as `.claude/rules/`, which Claude Code auto-loads. Never migrate rule files uninvited.
 
 ## 4. Add the reference line
 

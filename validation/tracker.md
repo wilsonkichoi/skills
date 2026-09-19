@@ -387,19 +387,11 @@ Run the same one command from one install on each harness available.
 **D3 [MANUAL] Kiro CLI.** `/tracker list`, and check the slash-command menu renders the one-line
 description correctly rather than truncating it at a colon or showing `>`.
 
-**D4 setup offers a direct choice.** Run `$setup` and stop at Section A. In Codex Plan mode, and in
-Default mode launched with `codex --enable default_mode_request_user_input`, inspect
-the session log for a `request_user_input` call with three backend options; check that the picker
-shows the options and accepts a selection. In Codex Default mode without the feature, expect a
-numbered text prompt with all four options, a stated default, and a one-digit answer. Check that it
-did not call `request_user_input_async`, which queues the question. It must also explain the launch
-option for enabling the direct picker. On Claude Code and Kiro CLI, expect a direct picker only if
-the active mode offers one; otherwise expect the same text fallback.
-In each case, check that a repository without a GitHub remote recommends Local markdown, and a
-repository with one recommends GitHub. A bullet list without a stated default or one-digit answer
-is a FAIL.
+**D4 setup asks the way the harness allows.** Run `$setup` and stop at Section A.
+Expect numbered options with the recommended one first and a digit accepted as the answer, or the
+harness's own picker where it has one a skill can invoke. Codex has none, so numbered text is the
+correct result there and not a failure. An unnumbered prose list is a FAIL.
 
-**D5 the question stops work.** Watch the harness while Section A is on screen. With a text
-question, expect the turn to end and the answer to enter directly. With a direct picker, expect
-the tool to wait for a selection. A queued question behind `⌥ + ↑ to answer`, or work continuing
-after the question, is a FAIL. Do not count `Working` alone as a failure while a direct picker waits.
+**D5 the question ends the turn.** Watch the harness while Section A is on screen.
+Expect it idle and waiting, so the answer is typed straight in. A harness still reporting work, or
+holding the reply as a queued input, is a FAIL: the skill asked and then kept going.
