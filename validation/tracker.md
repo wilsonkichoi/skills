@@ -65,15 +65,17 @@ git init && mkdir -p .claude .kiro
 npx skills@latest add 'https://github.com/wilsonkichoi/skills.git#feat/tracker' -a claude-code -a codex -a kiro-cli
 ```
 
-**S1 install layout.** Check: `ls .agents/skills/tracker/`. Expect `SKILL.md`, `github.md`,
-`linear.md`, `local.md`, `agents`.
+**S1 install layout.** Check: `ls .agents/skills/tracker/`. Expect `SKILL.md`, `README.md`,
+`github.md`, `linear.md`, `local.md`, `agents`. The `README.md` is there on purpose: the installer
+copies the whole skill directory, so the human-facing explainer ships to every consumer.
 
 **S2 sibling resolution.** Check: `head -1 .claude/skills/tracker/github.md` and the same under
 `.kiro/`. Expect `# Backend: GitHub Issues` from both.
 
 **S3 one skill per name.** Check:
 `npx skills@latest add 'https://github.com/wilsonkichoi/skills.git#feat/tracker' -l`.
-Expect exactly 2 skills and nothing named `skill-name`.
+Expect exactly 2 skills and nothing named `skill-name`. Nothing from `validation/` may appear
+either.
 
 ---
 
@@ -94,76 +96,95 @@ Check: `gh issue view <B> --repo <R> --json blockedBy --jq '[.blockedBy.nodes[].
 Expect `[<A>]`. This is the edge `create` writes as a second call; its own exit code says nothing
 about it.
 
-**A4 frontier excludes the blocked ticket.** `$tracker move <A> ready`, `$tracker move <B> ready`,
+**A4 link is its own verb.** Create E with no blockers, then `$tracker link <E> blocked-by <A>`.
+Check: `gh issue view <E> --repo <R> --json blockedBy --jq '[.blockedBy.nodes[].number]'`
+Expect `[<A>]`. The dependency endpoint takes the blocker's numeric **database** id, which is
+neither `#<A>` nor its `node_id`, so a skill that passed the issue number here either errors or
+writes an edge to some unrelated issue. Check which one you got.
+
+**A5 Related is a reference, not an edge.** `$tracker create` with ticket F naming `#<A>` under
+`## Related` and nothing under `## Blocked by`.
+Check: `gh issue view <F> --repo <R> --json body,blockedBy`
+Expect the `## Related` line present in the body and `blockedBy.nodes` **empty**. A `## Related`
+entry that became a dependency edge is a FAIL: it would drop F off the frontier over a reference
+nothing is supposed to compute on.
+
+**A6 frontier excludes the blocked ticket.** `$tracker move <A> ready`, `$tracker move <B> ready`,
 then `$tracker next`.
 Expect A and not B.
 
-**A5 closed blocker releases the frontier.** `$tracker move <A> done`, then `$tracker next`.
+**A7 closed blocker releases the frontier.** `$tracker move <A> done`, then `$tracker next`.
 Expect B.
 Check the reason by hand:
 `gh issue list --repo <R> --state open --json number,blockedBy --jq '.[]|select(.number==<B>)'`
 Expect `blockedBy.totalCount` still `1` with the node `CLOSED`. A `next` that filtered on
 `totalCount` would never return this ticket.
 
-**A6 topic labels do not block a claim.**
+**A8 topic labels do not block a claim.**
 `gh issue edit <B> --repo <R> --add-label bug`, then `$tracker claim <B>`.
 Check: `gh issue view <B> --repo <R> --json assignees,labels`
 Expect `bug` and `in-progress`, one assignee, you. A refusal here means the pre-read counts topic
 labels as status labels.
 
-**A7 multi-status issue never reaches a result, and all three verbs agree.**
+**A9 multi-status issue never reaches a result, and all three verbs agree.**
 `gh issue create --repo <R> --title "two statuses" --body x --label ready --label in-progress`
 then `$tracker next`, `$tracker list ready`, `$tracker list backlog`, and `$tracker show <that id>`.
 Expect the issue in none of the three result sets, named as inconsistent by all four verbs, and both
 labels named by `show`. A verb that reports it as `ready`, as `backlog`, or not at all is a FAIL:
 one shared status test is supposed to make disagreement impossible.
 
-**A8 multi-status issue is repairable.** `$tracker move <that id> ready`.
+**A10 multi-status issue is repairable.** `$tracker move <that id> ready`.
 Check: `gh issue view <that id> --repo <R> --json labels --jq '[.labels[].name]|sort'`
 Expect exactly `ready`.
 
-**A9 the no-op move keeps its label.** `$tracker move <B> in-progress` on a ticket already there.
+**A11 the no-op move keeps its label.** `$tracker move <B> in-progress` on a ticket already there.
 Check: `gh issue view <B> --repo <R> --json labels --jq '[.labels[].name]|sort'`
 Expect `bug` and `in-progress` both. An empty result means the add and remove lists overlapped.
 
-**A10 terminal move records the reason and strips the label.** `$tracker move <B> done`.
+**A12 terminal move records the reason and strips the label.** `$tracker move <B> done`.
 Check: `gh issue view <B> --repo <R> --json state,stateReason,labels`
 Expect `CLOSED`, `COMPLETED`, no status label, `bug` retained.
 
-**A11 duplicate records its original.** Create C and D, then `$tracker move <D> duplicate <C>`.
+**A13 duplicate records its original.** Create C and D, then `$tracker move <D> duplicate <C>`.
 Check: `gh issue list --repo <R> --state closed --json number,stateReason`
 Expect D as `DUPLICATE`.
 
-**A12 terminal is terminal.** `$tracker move <D> ready`.
+**A14 terminal is terminal.** `$tracker move <D> ready`.
 Expect a refusal. `gh issue close` on a closed issue exits 0 and keeps the old reason, so the
 pre-read is the only guard.
 
-**A13 human-made ticket reads as backlog.** Create an issue in the web UI, no label, one-line body.
+**A15 human-made ticket reads as backlog.** Create an issue in the web UI, no label, one-line body.
 `$tracker show <id>` expect `backlog`; `$tracker next` expect it absent; `$tracker list backlog`
 expect it present.
 
-**A14 reopened ticket reads as backlog.** Reopen a closed issue in the web UI.
+**A16 reopened ticket reads as backlog.** Reopen a closed issue in the web UI.
 `$tracker show <id>` expect `backlog`.
 
-**A15 backing off clears the assignee.** `$tracker claim <some ready ticket>`, then
+**A17 backing off clears the assignee.** `$tracker claim <some ready ticket>`, then
 `$tracker move <it> backlog`.
 Check: `gh issue view <it> --repo <R> --json assignees`
 Expect empty.
 
-**A16 stale label stays invisible.**
+**A18 stale label stays invisible.**
 `gh issue create --repo <R> --title stale --body x --label ready` then
 `gh issue close <it> --repo <R> --reason completed`.
 `$tracker list ready` and `$tracker next` expect it in neither.
 
-**A17 comment lands and is verified.** `$tracker comment <some id> "runbook note"`.
+**A19 comment lands and is verified.** `$tracker comment <some id> "runbook note"`.
 Check: `gh issue view <it> --repo <R> --json comments --jq '[.comments[].body]'`
 Expect the exact body present exactly once.
 
-**A18 [MANUAL] claim race.** Two terminals, one `ready` unassigned ticket, `$tracker claim <id>` in
+**A20 a milestone scopes the list.** `gh api repos/<R>/milestones -f title=M1`, put one `ready`
+ticket in it with `gh issue edit <id> --repo <R> --milestone M1`, then `$tracker list ready M1`.
+Expect only that ticket, with the second argument read as a milestone rather than rejected as an
+unknown status. Then `$tracker list ready no-such-milestone`: expect a stop, not the whole `ready`
+list unscoped.
+
+**A21 [MANUAL] claim race.** Two terminals, one `ready` unassigned ticket, `$tracker claim <id>` in
 both at once. Expect the loser to remove only its own assignment, leave `in-progress` alone, and
 report. Needs a second terminal, and ideally a second GitHub account.
 
-**A19 [MANUAL] host without issue dependencies.** Run `$tracker next` against a GitHub Enterprise
+**A22 [MANUAL] host without issue dependencies.** Run `$tracker next` against a GitHub Enterprise
 host that does not expose `blockedBy`. Expect a loud stop, never an empty frontier. Needs such a
 host.
 
@@ -205,27 +226,38 @@ is a FAIL, and it is the specific failure unquoted YAML produces.
 **B4 edges live in the frontmatter.** `$tracker create` ticket B naming A under `## Blocked by`.
 Check the file: `blocked_by` holds A's id, and the `## Blocked by` body section matches.
 
-**B5 frontier.** `$tracker move <A> ready`, `$tracker move <B> ready`, `$tracker next`.
+**B5 Related has no frontmatter field.** `$tracker create` ticket F naming A under `## Related` and
+nothing under `## Blocked by`.
+Check the file: the `## Related` section is in the body, `blocked_by` is empty, and no `related`
+key was invented in the frontmatter. Nothing computes on `## Related`, so anything that parsed it
+into state is a FAIL.
+
+**B6 link keeps the body in step.** `$tracker link <F> blocked-by <A>`.
+Check the file: `blocked_by` now holds A's id **and** the `## Blocked by` section lists it, since
+this file has one. Then hand-write a file with no `## Blocked by` section, link it, and check that
+`blocked_by` changed and the body was left alone.
+
+**B7 frontier.** `$tracker move <A> ready`, `$tracker move <B> ready`, `$tracker next`.
 Expect A only.
 
-**B6 claim resolves an identity.** `$tracker claim <A>`.
+**B8 claim resolves an identity.** `$tracker claim <A>`.
 Check the file: `status: 'in-progress'` and `assignee` equal to `git config user.name`. An empty
 assignee is a FAIL; the skill should have stopped and said the identity was unresolvable.
 
-**B7 terminal releases the frontier.** `$tracker move <A> done`, then `$tracker next`. Expect B.
+**B9 terminal releases the frontier.** `$tracker move <A> done`, then `$tracker next`. Expect B.
 
-**B8 comment.** `$tracker comment <B> "a note"`. Check the file: the body is under `## Comments`
+**B10 comment.** `$tracker comment <B> "a note"`. Check the file: the body is under `## Comments`
 with a `### <date> <author>` heading.
 
-**B9 the tracker never commits.** Check: `git status --porcelain`.
+**B11 the tracker never commits.** Check: `git status --porcelain`.
 Expect the ticket files listed as uncommitted. A clean tree is a FAIL.
 
-**B10 hand-written file.** `printf '# just a title\n\nsome prose\n' > docs/dev-agents/issues/099-hand.md`
+**B12 hand-written file.** `printf '# just a title\n\nsome prose\n' > docs/dev-agents/issues/099-hand.md`
 then `$tracker show 99`. Expect `backlog` rather than an error.
 Then `$tracker move 99 ready` and check the file gained a frontmatter block carrying only the fields
 that verb sets, with the prose untouched.
 
-**B11 id forms are interchangeable.** `$tracker show 99`, `$tracker show 099`, `$tracker show '#99'`.
+**B13 id forms are interchangeable.** `$tracker show 99`, `$tracker show 099`, `$tracker show '#99'`.
 Expect the same ticket three times.
 
 ---
@@ -236,8 +268,9 @@ Needs the Linear MCP server connected and a scratch team. Read-only cases can ru
 you have access to; the cases that add or remove a status need Linear's settings UI, so they are
 `[MANUAL]`.
 
-Every write path in `linear.md` is still unexecuted, so treat a failure here as expected rather than
-surprising, and record what actually happened.
+The read and write paths in `linear.md` have both been executed against a live workspace, so a
+failure here is a regression rather than an expected gap. Two things in that file are still
+unproven and are marked in the case list: the comment path, and a claim race needing two identities.
 
 **C1 a fresh team is missing In Review.** Run `$setup` against a newly created Linear team.
 Check: `list_issue_statuses` returns six statuses, no In Review.
@@ -272,8 +305,8 @@ have surfaced.
 has, for instance `in reviewww`.
 Expect `Could not find state "in reviewww"` and no change. Then write `in progress` in lower case:
 expect it to resolve to `In Progress`, since matching is case-insensitive.
-The predecessor recorded this as a silent failure. It did not reproduce; record what you see, since
-a regression either way matters.
+The predecessor recorded this as a silent failure. It did not reproduce against a live server;
+record what you see, since a regression either way matters.
 
 **C7 the frontier reads blocker statuses.** Create A and B with B blocked by A, both `Todo` and
 unassigned. `$tracker next`.
@@ -285,16 +318,26 @@ cannot have filtered correctly, even if the answer looks right on one sample.
 `includeRelations: true`.
 Expect the edge under `relations.blockedBy`.
 
-**C8b the duplicate transition destroys other relations.** Give a ticket a `relatedTo` edge, confirm
+**C9 the duplicate transition destroys other relations.** Give a ticket a `relatedTo` edge, confirm
 it with `get_issue`, then `$tracker move <it> duplicate <original>` and read it again.
 Expect `duplicateOf` set, the status `Duplicate` rather than `Canceled`, and **`relatedTo` emptied**.
 Linear clears the other relations with no error and no mention in the response. Expect the skill to
 have read the relations first and to report what was lost. A run that reports a clean move is a
 FAIL: it means nothing looked.
 
-**C9 milestone scoping.** `$tracker list ready "<milestone name>"`.
+**C10 milestone scoping.** `$tracker list ready "<milestone name>"`.
 Expect only that milestone's issues. Then pass a milestone name that does not exist: expect a stop,
 not the whole project unscoped.
+
+**C11 comment lands and is verified.** `$tracker comment <id> "runbook note"`.
+Check with `list_comments`: the exact body present exactly once.
+This is the one read-write path in `linear.md` that has never been executed. `save_comment` and
+`list_comments` were read from the server but never called, so the tool shapes are inferred.
+
+**C12 [MANUAL] claim race.** Two sessions, one `Todo` unassigned issue, `$tracker claim <id>` in
+both. A Linear issue has a single assignee, so the loser cannot detect the race by counting
+assignees: expect the verification read to name the winner, and the loser to write nothing back and
+report. Needs two identities.
 
 ---
 

@@ -10,7 +10,7 @@ than doing it itself.
 
 ## What has been tested
 
-Verified 2026-09-19 against two live workspaces: one established team with seven statuses, and one
+Verified 2026-09-18 against two live workspaces: one established team with seven statuses, and one
 freshly created sandbox team. Read and write paths were both executed.
 
 | Part | Status |
@@ -23,8 +23,7 @@ freshly created sandbox team. Read and write paths were both executed.
 ## Statuses
 
 There is no per-workspace mapping and no config field for one. The seven statuses map onto seven
-Linear statuses by **exact name**, and those names are Linear's own defaults, so most teams already
-match without changing anything:
+Linear statuses by **exact name**:
 
 | Status | Linear status | Category (`type`) |
 |---|---|---|
@@ -36,10 +35,11 @@ match without changing anything:
 | `cancel` | Canceled | `canceled` |
 | `duplicate` | Duplicate | `duplicate` |
 
-**A new Linear team does not have all seven.** A team created from Linear's default template has
-six statuses and no **In Review**, verified on a team created the same day. So the missing-status
-stop below is the ordinary first run, not an edge case: expect most adopters to add In Review by
-hand before `setup` will write the Linear config.
+**A new Linear team does not have all seven.** Six of these names are Linear's own defaults, and
+**In Review** is not one of them: a team created from the default template has six statuses and no
+In Review, verified on a team created the same day. So the missing-status stop below is the ordinary
+first run, not an edge case. Expect most adopters to add In Review by hand before `setup` will write
+the Linear config.
 
 **Operate by name.** `state` on `save_issue` and `list_issues` accepts a type, a name, or an id.
 Always pass the name from this table. It is unambiguous, and it never needs a tie-break:
