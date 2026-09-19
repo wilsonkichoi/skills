@@ -232,31 +232,60 @@ Expect the same ticket three times.
 
 ## C. Linear backend
 
-Nothing in `linear.md` has been run against a live workspace. Every case here is expected to be SKIP
-without a scratch Linear team, and a run that skips them all is honest, not green-by-omission.
+Needs the Linear MCP server connected and a scratch team. Read-only cases can run against any team
+you have access to; the cases that add or remove a status need Linear's settings UI, so they are
+`[MANUAL]`.
 
-**C1 [MANUAL] state resolution by type.** Ask the session to show the mapping it resolved. Expect it
-read the workflow states and mapped by state type.
+Every write path in `linear.md` is still unexecuted, so treat a failure here as expected rather than
+surprising, and record what actually happened.
 
-**C2 [MANUAL] renamed state.** Rename the team's `Done` to `Released`, then `$tracker list done`.
-Expect those tickets still read as `done`. A skill matching on name would report them `backlog`.
+**C1 setup accepts a default team.** Run `$setup` against a team with Linear's default statuses.
+Check: the seven required statuses are found, each in its category, and the Linear fields are
+written to the config.
+Expect no questions about status mapping. There is no mapping to configure.
 
-**C3 [MANUAL] ambiguity is a hard stop.** On a team with two `started` states and no `linear_states`
-in the config, run any verb that writes `in-progress`. Expect a stop that lists both candidates and
-asks, never a guess.
+**C2 [MANUAL] a missing status is a stop.** Rename or delete the team's `In Review`, then re-run
+`$setup`.
+Expect a refusal that names the missing status and says what to add in team settings, and **no**
+Linear fields written to the config. A skill that invents a substitute here is the failure this case
+exists for.
 
-**C4 [MANUAL] recorded mapping is reused.** Add `linear_states` to the config and re-run C3. Expect
-no question and the correct state.
+**C3 [MANUAL] an extra status warns and is recorded.** Add a status such as `Ready to Merge` under
+`Started`, then re-run `$setup`.
+Expect setup to complete, warn loudly by name and category, and write a note under **Tracker notes**
+in `docs/dev-agents/config.md`. Check the file, not just the report.
+Then park an issue in that status and run `$tracker list` and `$tracker next`: it must be reported
+as unmapped by its Linear name, never counted as one of the seven and never silently dropped.
 
-**C5 [MANUAL] triage is backlog.** File an issue into the team's Triage state by hand, then
-`$tracker list backlog`. Expect it present.
+**C4 operate by name.** `$tracker list ready`, then `$tracker move <id> in-progress`.
+Check with `get_issue`: the status is exactly `In Progress`. Nothing should be resolved by category
+at run time.
 
-**C6 [MANUAL] silent write is caught.** Attempt a status write with a state name that is close but
-not exact. Linear returns success and changes nothing. Expect the verification read to catch it and
-the report to say the write did not land.
+**C5 [MANUAL] a renamed status is a stop, not a fallback.** Rename `Done` to `Released` after setup
+has run, then `$tracker move <id> done`.
+Expect a stop saying the workflow no longer matches the config and to re-run `$setup`. A skill that
+finds `Released` by its `completed` category and writes to it anyway has absorbed a drift it should
+have surfaced.
 
-**C7 [MANUAL] no relation tool.** On a workspace whose MCP server exposes no relation tool, expect
-`link` to stop and `next` to stop, never an unverified frontier.
+**C6 the silent bad-name write is caught.** Ask the session to write a status using a name that is
+close but not exact, for instance `in review` against `In Review`.
+Linear returns success and changes nothing. Expect the verification read to catch it and the report
+to say the write did not land.
+
+**C7 the frontier reads blocker statuses.** Create A and B with B blocked by A, both `Todo` and
+unassigned. `$tracker next`.
+Expect A and not B. Then move A to `Done` and re-run: expect B.
+A relation carries only the blocker's id and title, so a frontier that never fetched A's status
+cannot have filtered correctly, even if the answer looks right on one sample.
+
+**C8 relations are native.** `$tracker link <B> blocked-by <A>`, then `get_issue` on B with
+`includeRelations: true`.
+Expect the edge under `relations.blockedBy`. Then `$tracker move <id> duplicate <original>` and
+expect `relations.duplicateOf` set, with the status `Duplicate` rather than `Canceled`.
+
+**C9 milestone scoping.** `$tracker list ready "<milestone name>"`.
+Expect only that milestone's issues. Then pass a milestone name that does not exist: expect a stop,
+not the whole project unscoped.
 
 ---
 

@@ -2,9 +2,6 @@
 issue_tracker: github                       # github / linear / local / other
 linear_team: "TEAM"                         # only for issue_tracker: linear
 linear_project: "Project name"              # only for issue_tracker: linear
-linear_states:                              # only for issue_tracker: linear, and only where the
-  in-progress: "In Progress"                # state type does not identify one state on its own.
-  in-review: "In Review"                    # tracker asks rather than guessing, and records here.
 context_file: AGENTS.md                     # project entry point for coding agents: AGENTS.md or CLAUDE.md
 rules_dir: docs/dev-agents/rules/           # promoted learnings, one file per rule
 issues_dir: docs/dev-agents/issues/         # only for issue_tracker: local
@@ -24,6 +21,17 @@ them later, so they can point at files that do not exist yet.
 
 Free text. Anything the fields cannot capture: branch naming, review expectations, deploy steps,
 who merges, what "done" means here.
+
+## Tracker notes
+
+Anything about this project's tracker that does not match what the skills expect, written down so
+it is a decision you can come back to rather than a surprise later. `setup` adds a note here when
+it finds something, and leaves the section out when it does not.
+
+The case that produces one today: a Linear team carrying a status outside the seven this skill set
+uses. Tickets parked in it are invisible to `next` and are reported as unmapped, so the note names
+the status and what it means for the project. Resolve it by deleting the status in Linear, by
+folding those tickets into one of the seven, or by deciding to live with it.
 
 ## Rules
 

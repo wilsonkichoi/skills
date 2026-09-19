@@ -138,12 +138,30 @@ to abandon the rest of setup.
   cannot write to the repository, create nothing and report the exact commands a maintainer needs
   to run.
 - **linear:** confirm the Linear MCP server is connected. If it is not, tell the user how to add it
-  and stop before writing Linear fields into the config. Then list the team's workflow states and
-  map the seven statuses onto them by state **type**, not by name. Where a type identifies exactly
-  one state, say so and move on. Where it does not, ask: two states of type `started` is the normal
-  shape and nothing in the API says which is `in-progress` and which is `in-review`. Record only the
-  answers you had to ask for, under `linear_states`. Never guess by position or by name similarity;
-  a status written to the wrong state succeeds silently and the ticket goes somewhere nobody looks.
+  and stop before writing Linear fields into the config. Then check the team's statuses with
+  `list_issue_statuses`, which are per team and shared by every project in it. Seven are required,
+  each with the category shown:
+
+  | Required status | Category |
+  |---|---|
+  | Backlog | `backlog` |
+  | Todo | `unstarted` |
+  | In Progress | `started` |
+  | In Review | `started` |
+  | Done | `completed` |
+  | Canceled | `canceled` |
+  | Duplicate | `duplicate` |
+
+  These are Linear's defaults, so most teams already match. **Any missing one is a stop.** There is
+  no MCP tool that creates or renames a status, so say exactly what to add or rename in the team's
+  settings and do not write the Linear fields into the config until it matches. Do not invent a
+  mapping onto whatever the team happens to have: a status written to the wrong place succeeds
+  silently and the ticket lands where nobody is looking.
+
+  **An extra status is a warning, not a stop.** Report it loudly, by name and category, and say that
+  tickets parked there are invisible to the frontier and will be reported as unmapped. Then write it
+  into the config body under **Tracker notes**, so it is a decision the user can come back to with
+  the AI rather than something they have to remember.
 - **local:** create `docs/dev-agents/issues/.gitkeep`.
 - **other:** nothing to set up. The workflow the user described is the contract.
 
