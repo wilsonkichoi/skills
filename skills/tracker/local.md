@@ -114,6 +114,13 @@ status is `backlog`. A write verb on such a file adds a frontmatter block with o
 verb sets, leaving the body exactly as the human wrote it. Do not backfill the rest of the shape,
 and do not reformat what is there.
 
+That leaves a file whose frontmatter is real but partial, which is the ordinary state of a
+hand-written ticket a verb has touched once. Every rule above still applies field by field: a
+missing `id` comes from the filename exactly as it does when there is no frontmatter at all, a
+missing `status` reads as `backlog`, and a missing `assignee` is unassigned. The frontmatter is
+authoritative for what it contains and silent about the rest; it is never evidence that a field was
+deliberately cleared.
+
 ## Per verb
 
 | Verb | File operation |

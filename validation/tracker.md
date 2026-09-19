@@ -397,8 +397,22 @@ assignee is a FAIL; the skill should have stopped and said the identity was unre
 **B10 comment.** `$tracker comment <B> "a note"`. Check the file: the body is under `## Comments`
 with a `### <date> <author>` heading.
 
-**B11 the tracker never commits.** Check: `git status --porcelain`.
-Expect the ticket files listed as uncommitted. A clean tree is a FAIL.
+**B11 the tracker never commits.** This one needs a committed baseline, or it cannot fail. Take
+setup's step 7 offer to commit the scaffold, or commit it by hand, so the repository has at least
+one commit and a clean tree. Then run one mutating verb, `$tracker comment <A> "commit probe"`, and
+check:
+
+```
+git log --oneline
+git status --porcelain -uall
+```
+
+Expect the commit count unchanged by the verb, and that ticket file listed as ` M` modified. `-uall`
+is not optional: plain `--porcelain` collapses untracked files into `?? docs/`, so it would report a
+directory rather than the file the case is about.
+Run against a repository with no commits at all, this case passes whatever the skill does, because
+an untracked tree is what a fresh repository looks like either way. A clean tree after the verb, or
+a new commit, is the FAIL.
 
 **B12 hand-written file.** `printf '# just a title\n\nsome prose\n' > docs/dev-agents/issues/099-hand.md`
 then `$tracker show 99`. Expect `backlog` rather than an error.
@@ -415,18 +429,23 @@ registry in this backend, so the set of milestones is whatever the files carry; 
 name nothing carries is the same wrong answer GitHub gives, in a place where the whole set was
 already read.
 
-**B15 the explicit assign forms, and reservation.** `$tracker assign <A> some-colleague` on a ticket
-that is `ready`, then `$tracker next` and `$tracker list ready`.
-Check the file: `assignee: 'some-colleague'` and `status: 'ready'` unchanged, since only the bare
-form moves the status. Expect A absent from the frontier and present in `list ready`: a `ready`
-ticket somebody was given is reserved, which is the one case where `ready` and an assignee belong
-together, and it is what makes B16's clear-on-handback a separate rule rather than a contradiction.
-There is no account to check a name against on this backend, so the name is written as given, which
-is the documented behaviour and not a finding. It is also the one thing A27 cannot happen here:
-nothing can silently drop a name that no directory validates.
-Then `$tracker assign <A> me from wrong-name`: expect a refusal and the file unchanged. Then
-`$tracker assign <A> me from some-colleague`: expect `assignee` holding `git config user.name` and
-`status` still unchanged.
+**B15 the explicit assign forms, and reservation.** Use a ticket that is `ready` and unassigned
+**right now**, which by this point in the leg is #099 after B12, not A: B9 moved A to `done` and the
+terminal rule correctly refuses to bring it back. Call it `<R>`.
+
+Run `$tracker assign <R> some-colleague`, then `$tracker next` and `$tracker list ready`.
+Check the file: `assignee: 'some-colleague'` with `status: 'ready'` unchanged, since only the bare
+form moves the status. Expect `<R>` absent from the frontier and present in `list ready`. That is the
+reservation, the one case where `ready` and an assignee belong together, and it is what makes B16's
+clear-on-handback a separate rule rather than a contradiction.
+
+Then `$tracker assign <R> me from wrong-name`: expect a refusal and the file unchanged, byte for
+byte. Then `$tracker assign <R> me from some-colleague`: expect `assignee` holding
+`git config user.name` and `status` still `ready`.
+
+There is no account to check a name against on this backend, so a name is written as given. That is
+documented behaviour and not a finding, and it is why A27 has no counterpart here: nothing can
+silently drop a name that no directory validates.
 
 **B16 move to ready clears the assignee here too.** `$tracker assign <B>`, then
 `$tracker move <B> ready`, then `$tracker next`.
@@ -649,6 +668,119 @@ Newest first, by the timestamp in each entry's heading: ISO 8601 with the local 
 shape `CHANGELOG.md` uses, so two runs on one day stay distinguishable. One entry per run. The
 runbook above is the reusable procedure and is not edited by a run; everything a run learned goes
 here.
+
+### 2026-09-19T08:04:21-07:00 Local leg, Codex
+
+```
+TRACKER VALIDATION
+backend: local                   harness: codex
+date: 2026-09-19T08:04:21-07:00  skill ref: d0c59a8 (feat/tracker)
+
+PASS  18
+FAIL  0
+SKIP  0
+
+failures:
+  none
+skipped:
+  none
+
+VERDICT: GREEN
+```
+
+Scope: B1 through B18, in order. This is the first observation of the local backend on any commit;
+no GitHub result was used as evidence. Working directory: `/Users/wchoi/tmp/tracker-local`. The
+directory had no `.git` at the start. `$setup` offered `git init` before Section A, and the user's
+run instruction authorized accepting that offer. `git rev-parse --git-dir` then returned `.git`.
+The setup used the requested local backend, the default product-doc paths, `AGENTS.md` as context,
+and an empty `test_command` because the directory has no source tree or test manifest. No commit or
+push was made. `git config user.name` returned `Wilson Choi` for B8, B15, and B16.
+
+Install identity was checked **before B1** against committed `d0c59a8`, not the source working
+tree: `git archive d0c59a8 skills/tracker skills/setup | tar -x` into a temporary directory,
+followed by `diff -r` against `.agents/skills/`. The only differences were
+`allow_implicit_invocation: false` in the commit versus `true` in the installed
+`setup/agents/openai.yaml` and `tracker/agents/openai.yaml`. The same two-line diff, and no third
+difference, remained after B18. This is deviation D-1 below.
+
+Every verdict below came from an independent disk read or git check. Frontmatter checks used
+`yaml.safe_load`, including the ten B3 titles and B18's first bounded frontmatter block. B7 and
+B16 frontier checks each used one read immediately after the write, with no retry or pause.
+
+| Case | Verdict | Independent evidence |
+|---|---|---|
+| B1 | PASS | `docs/dev-agents/issues/` exists; config carries `issue_tracker: local` and `issues_dir: docs/dev-agents/issues/`. Setup created `.git` after offering it. |
+| B2 | PASS | `001-ticket-a.md` parsed as a dict with `id` equal to string `'001'` and `status` equal to string `'backlog'`. |
+| B3 | PASS | All ten titles in the case parsed as `str` and matched their sent UTF-8 bytes. The `0123`, `null`, and date titles remained strings. |
+| B4 | PASS | `012-ticket-b.md` parsed with `blocked_by: ['001']`; its `## Blocked by` section lists `001`. |
+| B5 | PASS | `013-ticket-f.md` carried `## Related` with `001`, parsed `blocked_by: []`, and had no `related` key. |
+| B6 | PASS | Linking F added `001` to both `blocked_by` and its existing body section. Linking hand-written #014 changed its `blocked_by` and left its body byte-identical. |
+| B7 | PASS | After A and B moved to `ready`, the first frontier read returned `[1]`; blocked B was absent. |
+| B8 | PASS | A parsed as `in-progress` with `assignee: 'Wilson Choi'`, equal to `git config user.name`. |
+| B9 | PASS | A parsed as `done`; the next frontier read returned `[12]`, releasing B. |
+| B10 | PASS | B's body contains one `a note` under `## Comments` and `### 2026-09-19 tracker`. |
+| B11 | PASS | `git status --porcelain --untracked-files=all` listed the ticket files as uncommitted. The fresh repository was not clean. |
+| B12 | PASS | Hand-written #099 read as `backlog` before its move. Afterwards, YAML contained only `status: 'ready'` and `assignee: ''`; the original title and prose bytes were unchanged. |
+| B13 | PASS | `99`, `099`, and `#99` resolved to the same #099 file and the same `ready` state. |
+| B14 | PASS | `list ready M1` resolved to `[99]`. The unknown name stopped with `Unknown milestone no-such-milestone; available: M1`. |
+| B15 | PASS | Using ready #099 as the replacement for terminal A, explicit assignment kept `ready`, set `some-colleague`, removed #099 from `next`, and kept it in `list ready`. A wrong `from` name refused with an identical file hash. The correct `from some-colleague` set `Wilson Choi` and left `ready`. See D-2 and F11. |
+| B16 | PASS | Bare assignment put B in `in-progress` with `Wilson Choi`. Moving B to `ready` parsed as `assignee: ''`; the first following frontier read returned `[12]`. |
+| B17 | PASS | The first show of #013 returned its full state and body without `## Comments`. After `comment`, the second returned the same ticket plus one `show probe` under a dated author heading. |
+| B18 | PASS | #100's first frontmatter block parsed as id string `'100'` and status string `'backlog'`. Its body matched the sent file byte for byte, including both `---` lines and fake `status: 'done'` and `id: '999'`. `list backlog` included #100 and no #999. |
+
+Deviations from the runbook as written:
+
+- **D-1.** The installed `agents/openai.yaml` files for `setup` and `tracker` each set
+  `allow_implicit_invocation: true`, while committed `d0c59a8` says `false`. The user made both
+  changes before this run so Codex could run unattended. The setup change covers B1; the tracker
+  change covers B2 through B18. No other installed file differs from the commit.
+- **D-2.** B15 calls for assigning A while it is `ready`, but B9 has already moved A to terminal
+  `done`. The terminal rule forbids moving it back. B15 used #099, which was `ready` and unassigned
+  after B12. The check still exercised the reservation and handoff rules. See F11.
+- **D-3.** The B12 hand-written fixture was added with `apply_patch` instead of the runbook's
+  `printf` redirection. Its bytes matched the stated fixture before the skill read it.
+
+#### Finding
+
+**F11. `validation/tracker.md`: B15 names a ticket that B9 has already made terminal. (B15, runbook defect, not a skill defect.)**
+B9 moves A to `done`. B15 then says to run `assign <A> some-colleague` on a ticket that is
+`ready`. Those preconditions cannot both hold in one ordered leg, and the tracker's terminal rule
+correctly prevents restoring A to `ready`. This run used #099 after B12 made it `ready`, so B15's
+behavior was tested without weakening the terminal rule. Fix the B15 procedure by naming a fresh
+`ready`, unassigned ticket, or by using #099 after B12. Do not instruct a move out of `done`.
+
+**Fixed as prescribed.** B15 now says to use the ticket that is `ready` and unassigned at that point
+in the leg, names #099 after B12 as the one that is, says why A is not, and refers to it as `<R>`
+throughout so the rest of the case cannot drift back to A.
+
+**F12. `validation/tracker.md`: B11 cannot fail as written. (B11, runbook defect, found verifying this run rather than during it.)**
+B11 said to run `git status --porcelain` and expect the ticket files listed as uncommitted. Two
+things are wrong with that, both visible in this run's own artifacts.
+
+The command does not print what the case expects. Plain `--porcelain` collapses untracked files into
+a single `?? docs/` line, so it reports a directory; this run needed `-uall` to see the ticket files
+and did not record the substitution as a deviation.
+
+The deeper problem is that `/Users/wchoi/tmp/tracker-local` has **no commits at all**, verified with
+`git log` returning `your current branch 'main' does not have any commits yet`. An untracked tree is
+what a fresh repository looks like whether or not the tracker committed anything, so the case passes
+on either behaviour. What it is meant to catch, a verb running `git commit`, was in fact absent, but
+this check is not what established that.
+Fixed: B11 now takes setup's step 7 commit offer first, so there is a committed baseline and a clean
+tree, then runs one mutating verb and requires the commit count unchanged and that ticket file
+listed as ` M` by `git status --porcelain -uall`. A clean tree after the verb, or a new commit, is
+the FAIL.
+
+**F13. `local.md`: nothing said what a partial frontmatter block means. (B12, B13, B14, skill defect, low severity.)**
+After B12, `099-hand.md` carries `status`, `assignee` and `milestone` and has no `id` and no
+`title`, which is the ordinary state of a hand-written ticket one verb has touched. `local.md`
+covered a file with **no** frontmatter, whose id comes from the filename, and said nothing about
+this case. The behaviour was right in the run: B13 resolved `99`, `099` and `#99` to it and B14
+scoped it by milestone. The rule was simply never written, so a reader had to infer it and a future
+reader could as easily infer that a missing `id` is a broken ticket.
+Fixed: `local.md` now says a partial block is read field by field, that a missing `id` comes from the
+filename exactly as it does when there is no frontmatter, that a missing `status` is `backlog` and a
+missing `assignee` is unassigned, and that silence about a field is never evidence it was cleared.
 
 ### 2026-09-19T01:40-07:00 GitHub assignee delta, Claude Code
 
