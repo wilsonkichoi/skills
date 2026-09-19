@@ -106,7 +106,13 @@ merged badly: report both paths and do not pick one.
 
 **Filenames.** The slug is the title, lowercased, with every run of non-alphanumeric characters
 collapsed to a single hyphen and no leading or trailing hyphen, cut at roughly 50 characters on a
-word boundary. It is decoration. Nothing reads it, and renaming a file does not change the ticket.
+word boundary. Alphanumeric means a Unicode letter or digit, not `[a-z0-9]`, so `日本語` and
+`Ünïcödé` survive into the name while `✅`, `%` and punctuation collapse:
+`émoji ✅ and 日本語 and Ünïcödé` gives `émoji-and-日本語-and-ünïcödé`. Reading it as ASCII gives
+`-and--and-` instead, which is a different filename for the same ticket.
+
+It is decoration. Nothing reads it, and renaming a file does not change the ticket. The algorithm is
+written out anyway so that two sessions filing the same ticket produce the same name.
 
 **Missing fields.** A ticket with no `status` reads as `backlog`. A file a human wrote by hand with
 no frontmatter at all is still a valid ticket: its id is the leading number of the filename and its

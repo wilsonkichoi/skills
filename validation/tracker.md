@@ -348,12 +348,8 @@ local` and `issues_dir`.
 Check: parse the frontmatter with a real YAML parser, not by eye:
 `uv run --with pyyaml python -c "import yaml,sys;print(yaml.safe_load(open(sys.argv[1]).read().split('---')[1]))" docs/dev-agents/issues/001-*.md`
 Expect a dict whose `id` is the string `'001'` and whose `status` is the string `'backlog'`.
-Check the filename too, against the rule `local.md` states: the slug is the title, lowercased, every
-run of non-alphanumeric characters collapsed to one hyphen, no leading or trailing hyphen, cut at
-roughly 50 characters on a word boundary. `Fix: colon in title` gives `002-fix-colon-in-title.md`
-and nothing shorter. Nothing reads the slug, so a wrong one changes no other verdict, which is
-exactly why it needs a check of its own: two runs of this leg produced different filenames for the
-same ten titles and neither run noticed.
+Check the filename too: ticket A lands at `001-ticket-a.md`. B3 is where the slug rule is actually
+stressed, so the full check lives there.
 
 **B3 quoting round trip.** This is the case the quoting rule exists for. Create tickets with each of
 these titles, then parse each file back and compare byte for byte with what you sent:
@@ -373,6 +369,21 @@ It's a "mixed" quote: 100% and 日本語 ✅
 
 Expect all ten to parse and to come back identical. A title returning `83`, `None`, or a date object
 is a FAIL, and it is the specific failure unquoted YAML produces.
+
+**Check all ten filenames against the slug rule**, which these titles are what stress. The rule:
+lowercase the title, collapse every run of non-alphanumeric characters to one hyphen, no leading or
+trailing hyphen, cut at roughly 50 characters on a word boundary, where alphanumeric means a Unicode
+letter or digit. So:
+
+```
+It's got an apostrophe            003-it-s-got-an-apostrophe.md
+émoji ✅ and 日本語 and Ünïcödé      010-émoji-and-日本語-and-ünïcödé.md
+```
+
+The emoji and the CJK are the interesting half: an implementation reading alphanumeric as `[a-z0-9]`
+gives `010--and--and-.md` for the same ticket. Nothing reads the slug, so a wrong one changes no
+other verdict, which is exactly why it needs a check: two runs of this leg produced different
+filenames for these same ten titles and neither noticed, which is F16.
 
 **B4 edges live in the frontmatter.** `$tracker create` ticket B naming A under `## Blocked by`.
 Check the file: `blocked_by` holds A's id, and the `## Blocked by` body section matches.
@@ -724,6 +735,119 @@ Newest first, by the timestamp in each entry's heading: ISO 8601 with the local 
 shape `CHANGELOG.md` uses, so two runs on one day stay distinguishable. One entry per run. The
 runbook above is the reusable procedure and is not edited by a run; everything a run learned goes
 here.
+
+### 2026-09-19T09:32:52-07:00 Local leg, Codex
+
+```
+TRACKER VALIDATION
+backend: local                   harness: codex
+date: 2026-09-19T09:32:52-07:00  skill ref: 62e98db (feat/tracker)
+
+PASS  13
+FAIL  0
+SKIP  0
+
+failures:
+  none
+skipped:
+  none
+
+VERDICT: GREEN
+```
+
+Scope: B1 through B11, then B12, then B12b, in `/Users/wchoi/tmp/tracker-local`. B13 to B18
+were deliberately not run because they passed twice unchanged and are outside this targeted run.
+Every verdict used an independent disk or git check. B7's frontier check ran once, immediately
+after the two moves, with no retry or pause.
+
+Before scoring, `git archive 62e98db skills/tracker skills/setup` was extracted to a temporary
+directory and compared with `.agents/skills/` using `diff -r`. The same comparison after B12b
+found exactly the two expected differences, in `setup/agents/openai.yaml` and
+`tracker/agents/openai.yaml`: committed `allow_implicit_invocation: false` versus installed `true`.
+There was no third difference. This is D-1 below.
+
+Setup started with no `.git`, `docs/`, `AGENTS.md`, or `CLAUDE.md`. Its `git init` offer was taken
+before the local backend setup. Its step 7 offer produced the root commit `97fdde4`, containing
+only the five scaffold files. B11's required second baseline commit was `58c80e8`, containing
+the ticket files through B10. Both commits are in the scratch repository; the source repository
+was not committed or pushed. `git config user.name` was `Wilson Choi`.
+
+| Case | Verdict | Independent evidence |
+|---|---|---|
+| B1 | PASS | `git rev-parse --git-dir` returned `.git`; `docs/dev-agents/issues/` exists; config has `issue_tracker: local` and `issues_dir: docs/dev-agents/issues/`. |
+| B2 | PASS | `yaml.safe_load` parsed #001 with string `id: '001'` and string `status: 'backlog'`. The colon title was written to exactly `002-fix-colon-in-title.md`. |
+| B3 | PASS | A real YAML parser returned strings for all ten titles, and each UTF-8 byte sequence matched its input, including `0123`, `null`, the date, both quote forms, and Unicode. |
+| B4 | PASS | #012 parsed `blocked_by: ['001']`; its `## Blocked by` body section contained `- 001`. |
+| B5 | PASS | #013 had `## Related` with `- 001`, `blocked_by: []`, no `related` key, and no `## Blocked by` heading. `create` did not add that heading. |
+| B6 | PASS | Hand-written #015 started with an empty `## Blocked by` heading; linking added `001` to its frontmatter and body. Hand-written #016 started with no heading; linking added `blocked_by: ['001']` and left its body SHA-256 at `8a11de9a1575d29dbcc2f716bb87f4b5e8e96093483d990d596b0f18796319c6`. Neither fixture was repaired. |
+| B7 | PASS | The first frontier read after moving #001 and #012 to `ready` returned `[1]`; #012 remained blocked. |
+| B8 | PASS | #001 parsed as `in-progress` with `assignee: 'Wilson Choi'`, equal to `git config user.name`. |
+| B9 | PASS | #001 parsed as `done`; the next frontier read returned `[12]`. |
+| B10 | PASS | #012 held `a note` exactly once under `## Comments` and `### 2026-09-19 tracker`. |
+| B11 | PASS | The ticket pathspec was clean after the second baseline commit. After `comment 12 "commit probe"`, `git log --oneline \| wc -l` stayed at `2`, and `git status --porcelain -uall -- docs/dev-agents/issues/` returned ` M docs/dev-agents/issues/012-ticket-b.md`. |
+| B12 | PASS | Hand-written #099 without frontmatter read as `backlog`. After `move 99 ready`, YAML contained only `status: 'ready'` and `assignee: ''`; the original `# just a title\n\nsome prose\n` remained byte-identical after the new block. |
+| B12b | PASS | Hand-written #098 initially contained only `id`, `title`, and `milestone`; `show` resolved it as `backlog` and unassigned. After `move 98 ready`, the frontier contained `[12,98,99]`. After `assign 98 someone`, the file kept `id: '098'`, `title: 'Partial frontmatter'`, `milestone: 'M1'`, and `status: 'ready'`, and gained `assignee: 'someone'`; its body was unchanged. |
+
+Deviations from the runbook as written:
+
+- **D-1.** The two installed `agents/openai.yaml` files set `allow_implicit_invocation: true`,
+  while committed `62e98db` sets `false`. No skill body or backend file differed from the commit.
+- **D-2.** The setup interview did not use separate question turns. The run instruction had already
+  supplied the local backend, fresh-repository start, default document paths, and acceptance of
+  setup's commit offer. Codex took the `git init` offer under setup and used those answers. B1's
+  independent check passed, but the interview behavior was not tested in this run.
+- **D-3.** B2's #002 filename check used the first title in B3. It was created immediately after
+  ticket A and then reused for B3's ten-title comparison, so the title was not created twice.
+
+No new finding was established **by** this run against `62e98db`. The repaired B2, B5, B6, and B11
+cases ran without fixture repair or an undocumented baseline step, and B12b directly exercised the
+missing-field clauses of F13.
+
+#### Findings from verifying this run
+
+**F17. B2's slug check borrowed B3's fixture. (B2, B3, runbook defect.)**
+F16 put the slug check in B2 and illustrated it with `Fix: colon in title` giving
+`002-fix-colon-in-title.md`. B2 creates ticket A, which is `001-ticket-a.md`; the colon title is
+B3's first fixture. The run resolved it sensibly and logged it as D-3, checking #002 from B3 while
+scoring B2, but a case that can only be satisfied by another case's artifact is the same shape as
+F15: a branch passing on a fixture it does not own.
+Fixed: B2 checks ticket A's own filename, and the full ten-filename check moves to B3, where the
+hostile titles that stress the rule actually live.
+
+**F18. `local.md` did not say what "alphanumeric" means in the slug rule. (B3, skill defect, low severity.)**
+The rule said to collapse every run of non-alphanumeric characters. Read as Unicode, `日本語` and
+`Ünïcödé` are letters and survive into the filename while `✅` and `%` collapse; read as `[a-z0-9]`,
+the whole CJK title becomes `010--and--and-.md`. Both readings are defensible from the sentence as
+written, and they give different filenames for the same ticket, which is exactly what the rule is
+written out to prevent.
+Verified on this run's own artifacts: all thirteen skill-written filenames match the Unicode
+reading, by `unicodedata.category(ch)[0] in ('L','N')`, including
+`010-émoji-and-日本語-and-ünïcödé.md` and `011-it-s-a-mixed-quote-100-and-日本語.md`. So the behaviour
+was already the right one; the rule simply permitted the other.
+Fixed: `local.md` now says alphanumeric means a Unicode letter or digit, gives that title as the
+worked example, and names what the ASCII reading would produce. B3 carries the same example as its
+check.
+
+#### What this run settled that was previously open
+
+- **`create` does not invent an empty `## Blocked by` heading.** #013 came back with `## Related`,
+  `blocked_by: []` and no blocker heading at all. That was the open question behind F15, and it is
+  why B6's two hand-written fixtures are the right shape for that case rather than a workaround.
+- **B11 works in its third form.** Two commits, `97fdde4` scaffold and `58c80e8` baseline, the probe
+  leaving the count at 2, and ` M docs/dev-agents/issues/012-ticket-b.md` from the scoped status
+  read. `.git/info/exclude` was empty afterwards, so nothing was hidden to make the check readable.
+- **F13's missing-field clauses hold.** #098 carried `id`, `title` and `milestone` only; `show` read
+  `backlog` and unassigned from the absence of those keys, and `next` returned it after the move,
+  which it could only do if the missing `assignee` read as nobody. The file afterwards kept
+  `id: '098'`, `title` and `milestone: 'M1'` and gained `status` and `assignee`, appended rather
+  than reordered into the canonical shape, which is what "do not reformat what is there" asks for.
+
+#### Note on D-2
+
+The interview did not happen: the run instruction supplied the backend, the document paths and the
+commit decision in advance, so `setup` had its answers before it asked. B1 only checks the scaffold,
+so no verdict depended on it, and the run was right to flag it. Worth saying plainly that **no local
+run has ever exercised the setup interview**, and that leg D, not leg B, is where that belongs.
 
 ### 2026-09-19T09:08:52-07:00 Local leg, Codex
 
