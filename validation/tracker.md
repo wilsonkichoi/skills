@@ -383,7 +383,10 @@ this file has one. Then hand-write a file with no `## Blocked by` section, link 
 `blocked_by` changed and the body was left alone.
 
 **B7 frontier.** `$tracker move <A> ready`, `$tracker move <B> ready`, `$tracker next`.
-Expect A only.
+Expect A only, **on the first read**, with no retry and no pause. The rule A26 exists for on GitHub
+applies everywhere: a ticket made `ready` a moment ago is exactly the ticket `next` is being asked
+about. Files have no index to lag, so a first read that misses A is a defect in this skill rather
+than in a backend.
 
 **B8 the bare assign resolves an identity.** `$tracker assign <A>`.
 Check the file: `status: 'in-progress'` and `assignee` equal to `git config user.name`. An empty
@@ -417,8 +420,10 @@ that is `ready`, then `$tracker next` and `$tracker list ready`.
 Check the file: `assignee: 'some-colleague'` and `status: 'ready'` unchanged, since only the bare
 form moves the status. Expect A absent from the frontier and present in `list ready`: a `ready`
 ticket somebody was given is reserved, which is the one case where `ready` and an assignee belong
-together, and it is what makes B16's clear-on-handback a separate rule rather than a contradiction. There is no account to check a name against on this backend, so the name is written as
-given; that is the documented behaviour and not a finding.
+together, and it is what makes B16's clear-on-handback a separate rule rather than a contradiction.
+There is no account to check a name against on this backend, so the name is written as given, which
+is the documented behaviour and not a finding. It is also the one thing A27 cannot happen here:
+nothing can silently drop a name that no directory validates.
 Then `$tracker assign <A> me from wrong-name`: expect a refusal and the file unchanged. Then
 `$tracker assign <A> me from some-colleague`: expect `assignee` holding `git config user.name` and
 `status` still unchanged.
@@ -426,6 +431,38 @@ Then `$tracker assign <A> me from wrong-name`: expect a refusal and the file unc
 **B16 move to ready clears the assignee here too.** `$tracker assign <B>`, then
 `$tracker move <B> ready`, then `$tracker next`.
 Check the file: `assignee: ''` and `status: 'ready'`, with B back in the frontier.
+
+**B17 show reports a ticket that has no comments.** Take a ticket with no `## Comments` section and
+run `$tracker show` on it, then `$tracker comment <it> "show probe"`, then `$tracker show <it>` again.
+Expect the whole ticket both times, with no comments the first time and one the second. This is F9's
+shape on a backend that cannot have F9's cause: there is no flag here that replaces the ticket with
+its comments, so an empty or truncated report would be the skill inventing the problem rather than
+inheriting it.
+
+**B18 a body containing `---` is still one ticket.** Create a ticket whose body carries a horizontal
+rule and a pasted block that looks like frontmatter:
+
+```markdown
+## Notes
+Before.
+
+---
+
+status: 'done'
+id: '999'
+
+---
+
+After.
+```
+
+Then `$tracker show <it>` and `$tracker list backlog`.
+Expect the ticket's real `id` and `status`, the body intact including both `---` lines and the text
+between them, and no sign that `status: 'done'` was read as state. The frontmatter is the block
+between the **first** `---` and the next one, and everything after is body that is never parsed. A
+reader that splits on every `---`, or that takes the last block, either errors on an ordinary ticket
+or reads somebody's pasted YAML as the ticket's state. This is the same class as B3: the values that
+break are the ones that look harmless.
 
 ---
 
@@ -496,6 +533,11 @@ FAIL: it means nothing looked.
 **C10 milestone scoping.** `$tracker list ready "<milestone name>"`.
 Expect only that milestone's issues. Then pass a milestone name that does not exist: expect a stop,
 not the whole project unscoped.
+Then the A23b question in Linear form: `list_milestones` takes only `project` and has no state or
+archived filter, so check whether a completed milestone, or one in an archived project, still comes
+back from it while its issues are still there. A milestone the resolver cannot see is reported as a
+name that does not exist, which stops the caller over a milestone that is real. Record what you
+find; nothing in `linear.md` covers it.
 
 **C11 comment lands and is verified.** `$tracker comment <id> "runbook note"`.
 Check with `list_comments`: the exact body present exactly once.
@@ -506,6 +548,71 @@ This is the one read-write path in `linear.md` that has never been executed. `sa
 in both. A Linear issue has a single assignee, so the loser cannot detect the race by counting
 assignees: expect the verification read to name the winner, and the loser to write nothing back and
 report. Needs two identities.
+
+**C13 the bare assign is one call.** `$tracker assign <a Todo issue with no assignee>`.
+Check with `get_issue`: `status` is exactly `In Progress` and `assignee` is you. `save_issue` takes
+`state` and `assignee` together, so this must not arrive as two writes: a ticket that is assigned
+while still `Todo` is off the frontier and in nobody's queue, which is the gap the single call
+exists to close.
+
+**C14 the explicit assign forms, and reservation.** On a `Todo` issue:
+`$tracker assign <id> <who>`, where `<who>` may be **your own name**.
+Check with `get_issue`: `assignee` is that name and `status` is **still `Todo`**, since only the
+bare form moves the status. Then `$tracker next`: expect the issue absent, and `$tracker list ready`
+expect it present. That is the reservation, the one case where `ready` and an assignee belong
+together, and like A29b what it discriminates is the verb form rather than the identity.
+
+**[MANUAL] second half.** With `<who>` a different workspace member, `$tracker assign <id> me` with
+no `from` must refuse and name the holder, and `$tracker assign <id> me from <that member>` must
+land. A holder who is the caller makes the refusal unreachable, so this needs a second identity, the
+same one C12 needs.
+
+**C15 move to ready clears the assignee.** `$tracker assign <id>`, which puts it at `In Progress`
+with you on it, then `$tracker move <id> ready`, then `$tracker next`.
+Check with `get_issue`: `assignee` is null and `status` is `Todo`, with the issue back on the
+frontier. `linear.md` says `move <id> backlog` and `move <id> ready` both write `assignee: null`; a
+run where `ready` keeps the assignee is the same invisible-ticket bug A29 catches on GitHub, in a
+backend where `next` filters on `assignee: null` just as hard.
+
+**C16 an assignee Linear cannot resolve is a stop, not a success.**
+`$tracker assign <id> someone-not-in-this-workspace`.
+Check with `get_issue`: the assignee is unchanged, and expect the skill to say the assignment did
+not land. This is A27's shape on a different backend, and what it establishes is which shape Linear
+has: an error, or a write that succeeds and silently keeps the old assignee. Record what you see
+either way, because `linear.md` currently says nothing about it.
+
+**C17 a write is visible to the very next read.** `$tracker move <a Backlog issue> ready`, then
+`$tracker next` **once**. Then `$tracker assign <it>` and `$tracker list in-progress` **once**.
+Expect the issue in the frontier on the first read and in the list on the first read, with no retry
+and no pause. Whether `list_issues` lags behind a write has never been measured on Linear; GitHub's
+search index does, by seconds, which is F7 and the reason `next` there stopped using it. **A retry
+is a FAIL, not a PASS**: scoring on a second read is what hid the defect on GitHub for two runs.
+
+**C18 [MANUAL] archived issues are not silently dropped.** No MCP tool archives an issue, so this
+needs the Linear UI. The read-only half, establishing whether this workspace archives anything on
+its own, runs anywhere: list the team's `Done` issues with `includeArchived` both ways and compare
+the counts. Then archive a `Done` issue in the Linear UI, then
+`$tracker list done` and `$tracker show <it>`.
+Expect the issue to be reported by both, or the skill to say plainly that archived issues are
+excluded. `list_issues` takes `includeArchived` and **defaults it to `false`**, and `linear.md` never
+mentions archiving at all, so a list of terminal tickets can come back short with nothing to say it
+did. Establish first whether this workspace archives completed issues on its own, by policy or by
+age, because that decides whether the default is a papercut or a silent under-report of every
+`list done`.
+
+**C19 show reports an issue that has no comments.** `$tracker show <an issue with no comments>`,
+then `$tracker comment <it> "show probe"`, then `$tracker show <it>` again.
+Expect the whole issue both times, with no comments the first time and one the second. `show` calls
+`get_issue` plus `list_comments`, and nobody has run `list_comments` against an issue with none.
+This is F9's shape: on GitHub the comment call returned nothing at all at exit 0, and `show` had to
+stop using it.
+
+**C20 create writes the description as sent.** `$tracker create` with a ticket whose body has every
+section, a code fence, and a line of non-ASCII text.
+Check with `get_issue` and compare the description byte for byte against what was sent, not by eye.
+A markdown body crossing an MCP boundary is exactly where a silent rewrite would hide, and nothing
+in this leg has ever checked it. F4 is the same case on GitHub, where the comparison method itself
+turned out to be the trap.
 
 ---
 

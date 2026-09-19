@@ -44,6 +44,12 @@ Comments are append-only, newest last, one `### <date> <author>` heading each. T
 skill that wrote it, or `tracker` when a person invoked this skill directly.
 ```
 
+**Where the frontmatter ends.** It is the block between the **first** `---` line and the **next**
+one. Everything after that second line is body, and no verb parses it as YAML, ever. A body is free
+to contain a `---` of its own, as a horizontal rule or inside a pasted diff or config, and a reader
+that splits on every `---`, or that takes the last block rather than the first, turns an ordinary
+ticket into a parse error or, worse, reads somebody's pasted YAML as the ticket's state.
+
 ## Quoting
 
 **Every string value in the frontmatter is single-quoted, always, with no exceptions for values that
