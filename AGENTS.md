@@ -82,6 +82,13 @@ around it are the main reason the previous toolkit became unmaintainable.
 Inputs and outputs between skills stay loose. A skill states what it expects and what it produces,
 but does not reject work over formatting. Following rigid steps for ceremony is not the point.
 
+A skill that asks the user something ends its turn on the question. Asking and then carrying on
+leaves the harness working, and a working harness cannot simply take the reply: Codex parks it
+behind `⌥ + ↑ to answer`, which the user has to find before they can answer at all. Offer the
+options too, with the harness's native picker where there is one and a numbered list where there is
+not, so answering never means spelling a word back. Every skill on the roster interviews somebody,
+so this is a property of all of them rather than of `setup`.
+
 ## Skill template
 
 [`skill-template/`](./skill-template/) holds the copyable skeleton: `SKILL.md`, `agents/openai.yaml`,

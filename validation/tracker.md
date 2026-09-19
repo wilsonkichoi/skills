@@ -391,3 +391,8 @@ description correctly rather than truncating it at a colon or showing `>`.
 Expect a native option picker where the harness has one, and a numbered list where it does not, so
 the answer is never a word the user has to spell. A harness with no picker that still prints bare
 prose options is a FAIL against the skill, not against the harness.
+
+**D5 the question ends the turn.** Watch the harness while Section A is on screen.
+Expect it to be idle and waiting, so the answer is typed straight in. Codex showing `Working` or
+`Queued follow-up inputs ... ⌥ + ↑ to answer` is a FAIL: the skill asked and then kept going, and
+the reply is now behind a keystroke the user has to discover.

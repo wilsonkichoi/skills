@@ -58,6 +58,11 @@ picker, use it, so answering is a keypress. Where it has none, number the option
 is a valid answer. Never ask anyone to retype a path that is already on screen: show the default and
 take a bare yes.
 
+**A question ends the turn.** Ask it and stop: no tool call after it, no work started while it is
+outstanding, nothing that keeps the turn open. A harness that is still working cannot simply take
+the answer, and Codex parks it behind `⌥ + ↑ to answer`, a keystroke the user has to discover
+before they can reply at all. One section, one question, one turn.
+
 **Section A: Issue tracker.**
 
 > Explainer: The "issue tracker" is where issues live for this repo. Most skills will use the
