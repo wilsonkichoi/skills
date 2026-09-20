@@ -693,12 +693,18 @@ Expect the whole issue both times, with no comments the first time and one the s
 This is F9's shape: on GitHub the comment call returned nothing at all at exit 0, and `show` had to
 stop using it.
 
-**C20 create writes the description as sent.** `$tracker create` with a ticket whose body has every
-section, a code fence, and a line of non-ASCII text.
-Check with `get_issue` and compare the description byte for byte against what was sent, not by eye.
-A markdown body crossing an MCP boundary is exactly where a silent rewrite would hide, and nothing
-in this leg has ever checked it. F4 is the same case on GitHub, where the comparison method itself
-turned out to be the trap.
+**C20 create writes a description Linear keeps.** `$tracker create` with a ticket whose body has
+every section, a code fence, a line of non-ASCII text, and a `## Blocked by` entry naming a real
+ticket.
+Check with `get_issue`, and not byte for byte: `linear.md` says the body does not round-trip, so
+that comparison cannot pass and is not the test. Linear is allowed to insert blank lines around
+headings and to rewrite a bare `DEV-11` into a rich issue link. Expect every section heading
+present and in its original order, the fenced block's contents unchanged character for character,
+the non-ASCII line unchanged, and the native `blockedBy` relation on the issue. A dropped section,
+an edited code fence, mangled non-ASCII, or a missing relation is a FAIL.
+A markdown body crossing an MCP boundary is where a silent rewrite would hide, so what this case
+pins down is which rewrites are survivable. F4 is the same case on GitHub, where the comparison
+method itself turned out to be the trap.
 
 ---
 
@@ -735,6 +741,128 @@ Newest first, by the timestamp in each entry's heading: ISO 8601 with the local 
 shape `CHANGELOG.md` uses, so two runs on one day stay distinguishable. One entry per run. The
 runbook above is the reusable procedure and is not edited by a run; everything a run learned goes
 here.
+
+### 2026-09-19T21:50:12-07:00 Linear leg, Codex
+
+```
+TRACKER VALIDATION
+backend: linear                  harness: codex
+date: 2026-09-19T21:50:12-07:00  skill ref: 6adbf5d (feat/tracker)
+
+PASS  11
+FAIL  1
+SKIP  8
+
+failures:
+  C20  expected the 228-byte description unchanged  actual 487 bytes with added blank lines and rich issue links
+skipped:
+  C1   fresh-team missing-status branch needs a new team in the Linear UI; the dev-team branch ran
+  C2   [MANUAL] changing the shared team's In Review status needs the Linear UI
+  C3   [MANUAL] adding an extra shared status and parking an issue needs the Linear UI
+  C5   [MANUAL] renaming the shared team's Done status needs the Linear UI
+  C10  completed-milestone branch had no completed fixture or MCP state control; scoping branches ran
+  C12  [MANUAL] assignment race needs a second Linear identity
+  C14  [MANUAL] second-holder half needs a second Linear identity; reservation half ran
+  C18  [MANUAL] archiving an issue needs the Linear UI; the read-only count comparison ran
+
+VERDICT: RED
+```
+
+Scope: C1 through C20 in `/Users/wchoi/tmp/tracker-linear`. Every case is a first observation
+against Linear. No leg A, B, or D case was scored. Independent reads decide the verdicts.
+There was no retry or pause in either C17 read. No pre-existing issue was changed or deleted.
+
+Before scoring, `git archive 6adbf5d skills/tracker skills/setup` was extracted to a temporary
+directory. `diff -r` against `.agents/skills/` found exactly four expected differences, two per
+skill. The committed `SKILL.md` has `disable-model-invocation: true`; the install removes it.
+The committed `agents/openai.yaml` has `allow_implicit_invocation: false`; the install sets it to
+`true`. No backend file differed. The same four differences remained after C20. The other two
+harness skill directories are symlinks to `.agents/skills/`. This is D-1 below.
+
+The sandbox server's `list_teams` answered before the runbook was read. The team was `dev` and the
+project was `skills test`. An independent `list_issue_statuses` returned the seven required pairs:
+Backlog/backlog, Todo/unstarted, In Progress/started, In Review/started, Done/completed,
+Canceled/canceled, and Duplicate/duplicate. It returned no extra status. Setup accepted `git init`,
+wrote the default document paths and `AGENTS.md`, and made scratch root commit `e7e5ac1` under
+its step 7 offer. An independent file read confirmed `issue_tracker: linear`,
+`linear_team: "dev"`, and `linear_project: "skills test"`. It contained no deferred setup plan.
+No commit or push was made in `/Users/wchoi/src/skills`.
+
+| Case | Verdict | Independent evidence |
+|---|---|---|
+| C1 | SKIP | The missing-status half had no fresh team. The `dev` half completed without mapping questions: all seven exact name/category pairs were checked independently, and the written config has the three required Linear fields. |
+| C2 | SKIP | No team status was renamed or deleted. The team is shared and the UI branch was not available. |
+| C3 | SKIP | No extra status was added or tested. The independent status list contains exactly seven. |
+| C4 | PASS | `list_issues` found ready DEV-10 as Todo. After the move, `get_issue DEV-10` reported `In Progress`, not a category-based substitute. |
+| C5 | SKIP | Done was not renamed in the shared team. Runtime drift handling was untested. |
+| C6 | PASS | `save_issue` returned `Could not find state "in reviewww"`; `get_issue` still reported In Progress. Lower-case `in progress` resolved to In Progress. |
+| C7 | PASS | DEV-12 had native `blockedBy: DEV-11`. Before closing DEV-11, DEV-11 was on the project frontier and DEV-12 was not. After `get_issue DEV-11` reported Done, DEV-12 was Todo and unassigned with that satisfied blocker. |
+| C8 | PASS | A separate link on DEV-13 produced `relations.blockedBy: [DEV-11]` on an independent `get_issue`. See D-4. |
+| C9 | PASS | Before the move, `get_issue DEV-15` showed `relatedTo: [DEV-13]`. Afterwards it showed status Duplicate, `duplicateOf: DEV-14`, and `relatedTo: []`. The lost edge was recorded, not called a clean move. |
+| C10 | SKIP | The available branches worked: `list_milestones` found legC-M1; project Todo issues held only DEV-16 in it; an unknown name did not resolve. No completed milestone existed, so that resolver branch was untested. The direct `list_issues` milestone argument failed; see D-3 and F19. |
+| C11 | PASS | `list_comments DEV-16` was empty before the write and contained `runbook note` exactly once afterwards. |
+| C12 | SKIP | Only one active workspace user was returned by `list_users`; no two-identity race was run. |
+| C13 | PASS | One `save_issue` call set `state: In Progress` and `assignee: me` on DEV-12. `get_issue` reported In Progress and `wilson choi`. |
+| C14 | SKIP | The available half passed: explicit assignment to `wilson choi` left DEV-13 in Todo, removed it from unassigned candidates, and kept it in `list ready`. The different-holder half needs another identity. |
+| C15 | PASS | Moving DEV-12 to Todo with `assignee: null` left it unassigned on `get_issue`. The next project Todo read included DEV-12 on the first attempt. |
+| C16 | PASS | Assigning `someone-not-in-this-workspace` returned `Could not find user "someone-not-in-this-workspace" for assignee`. `get_issue DEV-13` still named `wilson choi`. Linear failed loudly. |
+| C17 | PASS | DEV-17 appeared in the first `list_issues` Todo/unassigned read immediately after Backlog to Todo. It appeared in the first In Progress list immediately after the one-call assign. Both pages reported `hasNextPage: false`; `get_issue` confirmed both states. |
+| C18 | SKIP | The read-only half found DEV-5 and DEV-11 with `includeArchived: false` and the same two with `true`, both complete pages. Neither had `archivedAt`. No automatic archive was observed; no issue was archived in the UI. |
+| C19 | PASS | `get_issue` plus `list_comments` returned full DEV-18 and `[]` before its first comment. The next show read returned the full issue and one `show probe` by `wilson choi`. |
+| C20 | FAIL | `get_issue DEV-19` returned 487 UTF-8 bytes against 228 sent. The first difference was an added blank line after `## What to build`; Linear also rewrote `DEV-11` and `DEV-13` as rich issue links. The native blocker relation survived. |
+
+Created issues, all in team `dev`, project `skills test`, and all left in place: DEV-10
+`legC-C4 name mapping`, DEV-11 `legC-C7 blocker A`, DEV-12 `legC-C7 dependent B`, DEV-13
+`legC-C8 link target`, DEV-14 `legC-C9 duplicate original`, DEV-15 `legC-C9 duplicate
+candidate`, DEV-16 `legC-C10 milestone member`, DEV-17 `legC-C17 immediate visibility`,
+DEV-18 `legC-C19 show no comments`, and DEV-19 `legC-C20 description round trip`.
+The run also created project milestone `legC-M1`. Nothing was deleted.
+
+Deviations from the runbook and supplied procedure:
+
+- **D-1.** The four installed invocation gate differences above were present for all cases. They
+  change no verb or backend instruction.
+- **D-2.** The supplied answers let setup run without its interview. Section ordering, picker
+  behavior, and question turn boundaries were not tested. Leg D, cases D4 to D6, has never run on
+  Codex. The two local runs recorded the same gap.
+- **D-3.** C10 used `list_milestones {project: "skills test"}`. The supplied workspace constraint
+  says `list_projects {includeMilestones: true}` fails with
+  `query is too complex, Complexity: 15879, Maximum allowed: 10000`, so it was not
+  called. The prescribed `list_issues` argument `milestone: "legC-M1"` was tried and rejected as
+  `Unrecognized key: "milestone"`. The scoping probe then fetched project Todo issues with
+  `projectMilestone` and filtered that field locally. This argument substitution is F19.
+- **D-4.** C8 linked a new target, DEV-13, instead of C7's DEV-12. DEV-12 already held the
+  DEV-11 edge from C7's create, so linking it again would not test a new edge.
+- **D-5.** The supplied note expected DEV-6 and DEV-8 on `next`. Independent `get_issue` reads
+  showed both have `project: null`, outside configured `skills test`. DEV-8 is also blocked by
+  open DEV-6. Neither belongs to the project frontier; DEV-6 is only a team-wide candidate.
+- **D-6.** A Chrome navigation attempt for the manual branches landed on an unrelated tab before
+  a sandbox page opened. No Linear UI state was changed. C1's fresh-team
+  branch, C10's completed-milestone branch, and C18's archive branch stayed untested.
+- **D-7.** The initial full-file read was truncated by the tool. The scoring rules, C cases, Run
+  log, and F1 to F18 were read before scoring. The remaining A and B procedure text was read after
+  scoring. It did not affect a C verdict, but it did not meet the requested read order.
+
+#### Findings
+
+**F19. `linear.md` prescribes an unsupported `list_issues` milestone argument. (C10, skill defect.)**
+The live `list_issues` schema has no `milestone` field. Passing `milestone: "legC-M1"` returned
+`Input validation error: Invalid arguments for tool list_issues: Unrecognized key: "milestone"`.
+The backend file says to pass `project` and `milestone` to that tool for `list`. A runner following
+that sentence cannot return a milestone-scoped list. The available path worked: resolve the name
+with `list_milestones`, page through project issues with `projectMilestone` in the requested fields,
+then filter the resolved milestone id or name. The file needs that algorithm and the unknown-name
+stop. This run did not edit the skill.
+
+**F20. C20's byte-identity expectation conflicts with Linear's description storage. (C20, runbook and contract conflict.)**
+The sent body was 228 UTF-8 bytes and used every ticket section, a code fence, non-ASCII text,
+and two issue references. `get_issue` returned 487 bytes. Linear inserted blank lines and
+converted both references to rich links. `linear.md` already says the body does not round-trip,
+while C20 requires a byte comparison and `SKILL.md` says `create` verifies the intended body.
+Those claims need one explicit contract. If exact bytes are required, the current Linear backend
+cannot meet it with this Markdown path. If semantic preservation is the contract, C20 must test
+the sections, code fence, non-ASCII text, and native relations separately. The FAIL stands under
+the runbook's current expected result.
 
 ### 2026-09-19T09:32:52-07:00 Local leg, Codex
 

@@ -83,7 +83,7 @@ order.
 
 | Verb | Linear |
 |---|---|
-| `list` | `list_issues` with `state` set to the status name, plus `project` and `milestone` to scope |
+| `list` | `list_issues` with `state` set to the status name and `project` to scope. A milestone is not an argument to this tool, so scoping to one is the procedure under Milestones below |
 | `show` | `get_issue` with `includeRelations: true`, plus `list_comments` |
 | `next` | See below |
 | `create` | One `save_issue` with `team`, `title`, `description`, `state`, and `blockedBy`. Relations apply on create here, unlike GitHub, so the edges and the status land together |
@@ -146,9 +146,25 @@ A milestone is a **project milestone** inside the configured `linear_project`, n
 are time boxes that move on their own schedule; a milestone names a body of work and does not
 expire, which is what GitHub milestones and the `local` backend's `milestone` field also mean.
 
-`save_issue` takes `milestone`, and `list_milestones` takes a project. A milestone name that
-matches nothing in the project is a stop, not a silently unscoped list: returning every ticket in
-the project when the caller asked for a subset is a wrong answer shaped like a right one.
+`save_issue` takes `milestone`, so writing one is direct. **Reading one is not: `list_issues` has
+no milestone filter.** Its `projectMilestone` is a field you ask for in the result, not an argument
+you scope by, and passing `milestone` to it is rejected with `Unrecognized key: "milestone"`.
+Scoping a list to a milestone is three steps:
+
+1. `list_milestones` with the configured `linear_project`, and match the requested name against
+   what comes back.
+2. `list_issues` with `project` and the requested `state`, with `projectMilestone` named in
+   `fields`, paged to the end.
+3. Keep the issues whose `projectMilestone` is the one resolved in step 1.
+
+A milestone name that matches nothing in step 1 is a stop that names the milestones that do exist.
+It is never a silently unscoped list: returning every ticket in the project when the caller asked
+for a subset is a wrong answer shaped like a right one. It is never an empty list either, since
+that reads as a real milestone nobody has filed against.
+
+`list_projects` with `includeMilestones: true` is not a shortcut around step 1. On a real workspace
+it failed with `query is too complex, Complexity: 15879, Maximum allowed: 10000`, and the
+complexity is the workspace's size rather than anything the caller passed.
 
 ## The duplicate transition is destructive
 
@@ -184,9 +200,11 @@ together.
 - **`list_issues` paginates.** A full page is an incomplete answer, the same as hitting `--limit` on
   GitHub: page through it with the returned cursor before reporting a list.
 - **The body does not round-trip.** Linear rewrites a plain `WKC-5` in a `## Blocked by` section
-  into a rich issue link. The frontmatter equivalent here is the relation, which is what every verb
-  reads, so this costs nothing. Do not compare a description you sent against the one that comes
-  back and call the difference a failure.
+  into a rich issue link, and inserts blank lines around headings. A 228-byte ticket body came back
+  as 487 bytes with every section, its code fence, and its non-ASCII text intact. The frontmatter
+  equivalent here is the relation, which is what every verb reads, so this costs nothing. Do not
+  compare a description you sent against the one that comes back and call the difference a failure.
+  Compare the sections and what is inside them.
 
 The predecessor also recorded that a status write with an inexact name fails silently. **That did
 not reproduce.** This server errors loudly on an unknown name and matches case-insensitively. The

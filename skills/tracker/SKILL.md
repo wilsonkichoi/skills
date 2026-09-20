@@ -93,7 +93,7 @@ exit code said.
 
 | Verb | Precondition read | Verification read |
 |---|---|---|
-| `create` | none | the ticket exists by id, with the body and the status intended |
+| `create` | none | the ticket exists by id, with the status intended and a body carrying every section it was given. Compare the sections and their contents, never the bytes: a backend that reformats markdown on the way in has not failed the write |
 | `link` | both tickets exist | the edge appears on the blocked ticket's dependency list |
 | `assign` | not terminal; the bare form also needs `ready` with no assignee, and any other holder has to be named | the only assignee is the one asked for, and on the bare form the status is `in-progress` too |
 | `comment` | the ticket exists | the comment body is present on the ticket |
