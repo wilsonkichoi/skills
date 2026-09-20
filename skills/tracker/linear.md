@@ -157,6 +157,12 @@ Scoping a list to a milestone is three steps:
    `fields`, paged to the end.
 3. Keep the issues whose `projectMilestone` is the one resolved in step 1.
 
+`list_milestones` takes only a project and has no state or archived filter, and it needs none for a
+completed milestone: one whose sole issue was moved to `done` came back from the next call with
+`progress: 100`, so finishing the work does not hide the milestone from the resolver. This is the
+opposite of GitHub, where the endpoint drops closed milestones unless the call asks for them. A
+milestone inside an archived project has not been measured.
+
 A milestone name that matches nothing in step 1 is a stop that names the milestones that do exist.
 It is never a silently unscoped list: returning every ticket in the project when the caller asked
 for a subset is a wrong answer shaped like a right one. It is never an empty list either, since

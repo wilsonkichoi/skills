@@ -742,6 +742,76 @@ shape `CHANGELOG.md` uses, so two runs on one day stay distinguishable. One entr
 runbook above is the reusable procedure and is not edited by a run; everything a run learned goes
 here.
 
+### 2026-09-19T22:35:22-07:00 Linear C10/C20 targeted re-run, Codex
+
+```
+TRACKER VALIDATION
+backend: linear                  harness: codex
+date: 2026-09-19T22:35:22-07:00  skill ref: c954b3f (feat/tracker)
+
+PASS  2
+FAIL  0
+SKIP  0
+
+failures:
+  none
+skipped:
+  none
+
+VERDICT: GREEN
+```
+
+Scope: targeted re-run of C10 and C20 only, not a full Linear leg. The other eighteen C cases
+were scored against the unchanged skill in the preceding leg and were not re-run or re-scored.
+The independent sandbox reads below decide both verdicts. No pre-existing issue or milestone was
+changed, and nothing was deleted. No commit or push was made.
+
+The `linear-wkc-sandbox` server answered `list_teams` before any other work and returned team
+`dev`. All Linear calls used that server and project `skills test`. The existing
+`docs/dev-agents/config.md` names `issue_tracker: linear`, `linear_team: "dev"`, and
+`linear_project: "skills test"`; setup was not run. `git archive c954b3f skills/tracker
+skills/setup` was extracted to a temporary directory and compared with `.agents/skills/` before
+the case calls. Exactly four differences appeared, two per skill: the committed `SKILL.md` has
+`disable-model-invocation: true` and the install omits it; committed `agents/openai.yaml` has
+`allow_implicit_invocation: false` and the install has `true`. No backend file differed. The same
+four differences remained after the cases. This is one invocation-gate deviation; neither change
+alters a verb.
+
+| Case | Verdict | Independent evidence |
+|---|---|---|
+| C10 | PASS | `get_issue` reported DEV-20 as Todo in `legC2-M2` and DEV-21 as Todo without a milestone. The complete project Todo page had both but only DEV-20 carried the resolved milestone id. An independent `list_milestones` found `legC-M1` and `legC2-M2`, with no `no-such-milestone` match. After DEV-22, the sole issue in `legC2-M3`, moved to Done, `get_issue` confirmed its Done status and milestone; `list_milestones` still returned `legC2-M3` with progress 100. The completed milestone remains visible to the resolver. |
+| C20 | PASS | Independent `get_issue DEV-23` returned the five headings `What to build`, `Acceptance criteria`, `Blocked by`, `Related`, and `Notes` in their sent order. The fenced content `λ = "snow ☃"` followed by the exact indented tag and two backslashes was character-identical to the sent content. The line `Café, 東京, and naïve résumé stay unchanged.` was identical. `relations.blockedBy` contained DEV-21. Linear added blank lines and rich issue links, which the rewritten case permits. |
+
+Actual C10 skill calls for `$tracker list ready "legC2-M2"` were
+`list_milestones {project: "skills test"}` followed by
+`list_issues {project: "skills test", state: "Todo", fields:
+["id", "title", "status", "assignee", "projectMilestone", "url"], limit: 250}`.
+The page had `hasNextPage: false`; the skill filtered locally by milestone id and returned only
+DEV-20. It did not pass a `milestone` argument to `list_issues` and did not receive an argument
+rejection. For `$tracker list ready "no-such-milestone"`, the skill called only
+`list_milestones {project: "skills test"}`. It stopped and named `legC-M1` and `legC2-M2`;
+it did not return an empty or unscoped Todo list. The `state: "Todo"` argument is the documented
+`ready` mapping, and `limit: 250` is the selected page size. No tool argument was substituted.
+
+For the completed-milestone branch, fixture calls created `legC2-M3`, created DEV-22 in it,
+then set DEV-22 to Done. The independent `list_milestones` call above was made after the move.
+For C20, `$tracker create` used one `save_issue` call with `state: "Backlog"`, the complete
+description, and native `blockedBy: ["DEV-21"]`, followed by the separate `get_issue` check.
+
+Created issues, all in team `dev` and project `skills test`:
+
+- DEV-20 `legC2-C10 milestone member`, Todo, in `legC2-M2`.
+- DEV-21 `legC2-C10 outside milestone`, Todo, no milestone.
+- DEV-22 `legC2-C10 completed milestone sole issue`, Done, in `legC2-M3`.
+- DEV-23 `legC2-C20 structured description`, Backlog, blocked by DEV-21.
+
+Created project milestones: `legC2-M2` and `legC2-M3`. All created items remain in place.
+
+F19 is closed: the installed `linear.md` uses the supported milestone resolution and local
+filtering path, and the scoped and unknown-name branches passed. F20 is closed: the rewritten C20
+checks semantic preservation and the native relation, and all checks passed. No new finding was
+numbered from F21.
+
 ### 2026-09-19T21:50:12-07:00 Linear leg, Codex
 
 ```
