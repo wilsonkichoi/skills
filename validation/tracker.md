@@ -740,6 +740,77 @@ anything, and a missing remote has to be resolved before Section B is on screen.
 Expect it idle and waiting, so the answer is typed straight in. A harness still reporting work, or
 holding the reply as a queued input, is a FAIL: the skill asked and then kept going.
 
+### Running leg D
+
+This is the one leg a person has to run. D4 to D6 are facts about the harness while the model is
+mid-turn: whether it sits idle, how many questions one screen carries, whether a bare digit is
+taken. A model reporting on its own turn is exactly the self-assessment `How to score` refuses, so
+these are watched from outside and written down by whoever watched. D1 to D3 are lighter, one
+command each with the verdict in the output, but every harness still has to be launched by hand.
+
+Two scratch directories, both installed with the invocation gates **left as shipped**. Every other
+leg strips them so it can run unattended. Leg D must not, because being triggered by name is what
+it tests.
+
+```
+mkdir -p ~/tmp/tracker-legd && cd ~/tmp/tracker-legd && npx skills@latest add 'https://github.com/wilsonkichoi/skills.git#<branch or tag>' -a claude-code -a codex -a kiro-cli -s '*' -y
+```
+
+```
+mkdir -p ~/tmp/tracker-legd-codex && cd ~/tmp/tracker-legd-codex && npx skills@latest add 'https://github.com/wilsonkichoi/skills.git#<branch or tag>' -a claude-code -a codex -a kiro-cli -s '*' -y
+```
+
+Do not run `git init` in either. D5 needs setup to make that offer itself, and the second directory
+has to stay in the same untouched state for D4.
+
+**1. Claude Code in the first directory: D5, D4, D6.** Launch it from that directory and type
+`/setup`. Answer live rather than pasting the answers ahead, which is the thing every other leg
+does and the reason this leg has never run. Backend **Local markdown**, defaults for Section B,
+`AGENTS.md` for Section C, no test command for Section D, accept the commit offer at the end. Local
+is the right backend here because it has no prerequisites, so nothing outside the interview can
+interrupt the sequence D5 is watching.
+
+Watch the first three screens and record what each one carried. Then, for D6, look at the harness
+itself while Section A is on screen rather than at the message.
+
+When setup finishes, create one ticket so the parity checks have something to find:
+`/tracker create` a ticket titled `legD parity probe`, at `ready`. Then `/tracker list ready`, which
+is **D2**: record the ticket id and that the list contains it.
+
+**2. Codex in the same directory: D1.** `$tracker list ready`. It passes if it returns the same
+ticket from the same install with no setup re-run.
+
+**3. Kiro CLI in the same directory: D3.** Before running anything, type `/` and read the command
+menu. Then `/tracker list ready` for the same ticket.
+
+**4. Codex in the second directory: D4, D6.** Fresh directory, so setup interviews again. `$setup`,
+then answer the `git init` offer and Section A only; the run can be abandoned after that. Codex has
+no picker, so numbered options with the recommended one first and a bare digit accepted is the
+correct result here rather than a fallback to apologise for. Type `1` and confirm it is taken.
+
+The observation sheet, filled in by the person at the keyboard and carried into the Run log entry
+verbatim:
+
+```
+D1 Codex list ready:        output =
+D2 Claude Code list ready:  output =
+D3 Kiro menu:               tracker description rendered as =
+D3 Kiro list ready:         output =
+D4 Claude Code:             form of the Section A question =
+D4 Codex:                   form of the Section A question =, digit accepted =
+D5 Claude Code:             screen 1 carried =, screen 2 =, screen 3 =
+D6 Claude Code:             harness state at Section A =
+D6 Codex:                   harness state at Section A =
+anything surprising:
+```
+
+Two things the observer decides and the scorer must not guess at. A screen carrying more than one
+question is recorded by naming **which** questions, since the rule is that only questions whose
+answers cannot change each other may share a call, and the verdict turns on that rather than on the
+count. And Claude Code asking Section A as prose instead of through its picker is written down as
+prose, not rounded up to a pass, because using the harness's own picker is the half of D4 the skill
+actually prescribes.
+
 ---
 
 ## Run log
