@@ -682,12 +682,16 @@ the fixture, and it is restorable. The read-only half runs anywhere: list the te
 with `includeArchived` both ways and compare the counts, remembering that equal counts on a young
 project prove only that nothing has archived yet, not the policy. Then delete a `Done` issue in the
 Linear UI, confirm `archivedAt` with `get_issue`, then `$tracker list done` and `$tracker show <it>`.
-Expect the issue to be reported by both, or the skill to say plainly that archived issues are
-excluded. `list_issues` takes `includeArchived` and **defaults it to `false`**, and `linear.md` never
-mentions archiving at all, so a list of terminal tickets can come back short with nothing to say it
-did. Establish first whether this workspace archives completed issues on its own, by policy or by
+Expect `list done` to report it and mark it archived with its timestamp, and `show` to return it
+and say the same. `list_issues` takes `includeArchived` and **defaults it to `false`**, so a
+terminal list that leaves the argument unset comes back short with nothing to say it did, which is
+what this case caught as F23 and what `linear.md`'s Archived issues section now prescribes against.
+Check the open side in the same run: `list ready` must leave `includeArchived` unset, because a
+deleted ticket carries the same `archivedAt` and has no business on the frontier. A pass that came
+from flipping the flag everywhere is a different behaviour wearing the right answer's clothes.
+Establish separately whether this workspace archives completed issues on its own, by policy or by
 age, because that decides whether the default is a papercut or a silent under-report of every
-`list done`.
+`list done`. Nothing on this server answers it: `get_team` returns no auto-archive period.
 
 **C19 show reports an issue that has no comments.** `$tracker show <an issue with no comments>`,
 then `$tracker comment <it> "show probe"`, then `$tracker show <it>` again.
@@ -744,6 +748,82 @@ Newest first, by the timestamp in each entry's heading: ISO 8601 with the local 
 shape `CHANGELOG.md` uses, so two runs on one day stay distinguishable. One entry per run. The
 runbook above is the reusable procedure and is not edited by a run; everything a run learned goes
 here.
+
+### 2026-09-19T23:27:50-07:00 Linear C18 targeted re-run, Codex
+
+```
+TRACKER VALIDATION
+backend: linear                  harness: codex
+date: 2026-09-19T23:27:50-07:00  skill ref: df55ff9 (feat/tracker)
+
+PASS  1
+FAIL  0
+SKIP  0
+
+failures:
+  none
+skipped:
+  none
+
+VERDICT: GREEN
+```
+
+Scope: this was a targeted re-run of C18 alone, not a Linear leg. No other case was scored.
+The server was `linear-wkc-sandbox` for every Linear call. Every issue query was limited to
+team `c-leg` and project `cleg test`, except `get_issue` and `list_comments`, which take the
+specific issue id. No call read or wrote team `dev` or project `skills test`.
+
+Before the case, `git archive df55ff9 skills/tracker skills/setup` was extracted into a temporary
+directory and compared with `/Users/wchoi/tmp/tracker-cleg/.agents/skills/` using `diff -r`.
+Exactly four differences appeared, the two invocation gates per skill: committed `SKILL.md`
+has `disable-model-invocation: true`, absent from the install; committed
+`agents/openai.yaml` has `allow_implicit_invocation: false`, while the install has `true`.
+No fifth difference or backend-file difference appeared. These gates change no verb.
+The existing config was read and named `issue_tracker: linear`, `linear_team: "c-leg"`, and
+`linear_project: "cleg test"`. Setup was not run.
+
+An independent `get_issue {id: "CLE-3", includeRelations: true}` confirmed the fixture before
+scoring: CLE-3 `legC3-C18-archive` belonged to `c-leg` and `cleg test`, had status `Done`, and
+had `archivedAt: 2026-09-20T06:17:45.980Z`. It was still in Recently deleted, not restored.
+
+| Case | Verdict | Independent evidence |
+|---|---|---|
+| C18 | PASS | Independent complete Done lists scoped to `c-leg` and `cleg test` returned zero issues with `includeArchived: false` and CLE-3 with `includeArchived: true`. The latter returned status `Done` and `archivedAt: 2026-09-20T06:17:45.980Z`. The pre-score `get_issue` independently confirmed the same status and timestamp. The skill's `list done` returned CLE-3 marked archived with that timestamp; its `show CLE-3` returned the full issue, marked archived, and zero comments. The separate `list ready` query left `includeArchived` unset. |
+
+The skill's actual `$tracker list done` call was
+`list_issues {team: "c-leg", project: "cleg test", state: "Done", includeArchived: true, fields: ["id", "title", "status", "assignee", "url", "archivedAt"], limit: 250}`.
+It returned only CLE-3 and `hasNextPage: false`. The skill did not list every state to find it.
+Its `$tracker show CLE-3` path called
+`get_issue {id: "CLE-3", includeRelations: true}` and
+`list_comments {issueId: "CLE-3", limit: 250}`, which returned zero comments and
+`hasNextPage: false`. Its `$tracker list ready` call was
+`list_issues {team: "c-leg", project: "cleg test", state: "Todo", fields: ["id", "title", "status", "assignee", "url"], limit: 250}`.
+It omitted `includeArchived` and returned CLE-2 with `hasNextPage: false`.
+
+Deviations from the reusable procedure:
+
+- **D-1.** The four installed invocation-gate differences described above were present. They
+  were expected for this run and changed no tracker verb.
+- **D-2.** This re-run used the existing soft-deleted CLE-3 fixture. It did not repeat the
+  Linear UI Delete action, create an issue, run setup, or test another C case. The runbook's
+  broader auto-archive policy question remains subject to F22; this targeted read did not
+  establish that policy.
+- **D-3.** C18's procedure says `linear.md` never mentions archiving. The installed backend
+  file now contains an `Archived issues` section. See F24.
+
+**F23 closed for C18 at df55ff9.** Terminal Done lists now pass `includeArchived: true`, request
+`archivedAt`, and disclose CLE-3. The open Ready list did not pass `includeArchived`. This
+conclusion covers the tested read paths and fixture, not the workspace auto-archive policy.
+No issue or project was created, changed, restored, or deleted. Nothing was committed or pushed.
+
+#### Findings
+
+**F24. C18's explanation is stale after the F23 fix. (C18, runbook defect.)**
+The reusable C18 procedure says `linear.md` never mentions archiving. At skill ref `df55ff9`,
+`linear.md` has an `Archived issues` section that prescribes `includeArchived: true` and
+`archivedAt` for terminal lists. The procedure's expectation remains testable, but that
+sentence now describes the prior skill. This run recorded the defect here and did not edit
+the procedure above the Run log.
 
 ### 2026-09-19T23:11:10-07:00 Linear outstanding manual cases, Codex
 
