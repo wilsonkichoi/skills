@@ -675,10 +675,13 @@ search index does, by seconds, which is F7 and the reason `next` there stopped u
 is a FAIL, not a PASS**: scoring on a second read is what hid the defect on GitHub for two runs.
 
 **C18 [MANUAL] archived issues are not silently dropped.** No MCP tool archives an issue, so this
-needs the Linear UI. The read-only half, establishing whether this workspace archives anything on
-its own, runs anywhere: list the team's `Done` issues with `includeArchived` both ways and compare
-the counts. Then archive a `Done` issue in the Linear UI, then
-`$tracker list done` and `$tracker show <it>`.
+needs the Linear UI. Linear has no manual Archive action either: archiving is automatic after a
+period of inactivity, and the reachable action is **Delete**, which soft-deletes the issue into
+Recently deleted and sets the same `archivedAt` field that `includeArchived` filters on. That is
+the fixture, and it is restorable. The read-only half runs anywhere: list the team's `Done` issues
+with `includeArchived` both ways and compare the counts, remembering that equal counts on a young
+project prove only that nothing has archived yet, not the policy. Then delete a `Done` issue in the
+Linear UI, confirm `archivedAt` with `get_issue`, then `$tracker list done` and `$tracker show <it>`.
 Expect the issue to be reported by both, or the skill to say plainly that archived issues are
 excluded. `list_issues` takes `includeArchived` and **defaults it to `false`**, and `linear.md` never
 mentions archiving at all, so a list of terminal tickets can come back short with nothing to say it
@@ -741,6 +744,129 @@ Newest first, by the timestamp in each entry's heading: ISO 8601 with the local 
 shape `CHANGELOG.md` uses, so two runs on one day stay distinguishable. One entry per run. The
 runbook above is the reusable procedure and is not edited by a run; everything a run learned goes
 here.
+
+### 2026-09-19T23:11:10-07:00 Linear outstanding manual cases, Codex
+
+```
+TRACKER VALIDATION
+backend: linear                  harness: codex
+date: 2026-09-19T23:11:10-07:00  skill ref: 676c203 (feat/tracker)
+
+PASS  4
+FAIL  1
+SKIP  0
+
+failures:
+  C18  expected CLE-3 reported by list done, or archived exclusion stated  actual empty Done list with no archive warning; show CLE-3 returned the issue
+skipped:
+  none
+
+VERDICT: RED
+```
+
+Scope: the five outstanding manual Linear cases C1, C2, C3, C5, and C18 in
+`/Users/wchoi/tmp/tracker-cleg`. C1, C2, C3, and C5 passed independent checks. C18's
+read-only and archived halves ran. C18 failed because `$tracker list done` silently omitted
+CLE-3, while `$tracker show CLE-3` returned the full issue. No other C case was scored. The user
+soft-deleted CLE-3 in Linear's UI; no item was permanently deleted. Nothing was committed or pushed.
+
+The `linear-wkc-sandbox` server answered `list_teams` before any other work, returning only the
+requested `c-leg` team for that query. Every Linear call used that server. No call read or wrote
+the earlier `dev` team or `skills test` project. The project fixture call was
+`save_project {name: "cleg test", addTeams: ["c-leg"]}`. It created project
+`125f6c76-eedb-4c6e-acda-3455a165731d` on team `c-leg`, key `CLE`.
+
+Before scoring, `git archive 676c203 skills/tracker skills/setup` was extracted into a temporary
+directory and compared with `.agents/skills/` using `diff -r`. Exactly four expected differences
+appeared, two per skill: committed `SKILL.md` has `disable-model-invocation: true`, absent from the
+install; committed `agents/openai.yaml` has `allow_implicit_invocation: false`, while the install
+has `true`. No backend file differed. The same four differences remained after the cases. Both
+`.claude/skills/` and `.kiro/skills/` link to `.agents/skills/`. This is one invocation-gate
+deviation, D-1, and changes no verb.
+
+| Case | Verdict | Independent evidence |
+|---|---|---|
+| C1 | PASS | The first `list_issue_statuses {team: "c-leg"}` returned exactly six default statuses and no In Review. Setup took the authorized `git init` offer, stopped on the missing In Review `started` status, and the first config read had neither `linear_team` nor `linear_project` or a deferred setup promise. After gate 1, the status list held the seven required exact name/category pairs. Setup completed without mapping questions. The config read held `issue_tracker: linear`, `linear_team: "c-leg"`, and `linear_project: "cleg test"`; a copy was saved before C3. |
+| C3 | PASS | After gate 2, `list_issue_statuses` showed Ready to Merge as an extra `started` status. Setup named the extra status and warned that its tickets are invisible to the frontier. An independent config read found that warning under `## Tracker notes`. Direct `save_issue {id: "CLE-1", state: "Ready to Merge"}` parked a ready ticket there; `get_issue` confirmed it. Both `$tracker list` and `$tracker next` named CLE-1 as unmapped at Ready to Merge, rather than counting or silently dropping it. |
+| C2 | PASS | After gate 3, `list_issue_statuses` showed Code Review and no In Review. Setup refused the missing In Review name, required it under `started`, and did not fall back to Code Review. A byte comparison found the config unchanged by this setup run. The diff against the saved C1 config contained only the C3 Tracker notes section, with no substitute status or changed Linear field. After gate 4, the status list and config read confirmed the required mapping again before C5. |
+| C5 | PASS | After gate 5, `list_issue_statuses` showed Released/completed and no Done. `$tracker move CLE-2 done` stopped before a write, reported that the team workflow no longer matched the config, and directed a rerun of `$setup`. Independent `get_issue CLE-2` still returned Todo, with its original `updatedAt`. Gate 6 restored Done/completed before C18. |
+| C18 | FAIL | `$tracker move CLE-3 done` was verified by a separate `get_issue`: status Done and `archivedAt: null`. Before gate 7, complete Done lists with `includeArchived: false` and `true` each contained CLE-3, count 1. After the user's UI Delete action, independent `get_issue CLE-3` returned its full Done issue with `archivedAt: 2026-09-20T06:17:45.980Z`. Complete Done lists then returned 0 with `includeArchived: false` and CLE-3 with `true`. The skill's `list_issues` call omitted `includeArchived` and returned an empty, complete-looking page without an archive warning. Its `show` path returned the full issue and zero comments. Expected CLE-3 in the Done list or an explicit exclusion; actual silent omission. See F21 through F23. |
+
+Gates performed by the user and verified by a new `list_issue_statuses {team: "c-leg"}` call
+after each reply: 1 added In Review under Started; 2 added Ready to Merge under Started;
+3 renamed In Review to Code Review; 4 renamed Code Review back to In Review;
+5 renamed Done to Released; 6 renamed Released back to Done. For gate 7, the user deleted
+CLE-3 in Linear's UI after finding no Archive action. The issue now sits in Recently deleted.
+This was the user's action, not a tracker or MCP write. Independent calls confirmed the resulting
+`archivedAt` value and both sides of the `includeArchived` filter before C18 was rescored.
+
+Created issues, all prefixed `legC3-`, in team `c-leg` and project `cleg test`, each confirmed
+with `get_issue` after `$tracker create`:
+
+- CLE-1 `legC3-C3-extra-status`, created Todo, now Ready to Merge, unarchived.
+- CLE-2 `legC3-C5-drift-ready`, created Todo, still Todo, unarchived.
+- CLE-3 `legC3-C18-archive`, created Backlog, now Done in Recently deleted, with `archivedAt: 2026-09-20T06:17:45.980Z`.
+
+The created project `cleg test` remains in its Backlog project status. The final c-leg issue
+status set, from `list_issue_statuses`, is Backlog/backlog, Todo/unstarted,
+In Progress/started, In Review/started, Ready to Merge/started, Done/completed,
+Canceled/canceled, and Duplicate/duplicate. CLE-1 and CLE-2 remain active; CLE-3 remains
+recoverable in Recently deleted.
+
+Deviations from the runbook and supplied procedure:
+
+- **D-1.** The four installed invocation-gate differences described above were present for all
+  cases and did not change a verb. There was no fifth difference or backend-file difference.
+- **D-2.** The supplied Section A through D answers and no-commit instruction were applied without
+  an interview or a step 7 commit offer. This run did not test setup's question order or picker.
+- **D-3.** For gate 7, the user deleted CLE-3 through Linear's UI instead of archiving it.
+  Delete is a different user-facing action, but it set `archivedAt` and made CLE-3 subject to
+  `includeArchived`. This supplied the archived-read fixture without an MCP write. CLE-3 now
+  sits in Recently deleted rather than the active Done state left by the earlier cases.
+- **D-4.** The independent `list_issues` confirmation calls included
+  `project: "cleg test"`, `fields`, and `limit: 250` alongside the user's team, Done state, and
+  `includeArchived` values. The project argument preserved the original project-scope rule.
+  The skill's `list done` call used the same team, project, state, fields, and limit, but omitted
+  `includeArchived`. No other tool argument was substituted.
+
+#### Findings
+
+**F21. C18 names a manual Archive action that Linear no longer has. (C18, runbook defect.)**
+Linear's documentation says issue archiving is automatic and offers no manual Archive action:
+https://linear.app/docs/delete-archive-issues. The reachable UI action was Delete, which put
+CLE-3 in Recently deleted. Delete and archive are different user-facing actions, but this server
+sets the same `archivedAt` field for the deleted issue and filters it through `includeArchived`.
+Independent `get_issue` returned CLE-3 with `archivedAt: 2026-09-20T06:17:45.980Z`; the complete
+Done list omitted it with `includeArchived: false` and returned it with `true`. C18's procedure
+must name the soft-delete action as the reachable fixture and state this API equivalence. The
+separate meaning of deleted and archived issues still matters to the skill fix in F23.
+
+**F22. C18's fresh-project count cannot establish the workspace auto-archive policy. (C18, runbook defect.)**
+The two complete Done lists each contained the newly completed CLE-3, count 1. This proves only
+that no Done issue in this new project was archived at the time of the reads. The project remains
+in Backlog, and Linear documents an inactivity period and a project-availability condition before
+a completed issue archives: https://linear.app/docs/delete-archive-issues. Equal counts here do
+not decide whether future `list done` calls silently under-report archived issues. The runbook's
+claimed policy inference requires an aged eligible issue or the team's auto-archive setting from
+the UI. On this server, independent `get_team {query: "c-leg"}` returned only `id`, `icon`,
+`name`, `visibility`, `createdAt`, and `updatedAt`. It exposed no auto-archive period, so the
+policy cannot be read through this MCP server; it exposes no auto-archive settings tool.
+
+**F23. `linear.md` silently omits archived or soft-deleted Done issues from `list done`. (C18, skill defect.)**
+The file never mentions archiving. Its `list` procedure calls `list_issues` by state and project
+without `includeArchived`. This server defaults that argument to `false`, so the skill call
+`{team: "c-leg", project: "cleg test", state: "Done", fields: ["id", "title", "status", "assignee", "url"], limit: 250}`
+returned `{"issues":[],"hasNextPage":false}` with no warning. An independent call with
+`includeArchived: true` returned CLE-3 as Done, and `get_issue` showed its full body and
+`archivedAt` timestamp. `$tracker show CLE-3` succeeded through
+`get_issue {id: "CLE-3", includeRelations: true}` and
+`list_comments {issueId: "CLE-3", limit: 250}`, which returned zero comments. The failure is
+the list path alone. Expected
+CLE-3 in `list done` or a plain statement that archived issues are excluded; actual was an
+empty, complete-looking page. The fix must define how terminal lists handle archived issues
+and disclose any exclusion. A blanket `includeArchived: true` also surfaces deleted issues,
+and `archivedAt` alone does not distinguish deletion from automatic archiving. This run did not
+edit the skill.
 
 ### 2026-09-19T22:35:22-07:00 Linear C10/C20 targeted re-run, Codex
 

@@ -83,7 +83,7 @@ order.
 
 | Verb | Linear |
 |---|---|
-| `list` | `list_issues` with `state` set to the status name and `project` to scope. A milestone is not an argument to this tool, so scoping to one is the procedure under Milestones below |
+| `list` | `list_issues` with `state` set to the status name and `project` to scope. A milestone is not an argument to this tool, so scoping to one is the procedure under Milestones below. A terminal status needs `includeArchived: true`, under Archived issues below |
 | `show` | `get_issue` with `includeRelations: true`, plus `list_comments` |
 | `next` | See below |
 | `create` | One `save_issue` with `team`, `title`, `description`, `state`, and `blockedBy`. Relations apply on create here, unlike GitHub, so the edges and the status land together |
@@ -171,6 +171,29 @@ that reads as a real milestone nobody has filed against.
 `list_projects` with `includeMilestones: true` is not a shortcut around step 1. On a real workspace
 it failed with `query is too complex, Complexity: 15879, Maximum allowed: 10000`, and the
 complexity is the workspace's size rather than anything the caller passed.
+
+## Archived issues
+
+`list_issues` takes `includeArchived` and **defaults it to `false`**, and an archived issue is
+still a real issue with a real status. On a team whose only `done` ticket was archived, the
+default read returned `{"issues":[],"hasNextPage":false}`: an empty page that reports itself as
+complete and is indistinguishable from a team that has closed nothing.
+
+So the three terminal statuses read differently from the four open ones:
+
+- `list done`, `list cancel`, and `list duplicate` pass `includeArchived: true`, ask for
+  `archivedAt` in `fields`, and mark every result that has one as archived. A closed ticket is a
+  record of work, and omitting it silently is the worse answer.
+- The four open statuses and `next` keep the default. A frontier that offers a ticket somebody
+  deleted is worse than one that comes back short, and a deleted ticket is archived too.
+- `show` works on an archived issue: `get_issue` returns it in full, comments included. Say that it
+  is archived and when, because a verb that writes to it is working on something nobody can see.
+
+Two things arrive at `archivedAt`, and this server tells them apart nowhere. Linear archives
+completed issues on its own after a period of inactivity, and a user deleting an issue soft-deletes
+it into Recently deleted with the same field set. No tool here returns a `trashed` flag, and
+`get_team` returns no auto-archive period, so the report says archived and dated and does not
+guess which one happened.
 
 ## The duplicate transition is destructive
 
