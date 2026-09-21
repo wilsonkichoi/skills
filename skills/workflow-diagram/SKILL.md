@@ -9,102 +9,82 @@ metadata:
 # Workflow diagram
 
 - **What it does:** Explain actual project skills with an interactive, offline workflow map.
-- **When to use it:** Create a map, or update it after workflow definitions or authored content change.
-- **Dependencies:** Node.js 22 or newer; browser tools for visual checks; no setup, npm install, or network rendering service.
+- **When to use it:** Create a map, or update it after skill definitions or authored diagram content change.
+- **Dependencies:** Node.js 22 or newer; browser tools for visual checks. No setup, config, npm install, or network.
 - **How to call it:** Claude Code `/workflow-diagram`, Codex `$workflow-diagram`, Kiro CLI `/workflow-diagram`.
-- **Input:** Target project, selected workflow skills, and existing diagram data when present.
-- **Output:** Inputs, HTML, README, screenshots, and temporary artifacts under `<project>/docs/dev-agents/diagram/`.
+- **Input:** Target project, the skills to include, and existing diagram data when present.
+- **Output:** `workflow.json`, `layout.json`, `diagram.html`, `README.md`, and screenshots under `<project>/docs/dev-agents/diagram/`.
 
-Read skill definitions as evidence. Never invoke diagrammed skills or execute their example commands.
+Read skill definitions as evidence only. Never invoke the skills you diagram or run their commands.
 
 ## 1. Inspect the project
 
-Identify the target project independently of the installed skill directory and current working directory.
-Read project instructions, relevant workflow documentation, and any existing `docs/dev-agents/config.md`.
-Setup and config are optional. Do not create config or change the setup interview.
+The target project is usually the current repository. It is never this installed skill's directory.
+Read project instructions, relevant workflow documentation, and `docs/dev-agents/config.md` if it exists.
+Do not create config or change the setup interview.
 
-In a skill-authoring repository, inspect shipped `skills/` definitions.
-In a consuming project, inspect installed or explicitly selected workflow skills.
+In a repository that authors skills, inspect its shipped `skills/` definitions.
+In a project that consumes skills, inspect its installed skills or the ones the user names.
 Resolve symlinks and deduplicate definitions by their real paths.
-Do not include every global skill or turn planned roster entries into shipped nodes.
+Do not include every global skill, and do not add planned or unshipped skills as nodes.
 Do not infer dependencies from directory order.
 
-Read existing `workflow.json`, `layout.json`, and `README.md` under the diagram directory before authoring.
-Treat the JSON files as authoritative. Never recover editable data from generated HTML when JSON exists.
-If no relevant definitions are available, report the missing input and preserve any existing diagram.
+Read `workflow.json`, `layout.json`, and `README.md` in the diagram directory when they exist.
+The JSON files are the only source for existing content. Never recover data from `diagram.html`.
+If no relevant definitions are available, report that and leave any existing diagram unchanged.
 
-If scope is ambiguous, ask one question with numbered choices, recommendation first, accepting a digit.
-End the turn on the question. Do not start dependent work while waiting.
-Use supplied scope and autonomous authorization without redundant questions.
+If scope is ambiguous, ask one question with numbered choices, recommendation first, and accept a digit as the answer.
+End the turn on the question. Skip it when the user already gave the scope.
 
 ## 2. Author or update the data
 
-Read [README.md](README.md) for the data contract and route recipes, and [design.md](design.md) for visual rules.
-Keep all project artifacts inside `docs/dev-agents/diagram/`; reject symlink escapes before writing any artifact.
-Keep reusable code inside this installed skill. Do not copy the renderer into the project or modify its application build.
+Read [README.md](README.md) for the data contract and helper commands, and [design.md](design.md) for layout and visual rules.
+Write only inside `docs/dev-agents/diagram/`. Do not copy the renderer into the project or change the project's build.
 
-Create the directory and missing JSON inputs only after establishing relevant source evidence.
-Use stable IDs, concise descriptions, supported lane colors, explicit edge IDs, and manually authored routes.
-Include auxiliary nodes only when they explain an evidenced workflow.
-Keep independent skills disconnected when no source establishes a relationship.
-Commands are copyable examples, never executable rendering instructions.
+Create the directory and JSON files only after finding relevant skill definitions.
+Use stable IDs, concise text, and a hand-authored route for every edge.
+Add an edge only when a source definition establishes the relationship. Otherwise leave skills disconnected.
+Add auxiliary nodes only when a source definition shows they explain the workflow.
 
-For updates, compare source definitions with the README's recorded sources and existing authored content.
-Preserve intentional descriptions, IDs, auxiliary nodes, unaffected positions, and routes.
-Add new skills within the existing layout unless that makes the map unreadable.
-If authored text conflicts with changed source facts, report the conflict and preserve the disputed text pending resolution.
-Apply independent, unambiguous changes when authorized. Do not replace the whole map with a template.
-
-Distinguish unreadable or inaccessible sources from confirmed removals.
-Remove a node only with evidence of removal or explicit user direction.
-Remove its obsolete positions and incident edges/routes together; retain valid auxiliary content.
-For unchanged sources and intent, leave JSON bytes unchanged, including wording, ordering, and coordinates.
-No persistent synchronization system or second task tracker is needed.
+When updating, compare the source definitions with the sources recorded in the project README.
+Keep existing IDs, wording, auxiliary nodes, coordinates, and routes unless their source changed.
+Place new skills within the existing layout unless that makes the map unreadable. Never rebuild the map from scratch.
+If authored text contradicts a changed source, keep the text, report the conflict, and apply the other changes.
+An unreadable source is not a removal. Remove a node only on evidence of removal or the user's direction.
+When removing a node, also remove its position and its edges with their routes.
+If sources and intent are unchanged, leave the JSON byte-identical.
 
 ## 3. Validate and build
 
-Locate `scripts/diagram.mjs` relative to this skill's `SKILL.md`.
-Use its absolute path and an explicit project path, quoting both.
-The following placeholders mean the installed skill directory and target project.
+Run `check`, then `build`, with the commands in README.md's [helper section](README.md#check-build-and-preview).
+Locate `scripts/diagram.mjs` relative to this `SKILL.md`, and pass its absolute path and the absolute project path.
 
-```sh
-node "<installed-skill>/scripts/diagram.mjs" check --project "<project>"
-```
-
-```sh
-node "<installed-skill>/scripts/diagram.mjs" build --project "<project>"
-```
-
-Relative documentation links require `--documentation-base` with an explicit HTTPS URL.
-Derive that base from verified project context, including repository and ref, or use actual HTTPS links.
-Do not assume this repository's GitHub URL applies to another project.
-Record the chosen base in the project README and regeneration commands.
-Fix field/path errors before accepting output. Review editorial warnings without truncating valid content.
-The helper preserves the previous valid HTML on failure and replaces successful output atomically.
+Relative links in node details need `--documentation-base`, an HTTPS URL for the target project.
+Derive it from the project's actual remote. Use the default branch unless the user names another ref.
+Never use a feature branch, and never reuse this skills repository's URL for another project.
+Fix every error before accepting the output. Review warnings, but never truncate valid content to silence them.
 
 ## 4. Inspect the browser result
 
-```sh
-node "<installed-skill>/scripts/diagram.mjs" preview --project "<project>" --port 4173
-```
+Start `preview` with `--port 0` and open the printed URL. Stop it when inspection ends.
+Also open `diagram.html` through `file://` with networking disabled when the browser tools allow it.
 
-Preview binds to loopback, reports port conflicts, and refreshes after valid input edits.
-Use `--port 0` to request an available port. Stop the preview after inspection.
-Also open `diagram.html` through `file://` with networking disabled when browser tools support it.
-
-Inspect fitted and selected states at desktop and phone sizes in light and dark themes.
-Check crossings, label overlap, readable selected cards, drawer or sheet placement, and visible controls.
-Check affected keyboard navigation, focus restoration, command copying, and touch gestures where supported.
-Save relevant screenshots under the project's `screenshots/` directory.
-Use `.cache/` there for temporary artifacts when needed, and ignore that cache locally.
-Record unavailable checks as SKIP with reasons. A successful build does not prove visual correctness.
+Review fitted and selected states at 1440 × 900, 768 × 1024, and 390 × 844, in light and dark themes.
+Check route crossings, label overlap, readable selected cards, panel placement, and visible controls.
+Check keyboard navigation, focus return, command copying, and touch gestures that your change affects.
+Save screenshots in the diagram directory's `screenshots/`. Put temporary files in its `.cache/`.
+Make sure the diagram directory's `.gitignore` lists `.cache/` and `.diagram-*.tmp`.
+Record every check you could not run as SKIP with the reason. A successful build does not prove the map looks right.
 
 ## 5. Record and report
 
-Write or update the project diagram README, preserving unrelated authored notes.
-Record source paths, scope, generator version from `assets/manifest.json`, regeneration commands, documentation base, and verification results.
-Keep project paths portable; do not record the implementation worktree or original MVP directory.
-Name unresolved source conflicts and inaccessible definitions.
+Write or update the diagram directory's `README.md`. Keep notes that you did not write.
+Record, with paths relative to the project root:
+- each node's source definition, with its revision or the contract facts you relied on
+- the scope, and the generator version from this skill's `assets/manifest.json`
+- the documentation base and the exact regeneration commands
+- verification results, with SKIP reasons
+- unresolved conflicts and unreadable sources
 
-Report added, changed, and removed nodes or relationships, output paths, and verification limits.
-Do not claim harness invocation or visual checks passed unless they actually ran.
+Keep this bookkeeping in the README, never in JSON fields.
+Report added, changed, and removed nodes and edges, output paths, and verification limits.

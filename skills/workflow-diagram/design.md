@@ -1,43 +1,42 @@
-# Shared design and editing guide
+# Visual design
 
-Use these visual rules for every project. Project facts belong in its JSON files, independent of this shared design.
+The same visual rules apply to every project. Project facts belong only in its JSON files.
 
-## Visual rules
+## What you control
 
-- Keep square corners, flat surfaces, left-aligned text, and strong 2px divider rules.
-- Use system sans-serif for explanations and system monospace for names, commands, and small numeric labels.
-- Keep the light palette at background `#f3f2f2`, surface `#ffffff`, ink `#201e1d`, and accent `#ec3013`.
-- Keep the dark palette at background `#141313`, surface `#1e1c1b`, ink `#f0eeec`, and accent `#ff4a2c`.
-- Reserve red for selection, keyboard focus, and connected relationships.
-- Keep lane colors in workflow data. Cards use a 6px lane bar; lane chips and regions use the same pair of colors.
-- Use solid skill borders and dashed auxiliary borders with a visible kind badge.
-- Use solid primary and return paths, dashed optional paths, and directional arrows.
-- Keep the primary path left to right. Give return paths a separate lower corridor.
-- Retain the two-level background grid. Avoid shadows, gradients, decorative illustrations, and remote font dependencies.
+- Lay out the primary path left to right. Give `loop` (return) routes their own corridor below it.
+- Card size is fixed at 240 × 160. Shorten summaries instead of fighting the size.
+- Pick lane colors that differ from each other and from the red accent, which marks selection.
+  Test each lane's `light` value on `#ffffff` cards and its `dark` value on `#1e1c1b` cards.
+- Use lane regions only to group nodes that share a lane.
+- Keep labels short, and move them with `labelOffset` when they overlap a card or another label.
 
-Cards stay 240 × 160 world pixels. Shorten summaries before changing this size. Fitted overviews show the complete graph, while selecting a node brings its card to readable zoom in the unobstructed area.
+## What the renderer does
 
-Primary and optional labels appear at rest. Return labels appear when a connected node is hovered, focused, or selected. Lane filters dim unrelated content but retain selectable nodes. An edge receives full emphasis only when both endpoints match the filter.
+You cannot change these; know them so you can check the result.
 
-## Panel behavior
+- Square corners, flat surfaces, 2px divider rules, a two-level background grid, and no motion.
+- System sans-serif for text; system monospace for names, commands, and small numbers.
+- Light theme: background `#f3f2f2`, surface `#ffffff`, ink `#201e1d`, accent `#ec3013`.
+  Dark theme: background `#141313`, surface `#1e1c1b`, ink `#f0eeec`, accent `#ff4a2c`.
+- Red marks only selection, keyboard focus, and the selected node's relationships.
+- Cards show a 6px lane bar. Lane chips and regions use the lane's colors.
+- Skills have solid borders. Auxiliary nodes have dashed borders and a kind badge.
+- `primary` and `loop` edges are solid, `optional` edges are dashed, and all have arrows.
+- Primary and optional edge labels always show. Loop labels show when a connected node is hovered,
+  focused, or selected.
+- A lane filter dims other content but keeps every node selectable. An edge is emphasized only when
+  both of its nodes match the filter.
+- The fitted view shows the whole graph. Selecting a node zooms its card to a readable size beside
+  the panel.
 
-Desktop uses a 360px right drawer. Containers narrower than 780px use a bottom sheet at 65% of the canvas height. The implementation measures the panel before centering the selected card.
+## Details panel
 
-The title and summary always appear. Additional context, When, commands, and documentation appear only when populated. Relationships are derived from the graph and exposed as text. The panel body scrolls independently; its close button and navigation remain fixed.
-
-Opening details makes that diagram's background controls inert. Tab and Shift+Tab remain inside the panel. Escape, the close button, and the backdrop close it and restore focus. Previous and Next follow the complete authored order, including dimmed or disconnected nodes. Arrow keys retain native control and text behavior.
-
-The renderer uses no motion transitions. Reduced-motion rules also prevent later styles from introducing unwanted animation in that mode.
-
-## Review loop
-
-1. Start the installed helper's preview for the target project.
-2. Edit its JSON content and layout; leave generated HTML alone.
-3. Review fitted and selected states at 1440 × 900, 768 × 1024, and 390 × 844, in both themes.
-4. Check crossings, labels, keyboard focus, readable cards, panel scrolling, and affected touch behavior.
-5. Save screenshots under the target project's diagram directory and record verification results there.
-6. Stop preview after inspection. Apply feedback to the same JSON files.
-
-For ordinary chat, supply relevant JSON and screenshots. Generated HTML never becomes an alternate source.
-Renderer changes belong in the canonical source under `tools/workflow-diagram/` in the skills repository and require its maintainer checks.
-Reference images for this repository are under `docs/dev-agents/diagram/screenshots/` at the repository root.
+- Desktop shows a 360px drawer on the right. A container narrower than 780px shows a bottom sheet
+  at 65% of the canvas height.
+- The title and summary always show. Body, When, commands, and links show only when set.
+  Relationships come from the edges and are listed as text.
+- The panel body scrolls; its close button and Previous/Next stay fixed. Previous/Next follow node
+  array order, including dimmed and disconnected nodes.
+- While the panel is open, Tab stays inside it and the map behind it is inert. Escape, the close
+  button, and the backdrop close it and return focus.

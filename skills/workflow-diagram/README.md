@@ -1,32 +1,26 @@
-# Workflow diagram
+# Workflow diagram reference
 
-Create or update a map of actual project skills with `$workflow-diagram` in Codex or `/workflow-diagram` in Claude Code and Kiro CLI.
-The skill reads definitions; it does not execute the skills or their commands.
-Setup, tracker configuration, and an application build are not required.
+The data contract and helper commands for the `workflow-diagram` skill. The procedure is in
+[SKILL.md](SKILL.md), the visual rules are in [design.md](design.md), and embedding the map in
+another page is in [embed.md](embed.md).
 
 ## Project files
 
-All project data and output belong here:
-
 ```text
 <project>/docs/dev-agents/diagram/
-  workflow.json
-  layout.json
-  diagram.html
-  README.md
+  workflow.json     # content: nodes, edges, lanes
+  layout.json       # geometry: positions, routes, regions
+  diagram.html      # generated; never edit or read back
+  README.md         # sources, commands, verification
   screenshots/
-  .cache/                 # optional and ignored
+  .gitignore        # lists .cache/ and .diagram-*.tmp
+  .cache/           # temporary files
 ```
-
-The JSON files own content and geometry. Generated HTML is never an authoring input.
-Keep the reusable renderer in the installed skill. Do not install npm dependencies into the consuming project.
-The helper requires Node.js 22 or newer and uses only built-ins and shipped assets.
-It works from a read-only installation without network access.
 
 ## Check, build, and preview
 
-Replace the placeholders with the installed skill directory and target project.
-Paths containing spaces or Unicode are supported.
+Replace `<installed-skill>` with this skill's directory and `<project>` with the target project root.
+Quote both. Paths with spaces or Unicode work.
 
 ```sh
 node "<installed-skill>/scripts/diagram.mjs" check --project "<project>"
@@ -37,38 +31,36 @@ node "<installed-skill>/scripts/diagram.mjs" build --project "<project>"
 ```
 
 ```sh
-node "<installed-skill>/scripts/diagram.mjs" preview --project "<project>" --port 4173
+node "<installed-skill>/scripts/diagram.mjs" preview --project "<project>" --port 0
 ```
 
-Check reads and validates without writing. Build validates, then atomically replaces `diagram.html`.
-A failure preserves previous HTML. Symlinks below the canonical project root are rejected for diagram paths, including input files.
-Concurrent hostile filesystem changes are outside this local authoring tool's protection boundary.
-Preview serves only the diagram and its change stream on loopback. It never serves arbitrary project files.
-Valid JSON edits reload the browser. Invalid edits report errors and retain the last valid preview.
-Stop preview with Ctrl+C; its watchers, clients, and server close.
-A port conflict is an error. Use `--port 0` for an available port and read the printed URL.
+- `check` validates both JSON files and writes nothing.
+- `build` validates, then replaces `diagram.html` atomically. On failure the previous HTML stays.
+- `preview` serves only the diagram on `127.0.0.1` and prints its URL. Valid JSON edits reload the
+  page; invalid edits print an error and keep the last valid page. `--port 0` picks a free port, and
+  a busy port is an error. Stop it with Ctrl+C.
+- All three reject symlinks inside the diagram path.
+- The helper needs Node.js 22 or newer, uses only Node built-ins and this skill's `assets/`, and
+  works from a read-only install without network access.
 
-HTTPS and local fragment links need no base. Relative documentation links require an explicit HTTPS base on all three operations:
+Relative `href` values in node links need a base URL on all three operations. HTTPS URLs and `#`
+fragments do not. When the base names a directory, end it with a slash:
 
 ```sh
-node "<installed-skill>/scripts/diagram.mjs" build --project "<project>" --documentation-base "https://example.com/project/"
+node "<installed-skill>/scripts/diagram.mjs" build --project "<project>" --documentation-base "https://github.com/<owner>/<repo>/blob/<default-branch>/"
 ```
 
-Use a verified URL for the target project, including the correct repository and ref.
-The base must end with a slash when it names a directory. No project URL is built into the generator.
-Links are intentional user navigation, not rendering dependencies.
+## Content: `workflow.json`
 
-## Author the map
+The formal contracts are [workflow.schema.json](assets/workflow.schema.json) and
+[layout.schema.json](assets/layout.schema.json). Both JSON files need `"schemaVersion": 1`.
 
-Read [the visual guide](design.md) before changing layout.
-The formal contracts are [workflow.schema.json](assets/workflow.schema.json) and [layout.schema.json](assets/layout.schema.json).
-The browser and Node validator share those schemas and semantic checks.
+A workflow needs a nonblank `title`, a nonempty `nodes` array, and an `edges` array. `subtitle` and
+`lanes` are optional. Array order sets the Previous/Next order and the lane chip order.
 
-### Content
-
-A workflow needs `schemaVersion: 1`, a nonblank `title`, a nonempty `nodes` array, and an `edges` array. `subtitle` and `lanes` are optional. Array order controls navigation and lane chips.
-
-A node needs only `id`, `label`, and `summary`. Its position belongs in the layout. IDs can include punctuation or Unicode and must be unique. `kind` defaults to `skill`; other values are `mode`, `artifact`, and `system`. An omitted `lane` uses neutral styling.
+A node needs `id`, `label`, and `summary`. IDs must be unique and may contain any characters.
+`kind` is `skill` by default. `mode`, `artifact`, and `system` nodes are auxiliary: they draw with a
+dashed border and a kind badge. A node without `lane` uses neutral styling.
 
 ```json
 {
@@ -84,27 +76,31 @@ A node needs only `id`, `label`, and `summary`. Its position belongs in the layo
 }
 ```
 
-All detail fields are optional. Only populated fields appear in the panel. HTML is literal text. Paired backticks mark inline code in summaries, body text, and When text. Commands are copied as text and are never executed.
+Every `details` field is optional, and the panel shows only the fields you set. Text is never
+parsed as HTML. Paired backticks mark inline code in `summary`, `body`, and `when`. Commands are
+copied as text and never run.
 
-Recommended limits produce warnings, not truncation: summaries use at most 30 words; body text uses two sentences and 60 words; When uses 25 words. Prefer at most two commands and three links. Cards clamp teaser text, while details retain the entire content and scroll independently.
+Longer text produces warnings, never truncation. Aim for summaries of at most 30 words, `body` of
+two sentences and 60 words, `when` of 25 words, at most two commands, and at most three links.
 
-### Add a node, lane, and edge
+A lane needs `id`, `label`, and a `color` with six-digit hex `light` and `dark` values.
 
-1. Append the node to `workflow.nodes` in its intended navigation order.
-2. Add its exact ID to `layout.nodes` with finite `x` and `y` coordinates.
-3. To group it, append a lane with `id`, `label`, and six-digit hex `color.light` and `color.dark` values.
-4. Set the node's `lane` to that lane ID. Optionally add a dashed rectangle under `layout.regions`.
-5. Add an edge with a unique `id`, `from`, and `to`. Its kind defaults to `primary`; `loop` and `optional` are supported.
-6. Add exactly one route under that edge ID in `layout.edges`.
-7. Build and review the preview in both themes. Check the map at fitted zoom and select the new node.
+An edge needs a unique `id`, `from`, and `to`. `kind` is `primary` by default; `loop` is a return
+path and `optional` draws dashed. `label` is optional text drawn on the route.
 
-No renderer changes are needed. Adding an edge without its route fails validation instead of hiding that relationship.
+## Geometry: `layout.json`
 
-### Route recipes
+- `nodes` maps every node ID to `{ "x": <number>, "y": <number> }`, the card's top-left corner.
+- `edges` maps every edge ID to exactly one route. An edge without a route fails validation.
+- `regions` is optional: `{ "lane", "x", "y", "width", "height" }` draws a dashed lane rectangle.
 
-Coordinates are in world pixels. Cards are 240 × 160. Rendering and validation share one card-size constant. Each route has a two-number start and one or more cubic segments. A segment contains two control points followed by its endpoint.
+Coordinates are world pixels. Cards are a fixed 240 × 160. A route has a `start` point and one or
+more cubic `segments`; each segment is two control points followed by its endpoint, six numbers in
+all. A route must start and end on its cards' borders, within half a pixel. `labelOffset` places
+the label relative to the route's midpoint and defaults to `[0, -18]`. `labelAngle` rotates it, in
+degrees.
 
-Forward edge: a card at `(0, 0)` connects to a card at `(480, 0)`.
+Forward edge, from a card at `(0, 0)` to a card at `(480, 0)`:
 
 ```json
 {
@@ -114,7 +110,7 @@ Forward edge: a card at `(0, 0)` connects to a card at `(480, 0)`.
 }
 ```
 
-Return edge: the right card returns through a lower corridor to the left card.
+Return (`loop`) edge, from the right card back through a lower corridor to the left card:
 
 ```json
 {
@@ -127,7 +123,7 @@ Return edge: the right card returns through a lower corridor to the left card.
 }
 ```
 
-Vertical edge: a card at `(0, 320)` connects upward to a card at `(0, 0)`.
+Vertical edge, from a card at `(0, 320)` up to a card at `(0, 0)`:
 
 ```json
 {
@@ -137,79 +133,13 @@ Vertical edge: a card at `(0, 320)` connects upward to a card at `(0, 0)`.
 }
 ```
 
-Routes must start and end on the referenced card boundaries, within half a world pixel. Parallel edges require distinct IDs and routes. `labelAngle` is optional, in degrees. Labels default to 18 pixels above the sampled midpoint of the route.
+The fitted view includes curve control points, so it can leave more margin than the visible curve
+needs.
 
-Bounds include cards, regions, curve control hulls, and rotated label boxes, plus padding. Control hulls can leave more space than the visible curve requires. This conservative fit avoids cropping. Check route crossings and label overlap visually.
+## Package
 
-
-## Preserve edits when updating
-
-Read existing JSON and its README before reading changed source definitions.
-Keep stable IDs, intentional text, auxiliary nodes, unaffected coordinates, and edge routes.
-Map each node to its source path in the README, with the source revision or relevant contract facts when useful.
-Do not embed source bookkeeping in JSON fields that the schema does not support.
-
-Add a new skill only after confirming its definition. Add edges only when source contracts support them.
-If a source change conflicts with an intentional description, record the conflict instead of overwriting the description.
-An inaccessible source does not establish removal. Confirm removal before deleting a node and its incident edges and routes.
-Unchanged sources and intent should leave JSON byte-identical. No timestamp belongs in generated HTML.
-
-Record generator version, source paths, chosen documentation base, regeneration commands, and verification in the project README.
-Preserve unrelated notes. Store screenshots beside that README.
-Mark unavailable checks SKIP; a successful build is not visual review.
-
-## Embed
-
-Import the shipped ESM asset from a page served over HTTP. Give the container an explicit height. The host owns data loading.
-
-```html
-<div id="workflow" style="height: 720px" tabindex="-1"></div>
-<script type="module">
-  import { mountDiagram } from './assets/workflow-diagram.js';
-
-  const [workflow, layout] = await Promise.all([
-    fetch('./data/workflow.json').then(response => response.json()),
-    fetch('./data/layout.json').then(response => response.json()),
-  ]);
-  const diagram = mountDiagram(document.getElementById('workflow'), {
-    workflow,
-    layout,
-    theme: 'auto',
-  });
-
-  // Optional API actions:
-  // diagram.select('your-node-id');
-  // diagram.select(null);
-  // diagram.resetView();
-  // diagram.destroy();
-</script>
-```
-
-| API | Contract |
-| --- | --- |
-| `mountDiagram(container, { workflow, layout, theme })` | Validates inputs before mounting; theme defaults to `auto` |
-| `diagram.select(id)` | Opens a node by exact ID; an unknown ID throws |
-| `diagram.select(null)` | Closes details and restores focus |
-| `diagram.resetView()` | Fits the entire map, or recenters the selected node when details are open |
-| `diagram.warnings` | Editorial warnings; valid content remains complete |
-| `diagram.destroy()` | Removes the owned host, observers, and listeners; safe to call twice |
-| `validateModel(workflow, layout, options)` | Returns cloned, normalized data and warnings; invalid data throws `DiagramValidationError` |
-
-A container can hold one instance. Destroy it before remounting. The library preserves other container children and uses Shadow DOM for style isolation. Its controls and keyboard handlers belong to that instance. Each instance has distinct DOM IDs.
-
-The container receives a bubbling `diagram:select` event with `event.detail.id`, or `null` on close. The library does not read or write the host URL. The standalone adapter uses exact encoded IDs in fragments such as `#node=tracker` and supports Back/Forward.
-
-In an embedded page, relative documentation links resolve against the host page. Pass an explicit HTTPS documentation base to `validateModel`, then mount its normalized output, to resolve them elsewhere.
-
-
-## Package ownership
-
-The installed helper and generated assets are ready to use. Consumers need no npm install or writable skill directory.
-Their canonical source, build, and maintainer tests live in `tools/workflow-diagram/` of the skills repository, outside the installed skill.
-Never edit generated assets directly. The deterministic manifest records generator version and source/output hashes.
-The repository `LICENSE` covers the skill source. Generated JavaScript embeds that license.
-Bundled dependency licenses are in [THIRD-PARTY-NOTICES.txt](assets/THIRD-PARTY-NOTICES.txt).
-
-Each consuming project owns `docs/dev-agents/diagram/`, including JSON, HTML, README, screenshots,
-and ignored temporary files. This fixed convention needs no setup config field. Read actual scoped
-skill definitions and preserve authored edits. Never promote planned skills or invent dependencies.
+The helper and generated assets are ready to use; consumers install nothing. Their source, build,
+and maintainer tests are in `tools/workflow-diagram/` of the skills repository, not in this
+installed skill. Never edit `assets/` directly. The repository `LICENSE` covers the skill, and the
+generated JavaScript embeds it. Bundled dependency licenses are in
+[THIRD-PARTY-NOTICES.txt](assets/THIRD-PARTY-NOTICES.txt).

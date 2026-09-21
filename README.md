@@ -82,7 +82,7 @@ It does not invoke diagrammed skills. Node.js 22 or newer is required; consumers
 
 Inputs, offline HTML, notes, and screenshots stay under `docs/dev-agents/diagram/` in the target project.
 See [this repository's map](docs/dev-agents/diagram/README.md) and the
-[authoring guide](skills/workflow-diagram/README.md).
+[diagram reference](skills/workflow-diagram/README.md).
 
 ## What `setup` writes
 
