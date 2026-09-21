@@ -968,6 +968,102 @@ shape `CHANGELOG.md` uses, so two runs on one day stay distinguishable. One entr
 runbook above is the reusable procedure and is not edited by a run; everything a run learned goes
 here.
 
+### 2026-09-21T16:42:13-07:00 Cycle and empty-frontier cases on all three backends, Codex
+
+```
+TRACKER VALIDATION
+backend: github                  harness: codex
+date: 2026-09-21T16:42:13-07:00  skill ref: cf4dd0d (feat/tracker)
+
+PASS  2
+FAIL  0
+SKIP  0
+
+failures:
+  none
+skipped:
+  none
+
+VERDICT: GREEN
+```
+
+```
+TRACKER VALIDATION
+backend: local                   harness: codex
+date: 2026-09-21T16:42:13-07:00  skill ref: cf4dd0d (feat/tracker)
+
+PASS  2
+FAIL  0
+SKIP  0
+
+failures:
+  none
+skipped:
+  none
+
+VERDICT: GREEN
+```
+
+```
+TRACKER VALIDATION
+backend: linear                  harness: codex
+date: 2026-09-21T16:42:13-07:00  skill ref: cf4dd0d (feat/tracker)
+
+PASS  2
+FAIL  0
+SKIP  0
+
+failures:
+  none
+skipped:
+  none
+
+VERDICT: GREEN
+```
+
+Scope: A31, A32, B19, B20, C21, and C22, the six cases `cf4dd0d` added. No other case was scored.
+
+Every command ran through `codex exec` (Codex 0.155.1), one process per command, with the prompt
+`$tracker <verb> ...` typed as the runbook writes it. The invocation gate was left as shipped. Three
+directories were reinstalled from `feat/tracker` and each compared with `git archive cf4dd0d` by
+`diff -r`: identical. They were `~/tmp/tracker-val-a3` (`github_repo: wilsonkichoi/tracker-gh`),
+`~/tmp/tracker-s-local` (new, `issue_tracker: local`), and `~/tmp/tracker-cleg` (team `c-leg`,
+project `cleg test`, server `linear-wkc-sandbox`). All 17 Codex transcripts from 16:16 to 16:39
+show the project's own `.agents/skills/tracker/SKILL.md` injected, carrying the `cf4dd0d` text,
+and no plugin skill file read.
+
+| Case | Verdict | Independent evidence |
+|---|---|---|
+| A31 | PASS | Fixtures #38 X, #39 Y, #40 Z. The first two links landed. `link 38 blocked-by 40` was refused as `#38 → #40 → #39 → #38`, and `link 38 blocked-by 38` as a self-link. `gh issue view` read `#38 []`, `#39 [38]`, `#40 [39]` afterwards. Neither refused run made a `POST`; the only match in their output is the template text from `github.md`. |
+| A32 | PASS | Frontier cleared by removing `ready` from #12, #13, #22 and #28. Fixture: P #43 blocked by Q #44 at `in-review`, R #45 reserved for `wilsonkichoi`, and S #46 in the cycle #46 → #41 → #42 → #46, built with `gh api`. GitHub accepted the cycle's third edge. The `next` query run by hand returned `frontier: []` and `held` #11, #29, #43, #45, #46. The reply said the frontier is empty and named all five: #43 behind #44 at `in-review`, unassigned; #45 and #29 assigned to `wilsonkichoi`; #11 behind #9 at `backlog`; and #46 in the cycle `#46 → #41 → #42 → #46`. It also named the inconsistent #23. |
+| B19 | PASS | Fixtures 001 X, 002 Y, 003 Z, hand-written. The first two links landed. `link 1 blocked-by 3` was refused as a cycle, and `link 1 blocked-by 1` as a self-link. A PyYAML parse read `001 []`, `002 ['001']`, `003 ['002']`. |
+| B20 | PASS | Fixture 010 to 015, hand-written as the case lists. The reply said the frontier is empty and named 010 behind 011 at `in-review`, unassigned; 012 reserved for `someone-else`; and 013 in the cycle `#013 → #014 → #015 → #013`. `cksum` over every issue file matched before and after. |
+| C21 | PASS | Fixtures CLE-7 X, CLE-8 Y, CLE-9 Z. The first two links landed. The reverse edge `link CLE-7 blocked-by CLE-8` was refused as `CLE-7 → CLE-8 → CLE-7`, the three-issue cycle as `CLE-7 → CLE-9 → CLE-8 → CLE-7`, and the self-link as such. `get_issue` read CLE-7 `blockedBy []`, CLE-8 `[CLE-7]`, CLE-9 `[CLE-8]`, so Linear never got the chance to flip the Y edge. The three refused runs made no `save_issue` call. |
+| C22 | PASS | CLE-2 moved from `Todo` to `Backlog` to empty the frontier. Fixture: P CLE-13 blocked by Q CLE-10 at `In Review`, R CLE-11 assigned to you, and S CLE-15 in the cycle CLE-15 → CLE-14 → CLE-12 → CLE-15, every relation read back with `get_issue`. The reply said the frontier is empty and named CLE-11 held by `wilson choi`, CLE-13 behind CLE-10 at `In Review`, and CLE-15 in the cycle `CLE-15 → CLE-14 → CLE-12 → CLE-15`. It made five `get_issue`, two `list_issues` and one `list_issue_statuses` call, and no write. |
+
+Deviations from the reusable procedure:
+
+- **D-1.** Each command was a separate `codex exec` process, not a turn in one interactive session.
+  This tests each verb cold, from the skill text alone, which is stricter than a session that
+  remembers earlier turns.
+- **D-2.** A32, B20 and C22 ran without the rest of their legs. The frontier was emptied by hand
+  instead: `ready` removed from four GitHub issues, and CLE-2 moved to `Backlog`. All five were
+  restored afterwards.
+- **D-3.** The local directory had no `setup` run. Its config was written by hand from
+  `config-template.md`, since no case here tests `setup`.
+- **D-4.** The first B20 attempt hung on `Reading additional input from stdin...` and never
+  started a model turn, so there was nothing to score. It was re-run with stdin closed.
+
+Notes, neither a verdict nor a finding:
+
+- B19's refusal printed the path as `#3 → #2 → #1`, the chain from the blocker to the blocked
+  ticket. A31 and C21 printed the closed loop. Both name the path, which is what the case checks.
+- C22 gave CLE-10's status but not its assignee. It has none. The GitHub and local replies said
+  "unassigned" for the same shape. `SKILL.md` asks for both, and no case checks the assignee.
+
+Teardown: GitHub #38 to #46 closed as not planned, and `ready` restored on #12, #13, #22 and #28.
+Linear CLE-7 to CLE-15 moved to `Canceled`, and CLE-2 back to `Todo`.
+
 ### 2026-09-21T15:12:23-07:00 S4/S5 targeted run, Codex
 
 ```
