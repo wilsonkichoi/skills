@@ -138,11 +138,15 @@ deliberately cleared.
 | `assign` | Bare: require `status: ready` with an empty `assignee`, then set `status: in-progress` and `assignee` in the same write. Explicit: set `assignee` only, refuse a terminal status, and refuse an existing holder the caller did not name with `from` |
 | `comment` | Append under `## Comments` |
 | `move` | Read `status` first and refuse any move out of `done`, `cancel`, or `duplicate`; otherwise edit `status`. Moving to `backlog` or to `ready` also sets `assignee: ''`; moving to `duplicate` sets `duplicate_of` |
-| `link` | Add the blocker id to `blocked_by`. Rewrite the `## Blocked by` section to match when the file has one, and leave the body alone when it does not |
+| `link` | Refuse a self-link, and walk the blocker's `blocked_by` through every file that is not terminal: reaching the blocked id is a cycle, so refuse and name the path. Otherwise add the blocker id to `blocked_by`. Rewrite the `## Blocked by` section to match when the file has one, and leave the body alone when it does not |
 
 For `next`, "in a terminal status" means `done`, `cancel`, or `duplicate`. A `blocked_by` id with no
 file behind it is an open blocker: the ticket stays off the frontier and the report names the
 missing id.
+
+When the frontier is empty, the same pass over every frontmatter holds the whole explanation: each
+`ready` ticket left out, its `assignee` or its open `blocked_by` ids, each blocker's `status` and
+`assignee`, and the edges to walk for a cycle. No second read is needed.
 
 There is no milestone registry here, so the milestones are the distinct non-empty `milestone` values
 across the files. `list <status> <milestone>` reads them all anyway, so collect that set in the same
@@ -158,7 +162,7 @@ exactly what the quoting rule above exists to prevent and exactly what a naive c
 | Verb | What the re-read must show |
 |---|---|
 | `create` | the file exists at the new id, `status` is what was asked for, and `blocked_by` holds every entry from `## Blocked by` |
-| `link` | the blocker id is in `blocked_by` |
+| `link` | the blocker id is in `blocked_by`, and the blocker's own `blocked_by` is unchanged |
 | `assign` | `assignee` holding exactly the name asked for, and `status: 'in-progress'` as well on the bare form |
 | `comment` | the comment body is under `## Comments` |
 | `move` | `status` is the target, and `assignee` is empty after a move to `backlog` or to `ready` |

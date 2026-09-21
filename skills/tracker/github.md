@@ -218,12 +218,29 @@ gh issue list --repo <owner/repo> --state open --limit 200 \
            | select(status == "ready")
            | select((.assignees | length) == 0)
            | select(.blockedBy.totalCount == (.blockedBy.nodes | length))
-           | select([.blockedBy.nodes[] | select(.state == "OPEN")] | length == 0)]
+           | select(open_blockers | length == 0)]
            | sort_by(.number),
-         inconsistent: [.[] | select(status == "inconsistent") | .number]}'
+         inconsistent: [.[] | select(status == "inconsistent") | .number],
+         held: [.[] | select(status == "ready")
+           | select((.assignees | length) > 0
+                    or (open_blockers | length) > 0
+                    or .blockedBy.totalCount != (.blockedBy.nodes | length))
+           | {number, assignees: [.assignees[].login], blockers: open_blockers,
+              truncated: (.blockedBy.totalCount != (.blockedBy.nodes | length))}]
+           | sort_by(.number),
+         open: (map({key: (.number | tostring),
+                     value: {status: status, assignees: [.assignees[].login],
+                             blockers: open_blockers}})
+                | from_entries)}'
 ```
 
-Six things that query is doing on purpose:
+with one more definition appended to the prelude for this query and for `link`:
+
+```
+def open_blockers: [.blockedBy.nodes[] | select(.state == "OPEN") | .number];
+```
+
+Seven things that query is doing on purpose:
 
 1. **`select(status == "ready")` is the shared status test**, the same one `list` uses, and it is
    what keeps an inconsistent issue out of the frontier. An issue carrying `ready` and `in-progress`
@@ -252,6 +269,13 @@ Six things that query is doing on purpose:
 6. **The assignee test is `jq` too.** The primary-store read has no unassigned filter, and the one
    that exists, `--search "no:assignee"`, is the search index again. One `select` costs nothing and
    the page was already being read in full.
+7. **`held` and `open` are what an empty frontier is explained from.** `held` is every `ready`
+   issue the frontier left out, with its assignees, its open blockers, and whether its blocker list
+   was truncated. `open` maps every open issue to its status, assignees, and open blockers. Look up
+   each held issue's blockers in `open` to report their status and holder, and walk on through
+   `open` to find a cycle. A blocker missing from `open` is in another repository or beyond the
+   page: read it with `gh issue view` before naming its status. Nothing here needs a second query.
+   The same read error still comes first, because `frontier` is built before `held`.
 
 `sort_by(.number)` is what puts the frontier in ascending issue number, since the page arrives
 newest first. When `rows` reaches `--limit`, raise it and read again: the page is the newest issues,
@@ -440,8 +464,21 @@ The exact body must be in that list. Comments are append-only, so a duplicate on
 than a missing one: check before re-posting, since the first attempt may have landed and only the
 response been lost.
 
-**link.** The endpoint takes the blocker's numeric database id, which is not the `#number` and not
-the `node_id`. Read both ids, POST, then read the edge back.
+**link.** Check for a cycle first. Read the open issues with the same command `next` uses, keep
+only `open` from its output, and walk from the blocker through each entry's `blockers`. If the walk
+reaches the blocked issue, refuse and name the path. A blocker missing from `open` is closed, or in
+another repository: read it with `gh issue view --json state,blockedBy` and keep walking only if it
+is open. The same truncation rule applies: a read that hit its limit cannot prove there is no
+cycle.
+
+GitHub's own check is not enough, measured 2026-09-21 on `wilsonkichoi/tracker-gh`. It refuses a
+self-link (`Target issue cannot be the same as the source issue`) and a two-issue cycle
+(`this dependency would create a cycle where the target is already blocked by the source`), both as
+HTTP 422. It accepted the third edge of a three-issue cycle, #35 → #37 → #36 → #35, and all three
+issues then sat off the frontier for good.
+
+The endpoint takes the blocker's numeric database id, which is not the `#number` and not the
+`node_id`. Read both ids, POST, then read the edge back.
 
 ```
 gh api repos/<owner>/<repo>/issues/<blocker number> --jq .id

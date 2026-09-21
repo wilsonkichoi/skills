@@ -103,7 +103,7 @@ exit code said.
 | Verb | Precondition read | Verification read |
 |---|---|---|
 | `create` | none | the ticket exists by id, with the status intended and a body carrying every section it was given. Compare the sections and their contents, never the bytes: a backend that reformats markdown on the way in has not failed the write |
-| `link` | both tickets exist | the edge appears on the blocked ticket's dependency list |
+| `link` | both tickets exist, they are different tickets, and the edge would not close a cycle | the edge appears on the blocked ticket's dependency list, and the blocker's own list of blockers is unchanged |
 | `assign` | not terminal; the bare form also needs `ready` with no assignee, and any other holder has to be named | the only assignee is the one asked for, and on the bare form the status is `in-progress` too |
 | `comment` | the ticket exists | the comment body is present on the ticket |
 | `move` | current status, and it is not terminal | the new status is what the backend reports |
@@ -119,7 +119,7 @@ exit code said.
 | `assign <id> [who] [from <holder>]` | Set who holds the ticket. Bare, it takes the ticket off the frontier. See below. |
 | `comment <id> <body>` | Append a comment. Never edit or delete an existing one. |
 | `move <id> <status> [original]` | Transition, including the terminal close with its reason. See below. |
-| `link <id> blocked-by <id>` | Record that the first ticket is blocked by the second. |
+| `link <id> blocked-by <id>` | Record that the first ticket is blocked by the second. Refuses a self-link and any edge that would close a cycle. See below. |
 
 Ticket ids are compared numerically and written however the backend writes them. Accept `12`,
 `012`, and `#12` as the same ticket.
@@ -129,12 +129,21 @@ never the whole set unscoped. Resolve the name against the backend's own list of
 querying with it: an answer shaped like a right one is the failure this rule exists to prevent.
 
 **`next`** returns the frontier: every ticket that is `ready`, has no assignee, and has no open
-blocker, lowest id first. When the frontier is empty, return nothing and say so. When the backend
-cannot report blockers at all, stop with an error naming that. An empty frontier is never inferred
-from a query that could not see the dependency edges, nor from a result that came back truncated,
-nor from a read that is not the backend's authoritative one. A backend whose fast query lags behind
-its own writes cannot answer this verb: a ticket made `ready` a second ago is exactly the ticket
-`next` exists to return, so read the store that already knows about it.
+blocker, lowest id first. When the backend cannot report blockers at all, stop with an error naming
+that. An empty frontier is never inferred from a query that could not see the dependency edges,
+nor from a result that came back truncated, nor from a read that is not the backend's authoritative
+one. A backend whose fast query lags behind its own writes cannot answer this verb: a ticket made
+`ready` a second ago is exactly the ticket `next` exists to return, so read the store that already
+knows about it.
+
+**An empty frontier says why.** Return no ticket, say the frontier is empty, and then name every
+`ready` ticket left off it with its reason. The reason is its assignee, for a reserved ticket; each
+open blocker with that blocker's status and assignee; or a blocker list the backend truncated. Walk
+each held ticket's open blockers on through their own open blockers, and name any cycle the walk
+finds as its path, such as `#12 → #14 → #15 → #12`. With no `ready` ticket at all, say that, and
+count the open tickets in each other status. An orchestrator with nobody watching reads this to
+decide what unblocks the work: an `in-review` blocker to finish, a decision ticket in `backlog`, a
+cycle to break. "Nothing to do" and "everything is stuck" must never produce the same answer.
 
 **`create`** writes the ticket at `backlog` unless one of the four open statuses is given, then
 writes one `link` edge per entry in its `## Blocked by` section, then moves it to the requested
@@ -142,6 +151,15 @@ status last. That order is the point: a ticket that reaches `ready` before its e
 the frontier and gets picked up as though nothing blocked it. A failure partway leaves a real ticket
 at `backlog` with some of its edges, so report the id, which edges landed, and that the status was
 not applied.
+
+**`link`** refuses two edges. One is a ticket blocked by itself. The other is any edge that would
+close a cycle. Before writing `link <A> blocked-by <B>`, start at B and follow its open blockers,
+then theirs, and so on. If the walk reaches A, refuse, write nothing, and name the path it found. A
+ticket in a terminal status ends the walk, because it no longer blocks anything and no verb reopens
+it. A cycle keeps every ticket in it off the frontier for good, and nothing else in the tracker
+would say so. Do not leave this check to the backend. GitHub refuses a two-ticket cycle but accepts
+a longer one. Linear accepts a longer one too, and given the reverse of an existing edge it silently
+flips that edge instead of refusing. The edges `create` writes pass the same check.
 
 **`assign`** has four forms, and only the first one touches the status:
 

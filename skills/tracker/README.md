@@ -104,7 +104,10 @@ did half of it. `ready` has to clear it: `next` looks for `ready` with nobody as
 `ready` ticket with a name still on it is invisible to the frontier and to that person both. Marking a duplicate takes the original's id:
 `tracker move 42 duplicate 17`.
 
-**`link`** records that one ticket is blocked by another: `tracker link 42 blocked-by 17`.
+**`link`** records that one ticket is blocked by another: `tracker link 42 blocked-by 17`. It
+refuses an edge that would close a cycle and names the loop it found, because tickets in a cycle
+wait on each other forever. Neither GitHub nor Linear catches every cycle for you. Linear, given the
+reverse of an existing edge, silently flips the old one.
 
 ## `next`, and the frontier
 
@@ -115,9 +118,14 @@ That is the whole scheduling model. There is no priority field. Tickets are writ
 order, so their numbers already encode the order you meant, and a ticket becomes workable the moment
 its last blocker closes, without anyone re-grooming the queue.
 
-When the frontier is empty, `next` says so. What it will never do is report an empty frontier
-because a query failed: if the backend cannot tell it what is blocking what, it stops with an error
-instead. An empty answer and an unanswerable question look identical from the outside, and only one
+When the frontier is empty, `next` says so, and says why. It names each `ready` ticket it left out
+and what holds it: the person it is reserved for, or each unfinished blocker with that blocker's
+status and holder. It names any cycle it finds. That is the difference between "nothing to do" and
+"everything is stuck behind one ticket in review", and it is what lets an agent running without you
+decide what to unblock next.
+
+What it will never do is report an empty frontier because a query failed: if the backend cannot
+tell it what is blocking what, it stops with an error instead. An empty answer and an unanswerable question look identical from the outside, and only one
 of them means you have nothing to do.
 
 The same care goes into which read it uses. GitHub has a fast search index and a primary store, and

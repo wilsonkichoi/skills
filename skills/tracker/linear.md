@@ -90,7 +90,7 @@ order.
 | `assign` | See below |
 | `comment` | `save_comment`, then `list_comments` and find the exact body |
 | `move` | `get_issue` first and refuse any move out of `done`, `cancel`, or `duplicate`; otherwise `save_issue` with the status name, then `get_issue` to confirm. Moving to `backlog` or to `ready` also sets `assignee: null`. Moving to `duplicate` is its own shape, above |
-| `link` | `save_issue` with `blockedBy`, then `get_issue` with `includeRelations: true` to confirm the edge |
+| `link` | The cycle check under Links below, then `save_issue` with `blockedBy`, then `get_issue` with `includeRelations: true` on both issues to confirm the edge and that the blocker's own `blockedBy` did not change |
 
 `create` needs no second call to apply the requested status. GitHub's create-link-then-label order
 exists because a GitHub edge is a separate API call that can fail after the label lands; here both
@@ -108,17 +108,41 @@ needed.
 `list_issues` cannot return relations, and a relation carries only the blocker's id and title, not
 its status. So the frontier is not one query:
 
-1. `list_issues` with `state: 'Todo'` and `assignee: null`, scoped to the project.
-2. For each result, `get_issue` with `includeRelations: true`.
+1. `list_issues` with `state: 'Todo'`, scoped to the project. An issue with an assignee is held,
+   reserved for that person, and needs no further reads.
+2. For each unassigned result, `get_issue` with `includeRelations: true`.
 3. For each `blockedBy` entry, read that issue's status. A blocker in `done`, `cancel`, or
    `duplicate` is satisfied; anything else still blocks.
 4. Keep the issues with no unsatisfied blocker, lowest issue number first.
+
+When step 4 keeps nothing, the reads above already hold most of the explanation: each held issue,
+its assignee or its open blockers, and each blocker's status. For the blocker's assignee and for
+the cycle walk, `get_issue` each open blocker with `includeRelations: true` and follow its own open
+`blockedBy`, reusing the cache.
 
 That is one call per candidate plus one per distinct blocker. Cache blocker statuses within the
 run, since the same blocker often holds up several tickets. On a large backlog, say so in the
 report rather than quietly taking a long time.
 
 Never report an empty frontier from a page that came back full, and never from a step that failed.
+
+## Links
+
+Check for a cycle before writing `link <A> blocked-by <B>`. `get_issue` B with
+`includeRelations: true`, then each of its `blockedBy` entries that is not in a terminal status,
+and so on. If the walk reaches A, refuse and name the path.
+
+Linear will not do this for you, measured 2026-09-21 on team `c-leg`:
+
+- **A two-issue cycle silently reverses the existing edge.** With CLE-5 blocked by CLE-4,
+  `save_issue` on CLE-4 with `blockedBy: ["CLE-5"]` returned success with no warning. Afterwards
+  CLE-4 was blocked by CLE-5, and CLE-5 was blocked by nothing. Linear keeps one relation per pair
+  of issues, so the new edge replaced the old one instead of joining it. That is why the
+  verification reads the blocker too.
+- **A longer cycle is accepted.** CLE-5 → CLE-6 → CLE-4 → CLE-5 was written and read back intact.
+- **A self-link is refused only in `warnings`.** The response is an ordinary success carrying
+  `Could not add CLE-6 to blockedBy: Argument Validation Error - relatedIssueId cannot have the same value as issueId.`
+  Refuse it before the call, and never read a `save_issue` result without its `warnings`.
 
 ## Assigning, where Linear differs
 

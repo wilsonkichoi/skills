@@ -375,6 +375,39 @@ missing identity that keeps A24 and half of A28 unrunnable: without it, nothing 
 lands for anybody but the caller, and A27 shows that is not academic, since a login without push
 access is dropped at exit 0.
 
+**A31 link refuses a cycle, and one GitHub would accept.** Create three `backlog` tickets X, Y, Z.
+`$tracker link <Y> blocked-by <X>`, then `$tracker link <Z> blocked-by <Y>`, then
+`$tracker link <X> blocked-by <Z>`, which would close X → Z → Y → X. Then
+`$tracker link <X> blocked-by <X>`.
+Expect the first two to land, and the last two to refuse: the third naming the path, the fourth
+naming a self-link.
+Check: `gh issue view <X> --repo <R> --json blockedBy --jq '[.blockedBy.nodes[].number]'` returns
+`[]`. GitHub itself accepts the third edge, so an `[<Z>]` here means the skill left the check to
+the backend. The refusal must come from the skill: `gh` would print a 422 for the self-link, and a
+reply that relays that error has not run the check.
+
+**A32 an empty frontier says why.** This case needs a frontier with nothing on it, so run it after
+every other A case. For each ticket `$tracker next` returns, `gh issue edit <n> --repo <R>
+--remove-label ready` until it returns nothing. Then build three held tickets with `gh`, not the
+skill:
+
+```
+gh issue create --repo <R> --title "A32 P" --body "held by Q" --label ready
+gh issue create --repo <R> --title "A32 Q" --body "in review" --label in-review
+gh issue create --repo <R> --title "A32 R" --body "reserved" --label ready --assignee @me
+gh issue create --repo <R> --title "A32 S" --body "in a cycle" --label ready
+gh issue create --repo <R> --title "A32 T" --body "in a cycle"
+gh issue create --repo <R> --title "A32 U" --body "in a cycle"
+```
+
+Make P blocked by Q, and S blocked by T, T by U, U by S, with the `gh api` pair from `github.md`'s
+`link` section for each edge. GitHub accepts that three-issue cycle. Then `$tracker next`.
+Check first that the fixture is what it claims: the `next` query from `github.md`, run by hand,
+returns `frontier: []`, and `held` lists P, R, and S.
+Expect the reply to say the frontier is empty and to name all three: P with Q as its open blocker,
+at `in-review`; R as reserved for your login; S with the cycle as a path through S, T, and U.
+A reply that says only that the frontier is empty is a FAIL, and so is one that misses the cycle.
+
 Tear down: delete the issues and the four labels, or delete the repository with
 `gh repo delete <R>` if the run created it. Do not delete a repository you already had; A3 is
 written so the leg can run against one you keep.
@@ -594,6 +627,34 @@ reader that splits on every `---`, or that takes the last block, either errors o
 or reads somebody's pasted YAML as the ticket's state. This is the same class as B3: the values that
 break are the ones that look harmless.
 
+**B19 link refuses a cycle.** Create three `backlog` tickets X, Y, Z.
+`$tracker link <Y> blocked-by <X>`, then `$tracker link <Z> blocked-by <Y>`, then
+`$tracker link <X> blocked-by <Z>`, then `$tracker link <X> blocked-by <X>`.
+Expect the first two to land, the third to refuse naming the path X → Z → Y → X, and the fourth to
+refuse as a self-link.
+Check with the B2 parser, not by eye: X's `blocked_by` is still empty, Y's is exactly X's id, and
+Z's is exactly Y's id.
+
+**B20 an empty frontier says why.** Run it after every other B case. Move every ticket
+`$tracker next` returns to `backlog` by editing its `status`, until it returns nothing. Then write
+six files by hand, since the skill will not write the cycle:
+
+```
+010-p.md  status: 'ready'        blocked_by: ['011']
+011-q.md  status: 'in-review'    blocked_by: []
+012-r.md  status: 'ready'        assignee: 'someone-else'
+013-s.md  status: 'ready'        blocked_by: ['014']
+014-t.md  status: 'backlog'      blocked_by: ['015']
+015-u.md  status: 'backlog'      blocked_by: ['013']
+```
+
+Each file gets the full frontmatter shape from `local.md`, with every value single-quoted, and the
+ids renumbered past the highest id already in the directory. Then `$tracker next`.
+Expect the reply to say the frontier is empty and to name P held by Q at `in-review`, R reserved
+for `someone-else`, and S with the cycle through S, T, and U as a path.
+Check: no file changed, compared with `cksum` before and after, since `next` only reads. A reply
+that says only that the frontier is empty is a FAIL, and so is one that misses the cycle.
+
 ---
 
 ## C. Linear backend
@@ -756,6 +817,27 @@ an edited code fence, mangled non-ASCII, or a missing relation is a FAIL.
 A markdown body crossing an MCP boundary is where a silent rewrite would hide, so what this case
 pins down is which rewrites are survivable. F4 is the same case on GitHub, where the comparison
 method itself turned out to be the trap.
+
+**C21 link refuses a cycle, including the one Linear would flip.** Create three `Backlog` issues X,
+Y, Z. `$tracker link <Y> blocked-by <X>`, then `$tracker link <Z> blocked-by <Y>`. Then
+`$tracker link <X> blocked-by <Y>`, the reverse of an existing edge, then
+`$tracker link <X> blocked-by <Z>`, which would close a three-issue cycle, then
+`$tracker link <X> blocked-by <X>`.
+Expect the first two to land and the last three to refuse, each naming its path or the self-link.
+Check with `get_issue` and `includeRelations: true` on all three: X has an empty `blockedBy`, Y's
+`blockedBy` is still exactly X, and Z's is still exactly Y. Linear, given the reverse edge, replaces
+Y's relation with X's and reports success, so a Y with an empty `blockedBy` means the skill let the
+write through.
+
+**C22 an empty frontier says why.** Run it after every other C case. Move every issue
+`$tracker next` returns out of `Todo`, until it returns nothing. Then build the fixture with
+`save_issue` directly, since the skill will not write the cycle: P at `Todo` blocked by Q at
+`In Review`; R at `Todo` assigned to you; S at `Todo`, blocked by T, T by U, and U by S, with T and
+U at `Backlog`. Linear accepts that three-issue cycle. Then `$tracker next`.
+Check first with `get_issue` that every relation reads back as written.
+Expect the reply to say the frontier is empty and to name P held by Q at `In Review` or
+`in-review`, R reserved for you, and S with the cycle through S, T, and U as a path. A reply that
+says only that the frontier is empty is a FAIL, and so is one that misses the cycle.
 
 ---
 
