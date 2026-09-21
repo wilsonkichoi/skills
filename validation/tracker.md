@@ -842,6 +842,118 @@ shape `CHANGELOG.md` uses, so two runs on one day stay distinguishable. One entr
 runbook above is the reusable procedure and is not edited by a run; everything a run learned goes
 here.
 
+### 2026-09-21T14:57:37-07:00 Local B2/B3 targeted re-run, Codex
+
+```
+TRACKER VALIDATION
+backend: local                   harness: codex
+date: 2026-09-21T14:57:37-07:00  skill ref: 69d7353 (feat/tracker)
+
+PASS  2
+FAIL  0
+SKIP  0
+
+failures:
+  none
+skipped:
+  none
+
+VERDICT: GREEN
+```
+
+Scope: B2 and B3 alone, not a Local leg. The last Local run was at `62e98db`, and `6adbf5d`
+changed `local.md` after it. That commit defined alphanumeric in the slug rule as a Unicode letter
+or digit (F18), and moved the full ten-filename check from B2 into B3 (F17). Neither B2's
+filename check nor B3's slug check had run against the current text. No other B case was scored.
+
+Directory `~/tmp/tracker-b3b`, installed from `feat/tracker`. A `diff -r` against
+`git archive 69d7353 skills/tracker skills/setup` found the install identical, so the invocation
+gates were as shipped and every command was typed. The Codex transcript
+(`rollout-2026-09-21T14-46-58-01a0c5ef-bc89-7110-82bd-49311faee83c.jsonl`) confirms the project
+skills ran: it reads `tracker-b3b/.agents/skills/setup/SKILL.md`, `config-template.md`,
+`tracker/SKILL.md` and `tracker/local.md`, and no `dev@agent-toolkit` skill file.
+
+Setup took `git init`, Local markdown, the Section B defaults, `AGENTS.md`, and no test command,
+and committed root commit `d4a224a`. It adds `AGENTS.md`, `CLAUDE.md`, `docs/dev-agents/config.md`,
+and the `rules/` and `issues/` `.gitkeep` files. The config holds `issue_tracker: local` and
+`issues_dir: docs/dev-agents/issues/`. The eleven tickets are untracked, as `local.md` requires.
+
+| Case | Verdict | Independent evidence |
+|---|---|---|
+| B2 | PASS | `001-ticket-a.md` exists. A PyYAML parse of the block between the first two `---` lines returned `id` as the string `'001'`, `status` as the string `'backlog'`, and `title` as `'Ticket A'`. |
+| B3 | PASS | All ten titles parsed as `str`, and each one's UTF-8 bytes equal the title sent, including `0123`, `null`, `2026-09-18`, `- leading dash`, both quote forms, the emoji, the CJK, and the accented Latin. Each file's `id` is the zero-padded string of its number, from `'002'` to `'011'`. All ten filenames equal the slug rule's output, computed independently with Unicode `\w` minus underscore. That includes `010-émoji-and-日本語-and-ünïcödé.md` and `011-it-s-a-mixed-quote-100-and-日本語.md`, not the `[a-z0-9]` reading `010--and--and-.md`. |
+
+Deviations from the reusable procedure:
+
+- **D-1.** The eleven `$tracker create` commands were sent in one Codex prompt that listed each
+  command, not as eleven separate turns. The transcript shows one read of `local.md` and eleven
+  files, each with its own id. B3 checks what lands on disk, so this changes no verdict.
+- **D-2.** Codex's `dev@agent-toolkit` plugin stayed enabled. Its `dev:setup` description was in
+  the skill listing the model saw, but no plugin skill file was read and nothing in its format was
+  written: there is no `.agent-toolkit/` or `.dev/` in the directory.
+- **D-3.** An earlier attempt in `~/tmp/tracker-b3` is void and was not scored. The person typed
+  `$dev:setup`, which is the plugin's `setup`, not this repository's. It wrote `.agent-toolkit/dev.md`
+  and `.dev/tasks/`, and ran no `git init`. The later `$tracker create` calls then fired the
+  project's `tracker` skill in a directory with no `docs/dev-agents/config.md`. That exposed F25.
+
+#### Findings
+
+**F25. `tracker` does not say what to do when `docs/dev-agents/config.md` is missing. (skill defect.)**
+In the void `~/tmp/tracker-b3` attempt, Codex loaded `tracker-b3/.agents/skills/tracker/SKILL.md`.
+It found no `docs/dev-agents/config.md`, called the skill's config path "obsolete", and wrote
+eleven tickets as `.dev/tasks/T-NNN-*.md` in the plugin's format instead. It reported
+`Created Ticket A as T-001`. No `tracker` verb can read those files. `tracker/SKILL.md` section 1
+says to read `issue_tracker` from the config, and nowhere says what happens when the file is
+absent: `grep` for missing, absent, or setup finds nothing. The fix is a stop in section 1: with no
+config, or no `issue_tracker` in it, write nothing, and tell the user to run `setup` with the
+harness's own prefix. A later leg needs a case for it, run in a directory with no config.
+
+### 2026-09-21T14:57:37-07:00 GitHub A5/A6 targeted re-run, Claude Code
+
+```
+TRACKER VALIDATION
+backend: github                  harness: claude-code
+date: 2026-09-21T14:57:37-07:00  skill ref: 69d7353 (feat/tracker)
+
+PASS  2
+FAIL  0
+SKIP  0
+
+failures:
+  none
+skipped:
+  none
+
+VERDICT: GREEN
+```
+
+Scope: A5 and A6 alone, not a GitHub leg. The last GitHub run was at `713f017`. Since then,
+`c954b3f` changed `create`'s verification row in `tracker/SKILL.md`: it now compares sections and
+their contents, not bytes. `github.md` has not changed since `713f017`. No other A case was scored.
+
+Directory `~/tmp/tracker-val-a3`, a clone of `wilsonkichoi/tracker-gh` with
+`github_repo: wilsonkichoi/tracker-gh`. Its install was older than `713f017` and was reinstalled
+from `feat/tracker` before the run. A `diff -r` against `git archive 69d7353` then found it
+identical, gates as shipped. `gh` was authenticated as `wilsonkichoi`.
+
+| Case | Verdict | Independent evidence |
+|---|---|---|
+| A5 | PASS | #33 `A5 re-run ticket A`, `OPEN`, labels `[]`, so it is at `backlog` with no status label. `gh issue view 33 --repo wilsonkichoi/tracker-gh --json body \| jq --rawfile sent /tmp/a5-body.md -e '.body == $sent'` printed `true` at exit 0. |
+| A6 | PASS | #34 `A6 re-run ticket B`, `OPEN`, labels `[]`. `gh issue view 34 --repo wilsonkichoi/tracker-gh --json blockedBy --jq '[.blockedBy.nodes[].number]'` returned `[33]`. |
+
+Deviations from the reusable procedure:
+
+- **D-1.** Both body files were saved with every line indented by two spaces, carried in from the
+  copy. A5's comparison is against the file as saved, so it still tests that `create` stores the
+  body unchanged. A6's `## Blocked by` heading was indented too, and `create` still found it and
+  wrote the edge.
+- **D-2.** `/tmp/a6-body.md` still held the placeholder `- #<A>` under `## Blocked by`, because it
+  was not replaced before the run. The prompt tied B to the A5 ticket, and the skill wrote
+  `- #33` into #34's body and the edge to #33. So #34's body is not byte-identical to its file,
+  which A6 does not check. The placeholder was the runbook operator's slip, not a skill defect.
+
+Issues #33 and #34 remain open on `wilsonkichoi/tracker-gh`.
+
 ### 2026-09-21T13:20:58-07:00 Harness parity leg D, Claude Code, Codex, Kiro CLI
 
 Complete. The person at the keyboard ran every step and reported what they watched; this entry
