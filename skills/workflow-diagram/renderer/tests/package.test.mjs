@@ -156,9 +156,10 @@ test('standalone installed assets require no npm, network, or writable installat
 
 test('generated assets are deterministic and detect source or schema drift', async t => {
   const base = await mkdtemp(join(cache, 'assets-')); t.after(() => rm(base, { recursive: true, force: true }));
-  const copy = join(base, 'skill');
+  const repository = join(base, 'repository'), copy = join(repository, 'skills/workflow-diagram');
+  await mkdir(copy, { recursive: true });
   for (const dir of ['scripts', 'assets', 'renderer/src', 'renderer/schema', 'renderer/build']) await cp(join(skill, dir), join(copy, dir), { recursive: true });
-  await cp(join(skill, 'LICENSE.txt'), join(copy, 'LICENSE.txt'));
+  await cp(resolve(skill, '../../LICENSE'), join(repository, 'LICENSE'));
   for (const file of ['package.json', 'package-lock.json']) await cp(join(root, file), join(copy, 'renderer', file));
   await symlink(join(root, 'node_modules'), join(copy, 'renderer/node_modules'));
   const cwd = join(copy, 'renderer');

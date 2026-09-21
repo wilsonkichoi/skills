@@ -6,6 +6,7 @@ import { createHash } from 'node:crypto';
 
 const root = fileURLToPath(new URL('../', import.meta.url));
 const skill = resolve(root, '..');
+const repository = resolve(skill, '../..');
 const hash = data => createHash('sha256').update(data).digest('hex');
 const outputs = {}, dependencies = new Map();
 const common = { absWorkingDir: root, bundle: true, write: false, metafile: true, minify: true,
@@ -35,7 +36,7 @@ for (const [name, { directory, pkg }] of [...dependencies].sort(([a], [b]) => a.
   notices.push(`${name} ${pkg.version} (${pkg.license})\n${await readFile(resolve(directory, license), 'utf8')}`);
 }
 outputs['THIRD-PARTY-NOTICES.txt'] = notices.join('\n----------------------------------------\n\n');
-const ownLicense = await readFile(resolve(skill, 'LICENSE.txt'), 'utf8');
+const ownLicense = await readFile(resolve(repository, 'LICENSE'), 'utf8');
 const licenseBanner = '/*!\n' + (ownLicense + '\nBundled dependencies\n\n' + outputs['THIRD-PARTY-NOTICES.txt']).replaceAll('*/', '* /') + '\n*/\n';
 for (const name of ['model.mjs', 'standalone.js', 'workflow-diagram.js']) outputs[name] = licenseBanner + outputs[name];
 async function sourceFiles(directory) {
@@ -47,7 +48,7 @@ async function sourceFiles(directory) {
   return paths;
 }
 const sources = {};
-const files = [resolve(skill, 'LICENSE.txt'), resolve(root, 'package.json'), resolve(root, 'package-lock.json')];
+const files = [resolve(repository, 'LICENSE'), resolve(root, 'package.json'), resolve(root, 'package-lock.json')];
 for (const dir of ['src', 'schema', 'build', '../scripts']) files.push(...await sourceFiles(resolve(root, dir)));
 for (const path of files.sort()) sources[relative(skill, path)] = hash(await readFile(path));
 outputs['manifest.json'] = JSON.stringify({ schemaVersion: 1,

@@ -1,6 +1,6 @@
 {
   "name": "workflow-diagram",
-  "version": "0.0.8",
+  "version": "0.0.9",
   "private": true,
   "type": "module",
   "description": "Portable, data-authored workflow diagrams with offline HTML export.",

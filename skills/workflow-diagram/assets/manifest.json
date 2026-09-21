@@ -1,13 +1,13 @@
 {
   "schemaVersion": 1,
-  "generatorVersion": "0.0.8",
+  "generatorVersion": "0.0.9",
   "sources": {
-    "LICENSE.txt": "62b39a3b4506b2223153ff0ccc9406dae0fa75c058781ae547937b6e57071804",
-    "renderer/build/assets.mjs": "55129070407a643315d61b42627c2dfafcda7825b2b66f9b645c97c76c7211f1",
+    "../../LICENSE": "62b39a3b4506b2223153ff0ccc9406dae0fa75c058781ae547937b6e57071804",
+    "renderer/build/assets.mjs": "0e4f987cc6fb47c5ea93413951d0ae66ff16c6b11540dd50a2cf75d122738a83",
     "renderer/build/preview.mjs": "73c3a63a70fa1e630a9222e34e5d61f86d532cb5e43e8673a928940595ce7255",
     "renderer/build/standalone.mjs": "74775b8630bb1869ef4a288c430323af92f8aa8f6fdfd4c594b675484d7c7ece",
-    "renderer/package-lock.json": "14704a6d789e477178306817d4bc10c1c306fcba884982d60084eaa7b5784d87",
-    "renderer/package.json": "89520ea3d823661d88416102d60ceb63e2a058d92436ddc897c34869428373a5",
+    "renderer/package-lock.json": "e8af65ef4f3526985764d20baadfbeac5a93f7b8e768904f670591d16b80d724",
+    "renderer/package.json": "e5540b2d6ce8dcd3cbced8e71db5c9fd03ed097ea3e5ef3a0113d054a51887ed",
     "renderer/schema/layout.schema.json": "cbfd15225d5cebf8ad1698d19055f1ca5a9f0d9455ea6446036a56ce1d2449a6",
     "renderer/schema/workflow.schema.json": "d47116b485de6a91ca4080110623238bce323ab508d8adbe26e2e1908a3026c7",
     "renderer/src/export.js": "be44f2db0243dfb7f4af374d310d4d68cc9e39f7f41b4dee95db2d1fb7c78e70",

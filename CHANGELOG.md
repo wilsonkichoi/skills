@@ -2,6 +2,8 @@
 
 Newest first. One line per version: `{version} {ISO 8601 timestamp with local offset} {summary}`
 
+0.0.9 2026-09-21T07:29:16-07:00 Remove workflow-diagram's duplicate license file and build its generated license banners from the repository license. Move workflow-diagram maintenance instructions from the root AGENTS.md into the skill README, so unrelated sessions do not load them.
+
 0.0.8 2026-09-21T07:02:50-07:00 Add the manually invoked workflow-diagram skill with project-scoped JSON authoring, offline HTML, a Node-only helper, loopback preview, and stable update guidance. Promote the renderer from the local MVP into one canonical source with deterministic browser/ESM/validator assets and bundled license notices. Guard diagram paths and atomic writes, retain interaction regressions, add installed-package checks and a public runbook, and document the narrow maintainer build exception. Add this repository's map of setup and workflow-diagram, without importing the unmerged tracker branch.
 
 0.0.7 2026-08-28T22:15:00-07:00 Turn `delete_branch_on_merge` back off and write down why: a merge is sometimes what triggers the check being waited on, so the branch has to outlive the merge and gets deleted once the work is verified. AGENTS.md says a merged branch is not a dead branch, and CONTRIBUTING.md's Rulesets section becomes "Rulesets and settings", recording the two plain repository settings (auto-delete off, wiki off) alongside the ruleset payloads.

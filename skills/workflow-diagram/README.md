@@ -206,5 +206,44 @@ In an embedded page, relative documentation links resolve against the host page.
 
 The installed helper and assets are ready to use. `renderer/` contains their canonical source and maintainer tests.
 Consumers do not run its npm build. The deterministic manifest records generator version and source/output hashes.
-The skill source is covered by [LICENSE.txt](LICENSE.txt). Bundled dependency licenses are in [THIRD-PARTY-NOTICES.txt](assets/THIRD-PARTY-NOTICES.txt).
-The maintainer procedure is in the repository's AGENTS.md.
+The repository `LICENSE` covers the skill source. Generated JavaScript embeds that license.
+Bundled dependency licenses are in [THIRD-PARTY-NOTICES.txt](assets/THIRD-PARTY-NOTICES.txt).
+
+## Maintainer procedure
+
+This skill is a narrow exception to the repository's no-script guidance. Interactive rendering,
+shared validation, and deterministic bundling require executable code. It adds no repository-wide
+build requirement and no per-harness source copies.
+
+`renderer/src/` and `renderer/schema/` are canonical. The maintainer build creates
+`assets/standalone.js`, `assets/model.mjs`, `assets/workflow-diagram.js`, dependency notices, and a
+deterministic hash manifest. Never edit those generated assets directly. The installed helper uses
+Node built-ins and those assets. Consumers need no npm install or writable skill directory.
+
+For renderer, schema, helper, or build changes, run these commands from `renderer/`:
+
+```sh
+npm ci
+npm run build:assets
+npm run check
+```
+
+`check` rejects stale generated assets, then runs unit, packaging, and browser checks. Its browser
+uses `PLAYWRIGHT_CHROMIUM_EXECUTABLE` when set, available macOS Chrome otherwise, and Playwright's
+Chromium fallback. Install that fallback locally when needed:
+
+```sh
+PLAYWRIGHT_BROWSERS_PATH=.cache/browsers npx playwright install chromium
+PLAYWRIGHT_BROWSERS_PATH=.cache/browsers npm run check
+```
+
+Keep dependencies, browser binaries, caches, traces, and test screenshots out of the shipped package.
+Install a clean source export when testing a local directory. The installer copies ignored files too.
+Verify installer discovery counts against shipped skills. Run `validation/workflow-diagram.md` from
+the repository root after behavior changes. Update its cases when commands or guarantees change.
+Report unavailable harness or browser checks as SKIP, never PASS. User documentation ships in the
+skill directory. Validation runbooks remain outside it.
+
+Each consuming project owns `docs/dev-agents/diagram/`, including JSON, HTML, README, screenshots,
+and ignored temporary files. This fixed convention needs no setup config field. Read actual scoped
+skill definitions and preserve authored edits. Never promote planned skills or invent dependencies.
