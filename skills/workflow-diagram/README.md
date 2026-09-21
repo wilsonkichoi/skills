@@ -61,7 +61,7 @@ Links are intentional user navigation, not rendering dependencies.
 ## Author the map
 
 Read [the visual guide](design.md) before changing layout.
-The formal contracts are [workflow.schema.json](renderer/schema/workflow.schema.json) and [layout.schema.json](renderer/schema/layout.schema.json).
+The formal contracts are [workflow.schema.json](assets/workflow.schema.json) and [layout.schema.json](assets/layout.schema.json).
 The browser and Node validator share those schemas and semantic checks.
 
 ### Content
@@ -102,7 +102,7 @@ No renderer changes are needed. Adding an edge without its route fails validatio
 
 ### Route recipes
 
-Coordinates are in world pixels. Cards are 240 × 160. `renderer/src/geometry.js` defines the only card-size constant used by rendering and validation. Each route has a two-number start and one or more cubic segments. A segment contains two control points followed by its endpoint.
+Coordinates are in world pixels. Cards are 240 × 160. Rendering and validation share one card-size constant. Each route has a two-number start and one or more cubic segments. A segment contains two control points followed by its endpoint.
 
 Forward edge: a card at `(0, 0)` connects to a card at `(480, 0)`.
 
@@ -204,45 +204,11 @@ In an embedded page, relative documentation links resolve against the host page.
 
 ## Package ownership
 
-The installed helper and assets are ready to use. `renderer/` contains their canonical source and maintainer tests.
-Consumers do not run its npm build. The deterministic manifest records generator version and source/output hashes.
+The installed helper and generated assets are ready to use. Consumers need no npm install or writable skill directory.
+Their canonical source, build, and maintainer tests live in `tools/workflow-diagram/` of the skills repository, outside the installed skill.
+Never edit generated assets directly. The deterministic manifest records generator version and source/output hashes.
 The repository `LICENSE` covers the skill source. Generated JavaScript embeds that license.
 Bundled dependency licenses are in [THIRD-PARTY-NOTICES.txt](assets/THIRD-PARTY-NOTICES.txt).
-
-## Maintainer procedure
-
-This skill is a narrow exception to the repository's no-script guidance. Interactive rendering,
-shared validation, and deterministic bundling require executable code. It adds no repository-wide
-build requirement and no per-harness source copies.
-
-`renderer/src/` and `renderer/schema/` are canonical. The maintainer build creates
-`assets/standalone.js`, `assets/model.mjs`, `assets/workflow-diagram.js`, dependency notices, and a
-deterministic hash manifest. Never edit those generated assets directly. The installed helper uses
-Node built-ins and those assets. Consumers need no npm install or writable skill directory.
-
-For renderer, schema, helper, or build changes, run these commands from `renderer/`:
-
-```sh
-npm ci
-npm run build:assets
-npm run check
-```
-
-`check` rejects stale generated assets, then runs unit, packaging, and browser checks. Its browser
-uses `PLAYWRIGHT_CHROMIUM_EXECUTABLE` when set, available macOS Chrome otherwise, and Playwright's
-Chromium fallback. Install that fallback locally when needed:
-
-```sh
-PLAYWRIGHT_BROWSERS_PATH=.cache/browsers npx playwright install chromium
-PLAYWRIGHT_BROWSERS_PATH=.cache/browsers npm run check
-```
-
-Keep dependencies, browser binaries, caches, traces, and test screenshots out of the shipped package.
-Install a clean source export when testing a local directory. The installer copies ignored files too.
-Verify installer discovery counts against shipped skills. Run `validation/workflow-diagram.md` from
-the repository root after behavior changes. Update its cases when commands or guarantees change.
-Report unavailable harness or browser checks as SKIP, never PASS. User documentation ships in the
-skill directory. Validation runbooks remain outside it.
 
 Each consuming project owns `docs/dev-agents/diagram/`, including JSON, HTML, README, screenshots,
 and ignored temporary files. This fixed convention needs no setup config field. Read actual scoped

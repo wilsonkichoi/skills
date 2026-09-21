@@ -1,8 +1,8 @@
 # Shipped skills workflow
 
 Open [diagram.html](diagram.html) in a browser, including directly from disk without networking.
-The map contains `setup` and `workflow-diagram`, the two shipped definitions in this candidate.
-Tracker and the remaining roster are planned on the refreshed main base and are excluded.
+The map contains `setup` and `workflow-diagram`, the two shipped definitions in this repository.
+Tracker and the remaining roster are planned and are excluded.
 There is no dependency edge: workflow-diagram explicitly supports projects without setup or config.
 Setup's older “before any other skill” wording predates this independent diagram tool.
 
@@ -15,27 +15,27 @@ Setup's older “before any other skill” wording predates this independent dia
 
 Inputs are [workflow.json](workflow.json) and [layout.json](layout.json).
 All positions and content are authored data; HTML is generated.
-The generator version is **0.0.8**, recorded in the installed skill's `assets/manifest.json`.
+The generator version is **0.0.10**, recorded in the installed skill's `assets/manifest.json`.
 The reusable renderer remains inside the skill.
 
-Documentation base for this unmerged candidate:
-`https://github.com/wilsonkichoi/skills/blob/feat/workflow-diagram/`.
-The repository remote and feature ref establish this base. Rendering does not fetch these links.
+Documentation base:
+`https://github.com/wilsonkichoi/skills/blob/main/`.
+The repository remote and its default branch establish this base. Rendering does not fetch these links.
 
 ## Regenerate
 
 Run from the repository root. These commands use the repository's skill; an installed copy can use its absolute helper path.
 
 ```sh
-node skills/workflow-diagram/scripts/diagram.mjs check --project . --documentation-base https://github.com/wilsonkichoi/skills/blob/feat/workflow-diagram/
+node skills/workflow-diagram/scripts/diagram.mjs check --project . --documentation-base https://github.com/wilsonkichoi/skills/blob/main/
 ```
 
 ```sh
-node skills/workflow-diagram/scripts/diagram.mjs build --project . --documentation-base https://github.com/wilsonkichoi/skills/blob/feat/workflow-diagram/
+node skills/workflow-diagram/scripts/diagram.mjs build --project . --documentation-base https://github.com/wilsonkichoi/skills/blob/main/
 ```
 
 ```sh
-node skills/workflow-diagram/scripts/diagram.mjs preview --project . --documentation-base https://github.com/wilsonkichoi/skills/blob/feat/workflow-diagram/ --port 0
+node skills/workflow-diagram/scripts/diagram.mjs preview --project . --documentation-base https://github.com/wilsonkichoi/skills/blob/main/ --port 0
 ```
 
 Open the printed loopback URL and stop preview after inspection.
@@ -62,7 +62,8 @@ The phone sheet scrolls independently; commands below the fold remain reachable.
 See the [public runbook](../../../validation/workflow-diagram.md) for independent acceptance checks.
 Results below distinguish automated behavior from actual harness invocation.
 
-Validated on 2026-09-21. Base: refreshed `origin/main` at `12513b3`; candidate branch: `feat/workflow-diagram`.
+Validated on 2026-09-21 on branch `feat/workflow-diagram`, based on `origin/main` at `12513b3`.
+Rechecked at 0.0.10 after the renderer moved to `tools/workflow-diagram/`: asset freshness, 76 unit/packaging tests, and 29 browser tests passed.
 Runtime: Node.js 26.7.0 and npm 11.19.0. Minimum-runtime packaging checks also passed on Node.js 22.23.2.
 Browser automation used Playwright 1.63.0 with local Google Chrome. The renderer retains a configurable Chromium fallback.
 

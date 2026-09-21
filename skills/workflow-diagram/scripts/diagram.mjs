@@ -15,9 +15,9 @@ export const generatorVersion = JSON.parse(await readFile(asset('manifest.json')
 // No path is derived from content, URL paths, or the installation directory.
 async function guarded(project, path, { missing = false } = {}) {
   const rel = relative(project, path);
-  if (!rel || rel === '..' || rel.startsWith('../') || isAbsolute(rel)) throw new Error(`Path escapes project: ${path}`);
-  let current = project;
   const parts = rel.split(/[\\/]/);
+  if (!rel || parts[0] === '..' || isAbsolute(rel)) throw new Error(`Path escapes project: ${path}`);
+  let current = project;
   for (const [index, part] of parts.entries()) {
     current = join(current, part);
     let stat;
@@ -81,12 +81,13 @@ export async function previewProject(project, { port = 4173, documentationBase, 
   let timer, watcher, closed = false, pending = Promise.resolve();
   const server = createServer((request, response) => {
     if (request.method !== 'GET') { response.writeHead(405); response.end(); return; }
-    if (request.url === '/__changes') {
+    const { pathname } = new URL(request.url, 'http://127.0.0.1');
+    if (pathname === '/__changes') {
       response.writeHead(200, { 'Content-Type': 'text/event-stream', 'Cache-Control': 'no-cache', Connection: 'keep-alive' });
       response.write(': connected\n\n'); clients.add(response);
       request.on('close', () => clients.delete(response)); return;
     }
-    if (request.url !== '/' && request.url !== '/diagram.html') { response.writeHead(404); response.end('Not found'); return; }
+    if (pathname !== '/' && pathname !== '/diagram.html') { response.writeHead(404); response.end('Not found'); return; }
     response.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store' }); response.end(html);
   });
   async function close() {

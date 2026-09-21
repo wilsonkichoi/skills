@@ -6,11 +6,12 @@ import { fileURLToPath } from 'node:url';
 import { execFile, spawn } from 'node:child_process';
 import { promisify } from 'node:util';
 import { once } from 'node:events';
-import { checkProject, buildProject, previewProject } from '../../scripts/diagram.mjs';
+import { checkProject, buildProject, previewProject } from '../../../skills/workflow-diagram/scripts/diagram.mjs';
 
 const exec = promisify(execFile);
 const root = fileURLToPath(new URL('../', import.meta.url));
-const skill = resolve(root, '..');
+const repositoryRoot = resolve(root, '../..');
+const skill = resolve(repositoryRoot, 'skills/workflow-diagram');
 const cache = resolve(root, '.cache/package-tests');
 await mkdir(cache, { recursive: true });
 async function fixture(t, name = 'branching') {
@@ -100,6 +101,7 @@ test('preview refreshes valid edits, retains valid page on errors, rejects file 
   const preview = await previewProject(project, { port: 0, onError: error => errors.push(error) });
   t.after(preview.close);
   const before = await (await fetch(preview.url)).text();
+  assert.equal(await (await fetch(preview.url + '/?reload=1')).text(), before);
   assert.equal((await fetch(preview.url + '/workflow.json')).status, 404);
   assert.equal((await fetch(preview.url + '/../../untouched.txt')).status, 404);
   await assert.rejects(() => previewProject(project, { port: Number(new URL(preview.url).port) }), { code: 'EADDRINUSE' });
@@ -157,12 +159,13 @@ test('standalone installed assets require no npm, network, or writable installat
 test('generated assets are deterministic and detect source or schema drift', async t => {
   const base = await mkdtemp(join(cache, 'assets-')); t.after(() => rm(base, { recursive: true, force: true }));
   const repository = join(base, 'repository'), copy = join(repository, 'skills/workflow-diagram');
+  const cwd = join(repository, 'tools/workflow-diagram');
   await mkdir(copy, { recursive: true });
-  for (const dir of ['scripts', 'assets', 'renderer/src', 'renderer/schema', 'renderer/build']) await cp(join(skill, dir), join(copy, dir), { recursive: true });
-  await cp(resolve(skill, '../../LICENSE'), join(repository, 'LICENSE'));
-  for (const file of ['package.json', 'package-lock.json']) await cp(join(root, file), join(copy, 'renderer', file));
-  await symlink(join(root, 'node_modules'), join(copy, 'renderer/node_modules'));
-  const cwd = join(copy, 'renderer');
+  for (const dir of ['scripts', 'assets']) await cp(join(skill, dir), join(copy, dir), { recursive: true });
+  for (const dir of ['src', 'schema', 'build']) await cp(join(root, dir), join(cwd, dir), { recursive: true });
+  for (const file of ['LICENSE', 'VERSION']) await cp(join(repositoryRoot, file), join(repository, file));
+  for (const file of ['package.json', 'package-lock.json']) await cp(join(root, file), join(cwd, file));
+  await symlink(join(root, 'node_modules'), join(cwd, 'node_modules'));
   const run = (...args) => exec(process.execPath, ['build/assets.mjs', ...args], { cwd });
   await run('--check');
   const before = await readFile(join(copy, 'assets/manifest.json'));
@@ -173,6 +176,10 @@ test('generated assets are deterministic and detect source or schema drift', asy
     await assert.rejects(() => run('--check'), /Stale generated asset/);
     await run(); await run('--check');
   }
+  await writeFile(join(repository, 'VERSION'), '9.9.9');
+  await assert.rejects(() => run('--check'), /Stale generated asset/);
+  await run();
+  assert.equal(JSON.parse(await readFile(join(copy, 'assets/manifest.json'), 'utf8')).generatorVersion, '9.9.9');
 });
 
 test('CLI executes through an installed skill symlink', async t => {

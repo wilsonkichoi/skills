@@ -18,7 +18,7 @@ npx skills@latest add "<clean-candidate>" --list
 npx skills@latest add "<clean-candidate>" --skill workflow-diagram -a claude-code -a codex -a kiro-cli -y
 ```
 
-Run the maintainer checks from `skills/workflow-diagram/renderer/` before testing the installed copy.
+Run the maintainer checks from `tools/workflow-diagram/` before testing the installed copy.
 Use the browser fallback described in root AGENTS.md if Chrome is unavailable.
 
 ```sh

@@ -39,5 +39,5 @@ The renderer uses no motion transitions. Reduced-motion rules also prevent later
 6. Stop preview after inspection. Apply feedback to the same JSON files.
 
 For ordinary chat, supply relevant JSON and screenshots. Generated HTML never becomes an alternate source.
-Renderer changes belong in the skill's canonical source and require its maintainer checks.
+Renderer changes belong in the canonical source under `tools/workflow-diagram/` in the skills repository and require its maintainer checks.
 Reference images for this repository are under `docs/dev-agents/diagram/screenshots/` at the repository root.

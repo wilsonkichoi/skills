@@ -2,7 +2,7 @@ import { test, expect } from '@playwright/test';
 import { mkdir, mkdtemp, cp, readFile, writeFile, rm } from 'node:fs/promises';
 import { resolve, join } from 'node:path';
 import { pathToFileURL } from 'node:url';
-import { buildProject, previewProject } from '../../../scripts/diagram.mjs';
+import { buildProject, previewProject } from '../../../../skills/workflow-diagram/scripts/diagram.mjs';
 
 async function project(name) {
   await mkdir('.cache/browser-projects', { recursive: true });

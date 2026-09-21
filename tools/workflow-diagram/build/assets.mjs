@@ -5,8 +5,8 @@ import { fileURLToPath } from 'node:url';
 import { createHash } from 'node:crypto';
 
 const root = fileURLToPath(new URL('../', import.meta.url));
-const skill = resolve(root, '..');
-const repository = resolve(skill, '../..');
+const repository = resolve(root, '../..');
+const skill = resolve(repository, 'skills/workflow-diagram');
 const hash = data => createHash('sha256').update(data).digest('hex');
 const outputs = {}, dependencies = new Map();
 const common = { absWorkingDir: root, bundle: true, write: false, metafile: true, minify: true,
@@ -35,6 +35,7 @@ for (const [name, { directory, pkg }] of [...dependencies].sort(([a], [b]) => a.
   if (!license) throw new Error(`Missing bundled license: ${name}`);
   notices.push(`${name} ${pkg.version} (${pkg.license})\n${await readFile(resolve(directory, license), 'utf8')}`);
 }
+for (const name of ['workflow.schema.json', 'layout.schema.json']) outputs[name] = await readFile(resolve(root, 'schema', name), 'utf8');
 outputs['THIRD-PARTY-NOTICES.txt'] = notices.join('\n----------------------------------------\n\n');
 const ownLicense = await readFile(resolve(repository, 'LICENSE'), 'utf8');
 const licenseBanner = '/*!\n' + (ownLicense + '\nBundled dependencies\n\n' + outputs['THIRD-PARTY-NOTICES.txt']).replaceAll('*/', '* /') + '\n*/\n';
@@ -48,11 +49,11 @@ async function sourceFiles(directory) {
   return paths;
 }
 const sources = {};
-const files = [resolve(repository, 'LICENSE'), resolve(root, 'package.json'), resolve(root, 'package-lock.json')];
-for (const dir of ['src', 'schema', 'build', '../scripts']) files.push(...await sourceFiles(resolve(root, dir)));
-for (const path of files.sort()) sources[relative(skill, path)] = hash(await readFile(path));
+const files = [resolve(repository, 'LICENSE'), resolve(repository, 'VERSION'), resolve(root, 'package.json'), resolve(root, 'package-lock.json')];
+for (const dir of [resolve(root, 'src'), resolve(root, 'schema'), resolve(root, 'build'), resolve(skill, 'scripts')]) files.push(...await sourceFiles(dir));
+for (const path of files.sort()) sources[relative(repository, path)] = hash(await readFile(path));
 outputs['manifest.json'] = JSON.stringify({ schemaVersion: 1,
-  generatorVersion: JSON.parse(await readFile(resolve(root, 'package.json'))).version,
+  generatorVersion: (await readFile(resolve(repository, 'VERSION'), 'utf8')).trim(),
   sources, outputs: Object.fromEntries(Object.entries(outputs).map(([path, data]) => [path, hash(data)])),
 }, null, 2) + '\n';
 const checking = process.argv.includes('--check');

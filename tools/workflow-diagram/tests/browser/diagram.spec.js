@@ -6,7 +6,7 @@ import { makeStandalone } from '../../build/standalone.mjs';
 
 test.beforeEach(async ({ page }) => {
   await page.route('**/library.js', route => route.fulfill({
-    contentType: 'text/javascript', path: resolve('../assets/workflow-diagram.js'),
+    contentType: 'text/javascript', path: resolve('../../skills/workflow-diagram/assets/workflow-diagram.js'),
   }));
 });
 
@@ -209,7 +209,11 @@ test('preview reloads data and reconnects after a source dependency restarts the
     await expect.poll(() => page.evaluate(() => window.beforeRestart), { timeout: 15_000 }).toBeUndefined();
     await expect(page.getByRole('heading', { level: 1 })).toHaveText(data.title);
   } finally {
-    await writeFile(dataPath, originalData); await writeFile(sourcePath, originalSource);
+    await writeFile(dataPath, originalData);
+    // Restoring the source restarts the server again; wait for it so later tests do not race it.
+    await page.evaluate(() => window.beforeRestart = true);
+    await writeFile(sourcePath, originalSource);
+    await expect.poll(() => page.evaluate(() => window.beforeRestart).catch(() => true), { timeout: 15_000 }).toBeUndefined();
   }
 });
 
