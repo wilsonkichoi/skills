@@ -12,9 +12,10 @@ metadata:
   `docs/dev-agents/config.md`: GitHub Issues, Linear, or local markdown files.
 - **When to use it:** any time a skill or a person needs to see or change ticket state. Every other
   skill in this set goes through these verbs instead of touching the backend directly.
-- **Dependencies:** `docs/dev-agents/config.md` with `issue_tracker` set, written by `setup`. For
-  GitHub, an authenticated `gh` against a host that exposes native issue dependencies, tested with
-  `gh` 2.97.0. For Linear, the Linear MCP server. For local, nothing.
+- **Dependencies:** `docs/dev-agents/config.md` with `issue_tracker` set, written by `setup`.
+  Without it, every verb stops before touching anything. For GitHub, an authenticated `gh` against
+  a host that exposes native issue dependencies, tested with `gh` 2.97.0. For Linear, the Linear
+  MCP server. For local, nothing.
 - **How to call it:** Claude Code `/tracker <verb> [args]`, Codex `$tracker <verb> [args]`,
   Kiro CLI `/tracker <verb> [args]`.
 - **Input:** one verb and its arguments.
@@ -33,9 +34,17 @@ way through, before running anything:
 - `local` → [local.md](./local.md)
 - `other` → no sibling file. Follow the workflow the user wrote into the config body.
 
-Never read more than one. Resolve `OWNER/REPO` once from the repository's configured remote and
-pass it explicitly on every command; never let `gh` infer a different repository from the working
-directory.
+Stop here when the config cannot name a backend: `docs/dev-agents/config.md` does not exist, it has
+no `issue_tracker` field, or the value is not one of the four above. Write nothing, create no file
+or directory, and read no backend file. Tell the user which of the three it was, and to run `setup`
+first: Claude Code `/setup`, Codex `$setup`, Kiro CLI `/setup`. Another tool's config or ticket
+format is never a substitute, even when one is sitting in the repository. A ticket written anywhere
+else is invisible to every verb here, so reporting it as created reports a success that did not
+happen.
+
+Never read more than one sibling file. Resolve `OWNER/REPO` once from the repository's configured
+remote and pass it explicitly on every command; never let `gh` infer a different repository from
+the working directory.
 
 ## 2. Statuses
 

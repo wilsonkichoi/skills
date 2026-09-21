@@ -69,6 +69,13 @@ no harness invokes one on its own and each `$tracker ...` has to be typed. That 
 behaviour, not a defect, and a leading space is enough to stop a slash command firing, so check that
 an invocation actually fired before scoring what came back.
 
+Check that it fired the right skill, too. A harness can list a same-named skill from a plugin or a
+global install beside this project's own: Codex offered `$dev:setup` from the `dev@agent-toolkit`
+plugin next to the project's `$setup`, and picking it wrote another tool's layout. Invoke the
+project's install. In Codex, that is the entry whose path is under the scratch directory's
+`.agents/skills/`. A run that fired any other skill is void, not scored: record it as a deviation,
+and start again in a fresh directory.
+
 For a leg that would otherwise be hundreds of hand-typed commands, delete that one line from the
 **installed** `SKILL.md` and restart the harness. Then say so in the report as a deviation, and say
 from which case onward, because the file under test now differs from the commit by that line. It
@@ -87,6 +94,43 @@ Both directories have to have been created by the installer, since nothing here 
 `npx skills@latest add 'https://github.com/wilsonkichoi/skills.git#feat/tracker' -l`.
 Expect exactly 2 skills and nothing named `skill-name`. Nothing from `validation/` may appear
 either.
+
+S4 and S5 run here, straight after the install and before any `$setup`, because they need a
+directory with no config that setup wrote. The check is on disk, never the reply: the failure they
+exist for is a skill that writes tickets somewhere no verb can read and reports success.
+
+**S4 no config is a stop.** In the install directory, with no `docs/dev-agents/config.md`, run
+`$tracker list`, then `$tracker create Probe`.
+Expect each reply to say there is no config and to name `$setup`.
+Check: this prints nothing.
+
+```
+find . -mindepth 1 \( -path ./.agents -o -path ./.claude -o -path ./.kiro \) -prune -o -newer skills-lock.json -print
+```
+
+Any line is a FAIL, whatever it is: a `docs/`, a `.dev/`, a ticket file, or any other new file or
+directory. `ls -A` shows only `.agents`, `.claude`, `.kiro`, and `skills-lock.json`.
+
+**S5 an unknown backend is a stop.** Write a config naming a backend the skill does not have:
+
+```
+mkdir -p docs/dev-agents && printf -- '---\nissue_tracker: jira\n---\n' > docs/dev-agents/config.md && cksum docs/dev-agents/config.md
+```
+
+Run `$tracker list`, then `$tracker create Probe`.
+Expect each reply to name `jira` as not a backend it knows and to name `$setup`.
+Check: this prints nothing, and `cksum docs/dev-agents/config.md` matches the value printed above.
+
+```
+find . -mindepth 1 \( -path ./.agents -o -path ./.claude -o -path ./.kiro \) -prune -o -newer docs/dev-agents/config.md -print
+```
+
+Then remove it, before any leg runs `$setup`. Setup keeps the choices an existing config already
+made, so a leftover `jira` config would change what the leg tests.
+
+```
+rm -rf docs
+```
 
 ---
 

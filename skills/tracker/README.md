@@ -21,6 +21,10 @@ Run `setup` once. It writes `docs/dev-agents/config.md`, and the field that matt
 `issue_tracker`, one of `github`, `linear`, `local`, or `other`. Everything below behaves the same
 whichever you picked.
 
+Until that file exists with one of those four values, every verb stops, writes nothing, and asks you
+to run `setup`. It never guesses a backend, and it never borrows another tool's config or ticket
+format, because tickets written anywhere else are invisible to every verb here.
+
 | Harness | How you call it |
 |---|---|
 | Claude Code | `/tracker list` |
