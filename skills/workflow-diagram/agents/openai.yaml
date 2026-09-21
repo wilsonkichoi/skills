@@ -1,0 +1,5 @@
+interface:
+  display_name: "workflow-diagram"
+  short_description: "Create and update offline workflow diagrams."
+policy:
+  allow_implicit_invocation: false

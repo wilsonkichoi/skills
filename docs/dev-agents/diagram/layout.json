@@ -1,0 +1,14 @@
+{
+  "schemaVersion": 1,
+  "nodes": {
+    "setup": {
+      "x": 0,
+      "y": 0
+    },
+    "workflow-diagram": {
+      "x": 400,
+      "y": 0
+    }
+  },
+  "edges": {}
+}

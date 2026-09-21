@@ -1,8 +1,9 @@
 # skills
 
 Skills for an AI software development lifecycle: research, architecture, planning, ticketing,
-implementation, review, and release. They are small, hand-maintainable markdown files rather than a
-framework. Nothing here fires on its own; every skill runs only when you invoke it by name.
+implementation, review, and release. They use hand-maintained instructions. The workflow diagram
+skill also ships an offline renderer. Nothing here fires on its own; every skill runs only when you
+invoke it by name.
 note: Kiro has no setting to suppress automatic activation.
 
 ## Install
@@ -49,7 +50,7 @@ Run `setup` once per repository:
 
 It interviews you about your issue tracker and your product docs, writes
 `docs/dev-agents/config.md`, and adds one reference line to your `AGENTS.md` or `CLAUDE.md` so
-every session loads that config. Every other skill reads the same file.
+every session loads that config. Workflow diagrams can also be created without setup or config.
 
 ## Skills
 
@@ -59,6 +60,7 @@ validated before the next starts. See [AGENTS.md](./AGENTS.md) for how a skill i
 | Skill | What it does | Status |
 |---|---|---|
 | [`setup`](./skills/setup/SKILL.md) | Configure a repository to use these skills | shipped |
+| [`workflow-diagram`](./skills/workflow-diagram/SKILL.md) | Create and update offline maps of actual project skills | shipped |
 | `tracker` | Read and write issues against GitHub, Linear, or local markdown | next |
 | `research` | Gather raw material, transcripts, and prior art into notes | planned |
 | `architect` | Turn product intent into `SPEC.md` | planned |
@@ -71,6 +73,16 @@ validated before the next starts. See [AGENTS.md](./AGENTS.md) for how a skill i
 | `git-fu` | Branch, rebase, merge, and conflict work | planned |
 | `release` | Cut a tagged release | planned |
 | `yolo` | Run the loop unattended across several tickets | planned |
+
+## Workflow diagrams
+
+Invoke `$workflow-diagram` in Codex or `/workflow-diagram` in Claude Code and Kiro CLI.
+The skill reads actual definitions and preserves authored content when updating an existing diagram.
+It does not invoke diagrammed skills. Node.js 22 or newer is required; consumers need no npm installation.
+
+Inputs, offline HTML, notes, and screenshots stay under `docs/dev-agents/diagram/` in the target project.
+See [this repository's map](docs/dev-agents/diagram/README.md) and the
+[authoring guide](skills/workflow-diagram/README.md).
 
 ## What `setup` writes
 

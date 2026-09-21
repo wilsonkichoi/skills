@@ -1,0 +1,15 @@
+{
+  "schemaVersion": 1,
+  "nodes": {
+    "source": { "x": 0, "y": 320 }, "transform": { "x": 480, "y": 320 },
+    "result": { "x": 960, "y": 320 }, "store": { "x": 480, "y": 0 }, "note": { "x": 960, "y": 0 }
+  },
+  "edges": {
+    "forward": { "start": [240, 400], "segments": [[320, 400, 400, 400, 480, 400]] },
+    "result": { "start": [720, 400], "segments": [[800, 400, 880, 400, 960, 400]] },
+    "return": { "start": [1080, 480], "segments": [[1080, 660, 1080, 660, 600, 660], [120, 660, 120, 660, 120, 480]], "labelOffset": [0, 20] },
+    "archive": { "start": [600, 320], "segments": [[600, 265, 600, 215, 600, 160]], "labelOffset": [100, 0] },
+    "parallel": { "start": [240, 360], "segments": [[300, 280, 420, 280, 480, 360]], "labelOffset": [0, -20] }
+  },
+  "regions": [{ "lane": "processing", "x": 456, "y": 270, "width": 768, "height": 234 }]
+}

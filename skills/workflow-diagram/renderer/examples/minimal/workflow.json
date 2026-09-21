@@ -1,0 +1,7 @@
+{
+  "schemaVersion": 1,
+  "title": "Minimal example",
+  "subtitle": "A summary-only node, with no lanes, edges, or detail fields.",
+  "nodes": [{ "id": "入口 / α", "label": "Entry point", "summary": "Select this node to see the smallest useful details panel." }],
+  "edges": []
+}

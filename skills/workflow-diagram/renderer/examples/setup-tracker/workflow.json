@@ -1,0 +1,96 @@
+{
+  "schemaVersion": 1,
+  "title": "Skills / development workflow",
+  "subtitle": "Configure the project once. Read and manage ticket state through the chosen tracker.",
+  "lanes": [
+    {
+      "id": "foundation",
+      "label": "Foundation",
+      "color": {
+        "light": "#2f6fb5",
+        "dark": "#5b9de0"
+      }
+    },
+    {
+      "id": "coordination",
+      "label": "Coordination",
+      "color": {
+        "light": "#12775e",
+        "dark": "#2aa787"
+      }
+    }
+  ],
+  "nodes": [
+    {
+      "id": "setup",
+      "label": "setup",
+      "lane": "foundation",
+      "summary": "Configure the project, select its issue tracker, and write the shared development settings.",
+      "details": {
+        "body": "Creates `docs/dev-agents/config.md` and the directories used by the skills. Supports GitHub Issues, Linear, local markdown, or a documented custom workflow.",
+        "when": "Use once per repository, before tracker; run it again to change the backend or fill missing settings.",
+        "commands": [
+          {
+            "label": "Codex",
+            "text": "$setup"
+          },
+          {
+            "label": "Claude Code / Kiro CLI",
+            "text": "/setup"
+          }
+        ],
+        "links": [
+          {
+            "label": "Read the setup skill",
+            "href": "https://github.com/wilsonkichoi/skills/blob/main/skills/setup/SKILL.md"
+          }
+        ]
+      }
+    },
+    {
+      "id": "tracker",
+      "label": "tracker",
+      "lane": "coordination",
+      "summary": "Read and update tickets, record dependencies, and find work that is ready to start.",
+      "details": {
+        "body": "Provides `list`, `show`, `next`, `create`, `assign`, `comment`, `move`, and `link`. Every change reads current state, writes the change, and verifies it with a separate read.",
+        "when": "Use whenever a person or skill needs to read or change ticket state in the configured backend.",
+        "commands": [
+          {
+            "label": "Codex: ready, unassigned, unblocked tickets",
+            "text": "$tracker next"
+          },
+          {
+            "label": "Claude Code / Kiro CLI: open tickets",
+            "text": "/tracker list"
+          }
+        ],
+        "links": [
+          {
+            "label": "Read the tracker skill",
+            "href": "https://github.com/wilsonkichoi/skills/blob/main/skills/tracker/SKILL.md"
+          },
+          {
+            "label": "Tracker usage and guarantees",
+            "href": "https://github.com/wilsonkichoi/skills/blob/main/skills/tracker/README.md"
+          }
+        ]
+      }
+    }
+  ],
+  "edges": [
+    {
+      "id": "configured-backend",
+      "from": "setup",
+      "to": "tracker",
+      "label": "Shared configuration"
+    },
+    {
+      "id": "reconfigure",
+      "from": "tracker",
+      "to": "setup",
+      "kind": "loop",
+      "label": "Change backend or settings"
+    }
+  ]
+}

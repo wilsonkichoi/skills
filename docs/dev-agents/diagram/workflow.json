@@ -1,0 +1,82 @@
+{
+  "schemaVersion": 1,
+  "title": "Shipped skills",
+  "subtitle": "Independent tools available in this repository; planned skills are not shown.",
+  "lanes": [
+    {
+      "id": "configuration",
+      "label": "Configuration",
+      "color": {
+        "light": "#7a4fa8",
+        "dark": "#ad83da"
+      }
+    },
+    {
+      "id": "documentation",
+      "label": "Documentation",
+      "color": {
+        "light": "#007c83",
+        "dark": "#53c7cb"
+      }
+    }
+  ],
+  "nodes": [
+    {
+      "id": "setup",
+      "label": "setup",
+      "lane": "configuration",
+      "summary": "Configure project conventions, document paths, and the selected issue tracker.",
+      "details": {
+        "body": "Interview the user and record choices in docs/dev-agents/config.md, with one reference in the project context file.",
+        "when": "Use when adopting the development skills or changing project configuration.",
+        "commands": [
+          {
+            "label": "Codex",
+            "text": "$setup"
+          },
+          {
+            "label": "Claude Code / Kiro CLI",
+            "text": "/setup"
+          }
+        ],
+        "links": [
+          {
+            "label": "Read the setup skill",
+            "href": "skills/setup/SKILL.md"
+          }
+        ]
+      }
+    },
+    {
+      "id": "workflow-diagram",
+      "label": "workflow-diagram",
+      "lane": "documentation",
+      "summary": "Create or update an offline map from actual workflow definitions and authored diagram data.",
+      "details": {
+        "body": "Keep project inputs, HTML, notes, and screenshots under docs/dev-agents/diagram/. Setup and tracker configuration are optional.",
+        "when": "Use to explain project skills or update a map after workflow changes.",
+        "commands": [
+          {
+            "label": "Codex",
+            "text": "$workflow-diagram"
+          },
+          {
+            "label": "Claude Code / Kiro CLI",
+            "text": "/workflow-diagram"
+          }
+        ],
+        "links": [
+          {
+            "label": "Read the diagram skill",
+            "href": "skills/workflow-diagram/SKILL.md"
+          },
+          {
+            "label": "Authoring guide",
+            "href": "skills/workflow-diagram/README.md"
+          }
+        ]
+      }
+    }
+  ],
+  "edges": []
+}
