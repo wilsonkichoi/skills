@@ -719,6 +719,9 @@ method itself turned out to be the trap.
 
 Run the same one command from one install on each harness available.
 
+The case IDs are labels, not the run order. [Running leg D](#running-leg-d) gives the order the
+cases are actually run in, and why.
+
 **D1 Codex.** `$tracker list` expect the backend answers.
 **D2 Claude Code.** `/tracker list` expect the same result.
 **D3 [MANUAL] Kiro CLI.** `/tracker list`, and check the slash-command menu renders the one-line
@@ -742,6 +745,13 @@ holding the reply as a queued input, is a FAIL: the skill asked and then kept go
 
 ### Running leg D
 
+The numbered steps below are in run order, and the case IDs are not. D1 and D3 check that another
+harness returns the ticket Claude Code created, and that ticket needs a finished `/setup`, which is
+the same run that covers D4 to D6. D4, D5 and D6 are three facts about one setup interview, so they
+cannot be split into separate runs. The interview only happens in a directory with no `.git`, so
+the Codex check of D4 and D6 needs a second directory of its own. Each step heading lists its cases
+in the order they are observed.
+
 This is the one leg a person has to run. D4 to D6 are facts about the harness while the model is
 mid-turn: whether it sits idle, how many questions one screen carries, whether a bare digit is
 taken. A model reporting on its own turn is exactly the self-assessment `How to score` refuses, so
@@ -761,45 +771,57 @@ mkdir -p ~/tmp/tracker-legd-codex && cd ~/tmp/tracker-legd-codex && npx skills@l
 ```
 
 Do not run `git init` in either. D5 needs setup to make that offer itself, and the second directory
-has to stay in the same untouched state for D4.
+has to stay in the same untouched state for D4 and D6.
 
-**1. Claude Code in the first directory: D5, D4, D6.** Launch it from that directory and type
-`/setup`. Answer live rather than pasting the answers ahead, which is the thing every other leg
-does and the reason this leg has never run. Backend **Local markdown**, defaults for Section B,
-`AGENTS.md` for Section C, no test command for Section D, accept the commit offer at the end. Local
-is the right backend here because it has no prerequisites, so nothing outside the interview can
-interrupt the sequence D5 is watching.
+#### Step 1. Claude Code, first directory: D5, D4, D6, D2
 
-Watch the first three screens and record what each one carried. Then, for D6, look at the harness
-itself while Section A is on screen rather than at the message.
+Launch it from that directory and type `/setup`. Answer live rather than pasting the answers
+ahead, which is the thing every other leg does and the reason this leg has never run. Backend
+**Local markdown**, defaults for Section B, `AGENTS.md` for Section C, no test command for Section
+D, accept the commit offer at the end. Local is the right backend here because it has no
+prerequisites, so nothing outside the interview can interrupt the sequence D5 is watching.
+
+Watch the first three screens and record what each one carried, which is D5. While Section A is on
+screen, record the form of the question for D4. Then, for D6, look at the harness itself rather
+than at the message.
 
 When setup finishes, create one ticket so the parity checks have something to find:
 `/tracker create` a ticket titled `legD parity probe`, at `ready`. Then `/tracker list ready`, which
 is **D2**: record the ticket id and that the list contains it.
 
-**2. Codex in the same directory: D1.** `$tracker list ready`. It passes if it returns the same
-ticket from the same install with no setup re-run.
+#### Step 2. Codex, first directory: D1
 
-**3. Kiro CLI in the same directory: D3.** Before running anything, type `/` and read the command
-menu. Then `/tracker list ready` for the same ticket.
+`$tracker list ready`. It passes if it returns the same ticket from the same install with no setup
+re-run.
 
-**4. Codex in the second directory: D4, D6.** Fresh directory, so setup interviews again. `$setup`,
-then answer the `git init` offer and Section A only; the run can be abandoned after that. Codex has
-no picker, so numbered options with the recommended one first and a bare digit accepted is the
-correct result here rather than a fallback to apologise for. Type `1` and confirm it is taken.
+#### Step 3. Kiro CLI, first directory: D3
+
+Before running anything, type `/` and read the command menu. Then `/tracker list ready` for the
+same ticket.
+
+#### Step 4. Codex, second directory: D4, D6
+
+Fresh directory, so setup interviews again. `$setup`, then answer the `git init` offer and
+Section A only; the run can be abandoned after that. Codex has no picker, so numbered options with
+the recommended one first and a bare digit accepted is the correct result here rather than a
+fallback to apologise for. Type `1` and confirm it is taken.
 
 The observation sheet, filled in by the person at the keyboard and carried into the Run log entry
-verbatim:
+verbatim. Its lines follow the run order, so it fills top to bottom:
 
 ```
-D1 Codex list ready:        output =
+step 1, Claude Code, first directory
+D5 Claude Code:             screen 1 carried =, screen 2 =, screen 3 =
+D4 Claude Code:             form of the Section A question =
+D6 Claude Code:             harness state at Section A =
 D2 Claude Code list ready:  output =
+step 2, Codex, first directory
+D1 Codex list ready:        output =
+step 3, Kiro CLI, first directory
 D3 Kiro menu:               tracker description rendered as =
 D3 Kiro list ready:         output =
-D4 Claude Code:             form of the Section A question =
+step 4, Codex, second directory
 D4 Codex:                   form of the Section A question =, digit accepted =
-D5 Claude Code:             screen 1 carried =, screen 2 =, screen 3 =
-D6 Claude Code:             harness state at Section A =
 D6 Codex:                   harness state at Section A =
 anything surprising:
 ```
