@@ -177,6 +177,9 @@ test('generated assets are deterministic and detect source or schema drift', asy
     await run(); await run('--check');
   }
   await writeFile(join(repository, 'VERSION'), '9.9.9');
+  await run('--check');
+  const pkg = JSON.parse(await readFile(join(cwd, 'package.json'), 'utf8'));
+  await writeFile(join(cwd, 'package.json'), JSON.stringify({ ...pkg, version: '9.9.9' }, null, 2) + '\n');
   await assert.rejects(() => run('--check'), /Stale generated asset/);
   await run();
   assert.equal(JSON.parse(await readFile(join(copy, 'assets/manifest.json'), 'utf8')).generatorVersion, '9.9.9');

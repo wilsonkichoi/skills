@@ -21,8 +21,10 @@ adds no consumer build step and no per-harness source copies.
 - `THIRD-PARTY-NOTICES.txt` and `manifest.json`
 
 Never edit those assets directly. The installed helper uses Node built-ins and those assets only.
-The manifest takes `generatorVersion` from the repository `VERSION` file and hashes every source and
-output, including `skills/workflow-diagram/scripts/diagram.mjs`.
+The manifest takes `generatorVersion` from this directory's `package.json` and hashes every source
+and output, including `skills/workflow-diagram/scripts/diagram.mjs`. The generator version is the
+renderer's own version, independent of the repository `VERSION`. Bump it only when a change alters
+rendering, validation, or the helper, then rebuild the assets.
 
 ## Checks
 
@@ -42,8 +44,6 @@ Chromium fallback. Install that fallback locally when needed:
 PLAYWRIGHT_BROWSERS_PATH=.cache/browsers npx playwright install chromium
 PLAYWRIGHT_BROWSERS_PATH=.cache/browsers npm run check
 ```
-
-Every `VERSION` bump changes the manifest, so run `npm run build:assets` after it.
 
 Keep dependencies, browser binaries, caches, traces, and test screenshots out of the skill
 directory. Install a clean source export when testing a local directory, because the installer

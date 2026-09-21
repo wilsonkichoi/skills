@@ -49,11 +49,11 @@ async function sourceFiles(directory) {
   return paths;
 }
 const sources = {};
-const files = [resolve(repository, 'LICENSE'), resolve(repository, 'VERSION'), resolve(root, 'package.json'), resolve(root, 'package-lock.json')];
+const files = [resolve(repository, 'LICENSE'), resolve(root, 'package.json'), resolve(root, 'package-lock.json')];
 for (const dir of [resolve(root, 'src'), resolve(root, 'schema'), resolve(root, 'build'), resolve(skill, 'scripts')]) files.push(...await sourceFiles(dir));
 for (const path of files.sort()) sources[relative(repository, path)] = hash(await readFile(path));
 outputs['manifest.json'] = JSON.stringify({ schemaVersion: 1,
-  generatorVersion: (await readFile(resolve(repository, 'VERSION'), 'utf8')).trim(),
+  generatorVersion: JSON.parse(await readFile(resolve(root, 'package.json'))).version,
   sources, outputs: Object.fromEntries(Object.entries(outputs).map(([path, data]) => [path, hash(data)])),
 }, null, 2) + '\n';
 const checking = process.argv.includes('--check');
