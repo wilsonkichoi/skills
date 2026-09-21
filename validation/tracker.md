@@ -842,6 +842,126 @@ shape `CHANGELOG.md` uses, so two runs on one day stay distinguishable. One entr
 runbook above is the reusable procedure and is not edited by a run; everything a run learned goes
 here.
 
+### 2026-09-21T13:20:58-07:00 Harness parity leg D, Claude Code, Codex, Kiro CLI
+
+Complete. The person at the keyboard ran every step and reported what they watched; this entry
+records it.
+
+```
+TRACKER VALIDATION
+backend: local                   harness: claude-code, codex, kiro-cli
+date: 2026-09-21T13:20:58-07:00  skill ref: 69d7353 (feat/tracker)
+
+PASS  8
+FAIL  0
+SKIP  0
+
+failures:
+  none
+skipped:
+  none
+
+VERDICT: GREEN
+```
+
+Pre-flight, before step 1. Both scratch directories, `~/tmp/tracker-legd` and
+`~/tmp/tracker-legd-codex`, were installed from `feat/tracker`, and `skills-lock.json` in each
+records that ref. `git archive 69d7353 skills/tracker skills/setup`, which is the fetched head of
+`origin/feat/tracker`, was extracted and compared with each directory's `.agents/skills/` using
+`diff -r`. Both were identical, so the invocation gates are **as shipped** in both, as leg D
+requires. `.claude/skills/` and `.kiro/skills/` are symlinks into `.agents/skills/` in both
+directories. Neither directory had a `.git`.
+
+Observation sheet. The person at the keyboard asked for the step 1 lines to be filled from the
+session transcript. So the step 1 lines below are transcribed from the tool calls the session
+made, not from a separate observer's notes; see D-2. Steps 2 to 4 are the person's own
+observations.
+
+```
+step 1, Claude Code, first directory
+D5 Claude Code:             screen 1 carried = the git init offer alone (one-question picker: "Yes, git init (Recommended)" / "No"),
+                            screen 2 = Section A alone (one-question picker: Local markdown (Recommended), GitHub, Linear, Other),
+                            screen 3 = Section B alone (one-question picker: Defaults (Recommended), Custom paths)
+                            then Section C alone, Section D alone, then the step 7 commit offer alone
+D4 Claude Code:             form of the Section A question = Claude Code's own picker (AskUserQuestion), single-select,
+                            four numbered options, recommended first and labelled "(Recommended)";
+                            digit accepted = not tried, answered with the arrow keys
+D6 Claude Code:             harness state at Section A = observer does not recall; the picker was the last call
+                            in the turn, and the answer came back through it
+D2 Claude Code list ready:  output = one row, 001 | legD parity probe | ready | none | none,
+                            file docs/dev-agents/issues/001-legd-parity-probe.md
+step 2, Codex, first directory
+D1 Codex list ready:        output = one row, 001 | legD parity probe | ready | none | none,
+                            file docs/dev-agents/issues/001-legd-parity-probe.md
+step 3, Kiro CLI, first directory
+D3 Kiro menu:               tracker description rendered as = full description, truncated by terminal width only:
+                            "/tracker       Read and write ticket state in this project's issue tracker,
+                            whether that is GitHub Issues, Linear, or local markdown files. Use it to
+                            list, show, create, assign, comme..." — no colon truncation, no ">" substitution
+D3 Kiro list ready:         output = one row, 001 | legD parity probe | ready | none | none,
+                            file docs/dev-agents/issues/001-legd-parity-probe.md
+step 4, Codex, second directory
+D4 Codex:                   form of the Section A question = numbered text options, one question,
+                            recommended option first; digit accepted = yes, `1` selected Local markdown
+D6 Codex:                   harness state at Section A = idle and waiting for a plain reply; no tool call
+                            or work ran while the question was outstanding
+anything surprising:        step 1 ran in the same Claude Code session that had read this runbook; see D-1.
+                            `/tracker create` was typed with no ticket, and the skill asked for one
+                            through a picker instead of inventing it.
+```
+
+Evidence, from independent reads and the person's observations:
+
+- **Setup.** `git log --oneline` in `~/tmp/tracker-legd` shows one root commit, `db0127d chore: set
+  up dev-agents config with the local tracker`. It adds `AGENTS.md`, a one-line `CLAUDE.md` with
+  `@AGENTS.md`, `docs/dev-agents/config.md`, and `.gitkeep` files in `rules/` and `issues/`.
+  The config holds `issue_tracker: local`, `context_file: AGENTS.md`,
+  `issues_dir: docs/dev-agents/issues/`, and the three default product-doc paths, with no
+  `test_command`. These match the answers the leg prescribes. The installed skills were left
+  untracked, which was the answer chosen at the commit offer.
+- **Create.** `docs/dev-agents/issues/001-legd-parity-probe.md` exists and is untracked, as
+  `local.md` requires: the tracker does not commit. A YAML re-parse of its frontmatter returned
+  `id: '001'`, `title: 'legD parity probe'`, `status: 'ready'`, `assignee: ''`, and
+  `blocked_by: []`, all as strings or a list.
+- **D2.** The only file in `issues_dir` is ticket 001 at `ready`, and the list output named exactly
+  that ticket. Ticket id for steps 2 and 3: **001**.
+- **D1.** `$tracker list ready` returned the same ticket, `001`, from the first scratch directory;
+  no setup re-run occurred.
+- **D4 and D6 Codex.** In the second directory, `$setup` presented the Section A choices as one
+  numbered text question, with Local markdown first and recommended. The user typed `1`, and the
+  answer was accepted. The Codex turn ended at the question and waited for the reply; no tool call
+  or setup work ran while the question was outstanding. Setup was abandoned after Section A, as
+  the procedure allows.
+- **After the run.** `~/tmp/tracker-legd-codex` has a `.git` with no commits, from the accepted
+  `git init` offer, and no `docs/` directory. The abandoned setup wrote no config or scaffold.
+  `~/tmp/tracker-legd` still has the one root commit `db0127d`, and ticket 001 is the only
+  change outside the installed skills, so steps 2 and 3 wrote nothing. A second `diff -r` against
+  the `69d7353` archive found both directories' `.agents/skills/` still identical, so the
+  invocation gates stayed as shipped through the whole leg.
+
+| Case | Verdict | Independent evidence |
+|---|---|---|
+| D5 | PASS | The transcript shows the git init offer, Sections A to D, and the commit offer each in a separate one-question picker, in that order. No picker carried more than one question. |
+| D4 Claude Code | PASS | The Section A question used Claude Code's own picker, with the recommended option first. D4 accepts the harness's own picker in place of numbered text, so the digit half does not apply here. The observer answered with the arrow keys. |
+| D6 Claude Code | PASS | The observer does not recall the harness state. The verdict rests on the transcript. Every question, Section A included, was asked through the picker as the last call in its turn, with nothing running alongside it. Each answer came back as the picker's result, which a modal picker only returns when it was on screen waiting. A queued reply cannot happen through the picker. |
+| D4 Codex | PASS | Section A used one numbered text question, with Local markdown first and recommended. The user typed `1`, and Codex accepted it. |
+| D6 Codex | PASS | The Codex turn ended at the Section A question and waited for the reply. No tool call or setup work ran while the question was outstanding. |
+| D2 | PASS | Ticket 001 at `ready` on disk, confirmed by a YAML re-parse, is the one row `/tracker list ready` returned. |
+| D1 | PASS | `$tracker list ready` returned ticket 001 from the first scratch directory, with the same title, status, assignee, blocker state, and file path as D2. |
+| D3 | PASS | The slash-command menu showed `/tracker` with its full description text, truncated only by terminal width. No colon truncation and no `>` substitution. `/tracker list ready` returned ticket 001, matching D1 and D2. |
+
+Deviations from the reusable procedure:
+
+- **D-1.** Step 1 ran in a Claude Code session that had already read this runbook, including the
+  expected results for D4 to D6, before `/setup` was typed. The model under test knew what a pass
+  looked like. The session said so on screen 1, before the git init offer. The person running the
+  leg accepted this and asked for the verdicts to stand on the observed behaviour.
+  It is recorded so a later run can compare against a fresh session.
+- **D-2.** The same session was both the harness under test and the log writer. The step 1 sheet
+  lines came from its transcript at the person's request, not from an outside observer's notes,
+  which is the self-assessment `How to score` warns about. The transcript can show which questions
+  each screen carried. It cannot show the harness's idle state or how the answer was keyed.
+
 ### 2026-09-19T23:27:50-07:00 Linear C18 targeted re-run, Codex
 
 ```
