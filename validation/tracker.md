@@ -886,6 +886,51 @@ shape `CHANGELOG.md` uses, so two runs on one day stay distinguishable. One entr
 runbook above is the reusable procedure and is not edited by a run; everything a run learned goes
 here.
 
+### 2026-09-21T15:12:23-07:00 S4/S5 targeted run, Codex
+
+```
+TRACKER VALIDATION
+backend: none                    harness: codex
+date: 2026-09-21T15:12:23-07:00  skill ref: d68ce35 (feat/tracker)
+
+PASS  2
+FAIL  0
+SKIP  0
+
+failures:
+  none
+skipped:
+  none
+
+VERDICT: GREEN
+```
+
+Scope: S4 and S5 alone, the two cases `d68ce35` added for F25. No leg was run, and no backend was
+configured at any point.
+
+Directory `~/tmp/tracker-s4`, installed from `feat/tracker`. A `diff -r` of
+`.agents/skills/tracker` against the source tree at `d68ce35` found them identical, so the
+invocation gates were as shipped and every command was typed. Codex 0.155.1, with the
+`dev@agent-toolkit` plugin still enabled. Both transcripts
+(`rollout-2026-09-21T15-06-38-01a0c601-bf1d-7241-bb12-082175c5cd16.jsonl` and
+`rollout-2026-09-21T15-10-15-01a0c605-0dda-7ca3-b81e-64df1586e941.jsonl`) show the project skill
+fired. The only files read were `tracker-s4/.agents/skills/tracker/SKILL.md` and
+`docs/dev-agents/config.md`. No backend file and no plugin skill file was read. The plugin appears
+only in the skill catalog the model was given.
+
+| Case | Verdict | Independent evidence |
+|---|---|---|
+| S4 | PASS | `$tracker list` and `$tracker create Probe` each replied that `docs/dev-agents/config.md` does not exist and to run `$setup`. The `create` reply added "No ticket was created." The `find ... -newer skills-lock.json -print` check printed nothing. |
+| S5 | PASS | With the config set to `issue_tracker: jira`, both commands replied that `jira` is unsupported and to run `$setup`. `cksum` read `3660788880 28` before and after. The `find ... -newer docs/dev-agents/config.md -print` check printed nothing. `docs/` was removed after the case. |
+
+Deviations from the reusable procedure:
+
+- **D-1.** S4's `ls -A` was not run. The `find` check lists new directories as well as new files,
+  so a `docs/` or `.dev/` would have shown up there. This changes no verdict.
+- **D-2.** S5's replies told the user to configure `github`, `linear`, or `local`, and left out
+  `other`. The case does not check which backends the reply lists, and `setup` offers all four.
+  This is a note, not a finding.
+
 ### 2026-09-21T14:57:37-07:00 Local B2/B3 targeted re-run, Codex
 
 ```
