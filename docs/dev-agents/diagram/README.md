@@ -68,7 +68,7 @@ Browser automation used Playwright 1.63.0 with local Google Chrome. The renderer
 
 | Runbook case | Result | Evidence |
 | --- | --- | --- |
-| 1. Discovery/install | PASS | Clean source export discovered two shipped skills; selected workflow-diagram installed once, shared by all three harness paths |
+| 1. Discovery/install | PASS | Clean source and pushed GitHub branch each discovered two shipped skills; workflow-diagram installed once, shared by all three harness paths |
 | 2. Explicit target/symlink | PASS | Foreign working directory, spaces and Unicode, installed directory symlink; regression covers the resolved CLI entry-detection defect |
 | 3. Read-only/offline | PASS | macOS sandbox-exec denied network and installation writes; check/build ran with Node and empty PATH |
 | 4. Containment | PASS | Inventory found only diagram output; source data and unrelated project files remained unchanged |
@@ -87,7 +87,10 @@ Browser automation used Playwright 1.63.0 with local Google Chrome. The renderer
 | 17. Visual/input | PASS, with limits | 29 browser cases retain original 25 regressions; project screenshots inspected as described above |
 | 18. Project record | PASS | Portable source paths, regeneration commands, generator version, chosen base, and local screenshots |
 | 19. Harness behavior | Mixed | Codex subagent and Claude Code CLI passed; Kiro invocation and interactive ambiguity checks have limits below |
-| 20. Integration | Pending PR | Separate branch from refreshed main; no tracker commits imported; metadata, public runbook, and scoped map complete |
+| 20. Integration | PASS | [PR #7](https://github.com/wilsonkichoi/skills/pull/7) is open and unmerged; separate branch from refreshed main, with no tracker commits |
+
+The pushed GitHub package also passed source/output hash verification and check/build through the Claude symlink with network and installation writes denied.
+No node_modules, caches, browser binaries, or test output were shipped.
 
 The automated suite passed **76 unit/packaging tests and 29 browser tests**.
 All 16 packaging tests also passed on Node.js 22.23.2.
