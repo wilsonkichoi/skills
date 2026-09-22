@@ -265,7 +265,9 @@ with `gh api repos/<R>/milestones -f title=...`, and put one open issue in each.
 2. `$tracker create "Fix" "in review"`: expect title `Fix`, status label `in-review`.
 3. `$tracker create Fix in review`: expect a question asking whether `in review` is the status or
    part of the title, and no new issue until it is answered. Check with
-   `gh issue list --repo <R> --state all --limit 200 --json number,title`.
+   `gh issue list --repo <R> --state all --limit 200 --json number,title`. Run this step three
+   times with different first words, and pass it only if all three ask. It passed once and failed
+   once at 0.0.26 and 0.0.27.
 4. `$tracker create "Fix" done`: expect a refusal and no new issue. `create` takes open statuses only.
 5. `$tracker list M1`, `$tracker list "in reviewww"`: expect each milestone's issue, scoped. The
    second is a milestone, not a refused status.
@@ -729,8 +731,9 @@ finds `Released` by its `completed` category and writes to it anyway has absorbe
 have surfaced.
 
 **C6 a bad status name is refused, never guessed.** On a `Backlog` issue, `$tracker move <id> in reviewww`.
-Expect a refusal that lists the seven statuses, and `get_issue` still reading `Backlog`. Moving it
-to `In Review` is a FAIL: the skill guessed a near miss. Then `$tracker move <id> in progress`:
+Expect a refusal that lists the seven statuses and suggests none of them, and `get_issue` still
+reading `Backlog`. Moving it to `In Review` is a FAIL: the skill guessed a near miss. So is a
+refusal that names `in-review` as what was meant. Then `$tracker move <id> in progress`:
 expect `get_issue` to read `In Progress`, since a status argument matches case-insensitively with a
 space read as a hyphen. Run the case three times, each on a fresh issue, and pass it only if all
 three pass. The 0.0.26 run found a model that skips the refusal on one pass, so one pass proves
@@ -1117,6 +1120,25 @@ Newest first, by the timestamp in each entry's heading: ISO 8601 with the local 
 shape `CHANGELOG.md` uses, so two runs on one day stay distinguishable. One entry per run. The
 runbook above is the reusable procedure and is not edited by a run; everything a run learned goes
 here.
+
+### 2026-09-22T12:58:22-07:00 Targeted 0.0.27 run, Codex
+
+Skill ref `d930695`, same directories, driver, and model as the 0.0.26 run below: `gpt-6-luna` at
+`high`, checked per child. Output `out/t1250`. Every child loaded the project's `SKILL.md` and its
+backend file. Cases A17b, A17c, B9b, and C6 (three repeats). Each verdict below was checked by hand
+against the raw evidence.
+
+| Case | Verdict | Independent evidence |
+|---|---|---|
+| A17b | PASS | #130 read `labels: []` before and after `move 130 in reviewww`, whose reply listed the seven statuses and changed nothing. After `move 130 in progress` it read one label, `in-progress`. |
+| A17c | FAIL | Steps 1, 2, and 4 to 7 passed: #136 `Alpha t1250 in review` with no status label, #135 `Bravo t1250` with `in-review`, `create "Delta t1250" done` refused, and the list steps matched `truth_after_reads.json` and the milestone list. Step 3, `create Charlie t1250 in review`, did not ask: it created #134 `Charlie t1250` and added `in-review`. The same step asked in the 0.0.26 run. The ask rule was only in `SKILL.md` section 2. |
+| B9b | PASS | `144-v26-t1250-b9b-target.md` kept SHA-256 `52886f91...c520f` after `move 144 in reviewww`, then parsed `status: 'in-progress'` after `move 144 in progress`. `create Echo in review` asked and created no file. |
+| C6 | FAIL | The 0.0.27 fix held on all three repeats: CLE-87, CLE-88, and CLE-89 each read `Backlog` after `move <id> in reviewww`, and `In Progress` after `move <id> in progress`. Repeats 1 and 2 listed the seven statuses. Repeat 3 replied "`in reviewww` is not a valid status. No change was made. Use `in-review` to move CLE-89.", naming a near miss and not the seven. |
+
+The pattern across both runs: a rule the verb's section 3 precondition names is followed, and a rule
+only section 2 states is followed intermittently. 0.0.28 puts the `create` ask and the full `move`
+refusal into the preconditions. The runbook now runs A17c step 3 three times, and C6 fails a refusal
+that suggests a status.
 
 ### 2026-09-22T12:47:29-07:00 Targeted 0.0.26 run, Codex
 
