@@ -1,41 +1,21 @@
 # Backend: GitHub Issues
 
-Use the `gh` CLI, not an MCP server. Resolve `OWNER/REPO` once from the `origin` remote and pass
-`--repo` on every command, so nothing depends on the working directory.
+Use the `gh` CLI. Resolve `OWNER/REPO` once from the `origin` remote and pass `--repo` on every
+command.
 
-Native issue dependencies are required. `gh` exposes them as the `blockedBy` JSON field. If
-`blockedBy` comes back `null`, this host does not have them: stop, say so, and suggest the `local`
-backend. Never fall back to parsing `Blocked by #N` out of issue bodies.
+Native issue dependencies are required, exposed as the `blockedBy` JSON field. If `blockedBy` is
+`null`, stop, say this host lacks issue dependencies, and suggest the `local` backend. Never parse
+`Blocked by #N` out of issue bodies.
 
-## Status mapping
+## Statuses
 
-The four open statuses are labels, created once by `setup`: `backlog`, `ready`, `in-progress`,
-`in-review`.
+The open statuses are labels: `backlog`, `ready`, `in-progress`, `in-review`. The terminal ones are
+close reasons: `done` is `COMPLETED`, `cancel` is `NOT_PLANNED`, `duplicate` is `DUPLICATE` with
+`--duplicate-of` naming the original. Every other label is a topic label, GitHub's own `duplicate`
+label included.
 
-The three terminal statuses are close reasons, not labels:
-
-| Status | How GitHub records it |
-|---|---|
-| `done` | closed, `stateReason: COMPLETED` |
-| `cancel` | closed, `stateReason: NOT_PLANNED` |
-| `duplicate` | closed, `stateReason: DUPLICATE`, with `--duplicate-of` naming the original |
-
-To read a status back, check `state` first:
-
-- Open with one status label: that status.
-- Open with no status label: `backlog`. Every human-created and every reopened issue lands here.
-  A reopened issue also reports `stateReason: REOPENED`. Ignore it, because it is not a status.
-- Open with two or more status labels: `inconsistent`. It has no status.
-- Closed: the status comes from `stateReason`, and any status label left on it is ignored.
-
-Every other label (`bug`, `enhancement`, GitHub's own `duplicate` label) is a topic label and never
-a status.
-
-## The prelude
-
-The rules above are written once, as a `jq` prelude. Every `--jq` in this file that says
-`<prelude>` starts with it. Never re-implement the status test inline, because two copies drift and
-then `list`, `show`, and `next` disagree about one issue.
+Read a status only through this `jq` prelude. Every `--jq` below that says `<prelude>` starts with
+it. Never re-implement the test inline.
 
 ```
 def STATUS: ["backlog","ready","in-progress","in-review"];
@@ -51,31 +31,14 @@ def open_blockers: [.blockedBy.nodes[] | select(.state == "OPEN") | .number];
 
 ## Reading rules
 
-**Read the primary store, never the search index.** `gh issue list` picks its backend from the
-flags:
+- Never pass `--label`, `--milestone`, or `--search` to `gh issue list`: they read a lagging search
+  index. Read the unfiltered list with `--state`, and filter and sort in `jq`.
+- Verify every write with `gh issue view <n>`, never by finding the issue in a list.
+- Every list query emits `rows`, the count before filtering. When `rows` equals `--limit`, raise the
+  limit and run again. Never report a list, an empty frontier, or a missing cycle from a full page.
+- Pass bodies with `--body-file`, never `--body`.
 
-| Invocation | Backend | Consistency |
-|---|---|---|
-| no filter, `--state`, `--assignee` | the repository's issue list | immediate |
-| `--label`, `--milestone`, `--search` | the search index | seconds behind, or more |
-| `gh issue view <n>` | the issue by number | immediate |
-
-An issue made `ready` a second ago is missing from `--label ready`, and an empty result looks the
-same as a repository with nothing `ready`. So every query here reads the unfiltered list and filters
-in `jq`. `--milestone <number>` is not a way around it, because `gh` turns it back into a title
-search. Verify every write with `gh issue view <n>`, never by finding the issue in a list.
-
-**A full page is an incomplete answer.** `--limit` defaults to 30 and results arrive newest first,
-so truncation drops the oldest, lowest-numbered issues first. Every filtering query emits `rows`, the
-count before filtering. When `rows` equals `--limit`, raise the limit and run it again. Never report
-a filtered list, an empty frontier, or the absence of a cycle from a page that hit its limit. Sort in
-`jq`: sorting on the server needs `--search`, which is the search index again.
-
-## Per verb
-
-### list
-
-All four open statuses, `backlog` included, use one query:
+## list
 
 ```
 gh issue list --repo <owner/repo> --state open --limit 200 \
@@ -85,30 +48,20 @@ gh issue list --repo <owner/repo> --state open --limit 200 \
          inconsistent: [.[] | select(status == "inconsistent") | .number]}'
 ```
 
-With no status argument, drop the `select` from `tickets` and keep `inconsistent`.
+With no status, drop the `select` from `tickets`. For a terminal status, use `--state closed` and
+drop `inconsistent`.
 
-For `done`, `cancel`, or `duplicate`, use the same query with `--state closed` and drop
-`inconsistent`, since a closed issue is never inconsistent.
-
-**Scoping to a milestone.** Resolve the title first, then filter in `jq`. Never pass `--milestone`
-to `gh issue list`.
+For a milestone, resolve the title first:
 
 ```
 gh api 'repos/<owner>/<repo>/milestones?state=all' --jq '.[] | select(.title == "<title>") | .number'
 ```
 
-`state=all` is required, because the endpoint otherwise returns open milestones only. Empty output
-is a stop: say the milestone does not exist and name the ones that do, from the same call with
-`--jq '.[].title'`. A name that resolves adds one more filter to the list query:
+Empty output is a stop: name the milestones that exist, from the same call with `--jq '.[].title'`.
+Otherwise add `select(.milestone.title == "<title>")` to the list query. `gh issue create` and
+`gh issue edit` accept only an open milestone.
 
-```
-select(.milestone.title == "<title>")
-```
-
-`gh issue create --milestone` and `gh issue edit --milestone` accept only an **open** milestone. On
-a closed one they exit 1 with `'<title>' not found`.
-
-### show
+## show
 
 ```
 gh issue view <n> --repo <owner/repo> \
@@ -119,13 +72,10 @@ gh issue view <n> --repo <owner/repo> \
          body, comments: [.comments[] | {author: .author.login, createdAt, body}]}'
 ```
 
-Use the `comments` JSON field, never the `--comments` flag. The flag replaces the issue with its
-comments, and on an issue with none it prints nothing at exit 0. When `status` is `inconsistent`,
-name both status labels and point at `move <id> <status>` as the repair.
+Never use the `--comments` flag. For an `inconsistent` issue, name both status labels and point at
+`move <id> <status>`.
 
-### next
-
-The frontier is one query:
+## next
 
 ```
 gh issue list --repo <owner/repo> --state open --limit 200 \
@@ -154,50 +104,35 @@ gh issue list --repo <owner/repo> --state open --limit 200 \
                 | from_entries)}'
 ```
 
-What the query depends on:
+Run it as written. Never soften the `error()` with `?` or `// []`, and never test blockers with
+`totalCount` alone: it counts closed blockers.
 
-- **Keep the `error()`.** Without it, a `null` `blockedBy` passes every filter below it as though
-  the issue had no blockers, or drops it silently, at exit 0. Never soften it with `?` or `// []`.
-- **Filter on the blocker's `state`, never on `totalCount`.** `totalCount` counts closed blockers
-  too, so a `totalCount == 0` test keeps every once-blocked issue off the frontier forever.
-- **Compare `totalCount` with the node count.** `gh` returns at most 50 blocker nodes. When the
-  counts differ, an open blocker may be hidden, so the issue is held and marked `truncated`.
-- **`held` and `open` explain an empty frontier.** `held` is every `ready` issue left off, with its
-  assignees and open blockers. `open` maps every open issue to its status, assignees, and open
-  blockers. Look up each blocker in `open` to report its status and holder, and walk `open` to find
-  a cycle. A blocker missing from `open` is closed, in another repository, or beyond the page: read
-  it with `gh issue view` before naming its status.
+For an empty frontier, report `held`. Look up each blocker in `open` for its status and holder, and
+walk `open` for cycles. Read a blocker missing from `open` with `gh issue view` before naming its
+status.
 
-The frontier is a list of candidates. Another session can take one between this read and the
-`assign`. When `assign` refuses the first candidate, take the next one; do not retry the same one.
+When `assign` refuses a frontier candidate, take the next one.
 
-### create
-
-Write the body to a file and pass `--body-file`. A multi-line body does not survive `--body`.
+## create
 
 ```
 gh issue create --repo <owner/repo> --title "<title>" --body-file <file> [--milestone "<title>"]
 ```
 
-Create it with no status label. Then run `link` once per `## Blocked by` entry. Skip the cycle walk,
-because nothing can be blocked by an issue that did not exist a moment ago. Apply the requested
-status label last.
-
-Verify by number, not from the URL `gh issue create` printed:
+Create with no status label, run `link` once per `## Blocked by` entry without the cycle walk, then
+add the requested status label. Verify by number:
 
 ```
 gh issue view <n> --repo <owner/repo> --json number,title,labels,blockedBy
 gh issue view <n> --repo <owner/repo> --json body | jq --rawfile sent <file> -e '.body == $sent'
 ```
 
-The first read must show every `## Blocked by` entry in `blockedBy.nodes` and the requested status
-label. GitHub stores the body unchanged, so the second must print `true` at exit 0. Compare with
-`jq` as written. `--jq .body > file` adds a trailing newline and `"$(...)"` strips one, so both
-report a difference on an identical body.
+The first must show every blocker and the status label. The second must print `true`. Compare
+exactly this way, never through a shell variable or `--jq .body`.
 
-### assign, the bare form
+## assign, bare form
 
-`assign <id>` and `assign <id> me`, with no `from`. Read, write, re-read:
+`assign <id>` or `assign <id> me`, no `from`:
 
 ```
 gh issue view <n> --repo <owner/repo> --json state,assignees,labels
@@ -205,36 +140,28 @@ gh issue edit <n> --repo <owner/repo> --add-assignee @me --remove-label ready --
 gh issue view <n> --repo <owner/repo> --json assignees,labels
 ```
 
-The first read must show an open issue whose status is `ready` (exactly one status label, and that
-label `ready`) and no assignee. Otherwise stop and write nothing. The read is not optional:
-`--remove-label` on a label the issue does not carry exits 0 and changes nothing, so a blind write on
-an `in-review` issue leaves it carrying both `in-review` and `in-progress`.
+The first read must show an open issue with exactly one status label, `ready`, and no assignee.
+Otherwise write nothing.
 
-The re-read must show `in-progress` as the only status label and you as the only assignee. Check the
-labels first, then the assignees:
+The re-read must show `in-progress` as the only status label and you as the only assignee. Check in
+this order:
 
-1. **Any other set of status labels** means a person moved the issue while you were writing. Take
-   back exactly what you added, leave their label alone, and report:
+1. Any other status labels: take back what you added, and report.
 
    ```
    gh issue edit <n> --repo <owner/repo> --remove-assignee @me --remove-label in-progress
    ```
 
-2. **More than one assignee** means another session pulled at the same time. The login that sorts
-   first, compared case-insensitively, keeps the issue. If that is not you, remove only your own
-   assignment and leave the labels alone, because `in-progress` now belongs to the winner:
+2. More than one assignee: the login that sorts first, case-insensitively, keeps it. If that is not
+   you, remove only yourself and leave the labels:
 
    ```
    gh issue edit <n> --repo <owner/repo> --remove-assignee @me
    ```
 
-The tie-break needs distinct accounts. Two sessions on one account read the same single login and
-both believe they won.
+## assign, explicit forms
 
-### assign, the explicit forms
-
-`assign <id> <who>`, `assign <id> <who> from <holder>`, and `assign <id> none`. These set the
-assignee and never touch a label.
+`assign <id> <who>`, `assign <id> <who> from <holder>`, and `assign <id> none`. Never touch a label.
 
 ```
 gh issue view <n> --repo <owner/repo> --json state,assignees,labels
@@ -242,48 +169,26 @@ gh issue edit <n> --repo <owner/repo> --remove-assignee <each holder except the 
 gh issue view <n> --repo <owner/repo> --json assignees
 ```
 
-For `none`, drop `--add-assignee` and remove every holder.
+For `none`, drop `--add-assignee` and remove every holder. Refuse a closed issue. Refuse any holder
+other than the target that `from` does not name, case-insensitively. Never put the target in the
+removal list.
 
-A closed issue on the first read is terminal: refuse. Every assignee the read found other than the
-target must be named by `from`, compared case-insensitively. An unnamed holder is a refusal, never a
-silent removal. Never put the target in the removal list: `gh` sends additions and removals as two
-unordered mutations, so a name in both lists ends up in whichever lands last.
+The re-read must show exactly the target, or nobody for `none`. Otherwise report what the issue
+carries and that the assignment did not land. `gh` exits 0 when it drops a user without push access.
 
-The re-read must show exactly the target, or nobody for `none`. It is the only check that catches
-this:
-
-| `--add-assignee` argument | Exit | Result |
-|---|---|---|
-| a login that does not exist | 1 | `Could not resolve to a user or bot with the login '<x>'` |
-| a real user without push access | **0** | the URL is printed and **nobody is assigned** |
-
-On a mismatch, say what the issue carries now and that the assignment did not land.
-
-### move, to an open status
+## move, to an open status
 
 ```
 gh issue view <n> --repo <owner/repo> --json state,stateReason,assignees,labels
 gh issue edit <n> --repo <owner/repo> --remove-label <every status label found except the target> --add-label <target>
 ```
 
-A closed issue on the read is terminal: refuse.
+Refuse a closed issue. Never put the target in the removal list, and never remove a topic label.
+Moving to `backlog` or `ready` also adds `--remove-assignee <login>` for every login the read found.
 
-The removal list is every status label the read found **minus the target**. Never guess a name, and
-never put the target in both lists: `gh` sends the two as unordered mutations, and
-`--remove-label ready --add-label ready` usually strips the label at exit 0. That is the most common
-move there is, `move <id> ready` on an issue already `ready`. Subtracting the target also repairs an
-inconsistent issue: one carrying `backlog` and `ready`, moved to `ready`, loses `backlog`. Topic
-labels are never removed.
+## move, to a terminal status
 
-Moving to `backlog` or `ready` also clears every assignee: add `--remove-assignee <login>` for each
-login the read found, not only `@me`.
-
-### move, to a terminal status
-
-The read above is the only guard. `gh issue close` on an issue that is already closed prints "is
-already closed", exits 0, and keeps the old reason.
-
-Close first, then strip the status labels:
+After the same read and refusal, close first, then strip the status labels:
 
 ```
 gh issue close <n> --repo <owner/repo> --reason "completed"
@@ -292,38 +197,33 @@ gh issue close <n> --repo <owner/repo> --reason "duplicate" --duplicate-of <orig
 gh issue edit <n> --repo <owner/repo> --remove-label <each status label the read found>
 ```
 
-In this order, a failed strip leaves a closed issue with a stale label, which the prelude ignores.
-The other order can leave an open, unlabelled issue, which reads as `backlog`.
-
-### Verifying a move
+## Verifying a move
 
 ```
 gh issue view <n> --repo <owner/repo> --json state,stateReason,assignees,labels
 ```
 
-For an open status, expect exactly one status label, the target. For a terminal status, expect
-`CLOSED`, the `stateReason` you asked for, and no status label.
+An open target: exactly one status label, the target. A terminal target: `CLOSED`, the requested
+`stateReason`, and no status label.
 
-### comment
+## comment
 
 ```
 gh issue comment <n> --repo <owner/repo> --body-file <file>
 gh issue view <n> --repo <owner/repo> --json comments --jq '[.comments[].body]'
 ```
 
-The exact body must be in the list. Before retrying a failed comment, read the list first: the first
-attempt may have landed, and a duplicate comment cannot be taken back.
+The exact body must be in the list. Before retrying, read the list; the first attempt may have
+landed.
 
-### link
+## link
 
-Refuse a self-link. Then check for a cycle: run the `next` query, keep only `open`, and walk from
-the blocker through each entry's `blockers`. If the walk reaches the blocked issue, refuse and name
-the path. A blocker missing from `open` is closed or in another repository: read it with
-`gh issue view --json state,blockedBy` and keep walking only if it is open. GitHub itself refuses
-only a self-link and a two-issue cycle, with HTTP 422. It accepts a longer cycle.
+Refuse a self-link. For a cycle, run the `next` query and walk `open` from the blocker through each
+entry's `blockers`. Read a blocker missing from `open` with `gh issue view --json state,blockedBy`
+and keep walking only if it is open. Reaching the blocked issue is a cycle: refuse and name the
+path. GitHub refuses only self-links and two-issue cycles.
 
-The endpoint takes the blocker's numeric database id, which is neither the `#number` nor the
-`node_id`:
+The endpoint takes the blocker's database id, not its number or `node_id`:
 
 ```
 gh api repos/<owner>/<repo>/issues/<blocker number> --jq .id
@@ -331,5 +231,4 @@ gh api --method POST repos/<owner>/<repo>/issues/<n>/dependencies/blocked_by -F 
 gh issue view <n> --repo <owner/repo> --json blockedBy --jq '[.blockedBy.nodes[].number]'
 ```
 
-The blocker's number must be in the list. An edge that failed without a check would let `create`
-put the issue on the frontier as though nothing blocked it.
+The blocker's number must be in the list.

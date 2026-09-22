@@ -559,8 +559,7 @@ No status and no assignee in the block above.
 error. `$tracker next` after `$tracker move 98 ready`: expect it on the frontier, which it can only
 reach if the missing `assignee` read as nobody. Then `$tracker assign 98 someone`: expect the file
 to gain `assignee` and keep `milestone`, with `id` and `title` untouched.
-`local.md` says a partial block is authoritative for what it contains and silent about the rest,
-never evidence that a field was cleared. B12 proves the filename fallback for a missing `id`, and
+`local.md` gives each missing field its default and reads the fields that are present as written. B12 proves the filename fallback for a missing `id`, and
 this is the half B12 cannot reach, because a file with no frontmatter at all exercises the defaults
 by a different route.
 
@@ -727,9 +726,9 @@ not the whole project unscoped.
 Then the A23b question in Linear form: `list_milestones` takes only `project` and has no state or
 archived filter, so check whether a completed milestone, or one in an archived project, still comes
 back from it while its issues are still there. A milestone the resolver cannot see is reported as a
-name that does not exist, which stops the caller over a milestone that is real. `linear.md` says a
-completed milestone is still returned; a milestone in an archived project is unmeasured, so record
-what you find.
+name that does not exist, which stops the caller over a milestone that is real. A completed milestone is
+still returned (see the evidence section); a milestone in an archived project is unmeasured, so
+record what you find.
 
 **C11 comment lands and is verified.** `$tracker comment <id> "runbook note"`.
 Check with `list_comments`: the exact body present exactly once.
@@ -807,8 +806,8 @@ stop using it.
 **C20 create writes a description Linear keeps.** `$tracker create` with a ticket whose body has
 every section, a code fence, a line of non-ASCII text, and a `## Blocked by` entry naming a real
 ticket.
-Check with `get_issue`, and not byte for byte: `linear.md` says the body does not round-trip, so
-that comparison cannot pass and is not the test. Linear is allowed to insert blank lines around
+Check with `get_issue`, and not byte for byte: `linear.md` compares a description by its
+sections, because the body does not round-trip, so a byte comparison cannot pass and is not the test. Linear is allowed to insert blank lines around
 headings and to rewrite a bare `DEV-11` into a rich issue link. Expect every section heading
 present and in its original order, the fenced block's contents unchanged character for character,
 the non-ASCII line unchanged, and the native `blockedBy` relation on the issue. A dropped section,
@@ -1016,6 +1015,41 @@ in the run log below, so a rule can be re-checked when a backend changes.
   dogfood run of the predecessor. It has not been reproduced here, and the rule costs nothing.
 - **Linear milestone list.** `list_projects` with `includeMilestones: true` failed on a real
   workspace with `query is too complex, Complexity: 15879, Maximum allowed: 10000`.
+- **GitHub commands that exit 0 and do nothing.** `gh issue edit --remove-label` on a label the
+  issue lacks. `--add-assignee` with a real user who lacks push access: the URL prints and nobody is
+  assigned (a login that does not exist exits 1 with
+  `Could not resolve to a user or bot with the login '<x>'`). `gh issue close` on a closed issue
+  prints "is already closed" and keeps the old reason. `gh issue view --comments` on an issue with no
+  comments prints nothing.
+- **GitHub concurrent mutations.** `gh` sends label or assignee additions and removals as two
+  unordered mutations, so a name in both lists ends in whichever lands last.
+  `--remove-label ready --add-label ready` stripped the label in 8 runs of 8.
+- **GitHub milestones.** `--milestone <number>` is turned back into a title search.
+  `gh issue create --milestone` and `gh issue edit --milestone` exit 1 with `'<title>' not found` on
+  a closed milestone. The milestones endpoint returns open milestones unless given `state=all`.
+- **GitHub limits and bodies.** `gh issue list` returns newest first and defaults to `--limit 30`, so
+  truncation drops the lowest numbers. `blockedBy.nodes` holds at most 50 entries. A multi-line body
+  does not survive `--body`. Comparing a body through `--jq .body > file` adds a trailing newline and
+  `"$(...)"` strips one, so both report a difference on an identical body.
+- **GitHub terminal order.** Closing before stripping labels means a failed strip leaves a stale
+  label on a closed issue, which the prelude ignores. The other order can leave an open, unlabelled
+  issue, which reads as `backlog`.
+- **Linear archive and descriptions.** Linear archives completed issues after inactivity, and a
+  deleted issue is archived too; the tools cannot tell the two apart. `list_issues` defaults
+  `includeArchived` to `false` (F23). Linear rewrites a bare issue id into a rich link and adds blank
+  lines around headings.
+- **Linear milestones.** `list_issues` rejects `milestone` with `Unrecognized key: "milestone"`. A
+  milestone whose only issue is Done still comes back from `list_milestones`, with `progress: 100`.
+- **Linear duplicate transition.** `Cannot create an issue in a duplicate state.` when creating in it;
+  `Issues can only be moved to a duplicate state when a duplicate issue relation exists.` when
+  setting the state first. Setting `duplicateOf` moves the status by itself and clears other
+  relations such as `relatedTo` with no error.
+- **Linear assignment.** An issue has one assignee, so the GitHub tie-break cannot fire. Two sessions
+  that write at once both succeed and the last write wins; a write between one session's write and
+  its read is invisible.
+- **Local unquoted values.** A YAML parser reads `0123` as `83`, `null` and `true` as a null and a
+  boolean, `2026-09-18` as a date, and fails on a value starting with `-`, `[`, or `{`, or containing
+  `: `. Trailing spaces are stripped.
 - **Local quoting.** 23 titles round-tripped byte-identical through a YAML parser: colons, hashes,
   `@`, apostrophes, double quotes, percent signs, leading dashes and question marks, brackets and
   braces, leading and trailing spaces, backslashes, pipes, angle brackets, tabs, anchors and
