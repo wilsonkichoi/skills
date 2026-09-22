@@ -852,6 +852,9 @@ Expect the reply to name the missing edge and say the status was not applied. Ch
 when the reply mentions a warning, because between the write and the reply it was on the frontier
 with nothing blocking it. If Linear rejects the whole call and no issue exists, that also passes.
 Record which happened, and the exact `warnings` or error text, in the run log.
+Linear refuses an unknown id with an error, as the 0.0.21 run found, so this fixture passes on a
+one-call create too and does not discriminate. A blocker Linear refuses only in `warnings` would.
+No such fixture is known yet; record any you find.
 
 **C25 [MANUAL] list with no status covers an unmapped status.** Needs C3's extra status, such as
 `Ready to Merge` under `started`. Put one issue in it with `save_issue`, then `$tracker list`.
@@ -1025,6 +1028,143 @@ Newest first, by the timestamp in each entry's heading: ISO 8601 with the local 
 shape `CHANGELOG.md` uses, so two runs on one day stay distinguishable. One entry per run. The
 runbook above is the reusable procedure and is not edited by a run; everything a run learned goes
 here.
+
+### 2026-09-21T23:47:33-07:00 Targeted 0.0.21 run, Codex
+
+```
+TRACKER VALIDATION
+backend: github                  harness: codex
+date: 2026-09-21T23:47:33-07:00  skill ref: e945bef (feat/tracker)
+
+PASS  8
+FAIL  0
+SKIP  1
+
+failures:
+  none
+skipped:
+  A32  precondition was not met: independent next read still returned existing issue #13
+
+VERDICT: RED
+```
+
+Scope: A6, A9, A10, A12, A20, A28, A29b, A30, and A32. All invocations used the installed
+`.agents/skills/tracker/SKILL.md` under `~/tmp/tracker-val-a3`, confirmed by the returned installed
+skill path. The backend was `wilsonkichoi/tracker-gh`.
+
+| Case | Verdict | Independent evidence |
+|---|---|---|
+| A6 | PASS | Fixtures #47 and #48. `gh issue view 48 --repo wilsonkichoi/tracker-gh --json blockedBy --jq '[.blockedBy.nodes[].number]'` read `[47]`; the blocker read had no blockers. |
+| A9 | PASS | After `gh issue view 47` and `48` reads, the primary-store `gh issue list --state open` query returned frontier containing #47 and held #48 behind open #47. |
+| A10 | PASS | After `gh issue view 47` read `state: OPEN`, `gh issue close 47 --reason completed`, and verification read `state: CLOSED,stateReason: COMPLETED`, the same primary-store query returned #48 in the frontier. Its blocker node remained #47 with `state: CLOSED` and `totalCount: 1`. |
+| A12 | PASS | Fixture #50. `gh issue view 50 --repo wilsonkichoi/tracker-gh --json labels` read `ready,in-progress`; independent `next`, `list ready`, and `list backlog` outputs put #50 in `inconsistent`, and `show 50` named both labels. |
+| A20 | PASS | Fixture #51. `gh issue view 51 --repo wilsonkichoi/tracker-gh --json assignees` read `[]` after bare assign then move to backlog. |
+| A28 | PASS | Fixture #52. The wrong `from` read refused without a write. After bare `assign 52 none`, `gh issue view 52 --repo wilsonkichoi/tracker-gh --json assignees` read `[]`. |
+| A29b | PASS | Fixture #53. `gh issue view 53 --repo wilsonkichoi/tracker-gh --json assignees,labels` read assignee `wilsonkichoi` and label `ready`; the independent frontier read excluded #53 and `list ready` included it. |
+| A30 | PASS | Fixture #54. The first `show` read `comments: []`; after the comment, `gh issue view 54 --repo wilsonkichoi/tracker-gh --json comments --jq '[.comments[].body]'` read exactly `Codex A30 show probe`, and the second `show` contained the ticket and one comment with author. |
+| A32 | SKIP | The hand-built fixtures were #55 P blocked by #56 Q, #57 R reserved, and #58 S in the #58 -> #59 -> #60 -> #58 cycle. The independent precondition query returned frontier `[#13]`, so the case could not run. |
+
+Part 1 audit:
+
+- CHANGED: `SKILL.md` changed `create` from one generic ordering rule to backend-specific behavior that may write edges with `backlog` and applies the requested status only after edge verification. Cases A6, C20, C23, and C24 cover this change.
+- CHANGED: `local.md` now permits one file write containing the requested status and `blocked_by`, instead of describing a backlog write followed by a later status application. Cases B2 and B4 cover the relevant file state.
+- CHANGED: `linear.md` now creates at `Backlog`, verifies relations, then applies the requested status. The old text described one `save_issue` with the requested state and relations together. Cases C20, C23, and C24 cover this change.
+- DROPPED: the status table's `Who moves a ticket into it` column and its actor guidance. No listed case covers it.
+- DROPPED: the local setup warning that local is single-session. No listed case covers setup messaging.
+- DROPPED: the GitHub note that sub-issues are deferred until `plan` is ported. No listed case covers sub-issues.
+- DROPPED: the `implement`-specific example in the loose ticket-shape rule. The general one-line-ticket rule remains.
+- Retained in the new text: backend stop conditions, one-sibling resolution, numeric IDs, terminal states, inconsistent status handling, milestone stops, primary-store reads, pagination limits, the shared GitHub jq status prelude, blocker null and truncation guards, exact body verification, assignment and move command shapes, comment verification, native dependency IDs, Linear status-name matching, warning reads, pagination, archive handling, relation walks, milestone resolution, duplicate transition errors, local frontmatter boundaries, quoting, identity, slugs, partial fields, per-verb file operations, YAML re-reads, and the no-commit rule.
+- No finding: measurements, dates, history, and backend error strings removed from the skill files were found in `validation/tracker.md`, as expected.
+
+Deviations:
+
+- D-1 invocation gate lifted by editing the installed agents/openai.yaml, all cases.
+- D-2 one Codex session, not one process per command.
+- D-3 A32's frontier precondition was set by hand, but existing #13 was not cleared. A32 is SKIP, never PASS.
+- D-4 GitHub fixtures #47, #48, and #50 through #62 were closed as `not planned` after the reads. Existing ready labels on #11, #12, #22, #28, and #29 were restored.
+
+```
+TRACKER VALIDATION
+backend: local                   harness: codex
+date: 2026-09-21T23:47:33-07:00  skill ref: e945bef (feat/tracker)
+
+PASS  2
+FAIL  1
+SKIP  0
+
+failures:
+  B15  expected assignee `Wilson Choi`  actual `me`
+skipped:
+  none
+
+VERDICT: RED
+```
+
+Scope: B2, B4, and B15 in `~/tmp/tracker-s-local`. The installed skill path was confirmed as
+`/Users/wchoi/tmp/tracker-s-local/.agents/skills/tracker/SKILL.md`.
+
+| Case | Verdict | Independent evidence |
+|---|---|---|
+| B2 | PASS | Fresh fixture `docs/dev-agents/issues/019-codex-b2-ticket-a-1790059066256.md`. The runbook PyYAML parse read `id: '019'` and `status: 'backlog'`. |
+| B4 | PASS | Fresh fixtures #019 and #021. The runbook PyYAML parse of `docs/dev-agents/issues/021-codex-b4-corrected-1790059198059.md` read `blocked_by: ['019']`; the body read `## Blocked by` with `#019`. |
+| B15 | FAIL | Hand-set fixture `docs/dev-agents/issues/018-b15-reservation.md`. Independent PyYAML parse after the final explicit assign read `status: 'ready'` and `assignee: 'me'`; `git config user.name` reads `Wilson Choi`. The wrong `from` form left the file unchanged before the final write. |
+
+Part 1 audit: same audit result as the GitHub block above. B2 and B4 were run because the local
+create rule changed. B15 was run because the explicit assignment rule was in scope.
+
+Deviations:
+
+- D-1 invocation gate lifted by editing the installed agents/openai.yaml, all cases.
+- D-2 one Codex session, not one process per command.
+- D-3 B15's `ready` and unassigned precondition was hand-written in `018-b15-reservation.md`, as required by the case dependency.
+- D-4 The first B4 fixture used blocker `016` by mistake. It was not scored. Corrected fixture #021 used blocker `019` and was scored.
+
+```
+TRACKER VALIDATION
+backend: linear                  harness: codex
+date: 2026-09-21T23:47:33-07:00  skill ref: e945bef (feat/tracker)
+
+PASS  4
+FAIL  0
+SKIP  2
+
+failures:
+  none
+skipped:
+  C14 second half  [MANUAL] needs a second workspace identity
+  C25  [MANUAL] skipped as instructed
+
+VERDICT: GREEN
+```
+
+Scope: C14 first half, C20, C23, C24, and the requested no-status list call check in
+`~/tmp/tracker-cleg`, team `c-leg`, project `cleg test`, MCP server `linear-wkc-sandbox`. The
+installed skill path was confirmed as `/Users/wchoi/tmp/tracker-cleg/.agents/skills/tracker/SKILL.md`.
+
+| Case | Verdict | Independent evidence |
+|---|---|---|
+| C14 first half | PASS | Fixture `CLE-16`. `get_issue(id: CLE-16, includeRelations: true)` read `assignee: wilson choi`, `status: Todo`, and `project: cleg test`. The Todo list read contained CLE-16, which is the independent `list ready` result. |
+| C20 | PASS | Fixtures `CLE-17` and `CLE-18`. `get_issue(CLE-18, includeRelations: true)` read status `Backlog`, native `blockedBy: [CLE-17]`, all requested headings in order, unchanged fenced code contents, and unchanged non-ASCII text. |
+| C23 | PASS | Fixture `CLE-19`. `get_issue(CLE-19, includeRelations: true)` read project `cleg test`, milestone `Codex C23 M1 1790059329815`, and status `Todo`. The independent Todo list with project and `projectMilestone` fields contained CLE-19. |
+| C24 | PASS | No issue matched the exact C24 title in the independent Backlog list. The exact tracker error was `Error: Could not find issue "CLE-99999" for blockedBy`, with `isError: true`; no warnings field or issue was returned. |
+| C14 second half | SKIP | [MANUAL] second workspace member required. |
+| C25 | SKIP | [MANUAL] skipped as instructed. |
+
+Auxiliary no-status list check, not scored as C25: `list_issue_statuses(team: "c-leg")` returned
+Backlog, Todo, Ready to Merge, In Review, In Progress, Done, Canceled, and Duplicate. Exactly one
+`list_issues` call was made for each of Backlog, Todo, Ready to Merge, In Review, and In Progress,
+with no call for Done, Canceled, or Duplicate. All five pages returned `hasNextPage: false`.
+
+Part 1 audit: same audit result as the GitHub block above. C20, C23, and C24 were added because
+the Linear create ordering changed.
+
+Deviations:
+
+- D-1 invocation gate lifted by editing the installed agents/openai.yaml, all cases.
+- D-2 one Codex session, not one process per command.
+- D-3 C14, C20, C23, and C24 used fresh fixtures. CLE-16 and CLE-17 were created directly with `save_issue`; the C23 milestone was created directly with `save_milestone`.
+- D-4 C25 and the C14 second half were skipped as instructed.
+
 
 ### 2026-09-21T16:42:13-07:00 Cycle and empty-frontier cases on all three backends, Codex
 

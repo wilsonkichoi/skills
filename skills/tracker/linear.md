@@ -125,9 +125,10 @@ save_issue { team, project, title, description, state: 'Backlog', blockedBy, mil
 ```
 
 Check `warnings`, then verify with `get_issue` and `includeRelations: true`: every `blockedBy` entry
-and the description's sections. A relation Linear rejects comes back as a success with the reason
-in `warnings`, so the issue exists without that edge. That is why the requested status waits for
-this read. When every edge is there and the requested status is not Backlog, apply it with
+and the description's sections. Linear refuses some relations with an error, such as an id that
+does not exist, but refuses others inside a successful call, with the reason only in `warnings`, as
+it does a self-link. Then the issue exists without that edge. That is why the requested status
+waits for this read. When every edge is there and the requested status is not Backlog, apply it with
 `save_issue { id, state }` and read the status back.
 
 ### Links

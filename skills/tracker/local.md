@@ -81,8 +81,9 @@ file is UTF-8.
 ## Identity
 
 There is no user account on this backend, so `assignee` is the value of `git config user.name`.
-When that is unset, stop and say so rather than writing an empty name. `assign <id> <who>` writes
-the name as given, because there is no account list to check it against.
+When that is unset, stop and say so rather than writing an empty name. `me` means that value in
+every form, `assign <id> me from <holder>` included; never write the word `me`. Any other `<who>`
+is written as given, because there is no account list to check it against.
 
 ## Ids and filenames
 
