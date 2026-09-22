@@ -102,7 +102,9 @@ purpose.
 assignee, which is how you hand work back when you cannot finish it, or take it off someone who
 did half of it. `ready` has to clear it: `next` looks for `ready` with nobody assigned, so a
 `ready` ticket with a name still on it is invisible to the frontier and to that person both.
-Marking a duplicate takes the original's id: `tracker move 42 duplicate 17`.
+Marking a duplicate takes the original's id: `tracker move 42 duplicate 17`. On Linear, that moves
+42's blockers, blocked tickets, and related tickets onto 17. The tracker names them before it writes,
+and refuses when a moved edge would close a cycle.
 
 **`link`** records that one ticket is blocked by another: `tracker link 42 blocked-by 17`. It
 refuses an edge that would close a cycle and names the loop it found, because tickets in a cycle

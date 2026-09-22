@@ -224,9 +224,11 @@ it has to read as an ordinary topic label and survive every write untouched.
 
 **A12 multi-status issue never reaches a result, and all three verbs agree.**
 `gh issue create --repo <R> --title "two statuses" --body x --label ready --label in-progress`
-then `$tracker next`, `$tracker list ready`, `$tracker list backlog`, and `$tracker show <that id>`.
-Expect the issue in none of the three result sets, named as inconsistent by all four verbs, and both
-labels named by `show`. A verb that reports it as `ready`, as `backlog`, or not at all is a FAIL:
+then `$tracker next`, `$tracker list ready`, `$tracker list backlog`, `$tracker list` with no
+status, and `$tracker show <that id>`.
+Expect the issue in none of the four result sets, named as inconsistent by all five verbs, and both
+labels named by `show`. The unfiltered `list` is its own branch of the query: before 0.0.26 it put
+the issue in both `tickets` and `inconsistent`. A verb that reports it as `ready`, as `backlog`, or not at all is a FAIL:
 one shared status test is supposed to make disagreement impossible.
 
 **A13 multi-status issue is repairable.** `$tracker move <that id> ready`.
@@ -255,6 +257,22 @@ pre-read is the only guard.
 **A17b a bad status name is refused.** On an open `backlog` issue, `$tracker move <id> in reviewww`.
 Expect a refusal that lists the seven statuses, and `gh issue view <id> --json labels` unchanged.
 Then `$tracker move <id> in progress`: expect exactly one status label, `in-progress`.
+
+**A17c a status is only read from a status position.** Create milestones `M1` and `in reviewww`
+with `gh api repos/<R>/milestones -f title=...`, and put one open issue in each. Then:
+
+1. `$tracker create "Fix in review"`: expect title `Fix in review`, no status label.
+2. `$tracker create "Fix" "in review"`: expect title `Fix`, status label `in-review`.
+3. `$tracker create Fix in review`: expect a question asking whether `in review` is the status or
+   part of the title, and no new issue until it is answered. Check with
+   `gh issue list --repo <R> --state all --limit 200 --json number,title`.
+4. `$tracker create "Fix" done`: expect a refusal and no new issue. `create` takes open statuses only.
+5. `$tracker list M1`, `$tracker list "in reviewww"`: expect each milestone's issue, scoped. The
+   second is a milestone, not a refused status.
+6. `$tracker list no-such-thing`: expect a stop naming both the milestones and the seven statuses.
+7. `$tracker list "in progress" M1`: expect both filters applied, with the milestone text unchanged.
+
+Never score a quoted retry as a PASS for the unquoted call in step 3.
 
 **A18 human-made ticket reads as backlog.** Create an issue in the web UI, no label, one-line body.
 `$tracker show <id>` expect `backlog`; `$tracker next` expect it absent; `$tracker list backlog`
@@ -467,8 +485,12 @@ gives `010--and--and-.md` for the same ticket. Nothing reads the slug, so a wron
 other verdict, which is exactly why it needs a check: two runs of this leg produced different
 filenames for these same ten titles and neither noticed, which is F16.
 
-**B4 edges live in the frontmatter.** `$tracker create` ticket B naming A under `## Blocked by`.
-Check the file: `blocked_by` holds A's id, and the `## Blocked by` body section matches.
+**B4 edges live in the frontmatter.** `$tracker create` ticket B naming A under `## Blocked by`,
+with `ready` as the status.
+Check the file: `blocked_by` holds A's id, `status` is `'ready'`, and the `## Blocked by` body
+section matches. Check the transcript: one write created the file with both `status` and
+`blocked_by`, not a `backlog` write followed by a promotion. Local is the one backend `SKILL.md`
+lets write both together.
 
 **B5 Related has no frontmatter field.** `$tracker create` ticket F with a `## Related` section
 naming A and **no `## Blocked by` section at all**, not an empty one.
@@ -507,7 +529,9 @@ assignee is a FAIL; the skill should have stopped and said the identity was unre
 
 **B9b a bad status name is refused.** On a `backlog` ticket, `$tracker move <id> in reviewww`.
 Expect a refusal that lists the seven statuses and the file's SHA-256 unchanged. Then
-`$tracker move <id> in progress`: expect the YAML parse to read `status: 'in-progress'`.
+`$tracker move <id> in progress`: expect the YAML parse to read `status: 'in-progress'`. Then
+`$tracker create Fix in review`: expect a question about whether `in review` is the status, and no
+new file until it is answered.
 
 **B10 comment.** `$tracker comment <B> "a note"`. Check the file: the body is under `## Comments`
 with a `### <date> <author>` heading.
@@ -720,12 +744,23 @@ cannot have filtered correctly, even if the answer looks right on one sample.
 `includeRelations: true`.
 Expect the edge under `relations.blockedBy`.
 
-**C9 the duplicate transition destroys other relations.** Give a ticket a `relatedTo` edge, confirm
-it with `get_issue`, then `$tracker move <it> duplicate <original>` and read it again.
-Expect `duplicateOf` set, the status `Duplicate` rather than `Canceled`, and **`relatedTo` emptied**.
-Linear clears the other relations with no error and no mention in the response. Expect the skill to
-have read the relations first and to report what was lost. A run that reports a clean move is a
-FAIL: it means nothing looked.
+**C9 the duplicate transition moves relations onto the original.** Create an original O, and a
+ticket X with `relatedTo` R, `blockedBy` B, and `blocks` D. Confirm with `get_issue`, then
+`$tracker move <X> duplicate <O>` and read X, O, and D again with `includeRelations: true`.
+Expect X at `Duplicate` rather than `Canceled`, `duplicateOf` O, and no relations left on X. Expect O
+to carry `relatedTo` R, `blockedBy` B, and `blocks` D. Linear moves them with no mention in the
+response. Expect the skill to have named all three before the write, to have said that B now blocks
+O, and to have made no call with `state`. A reply that calls the relations lost, or reports a clean
+move, is a FAIL: it did not read the original afterwards.
+
+Then the dropped edge. Create M blocked by O, and Y blocked by M. `$tracker move <Y> duplicate <O>`
+cannot move `blockedBy` M onto O, because O already blocks M. Expect the skill to name that edge as
+dropped before the write, and the move to go ahead. Afterwards O is still not blocked by M.
+
+Then the refusal half. Create N blocked by O, P blocked by N, and Z blocked by P.
+`$tracker move <Z> duplicate <O>` would make O blocked by P, closing O → P → N → O, and O has no
+relation with P for Linear to drop it on. Expect a refusal naming that path, Z still at its old
+status, and O still not blocked by P. Linear writes long cycles, so this refusal is the skill's own.
 
 **C10 milestone scoping.** `$tracker list ready "<milestone name>"`.
 Expect only that milestone's issues. Then pass a milestone name that does not exist: expect a stop,
@@ -1049,8 +1084,14 @@ in the run log below, so a rule can be re-checked when a backend changes.
   milestone whose only issue is Done still comes back from `list_milestones`, with `progress: 100`.
 - **Linear duplicate transition.** `Cannot create an issue in a duplicate state.` when creating in it;
   `Issues can only be moved to a duplicate state when a duplicate issue relation exists.` when
-  setting the state first. Setting `duplicateOf` moves the status by itself and clears other
-  relations such as `relatedTo` with no error.
+  setting the state first. Setting `duplicateOf` moves the status by itself. It also moves the
+  issue's relations onto the original, which earlier entries recorded as "cleared" because they read
+  only the duplicate. Measured 2026-09-22 on team `c-leg`: CLE-57, with `relatedTo` CLE-54,
+  `blockedBy` CLE-55, and `blocks` CLE-56, was marked a duplicate of CLE-53. Afterwards CLE-57 had no
+  relations, and CLE-53 had all three. CLE-58, blocked by CLE-53 and related to CLE-54, left CLE-53
+  with no self-edge and one `relatedTo` CLE-54. CLE-60, blocked by CLE-59 where CLE-59 was blocked
+  by CLE-53, left CLE-53 without CLE-59 as a blocker: the edge that would have closed the cycle was
+  dropped, with no warning.
 - **Linear assignment.** An issue has one assignee, so the GitHub tie-break cannot fire. Two sessions
   that write at once both succeed and the last write wins; a write between one session's write and
   its read is invisible.
@@ -1074,6 +1115,24 @@ Newest first, by the timestamp in each entry's heading: ISO 8601 with the local 
 shape `CHANGELOG.md` uses, so two runs on one day stay distinguishable. One entry per run. The
 runbook above is the reusable procedure and is not edited by a run; everything a run learned goes
 here.
+
+### 2026-09-22T11:48:12-07:00 Independent review of the trim, and 0.0.26 fixes, Claude Code
+
+Not a skill run. A second model reviewed `git diff 3819e4e 209a9df -- skills/tracker/` and raised
+five findings, F1 to F5. This entry records what was checked directly against a backend or the
+query text, and which cases still need a run through the installed skill.
+
+| Finding | Disposition | Evidence |
+|---|---|---|
+| F1 Linear duplicate warning lost its scope | Accepted, and corrected: the relations move, they are not cleared | Direct MCP calls through `linear-wkc-sandbox`, team `c-leg`, project `cleg test`, fixtures CLE-53 to CLE-60. See the "Linear duplicate transition" evidence entry. C9 rewritten. |
+| F2 local `create` contradicts the staged sequence | Accepted | Text only. `SKILL.md` now names the one-record exception, and failure reports the status the ticket now has. B4 extended. |
+| F3 `move backlog` adds a `backlog` label | Rejected | `move` has added the target label since before the trim, and A20 recorded `labels: ["backlog"]` as a PASS on 2026-09-19. The prelude reads both shapes as `backlog`. The `create` sentence was reworded so it no longer reads as a rule for every write. |
+| F4 status normalization has no argument boundary | Accepted | Text only. `SKILL.md` limits the rule to status positions, makes a non-status `list` argument a milestone, and asks on an ambiguous unquoted `create`. A17c added, B9b extended. |
+| F5 unfiltered GitHub `list` returns inconsistent issues as tickets | Accepted | The fix plan's `node` script ran the `list` query from `github.md` at `3819e4e` and `209a9df` against three in-memory issues. Both printed `tickets` `[12,13,14]` with 12 also under `inconsistent`. With `select(status != "inconsistent")` both printed `tickets` `[13,14]`, `inconsistent` `[12]`, `rows` 3. A12 extended. |
+
+Not run through the installed skill on any harness: A12's unfiltered `list`, A17c, B4, B9b's
+`create` step, and all three parts of C9. Each is SKIP until a run scores it. The CLE-5x fixtures are
+left in `cleg test`: CLE-57, CLE-58, and CLE-60 at `Duplicate`, the rest at `Backlog`.
 
 ### 2026-09-22T10:19:20-07:00 Re-run of the 0.0.25 fixes, Codex
 

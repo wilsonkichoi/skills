@@ -48,8 +48,8 @@ gh issue list --repo <owner/repo> --state open --limit 200 \
          inconsistent: [.[] | select(status == "inconsistent") | .number]}'
 ```
 
-With no status, drop the `select` from `tickets`. For a terminal status, use `--state closed` and
-drop `inconsistent`.
+With no status, select `status != "inconsistent"` in `tickets`, so an inconsistent issue appears
+only under `inconsistent`. For a terminal status, use `--state closed` and drop `inconsistent`.
 
 For a milestone, resolve the title first:
 
@@ -120,7 +120,8 @@ gh issue create --repo <owner/repo> --title "<title>" --body-file <file> [--mile
 ```
 
 Create with no status label, run `link` once per `## Blocked by` entry without the cycle walk, then
-add the requested status label. A `backlog` ticket stays unlabelled: add no label. Verify by number:
+add the requested status label. When the requested status is `backlog`, add no label. Verify by
+number:
 
 ```
 gh issue view <n> --repo <owner/repo> --json number,title,labels,blockedBy

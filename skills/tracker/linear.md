@@ -57,7 +57,7 @@ Read `warnings` in every `save_issue` result: a success can carry a refusal. Ver
 | `list` | `list_issues` with `state` and `project` |
 | `show` | `get_issue` with `includeRelations: true`, plus `list_comments` |
 | `comment` | `save_comment`, then find the exact body with `list_comments`. Before retrying, check whether the first attempt landed |
-| `move` | `get_issue`, refuse a move out of Done, Canceled, or Duplicate, then `save_issue` with the status name, then `get_issue`. Moving to `backlog` or `ready` also sets `assignee: null` |
+| `move` | `get_issue`, refuse a move out of Done, Canceled, or Duplicate, then `save_issue` with the status name, then `get_issue`. Moving to `backlog` or `ready` also sets `assignee: null`. For `duplicate`, follow its own section below instead |
 
 ### next
 
@@ -120,9 +120,20 @@ Never pass `milestone` to `list_issues`, and never use `list_projects` with `inc
 
 ### duplicate
 
-Read the issue's relations first, and name the ones the move will clear. Then one call, with no
+Setting `duplicateOf` moves the issue's `blockedBy`, `blocks`, and `relatedTo` relations onto the
+original. It drops a relation to the original itself, and one to a ticket the original already has a
+relation with. Nothing in the response says so.
+
+Before the write, `get_issue` both issues with `includeRelations: true`. Name each relation that
+will move and each that will be dropped, and say that every moved `blockedBy` entry now blocks the
+original. Treat each `blockedBy` entry that will move as `link <original> blocked-by <it>`, and
+each `blocks` entry that will move as `link <it> blocked-by <original>`, and run the `link` cycle
+walk on each. A cycle refuses the move: write nothing and name the path. Then one call, with no
 `state`:
 
 ```
 save_issue { id: <id>, duplicateOf: <original> }
 ```
+
+Verify with `get_issue` on both: the issue is Duplicate with `duplicateOf` set, and the original
+carries every relation you said would move.

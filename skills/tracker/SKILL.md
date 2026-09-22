@@ -51,6 +51,12 @@ format instead, even when one is in the repository. No verb here can see a ticke
 A status argument must be one of these seven, compared case-insensitively, with a space read as a
 hyphen. Refuse anything else, a near miss included, list the seven, and write nothing.
 
+That rule covers only an argument in a status position, never ticket text or a milestone name. For
+`list`, an argument that is not a status is a milestone, and when it matches no milestone either,
+the stop names the seven statuses as well as the milestones. For `create`, when unquoted ticket text
+ends in words that spell a status, as in `create Fix in review`, ask whether they are the status or
+part of the title, and write nothing until answered.
+
 A ticket can move between the four open statuses in any direction. Do not refuse a move because it
 skips a status.
 
@@ -128,8 +134,10 @@ answer.
 
 **`create`** writes the ticket at `backlog`, then one `link` per `## Blocked by` entry, then the
 requested status last. A backend may write the edges together with the `backlog` status, but it
-applies the requested status only after a read confirms every edge. If a step fails, report the id,
-which edges landed, and that the status was not applied.
+applies the requested status only after a read confirms every edge. A backend that keeps the status
+and the edges in one record, as `local` does, writes both in one write instead, since no read can
+see one without the other. If a step fails, report the id, which edges landed, and the status the
+ticket now has.
 
 **`link`** refuses a self-link. Before writing `link <A> blocked-by <B>`, start at B and follow its
 open blockers, then theirs, and so on. If the walk reaches A, refuse, write nothing, and name the
