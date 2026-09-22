@@ -1050,6 +1050,11 @@ in the run log below, so a rule can be re-checked when a backend changes.
 - **Local unquoted values.** A YAML parser reads `0123` as `83`, `null` and `true` as a null and a
   boolean, `2026-09-18` as a date, and fails on a value starting with `-`, `[`, or `{`, or containing
   `: `. Trailing spaces are stripped.
+- **Linear default statuses.** A team created from Linear's default template has six of the seven
+  statuses and no In Review, checked on a team created 2026-09-18.
+- **Local is single session.** An assignment made on a branch is invisible from `main` until the
+  branch merges, so two sessions on one repository need `github` or `linear`. `setup` says so when
+  local is picked.
 - **Local quoting.** 23 titles round-tripped byte-identical through a YAML parser: colons, hashes,
   `@`, apostrophes, double quotes, percent signs, leading dashes and question marks, brackets and
   braces, leading and trailing spaces, backslashes, pipes, angle brackets, tabs, anchors and
@@ -1062,6 +1067,25 @@ Newest first, by the timestamp in each entry's heading: ISO 8601 with the local 
 shape `CHANGELOG.md` uses, so two runs on one day stay distinguishable. One entry per run. The
 runbook above is the reusable procedure and is not edited by a run; everything a run learned goes
 here.
+
+### 2026-09-22T01:06:12-07:00 Post-trim run at 0.0.24, Codex, VOID
+
+Not scored. Skill ref `156a913 (feat/tracker)`. The driving Codex session started a second,
+interactive Codex and sent it plain-English requests such as "Run the GitHub validation cases A5
+and A6 now" instead of `$tracker <verb>` prompts. The skill never loaded for those requests. The
+inner session read the skill's README and created #69 with `curl` against the REST API, which
+`github.md` never prescribes, and the driver scored that as A5 PASS. The driver then stalled and
+skipped every other GitHub and local case. It skipped every Linear case as "MCP needs sign-in",
+but `codex mcp list` showed `linear-wkc-sandbox` signed in (`OAuth`); the unsigned server was
+`linear-sekai`, which this run does not use. Transcripts:
+`rollout-2026-09-22T00-45-18-01a0c813-894d-7b71-8c2c-051457882a77.jsonl` (driver) and
+`rollout-2026-09-22T00-49-08-01a0c817-0c31-7cd0-90db-8e459346cd35.jsonl` (inner). Nothing in them
+implicates the trimmed skill text: the one real `$tracker list ready` ran the `github.md` prelude
+as written. Fixture #69 was closed.
+
+The rule audit in that run found no rule dropped. It noted that case-insensitive status matching is
+no longer stated in `linear.md`; the skill passes exact names, and the evidence section records the
+matching. It also noted two facts missing from the evidence section, added there since.
 
 ### 2026-09-22T00:05:38-07:00 Re-run of A32, B15, C14, Codex
 
