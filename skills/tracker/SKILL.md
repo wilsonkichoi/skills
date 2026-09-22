@@ -54,11 +54,11 @@ skips a status.
 The three terminal statuses are final. No verb moves a ticket out of one or reopens it; that is a
 person's decision.
 
-A ticket with no recorded status is `backlog`, so `list backlog` finds tickets nobody labelled.
+A ticket with no recorded status is `backlog`.
 
 A ticket recorded in two statuses at once is **inconsistent** and has no status. `list` and `next`
 never return it as a normal ticket and never drop it silently: they name it separately, and
-`move <id> <status>` repairs it. Each backend file defines one status test, and every verb uses it.
+`move <id> <status>` repairs it.
 
 There is no `blocked` status. Anything that blocks a ticket, other work or a decision only a person
 can make, becomes its own ticket, joined with `link`. A decision ticket sits in `backlog`,
@@ -124,16 +124,14 @@ tickets in each other status. "Nothing to do" and "everything is stuck" must nev
 answer.
 
 **`create`** writes the ticket at `backlog`, then one `link` per `## Blocked by` entry, then the
-requested status last. A ticket that reaches `ready` before its edges exist can be picked up as
-though nothing blocked it. A backend may write the edges together with the `backlog` status, but it
+requested status last. A backend may write the edges together with the `backlog` status, but it
 applies the requested status only after a read confirms every edge. If a step fails, report the id,
 which edges landed, and that the status was not applied.
 
-**`link`** refuses a self-link and any edge that would close a cycle. Before writing
-`link <A> blocked-by <B>`, start at B and follow its open blockers, then theirs, and so on. If the
-walk reaches A, refuse, write nothing, and name the path. A ticket in a terminal status ends that
-branch of the walk. Run the check yourself: no backend refuses every cycle. `create` skips the
-walk, because no ticket can be blocked by one that does not exist yet.
+**`link`** refuses a self-link. Before writing `link <A> blocked-by <B>`, start at B and follow its
+open blockers, then theirs, and so on. If the walk reaches A, refuse, write nothing, and name the
+path. A ticket in a terminal status ends that branch of the walk. Run the check yourself: no backend
+refuses every cycle. `create` skips the walk.
 
 **`assign`** has four forms. Only the bare form changes status:
 
@@ -144,13 +142,8 @@ walk, because no ticket can be blocked by one that does not exist yet.
 | `assign <id> <who> from <holder>` | Take the ticket from `<holder>`. Status unchanged, also when `<who>` is `me` |
 | `assign <id> none [from <holder>]` | Unassign. Needs `from <holder>` unless the holder is you |
 
-The bare form sets both fields in one write because it is the only form that races another session.
-The explicit forms only record who holds the ticket, because handing work over does not mean it
-has started.
-
 **A `ready` ticket with an assignee is reserved.** `assign <id> <who>` on a `ready` ticket keeps it
-off the frontier for that person, and `show` and `list` name the holder. Moving a ticket into
-`ready` means the opposite, that nobody holds it, so `move` clears the assignee.
+off the frontier for that person, and `show` and `list` name the holder.
 
 **A holder who is not you must be named.** Any form that would replace an existing assignee refuses
 unless `from <holder>` names them, compared case-insensitively. The write removes every holder the
@@ -164,14 +157,8 @@ read found except the new one.
    sorts first, compared case-insensitively, keeps the ticket. If that is not you, remove your own
    assignment, leave the status, and report.
 
-This is not mutual exclusion. Two sessions can both pass the precondition and both write. The
-tie-break only makes them agree afterwards on one owner. It needs a backend that stores a list of
-assignees and sessions on distinct accounts; the backend file says when it cannot fire. Where it
-cannot, and on the explicit forms, the branch and the open pull request are the collision signal.
-
-**`move`** reads the current status first, because the write needs it and because nothing else
-protects the terminal statuses. Refuse any move out of `done`, `cancel`, or `duplicate`.
-`move <id> duplicate <original>` needs the id of the original ticket.
+**`move`** reads the current status first and refuses any move out of `done`, `cancel`, or
+`duplicate`. `move <id> duplicate <original>` needs the id of the original ticket.
 
 | Target | Assignees |
 |---|---|
@@ -179,9 +166,7 @@ protects the terminal statuses. Refuse any move out of `done`, `cancel`, or `dup
 | `in-progress`, `in-review` | Unchanged. Say who holds it when that is not you, and say when nobody does |
 | `done`, `cancel`, `duplicate` | Unchanged. They record who did the work |
 
-`ready` must clear the assignee, because `next` requires `ready` **and** no assignee. Without the
-clear, a ticket handed back with the last person's name on it is off the frontier, and nobody works
-on it.
+`ready` must clear the assignee: a ticket handed back with a name on it never reaches `next`.
 
 ## 5. Ticket shape
 
@@ -205,8 +190,7 @@ One to three sentences on what exists when this is done.
 Spec references, with the key excerpt copied in so nobody has to fetch it.
 ```
 
-`create` turns every `## Blocked by` entry into a real dependency edge, because `next` computes on
-the edges. `## Related` is only for readers: no verb parses it, writes it, or queries it. Write the
+`create` turns every `## Blocked by` entry into a real dependency edge. `## Related` is only for readers: no verb parses it, writes it, or queries it. Write the
 ids plainly and let the backend render them.
 
 The shape is loose. Other skills may add sections, no verb rejects a ticket over formatting, and a

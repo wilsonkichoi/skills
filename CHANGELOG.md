@@ -2,6 +2,8 @@
 
 Newest first. One line per version: `{version} {ISO 8601 timestamp with local offset} {summary}`
 
+0.0.24 2026-09-22T00:43:12-07:00 Trim `SKILL.md` from 2056 to about 1840 words by removing reasons next to rules that stand alone and a paragraph that gave no instruction; every rule stays. Restore detail 0.0.23 cut that a verb needs: Linear's `Could not find state` string as the missing-status signal, what Linear rewrites in a description, not guessing whether an archived issue was completed or deleted, and that the tie-break never fires on Linear; local's no-escape rule inside single quotes, the slug example, and that the slug carries no meaning.
+
 0.0.23 2026-09-22T00:35:28-07:00 Cut the three tracker backend files to rules, commands, and checks, since one of them loads on every tracker call: `github.md` 2302 to 1299 words, `linear.md` 1728 to 820, `local.md` 1309 to 632. Explanations and measurements behind the rules move to the runbook's evidence section. No rule, command, or check changed. Runbook references to removed wording in B12b, C10, and C20 now point at the rule or the evidence.
 
 0.0.22 2026-09-21T23:53:52-07:00 Fix local `assign <id> me from <holder>` writing the literal `me`: `local.md` now resolves `me` to `git config user.name` in every form (B15, caught by the targeted 0.0.21 run). `linear.md` no longer claims every rejected relation arrives as a warning: C24 showed an unknown blocker id fails the whole call, while a self-link still succeeds with a warning, which is what the Backlog-first create guards against.

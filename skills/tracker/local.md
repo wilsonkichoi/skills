@@ -35,7 +35,8 @@ after it as YAML.
 `blocked_by` is the only dependency list any verb reads. `create` writes a `## Blocked by` section,
 and `link` updates it when the file has one. Never add one to a body a person wrote.
 
-Single-quote every string value, doubling any `'` inside it. Titles are one line.
+Single-quote every string value, doubling any `'` inside it. Nothing else inside single quotes is
+special: write backslashes and Unicode as they are, never escaped. Titles are one line.
 
 ## Identity
 
@@ -48,7 +49,9 @@ never write the word `me`. Any other `<who>` is written as given.
 the highest plus one. When two files share a number, report both and pick neither.
 
 The slug is the title lowercased, each run of characters that are not Unicode letters or digits
-collapsed to one hyphen, no hyphen at either end, cut near 50 characters on a word boundary.
+collapsed to one hyphen, no hyphen at either end, cut near 50 characters on a word boundary:
+`émoji ✅ and 日本語 and Ünïcödé` becomes `émoji-and-日本語-and-ünïcödé`. The slug carries no meaning;
+never look a ticket up by it.
 
 ## Missing fields
 

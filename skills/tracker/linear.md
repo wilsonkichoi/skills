@@ -17,8 +17,8 @@ create, rename, or edit a team status; `setup` asks a person to.
 | `duplicate` | Duplicate | `duplicate` |
 
 Pass `state` as the name from this table, never a category or id. If a name is missing from the
-team, stop and say to re-run `setup`; never substitute a similar status. Report an issue in any other
-status by its Linear name. Linear issues cannot be `inconsistent`.
+team, which shows as `Could not find state "<name>"`, stop and say to re-run `setup`; never
+substitute a similar status. Report an issue in any other status by its Linear name. Linear issues cannot be `inconsistent`.
 
 ## Tools
 
@@ -44,8 +44,10 @@ Read `warnings` in every `save_issue` result: a success can carry a refusal. Ver
 - Follow `hasNextPage` to the end before reporting a list or an empty frontier.
 - For `done`, `cancel`, and `duplicate`, pass `includeArchived: true`, request `archivedAt`, and mark
   archived results with the date. Leave it unset for open statuses and `next`. When `get_issue`
-  returns an archived issue, say so and when.
-- Compare a description by its sections and their content, never byte for byte.
+  returns an archived issue, say so and when. Never say whether an archived issue was completed or
+  deleted; the tools cannot tell.
+- Compare a description by its sections and their content, never byte for byte. Linear turns bare
+  issue ids into links and adds blank lines around headings; neither is a mismatch.
 - Confirm a specific issue with `get_issue`, never by its presence in a list.
 
 ## Per verb
@@ -59,7 +61,8 @@ Read `warnings` in every `save_issue` result: a success can carry a refusal. Ver
 
 ### next
 
-1. `list_issues` with `state: 'Todo'` and `project`. An issue with an assignee is held.
+1. `list_issues` with `state: 'Todo'` and `project`. An issue with an assignee is held and needs no more
+   reads.
 2. For each unassigned issue, `get_issue` with `includeRelations: true`.
 3. For each `blockedBy` entry, read its status. Done, Canceled, and Duplicate no longer block.
 4. Keep issues with no open blocker, lowest number first.
@@ -101,6 +104,8 @@ Verify with `get_issue`:
   `assignee: null`, leave the status, and report.
 - An assignee other than the one you set: another session won. Write nothing, report, and take
   another ticket.
+
+An issue holds one assignee, so the `SKILL.md` tie-break never fires here.
 
 ### Milestones
 
