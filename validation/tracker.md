@@ -277,6 +277,8 @@ with `gh api repos/<R>/milestones -f title=...`, and put one open issue in each.
    0.0.28 it asked in 3 of 5 runs. Check the transcript too: the first assistant message, before
    any tool call, is the parse line from `SKILL.md` section 3, ending in `asking`.
 4. `$tracker create "Fix" done`: expect a refusal and no new issue. `create` takes open statuses only.
+   Check the transcript: the parse line names `done` and ends in `refusing`, and no tool call
+   follows. The 0.0.30 run wrote `create: no status, backlog` here and created the issue.
 5. `$tracker list M1`, `$tracker list "in reviewww"`: expect each milestone's issue, scoped. The
    second is a milestone, not a refused status.
 6. `$tracker list no-such-thing`: expect a stop naming both the milestones and the seven statuses.

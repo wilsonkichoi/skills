@@ -108,7 +108,8 @@ and refuses when a moved edge would close a cycle.
 
 `create` and `move` start their reply with one line saying how they read the status you gave, such
 as `move 92: "redy" is not a status, refusing`. A typo in a status is refused, never
-corrected to the nearest one, and `create Fix login ready` asks whether `ready` is the status.
+corrected to the nearest one. `create` reads a status only after a quoted ticket, as in
+`create "Fix login" ready`, and `create Fix login ready` asks whether `ready` is the status.
 
 **`link`** records that one ticket is blocked by another: `tracker link 42 blocked-by 17`. It
 refuses an edge that would close a cycle and names the loop it found, because tickets in a cycle
