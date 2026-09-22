@@ -106,10 +106,11 @@ Marking a duplicate takes the original's id: `tracker move 42 duplicate 17`. On 
 42's blockers, blocked tickets, and related tickets onto 17. The tracker names them before it writes,
 and refuses when a moved edge would close a cycle.
 
-`create` and `move` start their reply with one line saying how they read the status you gave, such
-as `move 92: "redy" is not a status, refusing`. A typo in a status is refused, never
-corrected to the nearest one. `create` reads a status only after a quoted ticket, as in
-`create "Fix login" ready`, and `create Fix login ready` asks whether `ready` is the status.
+`create` and `move` read a status the way a person would, and say which one they used. An obvious
+typo counts: `move 92 redy` moves 92 to `ready`. A word that could mean several statuses, or none,
+is refused with the seven listed. A typo never closes a ticket: when the obvious reading is `done`,
+`cancel`, or `duplicate`, the tracker asks first, because nothing reopens a closed ticket. When
+`create` cannot tell whether the last words are the status or part of the title, it asks.
 
 **`link`** records that one ticket is blocked by another: `tracker link 42 blocked-by 17`. It
 refuses an edge that would close a cycle and names the loop it found, because tickets in a cycle

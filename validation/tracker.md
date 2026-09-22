@@ -260,34 +260,35 @@ Expect D as `DUPLICATE`.
 Expect a refusal. `gh issue close` on a closed issue exits 0 and keeps the old reason, so the
 pre-read is the only guard.
 
-**A17b a bad status name is refused.** On an open `backlog` issue, `$tracker move <id> in reviewww`.
-Expect a refusal that lists the seven statuses and suggests none of them, and
-`gh issue view <id> --json labels` unchanged. A refusal that names `in-review` as what was meant,
-such as "Did you mean `in-review`?", is a FAIL.
-Then `$tracker move <id> in progress`: expect exactly one status label, `in-progress`.
+**A17b a status is read the way a person would.** On an open `backlog` issue, check each step with
+`gh issue view <id> --json state,labels`:
 
-**A17c a status is only read from a status position.** Create milestones `M1` and `in reviewww`
-with `gh api repos/<R>/milestones -f title=...`, and put one open issue in each. Then:
+1. `$tracker move <id> in reviewww`: an obvious typo. Expect exactly one status label, `in-review`,
+   and a reply that names `in-review`.
+2. `$tracker move <id> in reveal`: no status is clearly meant. Expect no change, and a reply that
+   lists the seven statuses or asks which was meant.
+3. `$tracker move <id> donee`: the obvious reading closes the ticket. Expect a question, the issue
+   still open with `in-review`, and no close.
+
+**A17c a status is only read where it can be one.** Create milestones `M1` and `in reviewww`
+with `gh api repos/<R>/milestones -f title=...`, and put one open issue in each. Check creates with
+`gh issue list --repo <R> --state all --limit 200 --json number,title,labels`. Then:
 
 1. `$tracker create "Fix in review"`: expect title `Fix in review`, no status label.
 2. `$tracker create "Fix" "in review"`: expect title `Fix`, status label `in-review`.
-3. `$tracker create Fix in review`: expect a question asking whether `in review` is the status or
-   part of the title, and no new issue until it is answered. Check with
-   `gh issue list --repo <R> --state all --limit 200 --json number,title`. Run this step at least
-   three times with different first words, ending in turn in `in review` and `in progress`, and pass
-   it only if every run asks. Across 0.0.26 to
-   0.0.28 it asked in 3 of 5 runs. Check the transcript too: the parse line from `SKILL.md`
-   section 3, ending in `asking`, comes before any tool call other than the skill load and the reads
-   of the config and the backend file.
-4. `$tracker create "Fix" done`: expect a refusal and no new issue. `create` takes open statuses only.
-   Check the transcript: the parse line names `done` and ends in `refusing`, and no tool call
-   follows. The 0.0.30 run wrote `create: no status, backlog` here and created the issue.
+3. `$tracker create Fix in review`: either a question and no new issue, or exactly one new issue
+   whose title and status are the ones the reply says it used. Run this step at least three times
+   with different first words, ending in turn in `in review` and `in progress`, and pass it only if
+   every run passes.
+4. `$tracker create "Fix" done`: expect a refusal or a question, and no new issue. `create` takes
+   open statuses only.
 5. `$tracker list M1`, `$tracker list "in reviewww"`: expect each milestone's issue, scoped. The
-   second is a milestone, not a refused status.
+   second names an existing milestone, so it is that milestone, not a status typo.
 6. `$tracker list no-such-thing`: expect a stop naming both the milestones and the seven statuses.
 7. `$tracker list "in progress" M1`: expect both filters applied, with the milestone text unchanged.
 
-Never score a quoted retry as a PASS for the unquoted call in step 3.
+Interactive Kiro CLI strips double quotes from `/tracker` arguments before the model sees them, so
+steps 1, 2, and 4 cannot run there: score them SKIP. Headless Kiro keeps the quotes.
 
 **A18 human-made ticket reads as backlog.** Create an issue in the web UI, no label, one-line body.
 `$tracker show <id>` expect `backlog`; `$tracker next` expect it absent; `$tracker list backlog`
@@ -542,12 +543,14 @@ assignee is a FAIL; the skill should have stopped and said the identity was unre
 
 **B9 terminal releases the frontier.** `$tracker move <A> done`, then `$tracker next`. Expect B.
 
-**B9b a bad status name is refused.** On a `backlog` ticket, `$tracker move <id> in reviewww`.
-Expect a refusal that lists the seven statuses and suggests none of them, and the file's SHA-256
-unchanged. A refusal that names `in-review` as what was meant is a FAIL. Then
-`$tracker move <id> in progress`: expect the YAML parse to read `status: 'in-progress'`. Then
-`$tracker create Fix in review`: expect a question about whether `in review` is the status, and no
-new file until it is answered.
+**B9b a status is read the way a person would.** On a `backlog` ticket:
+
+1. `$tracker move <id> in reviewww`: expect the YAML parse to read `status: 'in-review'`, and a
+   reply that names `in-review`.
+2. `$tracker move <id> in reveal`: expect the file's SHA-256 unchanged, and a reply that lists the
+   seven statuses or asks which was meant.
+3. `$tracker create Fix in review`: either a question and no new file, or exactly one new file whose
+   title and status are the ones the reply says it used.
 
 **B10 comment.** `$tracker comment <B> "a note"`. Check the file: the body is under `## Comments`
 with a `### <date> <author>` heading.
@@ -744,17 +747,16 @@ Expect a stop saying the workflow no longer matches the config and to re-run `$s
 finds `Released` by its `completed` category and writes to it anyway has absorbed a drift it should
 have surfaced.
 
-**C6 a bad status name is refused, never guessed.** On a `Backlog` issue, `$tracker move <id> in reviewww`.
-Expect a refusal that lists the seven statuses and suggests none of them, and `get_issue` still
-reading `Backlog`. Moving it to `In Review` is a FAIL: the skill guessed a near miss. So is a
-refusal that names `in-review` as what was meant. Then `$tracker move <id> in progress`:
-expect `get_issue` to read `In Progress`, since a status argument matches case-insensitively with a
-space read as a hyphen. Run the case at least three times, each on a fresh issue and with a different
-near miss in place of `in reviewww`: `in-progres`, `donee`, `backlogg`, `in_review`. Pass it only
-if every run passes. Check the transcript of each bad-status call: the parse line from `SKILL.md`
-section 3, ending in `refusing`, comes before any tool call other than the skill load and the reads
-of the config and the backend file, and no tool call follows it. The 0.0.26 run found a model that skips the refusal on one pass, so one pass proves
-little.
+**C6 a status is read the way a person would.** Run the case at least three times, each on a fresh
+`Backlog` issue, and pass it only if every run passes. Read the issue with `get_issue` after each
+step. Rotate the inputs: run 1 uses the first of each list, run 2 the second, and so on.
+
+1. `$tracker move <id> <typo>`, with `in reviewww`, `in-progres`, `in_review`: expect the status
+   the typo plainly means (In Review, In Progress, In Review), and a reply that names it.
+2. `$tracker move <id> <unclear>`, with `in reveal`, `in revolt`, `in rewind`: expect no change,
+   and a reply that lists the seven statuses or asks which was meant.
+3. `$tracker move <id> <terminal typo>`, with `donee`, `cancell`, `donne`: expect a question and
+   no change. A typo never closes a ticket.
 
 **C7 the frontier reads blocker statuses.** Create A and B with B blocked by A, both `Todo` and
 unassigned. `$tracker next`.

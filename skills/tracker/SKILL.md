@@ -48,16 +48,16 @@ format instead, even when one is in the repository. No verb here can see a ticke
 | `cancel` | Deliberately not doing it. |
 | `duplicate` | Another ticket already covers it. |
 
-A status argument must be one of these seven, compared case-insensitively, with a space read as a
-hyphen. Refuse anything else, a near miss included, list the seven, and write nothing.
-`move 12 redy` refuses: `redy` is not `ready`, and the refusal does not suggest it.
+A status argument names one of these seven. Read it the way a person would: case does not matter,
+a space reads as a hyphen, and an obvious typo means the status it misspells, as `redy` means
+`ready`. Say in the reply which status you used. When no single status is clearly meant, as in
+`move 12 blocked`, refuse, list the seven, and write nothing. A typo never closes a ticket: when the
+obvious reading is `done`, `cancel`, or `duplicate`, ask first, since no verb reopens one.
 
-That rule covers only an argument in a status position, never ticket text or a milestone name. For
-`list`, an argument that is not a status is a milestone, and when it matches no milestone either,
-the stop names the seven statuses as well as the milestones. For `create`, only a quoted ticket is
-followed by a status position, as in `create "Fix login" ready`. When the ticket is not quoted and its
-last words spell a status, as in `create Fix login ready`, ask whether they are the status or part of
-the title, and write nothing until answered.
+For `list`, an argument that names an existing milestone is that milestone. Otherwise read it as a
+status, and when it is neither, stop and name the milestones and the seven statuses. For `create`,
+when you cannot tell whether the last words of the ticket are its status or part of its title, ask,
+and write nothing until answered.
 
 A ticket can move between the four open statuses in any direction. Do not refuse a move because it
 skips a status.
@@ -79,27 +79,11 @@ started right now, and `next` returns it.
 
 ## 3. Read, write, verify
 
-`create`, `assign`, `comment`, `move`, and `link` change state. `create` and `move` start with a
-parse step; all five then run read, write, and verify:
+`create`, `assign`, `comment`, `move`, and `link` change state. Each runs read, write, and verify:
 
-0. **Parse.** After section 1's two reads, the config and the backend file, and before any other
-   tool call, write one line naming the status argument, or the words that could be one, and what
-   section 2 makes of it. A `create` line first says whether the ticket is
-   quoted. The line takes one of these shapes:
-
-   - `move 92: "redy" is not a status, refusing`
-   - `move 92: "In Review" is in-review`
-   - `create: quoted, "Ready" is ready`
-   - `create: quoted, "cancel" is not an open status, refusing`
-   - `create: quoted, no status, backlog`
-   - `create: not quoted, ends in "ready", asking`
-   - `create: not quoted, no status, backlog`
-
-   A `not quoted` line never names a status: its ticket has no status position. A line that ends in
-   refusing or asking stops the verb there: make no tool call, and reply with the refusal, listing
-   all seven, or with the question.
-1. **Read.** Fetch the current state and check this verb's precondition. If it fails, write nothing
-   and say why.
+1. **Read.** Fetch the current state and check this verb's precondition. For `create` and `move`,
+   say which status you read from the argument before writing. If the precondition fails, or you
+   refuse or ask per section 2, write nothing and say why.
 2. **Write.** One command where possible, so nothing is half applied.
 3. **Verify.** A separate read, checked against what the backend now says. Never trust the write's
    exit code, printed URL, or response: several backend commands return success and change nothing.
@@ -109,20 +93,20 @@ what you did about it. A verb that cannot confirm its own write has failed.
 
 | Verb | Precondition | Verification |
 |---|---|---|
-| `create` | a given status follows a quoted ticket and is one of the four open ones, per section 2; refuse a terminal one. An unquoted ticket whose last words spell a status gives no status: ask which was meant, and write nothing | the ticket exists by id, with the intended status and every section it was given. The backend file says how to compare the body |
+| `create` | a given status is one of the four open ones, read per section 2 | the ticket exists by id, with the intended status and every section it was given. The backend file says how to compare the body |
 | `link` | both tickets exist, they differ, and the edge would not close a cycle | the edge is on the blocked ticket, and the blocker's own blockers are unchanged |
 | `assign` | not terminal. The bare form also needs `ready` with no assignee. Any other holder must be named | the assignee is exactly the one asked for, or nobody for `none`. The bare form also shows `in-progress` |
 | `comment` | the ticket exists | the comment body is on the ticket |
-| `move` | the target is one of the seven statuses, per section 2. Otherwise refuse, list all seven, and suggest none. The current status is not terminal | the backend reports the new status |
+| `move` | the target is one of the seven statuses, read per section 2. The current status is not terminal | the backend reports the new status |
 
 ## 4. Verbs
 
 | Verb | Semantics |
 |---|---|
-| `list [status] [milestone]` | Tickets with id, title, status, assignee, and blockers. Both filters are optional. An argument that is not a status name is a milestone. With no status, open tickets only |
+| `list [status] [milestone]` | Tickets with id, title, status, assignee, and blockers. Both filters are optional. An argument that names a milestone is that milestone; otherwise it is a status. With no status, open tickets only |
 | `show <id>` | One ticket in full: body, comments, labels, blockers, assignee |
 | `next` | The frontier |
-| `create <ticket> [status]` | One ticket in the shape from section 5, plus its dependency edges. The status follows a quoted ticket, is an open one, and defaults to `backlog` |
+| `create <ticket> [status]` | One ticket in the shape from section 5, plus its dependency edges. The status is an open one and defaults to `backlog` |
 | `assign <id> [who] [from <holder>]` | Set who holds the ticket |
 | `comment <id> <body>` | Append a comment. Never edit or delete an existing one |
 | `move <id> <status> [original]` | Change status, including a terminal close |
