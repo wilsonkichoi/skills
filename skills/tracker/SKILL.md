@@ -50,12 +50,12 @@ format instead, even when one is in the repository. No verb here can see a ticke
 
 A status argument must be one of these seven, compared case-insensitively, with a space read as a
 hyphen. Refuse anything else, a near miss included, list the seven, and write nothing.
-`move 12 in reviewww` refuses: `in reviewww` is not `in-review`, and the refusal does not suggest it.
+`move 12 redy` refuses: `redy` is not `ready`, and the refusal does not suggest it.
 
 That rule covers only an argument in a status position, never ticket text or a milestone name. For
 `list`, an argument that is not a status is a milestone, and when it matches no milestone either,
 the stop names the seven statuses as well as the milestones. For `create`, when unquoted ticket text
-ends in words that spell a status, as in `create Fix in review`, ask whether they are the status or
+ends in words that spell a status, as in `create Fix login ready`, ask whether they are the status or
 part of the title, and write nothing until answered.
 
 A ticket can move between the four open statuses in any direction. Do not refuse a move because it
@@ -82,8 +82,8 @@ started right now, and `next` returns it.
 parse step; all five then run read, write, and verify:
 
 0. **Parse.** Before any tool call, write one line naming the status argument, or the words that
-   could be one, and what section 2 makes of it: `move 92: "in reviewww" is not a status, refusing`,
-   `move 92: "in progress" is in-progress`, `create: unquoted text ends in "in review", asking`, or
+   could be one, and what section 2 makes of it: `move 92: "redy" is not a status, refusing`,
+   `move 92: "In Review" is in-review`, `create: unquoted text ends in "ready", asking`, or
    `create: no status, backlog`. A line that ends in refusing or asking stops the verb there: make
    no tool call, and reply with the refusal, listing all seven, or with the question.
 1. **Read.** Fetch the current state and check this verb's precondition. If it fails, write nothing

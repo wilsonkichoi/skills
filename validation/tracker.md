@@ -27,6 +27,12 @@ Each case states its check and its expected result. Record exactly one verdict:
 reported as a pass is how a defect reaches a user. The report at the end counts the three separately
 and never folds SKIP into PASS.
 
+**A test input is never an example in the skill files.** When `SKILL.md` or a backend file uses
+the exact argument a case sends as an example, a pass shows the model matched the example, not that
+it applied the rule. Before a run, check with `grep -rnw -- '<input>' skills/tracker/`, and pick
+another input when a hit is an example. Ordinary prose, such as "a ticket in review", is not one.
+Repeated cases rotate their input for the same reason.
+
 Cases marked **[MANUAL]** need a human: a second terminal, a second account, a web UI action, or a
 service this repository has no credentials for. They are expected to be SKIP on an unattended run,
 and the report says so rather than treating the suite as green.
@@ -266,7 +272,8 @@ with `gh api repos/<R>/milestones -f title=...`, and put one open issue in each.
 3. `$tracker create Fix in review`: expect a question asking whether `in review` is the status or
    part of the title, and no new issue until it is answered. Check with
    `gh issue list --repo <R> --state all --limit 200 --json number,title`. Run this step at least
-   three times with different first words, and pass it only if every run asks. Across 0.0.26 to
+   three times with different first words, ending in turn in `in review`, `in progress`, and
+   `backlog`, and pass it only if every run asks. Across 0.0.26 to
    0.0.28 it asked in 3 of 5 runs. Check the transcript too: the first assistant message, before
    any tool call, is the parse line from `SKILL.md` section 3, ending in `asking`.
 4. `$tracker create "Fix" done`: expect a refusal and no new issue. `create` takes open statuses only.
@@ -736,7 +743,8 @@ Expect a refusal that lists the seven statuses and suggests none of them, and `g
 reading `Backlog`. Moving it to `In Review` is a FAIL: the skill guessed a near miss. So is a
 refusal that names `in-review` as what was meant. Then `$tracker move <id> in progress`:
 expect `get_issue` to read `In Progress`, since a status argument matches case-insensitively with a
-space read as a hyphen. Run the case at least three times, each on a fresh issue, and pass it only
+space read as a hyphen. Run the case at least three times, each on a fresh issue and with a different
+near miss in place of `in reviewww`: `in-progres`, `donee`, `backlogg`, `in_review`. Pass it only
 if every run passes. Check the transcript of each bad-status call: the first assistant message,
 before any tool call, is the parse line from `SKILL.md` section 3, ending in `refusing`, and no
 tool call follows it. The 0.0.26 run found a model that skips the refusal on one pass, so one pass proves
