@@ -265,9 +265,10 @@ with `gh api repos/<R>/milestones -f title=...`, and put one open issue in each.
 2. `$tracker create "Fix" "in review"`: expect title `Fix`, status label `in-review`.
 3. `$tracker create Fix in review`: expect a question asking whether `in review` is the status or
    part of the title, and no new issue until it is answered. Check with
-   `gh issue list --repo <R> --state all --limit 200 --json number,title`. Run this step three
-   times with different first words, and pass it only if all three ask. It passed once and failed
-   once at 0.0.26 and 0.0.27.
+   `gh issue list --repo <R> --state all --limit 200 --json number,title`. Run this step at least
+   three times with different first words, and pass it only if every run asks. Across 0.0.26 to
+   0.0.28 it asked in 3 of 5 runs. Check the transcript too: the first assistant message, before
+   any tool call, is the parse line from `SKILL.md` section 3, ending in `asking`.
 4. `$tracker create "Fix" done`: expect a refusal and no new issue. `create` takes open statuses only.
 5. `$tracker list M1`, `$tracker list "in reviewww"`: expect each milestone's issue, scoped. The
    second is a milestone, not a refused status.
@@ -735,8 +736,10 @@ Expect a refusal that lists the seven statuses and suggests none of them, and `g
 reading `Backlog`. Moving it to `In Review` is a FAIL: the skill guessed a near miss. So is a
 refusal that names `in-review` as what was meant. Then `$tracker move <id> in progress`:
 expect `get_issue` to read `In Progress`, since a status argument matches case-insensitively with a
-space read as a hyphen. Run the case three times, each on a fresh issue, and pass it only if all
-three pass. The 0.0.26 run found a model that skips the refusal on one pass, so one pass proves
+space read as a hyphen. Run the case at least three times, each on a fresh issue, and pass it only
+if every run passes. Check the transcript of each bad-status call: the first assistant message,
+before any tool call, is the parse line from `SKILL.md` section 3, ending in `refusing`, and no
+tool call follows it. The 0.0.26 run found a model that skips the refusal on one pass, so one pass proves
 little.
 
 **C7 the frontier reads blocker statuses.** Create A and B with B blocked by A, both `Todo` and
@@ -1120,6 +1123,24 @@ Newest first, by the timestamp in each entry's heading: ISO 8601 with the local 
 shape `CHANGELOG.md` uses, so two runs on one day stay distinguishable. One entry per run. The
 runbook above is the reusable procedure and is not edited by a run; everything a run learned goes
 here.
+
+### 2026-09-22T13:08:43-07:00 Targeted 0.0.28 run, Codex
+
+Skill ref `50fdd41`, same directories, driver, and model as the runs below: `gpt-6-luna` at `high`.
+Output `out/t1259`. Every child loaded the project's `SKILL.md`. Cases A17b, A17c with step 3 three
+times, B9b, and C6 three times. Each verdict below was checked by hand against the raw evidence.
+
+| Case | Verdict | Independent evidence |
+|---|---|---|
+| A17b | PASS | #137 read `labels: []` after `move 137 in reviewww`, and one label, `in-progress`, after `move 137 in progress`. |
+| A17c | FAIL | Steps 1, 2, and 4 to 7 passed, with step 6 naming all twelve milestones in `A17c_milestones_at_run.json`. Step 3 asked on 3b (`Foxtrot`) and 3c (`Golf`), and created nothing. On 3a it wrote "The title is `Charlie t1259`, and `in-review` is the requested status", then created #143 and added `in-review`. |
+| B9b | PASS | `144-v26-t1259-b9b-target.md` kept SHA-256 `619f87d4...1da6e` after the bad move, then parsed `in-progress`. `create Echo in review` asked and created no file. |
+| C6 | FAIL | CLE-90 and CLE-91 refused, listed the seven, and read `Backlog`. CLE-92 called `save_issue({id:"CLE-92",state:"In Review",...})` and replied "Moved CLE-92 from Backlog to In Review". All three then read `In Progress` after `move <id> in progress`. |
+
+In every failing child, the skill was in context and the backend file was read, and the model then
+went straight to the write with no message or call that checked the status argument. The children
+that passed say the check out loud first. Moving the rule into the section 3 preconditions in 0.0.27
+and 0.0.28 did not change that. 0.0.29 makes the check a written parse line before any tool call.
 
 ### 2026-09-22T12:58:22-07:00 Targeted 0.0.27 run, Codex
 

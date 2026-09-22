@@ -106,6 +106,10 @@ Marking a duplicate takes the original's id: `tracker move 42 duplicate 17`. On 
 42's blockers, blocked tickets, and related tickets onto 17. The tracker names them before it writes,
 and refuses when a moved edge would close a cycle.
 
+`create` and `move` start their reply with one line saying how they read the status you gave, such
+as `move 92: "in reviewww" is not a status, refusing`. A typo in a status is refused, never
+corrected to the nearest one, and `create Fix in review` asks whether `in review` is the status.
+
 **`link`** records that one ticket is blocked by another: `tracker link 42 blocked-by 17`. It
 refuses an edge that would close a cycle and names the loop it found, because tickets in a cycle
 wait on each other forever. It runs this check itself, because neither GitHub nor Linear refuses
