@@ -1134,6 +1134,21 @@ shape `CHANGELOG.md` uses, so two runs on one day stay distinguishable. One entr
 runbook above is the reusable procedure and is not edited by a run; everything a run learned goes
 here.
 
+### 2026-09-22T15:27:34-07:00 Manual 0.0.31 run, Kiro CLI interactive
+
+Skill ref `e4565de` in both directories, run by hand in `kiro-cli chat --agent-engine v3 --mode
+default`, model `auto`, all prompts in one session. Interactive Kiro reads the Linear OAuth login,
+so C6 ran here though it could not headless. The person running it reported every prompt as
+expected. The independent state below was read afterwards.
+
+| Case | Verdict | Independent evidence |
+|---|---|---|
+| A17b | PASS | #165 read one label, `in-progress`, after `move 165 in reviewww` then `move 165 in progress`. The refusal listed the seven and ended "Did you mean in-review?", as it did headless; A17b does not check a suggestion. It read `config.md` and `github.md` before the parse line. |
+| A17c | SKIP | Partial: every step that ran passed, but step 3 ran once of the three required, and steps 2 and 7 did not run. Steps 1, 3, 4, 5, and 6 ran, step 3 as `Kilo`. `create "Alpha manual in review"` made #169 with no status label, where headless Kiro added `in-review`. No `Kilo manual` or `Delta manual` issue exists. The list steps were reported as expected: #166 and #167 for `M1-manual`, #168 for `in reviewww`. Steps 2 and 7 were not run. |
+| C6 | SKIP | Partial: one run of the three required, and it passed. CLE-103's `stateHistory` goes from Backlog straight to In Progress at 22:24:50Z, so `move CLE-103 donee` wrote nothing. |
+
+Fixtures #165 to #169 closed, milestone `M1-manual` closed, CLE-103 cancelled.
+
 ### 2026-09-22T15:12:49-07:00 Targeted 0.0.31 run, Kiro CLI
 
 Skill ref `e4565de` (skill 0.0.31), directories as below, output `out/t1449-kiro`. Each call ran as
