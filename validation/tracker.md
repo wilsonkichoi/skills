@@ -1132,6 +1132,37 @@ shape `CHANGELOG.md` uses, so two runs on one day stay distinguishable. One entr
 runbook above is the reusable procedure and is not edited by a run; everything a run learned goes
 here.
 
+### 2026-09-22T13:26:43-07:00 Targeted 0.0.30 run, Codex
+
+Skill ref `43ac4ef` (skill 0.0.30), same directories and driver as the runs below: `gpt-6-luna` at
+`high`. Output `out/t1315-gpt-6-luna`. Every child loaded the project's `SKILL.md`, and the harness
+confirmed each child's model and effort. Cases A17b, A17c with step 3 five times, B9b, and C6 five
+times. Each verdict below was checked by hand against `reply.txt`, `calls.txt`, `parse.json`, and
+`checks/`. The GitHub scorer called A17c SKIP because it looked for `parse.json` under `checks/`;
+the files are under `steps/`, and the case ran.
+
+| Case | Verdict | Independent evidence |
+|---|---|---|
+| A17b | PASS | #144 read `labels: []` before and after `move 144 in reviewww`, and one label, `in-progress`, after `move 144 in progress`. The bad call wrote `move 144: "in reviewww" is not a status, refusing.` and made no tool call. |
+| A17c | FAIL | Steps 1, 2, and 5 to 7 passed: #149 `Alpha t1315 in review` with no label, #150 `Bravo t1315` with `in-review`, `list M1-t1315` gave #145 and #146, `list "in reviewww"` gave #147, `list "in progress" M1-t1315` gave #145, and `list nosucht1315` named all thirteen milestones in `A17c_milestones_at_run.json` and the seven statuses. Step 3 asked in 1 of 5. Only 3e (`India`) wrote `create: unquoted text ends in "in review", asking.` and made no tool call. 3a, 3b, 3c, and 3d each wrote a parse line before the first tool call, but it read the words as the status, such as `` `create`: "in progress" is `in-progress`; title is "Foxtrot t1315" ``. They created #148 `Charlie t1315` and #153 `Golf t1315` with `in-review`, and #151 `Foxtrot t1315` and #152 `Hotel t1315` with `in-progress`. Step 4 failed for the first time in four runs: `create "Delta t1315" done` wrote `` `create: no status, backlog` ``, the fourth parse example in `SKILL.md` word for word, and created #154 `Delta t1315` with no label. It dropped `done` without a word. |
+| B9b | PASS | `144-v26-t1315-b9b-target.md` kept SHA-256 `32158436...262c7` after the bad move, whose child refused with no tool call, then parsed `in-progress`. `create Echo in review` wrote `create: unquoted text ends in "in review", asking`, asked, and created no file. |
+| C6 | PASS | 5 of 5. CLE-93 to CLE-97 took `in reviewww`, `in-progres`, `donee`, `backlogg`, and `in_review`. Each child's first message was a parse line ending in `refusing`, each made zero tool calls, each reply listed the seven and suggested none, and each issue read `Backlog` afterwards. All five read `In Progress` after `move <id> in progress`. |
+
+The 0.0.29 parse line fixed the bad-status refusal on `move`: 7 of 7 refusals across A17b, B9b, and
+C6, none with a tool call, against 2 of 3 on C6 in the 0.0.28 run. It did not fix the unquoted
+`create`. The model writes the line, but it writes the status form of it rather than the asking form.
+Across 0.0.26 to 0.0.30, step 3 has asked in 4 of 10 GitHub runs, while the one-word title in B9b
+asked on every run from 0.0.27 on. Step 4 is new and is likely caused by 0.0.29: the parse examples
+give `create` no form for a status it was given, so the model copied the closest one and lost the
+argument.
+
+The same command on `gpt-6-astra` (tag `t1320`) is VOID. At 13:21 every Codex call returned "You've
+hit your usage limit", with a reset at 2026-09-23 14:39. The Linear fixture helper failed first, so C6
+never ran, and every A17c step 3 child died in about three seconds. The seven steps that finished
+before the limit are not scored. Cleanup: the harness closed issues above #154 and milestone
+`M1-t1320` and removed the local file above 143. CLE-98 to CLE-102 read `Backlog` with one state in
+their history, and were cancelled by hand. Output renamed to `out/void-t1320`.
+
 ### 2026-09-22T13:08:43-07:00 Targeted 0.0.28 run, Codex
 
 Skill ref `50fdd41`, same directories, driver, and model as the runs below: `gpt-6-luna` at `high`.
