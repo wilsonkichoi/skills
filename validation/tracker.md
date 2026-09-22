@@ -261,7 +261,9 @@ Expect a refusal. `gh issue close` on a closed issue exits 0 and keeps the old r
 pre-read is the only guard.
 
 **A17b a bad status name is refused.** On an open `backlog` issue, `$tracker move <id> in reviewww`.
-Expect a refusal that lists the seven statuses, and `gh issue view <id> --json labels` unchanged.
+Expect a refusal that lists the seven statuses and suggests none of them, and
+`gh issue view <id> --json labels` unchanged. A refusal that names `in-review` as what was meant,
+such as "Did you mean `in-review`?", is a FAIL.
 Then `$tracker move <id> in progress`: expect exactly one status label, `in-progress`.
 
 **A17c a status is only read from a status position.** Create milestones `M1` and `in reviewww`
@@ -274,8 +276,9 @@ with `gh api repos/<R>/milestones -f title=...`, and put one open issue in each.
    `gh issue list --repo <R> --state all --limit 200 --json number,title`. Run this step at least
    three times with different first words, ending in turn in `in review` and `in progress`, and pass
    it only if every run asks. Across 0.0.26 to
-   0.0.28 it asked in 3 of 5 runs. Check the transcript too: the first assistant message, before
-   any tool call, is the parse line from `SKILL.md` section 3, ending in `asking`.
+   0.0.28 it asked in 3 of 5 runs. Check the transcript too: the parse line from `SKILL.md`
+   section 3, ending in `asking`, comes before any tool call other than the skill load and the reads
+   of the config and the backend file.
 4. `$tracker create "Fix" done`: expect a refusal and no new issue. `create` takes open statuses only.
    Check the transcript: the parse line names `done` and ends in `refusing`, and no tool call
    follows. The 0.0.30 run wrote `create: no status, backlog` here and created the issue.
@@ -540,7 +543,8 @@ assignee is a FAIL; the skill should have stopped and said the identity was unre
 **B9 terminal releases the frontier.** `$tracker move <A> done`, then `$tracker next`. Expect B.
 
 **B9b a bad status name is refused.** On a `backlog` ticket, `$tracker move <id> in reviewww`.
-Expect a refusal that lists the seven statuses and the file's SHA-256 unchanged. Then
+Expect a refusal that lists the seven statuses and suggests none of them, and the file's SHA-256
+unchanged. A refusal that names `in-review` as what was meant is a FAIL. Then
 `$tracker move <id> in progress`: expect the YAML parse to read `status: 'in-progress'`. Then
 `$tracker create Fix in review`: expect a question about whether `in review` is the status, and no
 new file until it is answered.
@@ -747,9 +751,9 @@ refusal that names `in-review` as what was meant. Then `$tracker move <id> in pr
 expect `get_issue` to read `In Progress`, since a status argument matches case-insensitively with a
 space read as a hyphen. Run the case at least three times, each on a fresh issue and with a different
 near miss in place of `in reviewww`: `in-progres`, `donee`, `backlogg`, `in_review`. Pass it only
-if every run passes. Check the transcript of each bad-status call: the first assistant message,
-before any tool call, is the parse line from `SKILL.md` section 3, ending in `refusing`, and no
-tool call follows it. The 0.0.26 run found a model that skips the refusal on one pass, so one pass proves
+if every run passes. Check the transcript of each bad-status call: the parse line from `SKILL.md`
+section 3, ending in `refusing`, comes before any tool call other than the skill load and the reads
+of the config and the backend file, and no tool call follows it. The 0.0.26 run found a model that skips the refusal on one pass, so one pass proves
 little.
 
 **C7 the frontier reads blocker statuses.** Create A and B with B blocked by A, both `Todo` and
@@ -1147,7 +1151,8 @@ expected. The independent state below was read afterwards.
 | A17c | SKIP | Partial: every step that ran passed, but step 3 ran once of the three required, and steps 2 and 7 did not run. Steps 1, 3, 4, 5, and 6 ran, step 3 as `Kilo`. `create "Alpha manual in review"` made #169 with no status label, where headless Kiro added `in-review`. No `Kilo manual` or `Delta manual` issue exists. The list steps were reported as expected: #166 and #167 for `M1-manual`, #168 for `in reviewww`. Steps 2 and 7 were not run. |
 | C6 | SKIP | Partial: one run of the three required, and it passed. CLE-103's `stateHistory` goes from Backlog straight to In Progress at 22:24:50Z, so `move CLE-103 donee` wrote nothing. |
 
-Fixtures #165 to #169 closed, milestone `M1-manual` closed, CLE-103 cancelled.
+Fixtures #165 to #169 closed, milestone `M1-manual` closed, CLE-103 cancelled. Re-scored under
+the 0.0.32 checks, A17b is FAIL, since its refusal suggested `in-review`.
 
 ### 2026-09-22T15:12:49-07:00 Targeted 0.0.31 run, Kiro CLI
 
@@ -1171,6 +1176,10 @@ All 17 sessions made the same two reads, `config.md` and then the backend file, 
 line. `SKILL.md` section 1 says to read the backend file "before running anything", and section 3
 step 0 says to write the parse line "before any tool call". Kiro follows section 1, and Codex on
 `gpt-6-luna` follows step 0. No session wrote to the tracker before its parse line.
+
+Re-scored under the 0.0.32 checks: A17b and B9b are FAIL, since each refusal suggested
+`in-review`. The A17c step 3 transcript check passes in 5 of 5, since the parse step now comes after
+those two reads. A17c stays FAIL on steps 1, 5b, and 6.
 
 ### 2026-09-22T13:26:43-07:00 Targeted 0.0.30 run, Codex
 

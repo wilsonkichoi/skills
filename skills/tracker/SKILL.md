@@ -82,8 +82,9 @@ started right now, and `next` returns it.
 `create`, `assign`, `comment`, `move`, and `link` change state. `create` and `move` start with a
 parse step; all five then run read, write, and verify:
 
-0. **Parse.** Before any tool call, write one line naming the status argument, or the words that
-   could be one, and what section 2 makes of it. A `create` line first says whether the ticket is
+0. **Parse.** After section 1's two reads, the config and the backend file, and before any other
+   tool call, write one line naming the status argument, or the words that could be one, and what
+   section 2 makes of it. A `create` line first says whether the ticket is
    quoted. The line takes one of these shapes:
 
    - `move 92: "redy" is not a status, refusing`
