@@ -1134,6 +1134,29 @@ shape `CHANGELOG.md` uses, so two runs on one day stay distinguishable. One entr
 runbook above is the reusable procedure and is not edited by a run; everything a run learned goes
 here.
 
+### 2026-09-22T15:12:49-07:00 Targeted 0.0.31 run, Kiro CLI
+
+Skill ref `e4565de` (skill 0.0.31), directories as below, output `out/t1449-kiro`. Each call ran as
+`kiro-cli chat --agent-engine v3 --mode default --output-format stream-json --trust-all-tools` with
+`/tracker ...`. Every session reported mode `vibe` (default) and model `auto`. Kiro records no model
+behind `auto`, so these verdicts belong to Kiro's auto routing, not to a named model. Every step
+loaded the project's `SKILL.md` through `Load skill: tracker`. Cases A17b, A17c with step 3 five
+times, and B9b. C6 did not run: headless Kiro gets `linear-wkc-sandbox: Unauthorized`. Kiro's logs
+show the OAuth token is read through "ACP secret storage", which only the interactive client
+offers. Each verdict below was checked by hand. The scorer failed B9b on a parse-line check that
+B9b's text does not have.
+
+| Case | Verdict | Independent evidence |
+|---|---|---|
+| A17b | PASS | #159 read `labels: []` before and after `move 159 in reviewww`, and one label, `in-progress`, after `move 159 in progress`. The refusal listed the seven, but also asked "Did you mean `in-review`?", which `SKILL.md` section 2 forbids and this case does not check. |
+| A17c | FAIL | Step 1 failed: `create "Alpha t1449 in review"` created #163 and added `in-review`, reading a status out of quoted ticket text. Step 2 passed: #164 `Bravo t1449` with `in-review`. Step 3 asked in 5 of 5, and no issue was created, but the transcript check failed in 5 of 5: each session read `config.md` and `github.md` before writing the parse line. Step 4 passed: `**Parse:** quoted, "done" is a terminal status — refusing`, no call after it, no issue. Step 5a passed (#160, #161). Step 5b failed: `list "in reviewww"` refused it as a status typo and suggested `in-review`, where the milestone `in reviewww` holds #162. Step 6 failed: it named all fifteen milestones in `A17c_milestones_at_run.json` but not the seven statuses, and suggested `M1-t1449`. Step 7 passed (#160 only). |
+| B9b | PASS | `144-v26-t1449-b9b-target.md` kept SHA-256 `4c4a97a2...4559d` after the bad move, then parsed `in-progress`. `create Echo in review` asked and created no file. The step 1 refusal also asked "Did you mean `in-review`?". |
+
+All 17 sessions made the same two reads, `config.md` and then the backend file, before any parse
+line. `SKILL.md` section 1 says to read the backend file "before running anything", and section 3
+step 0 says to write the parse line "before any tool call". Kiro follows section 1, and Codex on
+`gpt-6-luna` follows step 0. No session wrote to the tracker before its parse line.
+
 ### 2026-09-22T13:26:43-07:00 Targeted 0.0.30 run, Codex
 
 Skill ref `43ac4ef` (skill 0.0.30), same directories and driver as the runs below: `gpt-6-luna` at
