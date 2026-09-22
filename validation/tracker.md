@@ -1075,6 +1075,120 @@ shape `CHANGELOG.md` uses, so two runs on one day stay distinguishable. One entr
 runbook above is the reusable procedure and is not edited by a run; everything a run learned goes
 here.
 
+### 2026-09-22T10:19:20-07:00 Re-run of the 0.0.25 fixes, Codex
+
+Both defects from the post-trim run are fixed and re-verified: A5 and the new A17b on GitHub, C6 on
+Linear, B9b on local. Same method as the run below, one child `codex exec ... '$tracker <verb>'`
+per skill call, gate as shipped, at skill ref `817326f (feat/tracker)`. The local driver ignored its
+scope of B9b alone and ran the whole B leg, which is recorded here as its own report block.
+
+```
+TRACKER VALIDATION
+backend: github                  harness: codex
+date: 2026-09-22T09:12:25-07:00  skill ref: 817326f (feat/tracker)
+
+PASS  2
+FAIL  0
+SKIP  0
+
+failures:
+  none
+skipped:
+  none
+
+VERDICT: GREEN
+```
+
+| Case | Verdict | Independent evidence |
+|---|---|---|
+| A5 | PASS | Fixture #104. `gh issue view 104 --json title,labels` read `{"labels":[],"title":"A5 rerun 2026-09-22 fixture"}`, and the runbook body comparison printed `true` at exit 0. A later check read #104 `CLOSED`, `NOT_PLANNED`, `labels: []`. |
+| A17b | PASS | Fixture #105, open with no label. After `$tracker move 105 in reviewww`, the read was `{"assignees":[],"labels":[],"number":105,"state":"OPEN"}`. The child's four tool calls were all reads, no `gh issue edit` among them, and it answered "`reviewww` is invalid" and listed the seven statuses. After `$tracker move 105 in progress`, the read was `labels: ["in-progress"]`. |
+
+Deviations:
+
+- D-1 one codex exec process per skill call, gate as shipped.
+- D-2 A17b's precondition was a fresh `gh issue create`, not a ticket from an earlier case.
+- D-3 fixtures #104 and #105 were closed `NOT_PLANNED`. No existing ticket was touched.
+
+```
+TRACKER VALIDATION
+backend: local                   harness: codex
+date: 2026-09-22T10:19:20-07:00  skill ref: 817326f (feat/tracker)
+
+PASS  22
+FAIL  0
+SKIP  0
+
+failures:
+  none
+skipped:
+  none
+
+VERDICT: GREEN
+```
+
+Scope: the driver was asked for B9b and ran B1 through B20 as well. All 22 are scored here.
+
+| Case | Verdict | Independent evidence |
+|---|---|---|
+| B9b | PASS | Fixture `131-related-f.md` at `backlog`. The invalid `in reviewww` call was refused with the seven statuses named, and the file's SHA-256 stayed `ff6b0901dd86866c9c6f2591bc85604ee96179a0f608b7a6eed78c6a2488138d`. That child made four tool calls, all reads: the config, `SKILL.md` and `local.md`, the file list, and the file. `in progress` then parsed as `status: 'in-progress'`. |
+| B1 | PASS | `docs/dev-agents/issues/` exists; the config read `issue_tracker: local` and `issues_dir: docs/dev-agents/issues/`. |
+| B2 | PASS | Fixture `023-ticket-a.md` parsed `id: '023'`, `status: 'backlog'`, filename matching the slug. |
+| B3 | PASS | Ten fixtures, `024` to `028` and `125` to `129`. Every title parsed back as the exact string, and the filenames followed the Unicode slug rule, including `126-émoji-and-日本語-and-ünïcödé.md`. |
+| B4 | PASS | `130-ticket-b.md` parsed `blocked_by: ['023']` with `- 023` under `## Blocked by`. |
+| B5 | PASS | `131-related-f.md` carried `## Related` with `#023`, `blocked_by: []`, no `related` key, and no `## Blocked by`. |
+| B6 | PASS | `132-has-section.md` gained `blocked_by: ['023']` and `- 023`; `133-no-section.md` gained the edge and no heading. |
+| B7 | PASS | After `023` and `130` moved to `ready`, the first `$tracker next` listed only `#023`; the parse held `130` behind `023`. |
+| B8 | PASS | After the bare assign, `023` parsed `status: 'in-progress'`, `assignee: 'Wilson Choi'`, equal to `git config user.name`. |
+| B9 | PASS | After `023` moved to `done`, the first `$tracker next` listed `#130`. |
+| B10 | PASS | `130` held `### 2026-09-22 tracker` and the exact body `a note`. |
+| B11 | PASS | The commit count stayed 3 across `$tracker comment 130`, and `git status --porcelain` showed only ` M docs/dev-agents/issues/130-ticket-b.md`. |
+| B12 | PASS | Hand-written `099-hand.md` read as implicit `backlog`; after the move its frontmatter held only `status: 'ready'` and `assignee: ''`, with the body intact. |
+| B12b | PASS | `098-partial.md` kept `id`, `title`, and `milestone: 'M1'`, ending at `status: 'ready'` and `assignee: 'someone'`. |
+| B13 | PASS | `show 99`, `show 099`, and `show '#99'` all resolved `099-hand.md`. |
+| B14 | PASS | `list ready M1` returned only `098`; the unknown milestone stopped and named `M1`. |
+| B15 | PASS | `099` parsed `ready` with `some-colleague`, off the frontier and in `list ready`. The wrong-holder refusal left the checksum unchanged, and the handover wrote `Wilson Choi`. |
+| B16 | PASS | The bare assign gave `130` `in-progress` and `Wilson Choi`; the move to `ready` cleared the assignee and the next `$tracker next` returned it. |
+| B17 | PASS | `show 131` had no comments first, then exactly one `show probe` with its author heading, body intact. |
+| B18 | PASS | `134-body-delimiters.md` parsed `status: 'backlog'`; `show 134` returned both body `---` lines and the pasted `status: 'done'` text, and `list backlog` included it. |
+| B19 | PASS | `135`, `136`, `137` parsed `[]`, `['135']`, `['136']`. The cycle and self-link calls refused, and `135` kept no blocker. |
+| B20 | PASS | With `130` at backlog, the independent frontier was empty. `138` was held by open blocker `139` in review, `140` by `someone-else`, and `141` by the cycle `141 → 142 → 143 → 141`. Six fixture checksums were unchanged across the read. |
+
+Deviations:
+
+- D-1 one codex exec process per skill call, gate as shipped.
+- D-2 the driver was scoped to B9b and ran the whole leg. The extra cases are scored because each carries its own independent evidence.
+- D-3 fresh ids were used throughout, since the scratch repository still held earlier artifacts. B6 used `132` and `133` in place of the runbook's `015` and `016`.
+- D-4 B3's `0123` and `null` were first sent unquoted and read as other input. Only the quoted retries, `128` and `129`, were scored.
+- D-5 fixtures were cancelled through `$tracker move <id> cancel`. `023` stayed `done`, since no verb leaves a terminal status.
+
+```
+TRACKER VALIDATION
+backend: linear                  harness: codex
+date: 2026-09-22T09:10:57-07:00  skill ref: 817326f (feat/tracker)
+
+PASS  1
+FAIL  0
+SKIP  0
+
+failures:
+  none
+skipped:
+  none
+
+VERDICT: GREEN
+```
+
+| Case | Verdict | Independent evidence |
+|---|---|---|
+| C6 | PASS | Fixture CLE-52 in project `cleg test`. `get_issue` read `Backlog` before the invalid call and `Backlog` after it. The child refused `in reviewww` and listed the seven statuses. `in progress` then read `In Progress`. An independent `get_issue` after the run read `stateHistory` as Backlog from creation at 16:07:53Z until 16:09:16Z, then In Progress, then Canceled at 16:10:27Z, so the invalid call wrote nothing. |
+
+Deviations:
+
+- D-1 one codex exec process per skill call, gate as shipped.
+- D-2 CLE-52 was cancelled after scoring.
+
+
 ### 2026-09-22T08:44:06-07:00 Post-trim run at 0.0.24, Codex
 
 First valid run after the 0.0.23 and 0.0.24 trims. Three Codex driver sessions ran in parallel, one
