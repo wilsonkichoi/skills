@@ -101,13 +101,13 @@ purpose.
 **`move`** changes status, including closing. Moving to `backlog` or to `ready` also clears the
 assignee, which is how you hand work back when you cannot finish it, or take it off someone who
 did half of it. `ready` has to clear it: `next` looks for `ready` with nobody assigned, so a
-`ready` ticket with a name still on it is invisible to the frontier and to that person both. Marking a duplicate takes the original's id:
-`tracker move 42 duplicate 17`.
+`ready` ticket with a name still on it is invisible to the frontier and to that person both.
+Marking a duplicate takes the original's id: `tracker move 42 duplicate 17`.
 
 **`link`** records that one ticket is blocked by another: `tracker link 42 blocked-by 17`. It
 refuses an edge that would close a cycle and names the loop it found, because tickets in a cycle
-wait on each other forever. Neither GitHub nor Linear catches every cycle for you. Linear, given the
-reverse of an existing edge, silently flips the old one.
+wait on each other forever. It runs this check itself, because neither GitHub nor Linear refuses
+every cycle.
 
 ## `next`, and the frontier
 
@@ -125,8 +125,8 @@ status and holder. It names any cycle it finds. That is the difference between "
 decide what to unblock next.
 
 What it will never do is report an empty frontier because a query failed: if the backend cannot
-tell it what is blocking what, it stops with an error instead. An empty answer and an unanswerable question look identical from the outside, and only one
-of them means you have nothing to do.
+tell it what is blocking what, it stops with an error instead. An empty answer and an unanswerable
+question look identical from the outside, and only one of them means you have nothing to do.
 
 The same care goes into which read it uses. GitHub has a fast search index and a primary store, and
 the index runs seconds behind: the ticket you made `ready` a moment ago is exactly the one it has
@@ -182,7 +182,7 @@ timeline, which is most of the value for none of the machinery.
 | Open statuses | Labels | Workflow states | `status` in frontmatter |
 | Terminal statuses | Close reasons, not labels | Workflow states | `status` in frontmatter |
 | Blockers | Native issue dependencies | "Blocked by" relations | `blocked_by` in frontmatter |
-| Multiple sessions | Safe | Safe | **One session at a time** |
+| Multiple sessions | Yes | Yes, with a weaker race check | **One session at a time** |
 
 Two consequences worth knowing:
 
@@ -200,9 +200,9 @@ people or two agents share the repository.
 Every verb that changes something reads first, writes, then reads again to confirm, and that last
 read is a fresh query rather than a look at what the write returned.
 
-That is not caution for its own sake. Three of the commands underneath report success while doing
+That is not caution for its own sake. Several commands underneath report success while doing
 nothing at all: removing a label a ticket does not have, closing an issue that is already closed,
-and setting a Linear status by a name that is slightly wrong. All three exit cleanly. The
+and assigning a GitHub user who has no access to the repository. All of them exit cleanly. The
 verification read is the only thing that tells them apart from a write that worked.
 
 If a verb cannot confirm its own change, it tells you what it expected, what the backend actually
@@ -211,7 +211,8 @@ says, and what it did about it.
 ## Things it will not do
 
 - Reopen a terminal ticket. Terminal is terminal.
-- Guess. If two sessions race for the same free ticket, or a Linear workflow has two states it
-  could plausibly mean, it stops and says so instead of picking.
+- Guess. If a Linear workflow is missing a status it needs, it stops and says so instead of
+  picking a similar one. If two sessions take the same free ticket at once, a fixed rule decides
+  which one keeps it, and the other steps back and says so.
 - Keep a second copy of status anywhere. No `PLAN.md` checkboxes, no `PROGRESS.md`.
 - Commit anything, on any backend.

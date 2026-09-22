@@ -370,7 +370,8 @@ empty `assignees` as the reservation failing.
 
 **A29c [MANUAL] reserving for somebody else.** The same case with `<who>` a second collaborator.
 Expect the assignment to land, `show` to name them, and `$tracker assign <it> me` to refuse until it
-names them with `from`. This is the half a one-account machine cannot reach, and it is the same
+names them with `from`. When it lands, the label must still be `ready`: taking a ticket from its
+holder is a handover, and only the bare form sets `in-progress`. This is the half a one-account machine cannot reach, and it is the same
 missing identity that keeps A24 and half of A28 unrunnable: without it, nothing proves an assignment
 lands for anybody but the caller, and A27 shows that is not academic, since a login without push
 access is dropped at exit 0.
@@ -663,10 +664,9 @@ Needs the Linear MCP server connected and a scratch team. Read-only cases can ru
 you have access to; the cases that add or remove a status need Linear's settings UI, so they are
 `[MANUAL]`.
 
-The read and write paths in `linear.md` have both been executed against a live workspace, so a
-failure here is a regression rather than an expected gap. Two things in that file are still
-unproven and are marked in the case list: the comment path, and an assignment race needing two
-identities.
+The read and write paths in `linear.md` have all been executed against a live workspace, so a
+failure here is a regression rather than an expected gap. The one path still unproven is the
+assignment race, which needs two identities and is marked in the case list.
 
 **C1 a fresh team is missing In Review.** Run `$setup` against a newly created Linear team.
 Check: `list_issue_statuses` returns six statuses, no In Review.
@@ -727,13 +727,12 @@ not the whole project unscoped.
 Then the A23b question in Linear form: `list_milestones` takes only `project` and has no state or
 archived filter, so check whether a completed milestone, or one in an archived project, still comes
 back from it while its issues are still there. A milestone the resolver cannot see is reported as a
-name that does not exist, which stops the caller over a milestone that is real. Record what you
-find; nothing in `linear.md` covers it.
+name that does not exist, which stops the caller over a milestone that is real. `linear.md` says a
+completed milestone is still returned; a milestone in an archived project is unmeasured, so record
+what you find.
 
 **C11 comment lands and is verified.** `$tracker comment <id> "runbook note"`.
 Check with `list_comments`: the exact body present exactly once.
-This is the one read-write path in `linear.md` that has never been executed. `save_comment` and
-`list_comments` were read from the server but never called, so the tool shapes are inferred.
 
 **C12 [MANUAL] assignment race.** Two sessions, one `Todo` unassigned issue, `$tracker assign <id>`
 in both. A Linear issue has a single assignee, so the loser cannot detect the race by counting
@@ -755,7 +754,7 @@ together, and like A29b what it discriminates is the verb form rather than the i
 
 **[MANUAL] second half.** With `<who>` a different workspace member, `$tracker assign <id> me` with
 no `from` must refuse and name the holder, and `$tracker assign <id> me from <that member>` must
-land. A holder who is the caller makes the refusal unreachable, so this needs a second identity, the
+land with the status still `Todo`. A holder who is the caller makes the refusal unreachable, so this needs a second identity, the
 same one C12 needs.
 
 **C15 move to ready clears the assignee.** `$tracker assign <id>`, which puts it at `In Progress`
@@ -790,7 +789,7 @@ Linear UI, confirm `archivedAt` with `get_issue`, then `$tracker list done` and 
 Expect `list done` to report it and mark it archived with its timestamp, and `show` to return it
 and say the same. `list_issues` takes `includeArchived` and **defaults it to `false`**, so a
 terminal list that leaves the argument unset comes back short with nothing to say it did, which is
-what this case caught as F23 and what `linear.md`'s Archived issues section now prescribes against.
+what this case caught as F23 and what `linear.md`'s archived-issue rule now prescribes against.
 Check the open side in the same run: `list ready` must leave `includeArchived` unset, because a
 deleted ticket carries the same `archivedAt` and has no business on the frontier. A pass that came
 from flipping the flag everywhere is a different behaviour wearing the right answer's clothes.
@@ -838,6 +837,27 @@ Check first with `get_issue` that every relation reads back as written.
 Expect the reply to say the frontier is empty and to name P held by Q at `In Review` or
 `in-review`, R reserved for you, and S with the cycle through S, T, and U as a path. A reply that
 says only that the frontier is empty is a FAIL, and so is one that misses the cycle.
+
+**C23 create sets the project and the milestone.** Create a milestone M1 in `linear_project`, then
+`$tracker create` with a one-line ticket and `ready` as the status, naming M1.
+Check with `get_issue`: `project` is the configured project, `projectMilestone` is M1, and the
+status is `Todo`. Then `$tracker list ready M1` must return it. An issue outside the project is a
+FAIL even when `get_issue` finds it, because every project-scoped read misses it.
+
+**C24 create holds the status back when an edge does not land.** `$tracker create` with `ready` as
+the status and a `## Blocked by` entry naming an id that does not exist in the team, such as
+`<prefix>-99999`.
+Expect the reply to name the missing edge and say the status was not applied. Check with
+`get_issue`: the issue exists at `Backlog` with no `blockedBy`. An issue at `Todo` is a FAIL even
+when the reply mentions a warning, because between the write and the reply it was on the frontier
+with nothing blocking it. If Linear rejects the whole call and no issue exists, that also passes.
+Record which happened, and the exact `warnings` or error text, in the run log.
+
+**C25 [MANUAL] list with no status covers an unmapped status.** Needs C3's extra status, such as
+`Ready to Merge` under `started`. Put one issue in it with `save_issue`, then `$tracker list`.
+Expect the issue listed under its Linear name, not dropped and not folded into one of the seven.
+Check the calls: one `list_issues` per open team status, the extra one included, and none for Done,
+Canceled, or Duplicate.
 
 ---
 
@@ -960,6 +980,44 @@ prose, not rounded up to a pass, because using the harness's own picker is the h
 actually prescribes.
 
 ---
+
+## Evidence behind the skill files
+
+The backend files state rules without the measurements behind them. The measurements live here, or
+in the run log below, so a rule can be re-checked when a backend changes.
+
+- **GitHub status prelude.** Checked against eight label shapes: none, `backlog`, `ready`, a topic
+  label alone, a topic label with `backlog`, `backlog` with `ready`, `ready` with `in-progress` and a
+  topic label, and `in-review`. The first five and the last resolve to a status, and the two
+  multi-status shapes to `inconsistent`. Closed issues resolve through `stateReason`, and a stale
+  status label on one is ignored.
+- **GitHub read backends.** `GH_DEBUG=api` on `gh` 2.97.0 shows `--label`, `--milestone`, and
+  `--search` sending a search query, and the unfiltered list sending `query IssueList`. An issue
+  created with `--label ready` was missing from `--label ready` on three of three trials, and present
+  in the unfiltered read on all three.
+- **GitHub `blockedBy.totalCount`.** It counts closed blockers, measured 2026-09-18 on `gh` 2.97.0.
+  The GraphQL schema agrees: `totalBlockedBy` is documented as "open and closed".
+- **GitHub cycles.** Measured 2026-09-21 on `wilsonkichoi/tracker-gh`: a self-link returns HTTP 422
+  `Target issue cannot be the same as the source issue`, a two-issue cycle returns HTTP 422
+  `this dependency would create a cycle where the target is already blocked by the source`, and the
+  third edge of #35 → #37 → #36 → #35 was accepted.
+- **Linear cycles.** Measured 2026-09-21 on team `c-leg`: with CLE-5 blocked by CLE-4, `save_issue`
+  on CLE-4 with `blockedBy: ["CLE-5"]` succeeded with no warning and left CLE-5 blocked by nothing.
+  CLE-5 → CLE-6 → CLE-4 → CLE-5 was written and read back intact. A self-link returned success with
+  `Could not add CLE-6 to blockedBy: Argument Validation Error - relatedIssueId cannot have the same value as issueId.`
+  in `warnings`.
+- **Linear status names.** The predecessor recorded that an inexact status name fails silently. It
+  did not reproduce: the server matches case-insensitively and rejects an unknown name with
+  `Could not find state "<name>"`.
+- **Linear unfiltered list.** The claim that an unfiltered `list_issues` can omit issues comes from a
+  dogfood run of the predecessor. It has not been reproduced here, and the rule costs nothing.
+- **Linear milestone list.** `list_projects` with `includeMilestones: true` failed on a real
+  workspace with `query is too complex, Complexity: 15879, Maximum allowed: 10000`.
+- **Local quoting.** 23 titles round-tripped byte-identical through a YAML parser: colons, hashes,
+  `@`, apostrophes, double quotes, percent signs, leading dashes and question marks, brackets and
+  braces, leading and trailing spaces, backslashes, pipes, angle brackets, tabs, anchors and
+  aliases, bare `null` and `true`, a leading-zero number, a date, CJK, accented Latin, an emoji, and
+  a mixed title.
 
 ## Run log
 

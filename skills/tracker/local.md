@@ -4,8 +4,7 @@ One file per ticket under the configured `issues_dir`, named `NNN-slug.md`. No C
 nothing to authenticate.
 
 `local` is single session. An assignment made on a branch is invisible from `main` until that branch
-merges, so two sessions working the same repository at once need `github` or `linear`. `setup` says
-this when the user picks local.
+merges, so two sessions working the same repository at once need `github` or `linear`.
 
 ## File shape
 
@@ -44,25 +43,26 @@ Comments are append-only, newest last, one `### <date> <author>` heading each. T
 skill that wrote it, or `tracker` when a person invoked this skill directly.
 ```
 
-**Where the frontmatter ends.** It is the block between the **first** `---` line and the **next**
-one. Everything after that second line is body, and no verb parses it as YAML, ever. A body is free
-to contain a `---` of its own, as a horizontal rule or inside a pasted diff or config, and a reader
-that splits on every `---`, or that takes the last block rather than the first, turns an ordinary
-ticket into a parse error or, worse, reads somebody's pasted YAML as the ticket's state.
+**Where the frontmatter ends.** The frontmatter is the block between the **first** `---` line and
+the **next** one. Everything after that is body, and no verb parses the body as YAML. A body may
+contain its own `---`, as a horizontal rule or inside a pasted diff or config. Never split on every
+`---`, and never take the last block.
+
+**The frontmatter is the state.** `blocked_by` is the only dependency list any verb reads. The
+`## Blocked by` section is for a person reading the file: `create` writes it, and `link` keeps it in
+step when the file has one, but no verb reads it. No verb adds that section to a body a person wrote.
+`## Related` has no frontmatter field, because nothing computes on it.
 
 ## Quoting
 
-**Every string value in the frontmatter is single-quoted, always, with no exceptions for values that
-look safe.** To quote a value, wrap it in `'` and double every `'` already inside it. That is the
-whole rule, and it is the entire YAML escaping story for single-quoted scalars: nothing else inside
-them is special.
+**Single-quote every string value in the frontmatter, always.** Wrap the value in `'` and double
+every `'` inside it. Nothing else inside single quotes is special.
 
 ```
 title: 'It''s a "mixed" quote: 100% and 日本語 ✅'
 ```
 
-Quote unconditionally rather than case by case, because the values that break are the ones that look
-harmless:
+Quote every value, because the values that break look harmless:
 
 | Written unquoted | What a YAML parser returns |
 |---|---|
@@ -73,59 +73,43 @@ harmless:
 | `title: Fix: colon in title` | parse error |
 | `title: - leading dash` | parse error |
 | `title: [bracketed] {braced}` | parse error |
-| `title: 'trailing spaces   '` unquoted | trailing whitespace stripped |
+| `title: trailing spaces   ` | trailing whitespace stripped |
 
-A title is one line. Strip any newline out of it before writing, since a multi-line value needs a
-block scalar and nothing here needs one. Unicode needs no escaping at all: the file is UTF-8 and
-single quotes carry it through unchanged.
+A title is one line, so remove any newline before writing it. Unicode needs no escaping, because the
+file is UTF-8.
 
-Round-tripped through a YAML parser across 23 titles covering colons, hashes, `@`, apostrophes,
-double quotes, percent signs, leading dashes and question marks, brackets and braces, leading and
-trailing spaces, backslashes, pipes, angle brackets, tabs, anchors and aliases, the bare words
-`null` and `true`, a leading-zero number, a date, CJK, accented Latin, an emoji, and a mixed case
-combining several at once. All 23 came back byte-identical.
+## Identity
 
-**The frontmatter is the state.** `blocked_by` is the only dependency list any verb reads. The
-`## Blocked by` section in the body is there for a human reading the file: `create` writes it, and
-`link` keeps it in step when the file has one, but nothing ever reads it back. Two readers of one
-fact is exactly what the skill's own rules forbid, so there is one reader. A file with no such
-section is not missing anything, and no verb adds one to a body a human wrote.
+There is no user account on this backend, so `assignee` is the value of `git config user.name`.
+When that is unset, stop and say so rather than writing an empty name. `assign <id> <who>` writes
+the name as given, because there is no account list to check it against.
 
-`## Related` has no frontmatter field and needs none. Nothing computes on it, so there is nothing to
-keep in step: `create` writes whatever the ticket gave it and every other verb leaves it alone.
+## Ids and filenames
 
-**Identity.** There is no user account on this backend, so `assignee` is the value of
-`git config user.name`. When that is unset, stop and say so rather than writing an empty name. An
-explicit `assign <id> <who>` writes the name as given, since there is no account here to check it
-against and no way to tell a typo from a colleague who has never touched this repository.
+Compare ids numerically. `12`, `012`, and `#12` are the same ticket, in an argument, in
+`blocked_by`, and in the body section. Write them as three zero-padded digits. A new id is the
+highest existing number plus one. When two files share a leading number, report both paths and do
+not pick one.
 
-**Ids.** Compare ids numerically. `12`, `012`, and `#12` are the same ticket, in an argument, in
-`blocked_by`, and in the body section. Write them as the zero-padded three-digit form. A new id is
-the highest existing number plus one. Two files sharing a leading number is a repository someone
-merged badly: report both paths and do not pick one.
+The slug is the title, lowercased, with every run of non-alphanumeric characters collapsed to one
+hyphen, no hyphen at either end, and cut at about 50 characters on a word boundary. Alphanumeric
+means any Unicode letter or digit, not `[a-z0-9]`. So `émoji ✅ and 日本語 and Ünïcödé` becomes
+`émoji-and-日本語-and-ünïcödé`. No verb reads the slug, and renaming a file does not change the
+ticket. The rule is exact only so that two sessions produce the same name.
 
-**Filenames.** The slug is the title, lowercased, with every run of non-alphanumeric characters
-collapsed to a single hyphen and no leading or trailing hyphen, cut at roughly 50 characters on a
-word boundary. Alphanumeric means a Unicode letter or digit, not `[a-z0-9]`, so `日本語` and
-`Ünïcödé` survive into the name while `✅`, `%` and punctuation collapse:
-`émoji ✅ and 日本語 and Ünïcödé` gives `émoji-and-日本語-and-ünïcödé`. Reading it as ASCII gives
-`-and--and-` instead, which is a different filename for the same ticket.
+## Missing fields
 
-It is decoration. Nothing reads it, and renaming a file does not change the ticket. The algorithm is
-written out anyway so that two sessions filing the same ticket produce the same name.
+A person may write a ticket by hand, with partial frontmatter or none. Read each field on its own:
 
-**Missing fields.** A ticket with no `status` reads as `backlog`. A file a human wrote by hand with
-no frontmatter at all is still a valid ticket: its id is the leading number of the filename and its
-status is `backlog`. A write verb on such a file adds a frontmatter block with only the fields that
-verb sets, leaving the body exactly as the human wrote it. Do not backfill the rest of the shape,
-and do not reformat what is there.
+- No `id`: the leading number of the filename.
+- No `status`: `backlog`.
+- No `assignee`: unassigned.
 
-That leaves a file whose frontmatter is real but partial, which is the ordinary state of a
-hand-written ticket a verb has touched once. Every rule above still applies field by field: a
-missing `id` comes from the filename exactly as it does when there is no frontmatter at all, a
-missing `status` reads as `backlog`, and a missing `assignee` is unassigned. The frontmatter is
-authoritative for what it contains and silent about the rest; it is never evidence that a field was
-deliberately cleared.
+A missing field is never evidence that someone cleared it on purpose.
+
+A write verb on such a file adds only the fields that verb sets, in a new frontmatter block if there
+is none. Leave the body exactly as it was. Do not fill in the rest of the shape, and do not reformat
+what is there.
 
 ## Per verb
 
@@ -133,48 +117,44 @@ deliberately cleared.
 |---|---|
 | `list` | Read the frontmatter of every file in `issues_dir` and filter |
 | `show` | Read the one file whole |
-| `next` | Read every frontmatter; keep `status: ready` with an empty `assignee` and every `blocked_by` id in a terminal status; sort by id |
-| `create` | Write a new file with `status: backlog`, the ticket shape, and `blocked_by`, then apply the requested status last |
-| `assign` | Bare: require `status: ready` with an empty `assignee`, then set `status: in-progress` and `assignee` in the same write. Explicit: set `assignee` only, refuse a terminal status, and refuse an existing holder the caller did not name with `from` |
-| `comment` | Append under `## Comments` |
-| `move` | Read `status` first and refuse any move out of `done`, `cancel`, or `duplicate`; otherwise edit `status`. Moving to `backlog` or to `ready` also sets `assignee: ''`; moving to `duplicate` sets `duplicate_of` |
-| `link` | Refuse a self-link, and walk the blocker's `blocked_by` through every file that is not terminal: reaching the blocked id is a cycle, so refuse and name the path. Otherwise add the blocker id to `blocked_by`. Rewrite the `## Blocked by` section to match when the file has one, and leave the body alone when it does not |
+| `next` | Read every frontmatter. Keep `status: ready` with an empty `assignee` and every `blocked_by` id in a terminal status. Sort by id |
+| `create` | Write one new file with the requested `status`, the ticket shape, and `blocked_by`. No cycle walk, since no file can name the new id yet |
+| `assign` | Bare: require `status: ready` with an empty `assignee`, then set `status: in-progress` and `assignee` in one write. Explicit: set `assignee` only, or `''` for `none`. Refuse a terminal status, and refuse an existing holder the caller did not name with `from` |
+| `comment` | Append under `## Comments`, adding the heading if the file has none |
+| `move` | Read `status` and refuse any move out of `done`, `cancel`, or `duplicate`, then set `status`. Moving to `backlog` or `ready` also sets `assignee: ''`. Moving to `duplicate` also sets `duplicate_of` |
+| `link` | Refuse a self-link. Walk the blocker's `blocked_by` through every file that is not terminal; reaching the blocked id is a cycle, so refuse and name the path. Otherwise add the blocker id to `blocked_by`, and update the `## Blocked by` section if the file has one |
 
-For `next`, "in a terminal status" means `done`, `cancel`, or `duplicate`. A `blocked_by` id with no
-file behind it is an open blocker: the ticket stays off the frontier and the report names the
-missing id.
+`create` needs only one write, because `status` and `blocked_by` sit in the same frontmatter and land
+together.
 
-When the frontier is empty, the same pass over every frontmatter holds the whole explanation: each
-`ready` ticket left out, its `assignee` or its open `blocked_by` ids, each blocker's `status` and
-`assignee`, and the edges to walk for a cycle. No second read is needed.
+The terminal statuses are `done`, `cancel`, and `duplicate`. A `blocked_by` id with no file behind
+it is an open blocker: the ticket stays off the frontier and the report names the missing id.
 
-There is no milestone registry here, so the milestones are the distinct non-empty `milestone` values
-across the files. `list <status> <milestone>` reads them all anyway, so collect that set in the same
-pass: a name not in it is a stop naming the milestones that exist, never an empty list.
+When the frontier is empty, the same pass over every frontmatter explains it: each held `ready`
+ticket, its `assignee` or open `blocked_by` ids, each blocker's `status` and `assignee`, and the
+edges to walk for a cycle.
+
+There is no milestone list, so the milestones are the distinct non-empty `milestone` values across
+the files. Collect them in the same pass as `list`. A name not among them is a stop that names the
+ones that exist.
 
 ## Verifying a write
 
-A file write has no exit code worth trusting either. After every mutating verb, re-read the file
-from disk and parse its frontmatter again. Checking the string you were about to write is not a
-verification; the failure this catches is a value that did not survive the round trip, which is
-exactly what the quoting rule above exists to prevent and exactly what a naive check would miss.
+After every mutating verb, re-read the file from disk and parse its frontmatter again with a YAML
+parser. Checking the string you meant to write does not count. The failure this catches is a value
+that did not survive parsing: a `title` that comes back as `83`, `None`, or a date was written
+unquoted.
 
 | Verb | What the re-read must show |
 |---|---|
-| `create` | the file exists at the new id, `status` is what was asked for, and `blocked_by` holds every entry from `## Blocked by` |
+| `create` | the file exists at the new id, `status` is what was asked for, and `blocked_by` holds every `## Blocked by` entry |
 | `link` | the blocker id is in `blocked_by`, and the blocker's own `blocked_by` is unchanged |
-| `assign` | `assignee` holding exactly the name asked for, and `status: 'in-progress'` as well on the bare form |
+| `assign` | `assignee` is exactly the name asked for, or empty for `none`, and on the bare form `status` is `in-progress` |
 | `comment` | the comment body is under `## Comments` |
-| `move` | `status` is the target, and `assignee` is empty after a move to `backlog` or to `ready` |
+| `move` | `status` is the target, and `assignee` is empty after a move to `backlog` or `ready` |
 
-Re-parse rather than re-read as text. A `title` that comes back as `83`, `None`, or a date object
-means the value was written unquoted, and the ticket is now lying about itself in a way no string
-comparison against the original will catch.
+## No commits
 
-## The tracker does not commit
-
-Edit the files and stop there. Never run `git add`, `git commit`, or `git push` from this skill.
-The edit lands with whatever commit the session makes next, alongside the work it describes.
-
-Committing the assignment on `main` before branching, which is what the predecessor did, is a direct
-push to `main` and a pull-request-gated repository rejects it. Do not reach for it.
+Edit the files and stop. Never run `git add`, `git commit`, or `git push` from this skill. The edit
+lands with the session's next commit, beside the work it describes. Committing on `main` would also
+be a direct push, which a pull-request-gated repository rejects.
