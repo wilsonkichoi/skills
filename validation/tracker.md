@@ -1029,6 +1029,87 @@ shape `CHANGELOG.md` uses, so two runs on one day stay distinguishable. One entr
 runbook above is the reusable procedure and is not edited by a run; everything a run learned goes
 here.
 
+### 2026-09-22T00:05:38-07:00 Re-run of A32, B15, C14, Codex
+
+```
+TRACKER VALIDATION
+backend: github                  harness: codex
+date: 2026-09-22T00:05:38-07:00  skill ref: 3819e4e (feat/tracker)
+
+PASS  1
+FAIL  0
+SKIP  0
+
+failures:
+  none
+skipped:
+  none
+
+VERDICT: GREEN
+```
+
+| Case | Verdict | Independent evidence |
+|---|---|---|
+| A32 | PASS | The hand-run `github.md` frontier query first returned #12, #13, #22, and #28. Removing `ready` from all four, including #13, produced `frontier: []`. Fixtures were #63 P blocked by #64 Q, #65 R reserved for `wilsonkichoi`, and #66 S in the cycle #66 -> #67 -> #68 -> #66. The independent post-fixture query returned `frontier: []` and held #63 with blocker #64, #65 with assignee `wilsonkichoi`, and #66 with blocker #67. Q was `in-review`; the skill result named the cycle through #67 and #68. Fixtures #63 through #68 were closed with `NOT_PLANNED`, and `ready` was restored on #12, #13, #22, and #28. |
+
+Deviations:
+
+- D-1 invocation gate lifted by editing the installed agents/openai.yaml, all cases.
+- D-2 one Codex session.
+
+```
+TRACKER VALIDATION
+backend: local                   harness: codex
+date: 2026-09-22T00:05:38-07:00  skill ref: 3819e4e (feat/tracker)
+
+PASS  1
+FAIL  0
+SKIP  0
+
+failures:
+  none
+skipped:
+  none
+
+VERDICT: GREEN
+```
+
+| Case | Verdict | Independent evidence |
+|---|---|---|
+| B15 | PASS | Hand-written fixture `docs/dev-agents/issues/022-b15-rerun.md` started `ready` and unassigned. Independent YAML parsing after assigning `some-colleague` read `status: 'ready'` and `assignee: 'some-colleague'`. The independent frontier read excluded #022, and the independent ready-list read included it. The wrong-holder attempt refused with no write; the pre-attempt SHA-256 was `c4d42bd392caa5869ef6241b5784b25fed780594121fa79ff909c19326062b81`. Final independent parsing read `status: 'ready'` and `assignee: 'Wilson Choi'`, equal to `git config user.name`, not `me`. |
+
+Deviations:
+
+- D-1 invocation gate lifted by editing the installed agents/openai.yaml, all cases.
+- D-2 one Codex session.
+
+```
+TRACKER VALIDATION
+backend: linear                  harness: codex
+date: 2026-09-22T00:05:38-07:00  skill ref: 3819e4e (feat/tracker)
+
+PASS  1
+FAIL  0
+SKIP  0
+
+failures:
+  none
+skipped:
+  none
+
+VERDICT: GREEN
+```
+
+| Case | Verdict | Independent evidence |
+|---|---|---|
+| C14 first half | PASS | Fresh issue `CLE-20` was created through MCP server `linear-wkc-sandbox` in team `c-leg`, project `cleg test`, with status `Todo` and no assignee. Independent `get_issue(CLE-20, includeRelations: true)` after the explicit assignment read status `Todo`, assignee `wilson choi`, team `c-leg`, and project `cleg test`. The independent frontier reconstruction excluded CLE-20 because it had an assignee. The independent `list_issues` read for state `Todo`, team `c-leg`, and project `cleg test` included CLE-20. |
+
+Deviations:
+
+- D-1 invocation gate lifted by editing the installed agents/openai.yaml, all cases.
+- D-2 one Codex session.
+
+
 ### 2026-09-21T23:47:33-07:00 Targeted 0.0.21 run, Codex
 
 ```
