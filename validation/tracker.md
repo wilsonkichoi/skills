@@ -267,8 +267,6 @@ pre-read is the only guard.
    and a reply that names `in-review`.
 2. `$tracker move <id> in reveal`: no status is clearly meant. Expect no change, and a reply that
    lists the seven statuses or asks which was meant.
-3. `$tracker move <id> donee`: the obvious reading closes the ticket. Expect a question, the issue
-   still open with `in-review`, and no close.
 
 **A17c a status is only read where it can be one.** Create milestones `M1` and `in reviewww`
 with `gh api repos/<R>/milestones -f title=...`, and put one open issue in each. Check creates with
@@ -755,8 +753,6 @@ step. Rotate the inputs: run 1 uses the first of each list, run 2 the second, an
    the typo plainly means (In Review, In Progress, In Review), and a reply that names it.
 2. `$tracker move <id> <unclear>`, with `in reveal`, `in revolt`, `in rewind`: expect no change,
    and a reply that lists the seven statuses or asks which was meant.
-3. `$tracker move <id> <terminal typo>`, with `donee`, `cancell`, `donne`: expect a question and
-   no change. A typo never closes a ticket.
 
 **C7 the frontier reads blocker statuses.** Create A and B with B blocked by A, both `Todo` and
 unassigned. `$tracker next`.

@@ -48,17 +48,6 @@ format instead, even when one is in the repository. No verb here can see a ticke
 | `cancel` | Deliberately not doing it. |
 | `duplicate` | Another ticket already covers it. |
 
-A status argument names one of these seven. Read it the way a person would: case does not matter,
-a space reads as a hyphen, and an obvious typo means the status it misspells, as `redy` means
-`ready`. Say in the reply which status you used. When no single status is clearly meant, as in
-`move 12 blocked`, refuse, list the seven, and write nothing. A typo never closes a ticket: when the
-obvious reading is `done`, `cancel`, or `duplicate`, ask first, since no verb reopens one.
-
-For `list`, an argument that names an existing milestone is that milestone. Otherwise read it as a
-status, and when it is neither, stop and name the milestones and the seven statuses. For `create`,
-when you cannot tell whether the last words of the ticket are its status or part of its title, ask,
-and write nothing until answered.
-
 A ticket can move between the four open statuses in any direction. Do not refuse a move because it
 skips a status.
 
@@ -81,9 +70,8 @@ started right now, and `next` returns it.
 
 `create`, `assign`, `comment`, `move`, and `link` change state. Each runs read, write, and verify:
 
-1. **Read.** Fetch the current state and check this verb's precondition. For `create` and `move`,
-   say which status you read from the argument before writing. If the precondition fails, or you
-   refuse or ask per section 2, write nothing and say why.
+1. **Read.** Fetch the current state and check this verb's precondition. If it fails, write nothing
+   and say why.
 2. **Write.** One command where possible, so nothing is half applied.
 3. **Verify.** A separate read, checked against what the backend now says. Never trust the write's
    exit code, printed URL, or response: several backend commands return success and change nothing.
@@ -93,11 +81,11 @@ what you did about it. A verb that cannot confirm its own write has failed.
 
 | Verb | Precondition | Verification |
 |---|---|---|
-| `create` | a given status is one of the four open ones, read per section 2 | the ticket exists by id, with the intended status and every section it was given. The backend file says how to compare the body |
+| `create` | a given status is one of the four open ones | the ticket exists by id, with the intended status and every section it was given. The backend file says how to compare the body |
 | `link` | both tickets exist, they differ, and the edge would not close a cycle | the edge is on the blocked ticket, and the blocker's own blockers are unchanged |
 | `assign` | not terminal. The bare form also needs `ready` with no assignee. Any other holder must be named | the assignee is exactly the one asked for, or nobody for `none`. The bare form also shows `in-progress` |
 | `comment` | the ticket exists | the comment body is on the ticket |
-| `move` | the target is one of the seven statuses, read per section 2. The current status is not terminal | the backend reports the new status |
+| `move` | the target is one of the seven statuses. The current status is not terminal | the backend reports the new status |
 
 ## 4. Verbs
 
