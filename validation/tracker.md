@@ -1138,6 +1138,27 @@ shape `CHANGELOG.md` uses, so two runs on one day stay distinguishable. One entr
 runbook above is the reusable procedure and is not edited by a run; everything a run learned goes
 here.
 
+### 2026-09-22T15:51:30-07:00 Manual 0.0.32 run, Kiro CLI interactive, GitHub only
+
+Skill ref `fdf2341` in `~/tmp/tracker-val-a3`, by hand in `kiro-cli chat --agent-engine v3 --mode
+default`, model `auto`. Verdicts come from the Kiro session files `~/.kiro/sessions/cli/2ba4989d...`
+(A17b) and `fd5caa36...` (A17c), which record the text each prompt delivered and every reply.
+
+**Interactive Kiro strips double quotes from `/tracker` arguments.** `/tracker create "Alpha manual2
+in review"` reached the model as `create Alpha manual2 in review`, and `create "Delta manual2" done`
+as `create Delta manual2 done`. The quoted form of `create` cannot be sent through interactive Kiro.
+Headless Kiro kept them: the t1449 run's step 4 reply read `quoted, "done"`. On interactive Kiro, a
+multi-word ticket that ends in a status word always gets the question, which writes nothing.
+
+| Case | Verdict | Independent evidence |
+|---|---|---|
+| A17b | FAIL | `move 170 in reviewww` read the config and `github.md`, then wrote `move 170: "in reviewww" is not a status, refusing`, listed the seven, and ended "Did you mean `in-review`? If so, run: /tracker move 170 in-review". `move 170 in progress` then left #170 with one label, `in-progress`. |
+| A17c | FAIL | Step 6 failed: `list nosuchmanual2` named all seventeen milestones but not the seven statuses. Steps 1, 2, and 4 did not test the skill, since the quotes were stripped; given the unquoted text each received, each asked, and no issue was created. Step 3 asked in 3 of 3 (`Lima`, `Mike`, `Oscar`), with no issue created. Step 5a gave #171 and #172, step 5b gave #173 as the `in reviewww` milestone, and step 7 gave #171 only. |
+
+The parse line came after the two reads in both sessions, as 0.0.32 asks. #170 is closed. #171 to
+#173, milestone `M1-manual2`, the local ticket 144, and CLE-104 to CLE-106 stay open for the Codex
+run, with #174 as its new A17b target.
+
 ### 2026-09-22T15:27:34-07:00 Manual 0.0.31 run, Kiro CLI interactive
 
 Skill ref `e4565de` in both directories, run by hand in `kiro-cli chat --agent-engine v3 --mode
