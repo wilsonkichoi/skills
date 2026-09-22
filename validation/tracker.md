@@ -732,7 +732,9 @@ have surfaced.
 Expect a refusal that lists the seven statuses, and `get_issue` still reading `Backlog`. Moving it
 to `In Review` is a FAIL: the skill guessed a near miss. Then `$tracker move <id> in progress`:
 expect `get_issue` to read `In Progress`, since a status argument matches case-insensitively with a
-space read as a hyphen.
+space read as a hyphen. Run the case three times, each on a fresh issue, and pass it only if all
+three pass. The 0.0.26 run found a model that skips the refusal on one pass, so one pass proves
+little.
 
 **C7 the frontier reads blocker statuses.** Create A and B with B blocked by A, both `Todo` and
 unassigned. `$tracker next`.
@@ -1115,6 +1117,33 @@ Newest first, by the timestamp in each entry's heading: ISO 8601 with the local 
 shape `CHANGELOG.md` uses, so two runs on one day stay distinguishable. One entry per run. The
 runbook above is the reusable procedure and is not edited by a run; everything a run learned goes
 here.
+
+### 2026-09-22T12:47:29-07:00 Targeted 0.0.26 run, Codex
+
+Skill ref `c758000`, installed byte-identical in `~/tmp/tracker-val-a3`, `~/tmp/tracker-s-local`, and
+`~/tmp/tracker-cleg`. Driven by `~/tmp/tracker-0026/run.py`, output `out/t1236`: one `codex exec`
+child per skill call on `gpt-6-luna` at reasoning effort `high`, checked per child from the
+transcript's `turn_context`. Every child loaded the project's `SKILL.md` and its backend file.
+Fixtures, independent checks, and cleanup ran in the script; Linear fixtures and reads went through a
+helper limited to `linear-wkc-sandbox`. The skill children called Linear through the `codex_apps`
+connector, which reaches the same workspace.
+
+The per-backend scorers made errors, so every verdict below was re-scored by hand from the raw
+replies, tool calls, and backend reads. The GitHub and local scorers listed C9 as skipped although it
+is a Linear case, and the Linear scorer applied C9's first-part expectations to the second part.
+
+| Case | Verdict | Independent evidence |
+|---|---|---|
+| A12 | PASS | #124 carried `ready` and `in-progress`. `next`, `list ready`, `list backlog`, and `list` with no status left it out of their results and named it inconsistent; `show` named both labels. |
+| A17c | PASS | #129 `Alpha t1236 in review` with no status label; #128 `Bravo t1236` with `in-review`. The unquoted `create Charlie t1236 in review` asked whether `in review` was the status and created nothing. `create "Delta t1236" done` refused. `list M1-t1236` returned #125 and #126; `list "in reviewww"` returned #127; `list "in progress" M1-t1236` returned #125 only. `list nosucht1236` named all ten milestones `gh api .../milestones?state=all` returns, and the seven statuses. |
+| B4 | PASS | One write created `146-v26-t1236-b4-blocked.md` with `status: 'ready'` and `blocked_by: ['144']`; the parse read both, and the body carried `## Blocked by` with `- 144`. |
+| B9b | SKIP | Steps 1 and 2 passed: the file's SHA-256 was unchanged after `move 145 in reviewww`, and the parse read `in-progress` after `move 145 in progress`. Step 3 is void: the fixture prompt `create Echo t1236 in review` put a run tag where the child read a ticket id, so it asked about that instead. It wrote nothing. Re-run with a title that carries no tag. |
+| C6 | FAIL | `move CLE-74 in reviewww` called `save_issue({id:"CLE-74",state:"In Review"})` and replied "Moved CLE-74 from Backlog to In Review". The helper read `In Review`. The child had `SKILL.md` in context and followed `linear.md`'s `move` row; the refusal lived only in `SKILL.md` section 2, and neither the section 3 precondition nor the backend row named it. 0.0.27 puts it in the `move` and `create` preconditions. The second step, `move CLE-74 in progress`, read `In Progress`. |
+| C9 | PASS | Part a: CLE-79 named `blocks CLE-78`, `blocked by CLE-77`, and `related to CLE-76` before the write, said CLE-75 would be blocked by CLE-77, and wrote `save_issue({id:"CLE-79",duplicateOf:"CLE-75"})` with no `state`. Afterwards CLE-79 read `Duplicate` with no relations, and CLE-75 carried all three. Part b: CLE-82 named the CLE-81 edge as dropped before the write and went ahead. CLE-82 read `Duplicate`, and CLE-80 still only blocked CLE-81. Part c: CLE-86 refused with `CLE-83 → CLE-85 → CLE-84 → CLE-83`, made no write, and read `Todo` blocked by CLE-85. |
+
+Wall time was six minutes for all three legs. Three earlier starts of the same script, `void-t1211`,
+`void-t1213`, and `void-t1214`, ran by accident while the script was being written, and `void-t1223` ran on the
+wrong model. None was scored, and their fixtures were closed, cancelled, or deleted.
 
 ### 2026-09-22T11:48:12-07:00 Independent review of the trim, and 0.0.26 fixes, Claude Code
 

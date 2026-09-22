@@ -90,11 +90,11 @@ what you did about it. A verb that cannot confirm its own write has failed.
 
 | Verb | Precondition | Verification |
 |---|---|---|
-| `create` | none | the ticket exists by id, with the intended status and every section it was given. The backend file says how to compare the body |
+| `create` | a given status is one of the four open ones, per section 2 | the ticket exists by id, with the intended status and every section it was given. The backend file says how to compare the body |
 | `link` | both tickets exist, they differ, and the edge would not close a cycle | the edge is on the blocked ticket, and the blocker's own blockers are unchanged |
 | `assign` | not terminal. The bare form also needs `ready` with no assignee. Any other holder must be named | the assignee is exactly the one asked for, or nobody for `none`. The bare form also shows `in-progress` |
 | `comment` | the ticket exists | the comment body is on the ticket |
-| `move` | the current status is not terminal | the backend reports the new status |
+| `move` | the target is one of the seven statuses, per section 2, never the nearest match. The current status is not terminal | the backend reports the new status |
 
 ## 4. Verbs
 
