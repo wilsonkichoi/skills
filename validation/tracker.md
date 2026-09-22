@@ -272,8 +272,8 @@ with `gh api repos/<R>/milestones -f title=...`, and put one open issue in each.
 3. `$tracker create Fix in review`: expect a question asking whether `in review` is the status or
    part of the title, and no new issue until it is answered. Check with
    `gh issue list --repo <R> --state all --limit 200 --json number,title`. Run this step at least
-   three times with different first words, ending in turn in `in review`, `in progress`, and
-   `backlog`, and pass it only if every run asks. Across 0.0.26 to
+   three times with different first words, ending in turn in `in review` and `in progress`, and pass
+   it only if every run asks. Across 0.0.26 to
    0.0.28 it asked in 3 of 5 runs. Check the transcript too: the first assistant message, before
    any tool call, is the parse line from `SKILL.md` section 3, ending in `asking`.
 4. `$tracker create "Fix" done`: expect a refusal and no new issue. `create` takes open statuses only.
