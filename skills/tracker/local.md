@@ -45,13 +45,11 @@ never write the word `me`. Any other `<who>` is written as given.
 
 ## Ids and filenames
 
-`12`, `012`, and `#12` are one ticket, everywhere. Write ids as three zero-padded digits. A new id is
+Write ids as three zero-padded digits. A new id is
 the highest plus one. When two files share a number, report both and pick neither.
 
-The slug is the title lowercased, each run of characters that are not Unicode letters or digits
-collapsed to one hyphen, no hyphen at either end, cut near 50 characters on a word boundary:
-`émoji ✅ and 日本語 and Ünïcödé` becomes `émoji-and-日本語-and-ünïcödé`. The slug carries no meaning;
-never look a ticket up by it.
+The slug is a short, lowercase, hyphenated form of the title. It carries no meaning; never look a
+ticket up by it.
 
 ## Missing fields
 
@@ -76,8 +74,7 @@ Terminal statuses are `done`, `cancel`, and `duplicate`.
 
 A `blocked_by` id with no file is an open blocker; name the missing id. For an empty frontier, the
 same pass names each held ticket's holder or open blockers, each blocker's status and assignee, and
-any cycle. Milestones are the distinct non-empty `milestone` values; an unknown name is a stop that
-names them.
+any cycle. Milestones are the distinct non-empty `milestone` values.
 
 ## Verifying a write
 

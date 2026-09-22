@@ -111,8 +111,7 @@ An issue holds one assignee, so the `SKILL.md` tie-break never fires here.
 
 A milestone is a project milestone in `linear_project`, never a cycle. To scope a list:
 
-1. `list_milestones` with `linear_project`; match the name. No match is a stop that names the ones
-   that exist.
+1. `list_milestones` with `linear_project`; match the name.
 2. `list_issues` with `project`, `state`, and `projectMilestone` in `fields`.
 3. Keep the issues whose `projectMilestone` matches.
 

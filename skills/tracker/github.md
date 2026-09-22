@@ -57,8 +57,8 @@ For a milestone, resolve the title first:
 gh api 'repos/<owner>/<repo>/milestones?state=all' --jq '.[] | select(.title == "<title>") | .number'
 ```
 
-Empty output is a stop: name the milestones that exist, from the same call with `--jq '.[].title'`.
-Otherwise add `select(.milestone.title == "<title>")` to the list query. `gh issue create` and
+Empty output means no such milestone; the same call with `--jq '.[].title'` lists the ones that
+exist. Otherwise add `select(.milestone.title == "<title>")` to the list query. `gh issue create` and
 `gh issue edit` accept only an open milestone.
 
 ## show
@@ -172,8 +172,7 @@ gh issue view <n> --repo <owner/repo> --json assignees
 ```
 
 For `none`, drop `--add-assignee` and remove every holder. Refuse a closed issue. Refuse any holder
-other than the target that `from` does not name, case-insensitively. Never put the target in the
-removal list.
+other than the target that `from` does not name. Never put the target in the removal list.
 
 The re-read must show exactly the target, or nobody for `none`. Otherwise report what the issue
 carries and that the assignment did not land. `gh` exits 0 when it drops a user without push access.

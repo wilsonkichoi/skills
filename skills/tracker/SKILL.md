@@ -32,7 +32,7 @@ way through, before running anything:
 
 Stop when the config cannot name a backend: the file does not exist, it has no `issue_tracker`
 field, or the value is not one of the four above. Write nothing, create no file or directory, and
-read no backend file. Say which of the three it was, and ask the user to run `setup` first:
+read no backend file. Say so, and ask the user to run `setup` first:
 Claude Code `/setup`, Codex `$setup`, Kiro CLI `/setup`. Never use another tool's config or ticket
 format instead, even when one is in the repository. No verb here can see a ticket written there.
 
@@ -100,11 +100,8 @@ what you did about it. A verb that cannot confirm its own write has failed.
 | `move <id> <status> [original]` | Change status, including a terminal close |
 | `link <id> blocked-by <id>` | Record that the first ticket is blocked by the second |
 
-`12`, `012`, and `#12` are the same ticket. Compare ids numerically, and write them the way the
-backend does.
-
-A milestone argument that matches no milestone is a stop that names the milestones that exist.
-Never return an empty list, and never return the unscoped set.
+A milestone that matches none is a stop that names the milestones that exist, never an empty or
+unscoped list.
 
 **`next`** returns every ticket that is `ready`, has no assignee, and has no open blocker, lowest id
 first. Never report an empty frontier from a read that could not see dependency edges, that came
@@ -148,8 +145,7 @@ refuses every cycle. `create` skips the walk.
 off the frontier for that person, and `show` and `list` name the holder.
 
 **A holder who is not you must be named.** Any form that would replace an existing assignee refuses
-unless `from <holder>` names them, compared case-insensitively. The write removes every holder the
-read found except the new one.
+unless `from <holder>` names them. The write removes every holder the read found except the new one.
 
 **The bare form's tie-break.** Check the verification read in this order:
 
@@ -168,7 +164,6 @@ read found except the new one.
 | `in-progress`, `in-review` | Unchanged. Say who holds it when that is not you, and say when nobody does |
 | `done`, `cancel`, `duplicate` | Unchanged. They record who did the work |
 
-`ready` must clear the assignee: a ticket handed back with a name on it never reaches `next`.
 
 ## 5. Ticket shape
 
