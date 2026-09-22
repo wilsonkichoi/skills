@@ -120,14 +120,15 @@ gh issue create --repo <owner/repo> --title "<title>" --body-file <file> [--mile
 ```
 
 Create with no status label, run `link` once per `## Blocked by` entry without the cycle walk, then
-add the requested status label. Verify by number:
+add the requested status label. A `backlog` ticket stays unlabelled: add no label. Verify by number:
 
 ```
 gh issue view <n> --repo <owner/repo> --json number,title,labels,blockedBy
 gh issue view <n> --repo <owner/repo> --json body | jq --rawfile sent <file> -e '.body == $sent'
 ```
 
-The first must show every blocker and the status label. The second must print `true`. Compare
+The first must show every blocker and the requested status label, or no status label for
+`backlog`. The second must print `true`. Compare
 exactly this way, never through a shell variable or `--jq .body`.
 
 ## assign, bare form

@@ -48,6 +48,9 @@ format instead, even when one is in the repository. No verb here can see a ticke
 | `cancel` | Deliberately not doing it. |
 | `duplicate` | Another ticket already covers it. |
 
+A status argument must be one of these seven, compared case-insensitively, with a space read as a
+hyphen. Refuse anything else, a near miss included, list the seven, and write nothing.
+
 A ticket can move between the four open statuses in any direction. Do not refuse a move because it
 skips a status.
 

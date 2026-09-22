@@ -252,6 +252,10 @@ Expect D as `DUPLICATE`.
 Expect a refusal. `gh issue close` on a closed issue exits 0 and keeps the old reason, so the
 pre-read is the only guard.
 
+**A17b a bad status name is refused.** On an open `backlog` issue, `$tracker move <id> in reviewww`.
+Expect a refusal that lists the seven statuses, and `gh issue view <id> --json labels` unchanged.
+Then `$tracker move <id> in progress`: expect exactly one status label, `in-progress`.
+
 **A18 human-made ticket reads as backlog.** Create an issue in the web UI, no label, one-line body.
 `$tracker show <id>` expect `backlog`; `$tracker next` expect it absent; `$tracker list backlog`
 expect it present.
@@ -501,6 +505,10 @@ assignee is a FAIL; the skill should have stopped and said the identity was unre
 
 **B9 terminal releases the frontier.** `$tracker move <A> done`, then `$tracker next`. Expect B.
 
+**B9b a bad status name is refused.** On a `backlog` ticket, `$tracker move <id> in reviewww`.
+Expect a refusal that lists the seven statuses and the file's SHA-256 unchanged. Then
+`$tracker move <id> in progress`: expect the YAML parse to read `status: 'in-progress'`.
+
 **B10 comment.** `$tracker comment <B> "a note"`. Check the file: the body is under `## Comments`
 with a `### <date> <author>` heading.
 
@@ -696,12 +704,11 @@ Expect a stop saying the workflow no longer matches the config and to re-run `$s
 finds `Released` by its `completed` category and writes to it anyway has absorbed a drift it should
 have surfaced.
 
-**C6 a bad status name errors rather than failing silently.** Write a status using a name no status
-has, for instance `in reviewww`.
-Expect `Could not find state "in reviewww"` and no change. Then write `in progress` in lower case:
-expect it to resolve to `In Progress`, since matching is case-insensitive.
-The predecessor recorded this as a silent failure. It did not reproduce against a live server;
-record what you see, since a regression either way matters.
+**C6 a bad status name is refused, never guessed.** On a `Backlog` issue, `$tracker move <id> in reviewww`.
+Expect a refusal that lists the seven statuses, and `get_issue` still reading `Backlog`. Moving it
+to `In Review` is a FAIL: the skill guessed a near miss. Then `$tracker move <id> in progress`:
+expect `get_issue` to read `In Progress`, since a status argument matches case-insensitively with a
+space read as a hyphen.
 
 **C7 the frontier reads blocker statuses.** Create A and B with B blocked by A, both `Todo` and
 unassigned. `$tracker next`.
@@ -1067,6 +1074,184 @@ Newest first, by the timestamp in each entry's heading: ISO 8601 with the local 
 shape `CHANGELOG.md` uses, so two runs on one day stay distinguishable. One entry per run. The
 runbook above is the reusable procedure and is not edited by a run; everything a run learned goes
 here.
+
+### 2026-09-22T08:44:06-07:00 Post-trim run at 0.0.24, Codex
+
+First valid run after the 0.0.23 and 0.0.24 trims. Three Codex driver sessions ran in parallel, one
+per backend, from 07:17 to 08:44. Each driver ran every skill call as its own child
+`codex exec --dangerously-bypass-approvals-and-sandbox -C <dir> '$tracker <verb> <args>'` and
+scored only on its own independent reads. A review of every child transcript from the run found a
+literal `$tracker` prompt as the first user turn and the installed
+`<dir>/.agents/skills/tracker/SKILL.md` loaded, in all three directories. Two defects surfaced,
+A5 and C6, both fixed in 0.0.25. Neither was caused by text the trim removed alone: see the notes
+under each block.
+
+```
+TRACKER VALIDATION
+backend: github                  harness: codex
+date: 2026-09-22T08:03:43-07:00  skill ref: 156a913 (feat/tracker)
+
+PASS  20
+FAIL  1
+SKIP  0
+
+failures:
+  A5  expected labels [] and body true  actual labels ["backlog"] and body true
+skipped:
+  none
+
+VERDICT: RED
+```
+
+Scope: A5, A6, A9, A10, A12, A13, A14, A15, A16, A17, A20, A22, A23, A23b, A26, A28, A29, A29b,
+A30, A31, and A32 in `~/tmp/tracker-val-a3`, repository `wilsonkichoi/tracker-gh`.
+
+| Case | Verdict | Independent evidence |
+|---|---|---|
+| A5 | FAIL | Fixture #70. `gh issue view 70 --json number,title,labels` read `labels: ["backlog"]`. `gh issue view 70 --json body \| jq --rawfile sent fixture-A5-body.md -e '.body == $sent'` printed `true`. The child said "I will create it without a label, then apply and verify `backlog`". |
+| A6 | PASS | Fixture #72 with hand-created blocker #71. `gh issue view 72 --json blockedBy --jq '[.blockedBy.nodes[].number]'` read `[71]`. #72 also carried a `backlog` label, the A5 defect again. |
+| A9 | PASS | Fixtures #73 and #74, both `ready`, #74 blocked by #73. The `$tracker next` result included #73 and excluded #74. |
+| A10 | PASS | Fixtures #75 and #76. After `$tracker move 75 done`, the list read held #76 with `blockedBy.totalCount: 1` and node #75 `CLOSED`; the next `$tracker next` included #76. |
+| A12 | PASS | Fixture #83 read `labels: ["ready","in-progress"]`. `next`, `list ready`, and `list backlog` excluded it and named it inconsistent; `show` named both labels. |
+| A13 | PASS | Fixture #103 read `["ready","in-progress"]`. After `$tracker move 103 ready`, `gh issue view 103 --json labels` read `["ready"]`. |
+| A14 | PASS | Fixture #85 read `["bug","duplicate","in-progress"]` after the no-op move. |
+| A15 | PASS | Fixture #86 read `CLOSED`, `COMPLETED`, `["bug","duplicate"]`. |
+| A16 | PASS | Fixtures #77 and #78. #78 read `CLOSED` with `stateReason: DUPLICATE`. |
+| A17 | PASS | Fixture #80 stayed `CLOSED` with `DUPLICATE`; `$tracker move 80 ready` refused with no write. |
+| A20 | PASS | Fixture #87 read `assignees: []` after the bare assign and the move to backlog. |
+| A22 | PASS | Fixture #81 `--json comments` read exactly one `runbook note`. |
+| A23 | PASS | Fixture #88 on open milestone `tracker-val-a3 M1`. The scoped list returned only #88; an unknown milestone stopped and named the existing ones. |
+| A23b | PASS | Fixture #89 on closed milestone `tracker-val-a3 M2`. `milestones` without `state=all` omitted M2, `milestones?state=all` listed it, and the scoped list returned #89. |
+| A26 | PASS | Fixture #82. The first `$tracker next` after the move included #82; the first milestone list after an independent milestone edit returned it. |
+| A28 | PASS | Fixture #90. The wrong-holder call left `["wilsonkichoi"]`; the bare `none` produced `[]`. |
+| A29 | PASS | Fixture #91 read `assignees: []` and `["ready"]` after bare assign and move to ready; `$tracker next` included it. |
+| A29b | PASS | Fixture #92 read `["wilsonkichoi"]` and `ready`. `next` omitted it, `list ready` included it, and `show` named the holder. |
+| A30 | PASS | Fixture #93. The first `show` had no comments; after the comment, the second showed one comment by `wilsonkichoi` with body `show probe`. |
+| A31 | PASS | Fixtures #94, #95, #96. After two valid links, #95 was blocked by #94 and #96 by #95. After the refused cycle and self-link, #94 read `blockedBy: []`. |
+| A32 | PASS | Fixtures #97 to #102. With every issue from the frontier query moved out of `ready`, the independent query read `frontier: []` and held #97 behind #98, #99 on `wilsonkichoi`, and #100 behind #101. The skill named #98 as `in-review`, #99 as reserved, and the cycle `#100 -> #101 -> #102 -> #100`. |
+
+A5 root cause. `github.md` `create` says "Create with no status label, ... then add the requested
+status label", and its verification says the read "must show ... the status label". A default
+`backlog` request therefore adds the `backlog` label. The 0.0.22 wording had the same two sentences;
+the trim removed the statuses-section line "Open with no status label: `backlog`. Every
+human-created and every reopened issue lands here", which was the only nearby text that made an
+unlabelled issue the normal `backlog` shape. Fixed in 0.0.25: `create` now says a `backlog` ticket
+stays unlabelled, and the verification expects no status label for `backlog`.
+
+Deviations:
+
+- D-1 one codex exec process per skill call, gate as shipped.
+- D-2 cases that depend on earlier cases used fresh hand-built fixtures: A6, A9, A10, A13 to A17, A20, A23, A23b, A26, A28 to A31, and A32.
+- D-3 A13's first setup used single-status fixture #84 by mistake. Only the re-run on #103 was scored.
+- D-4 A32 cleared `ready` from the existing #12, #13, #22, and #28, then restored it. A check after the run read #11, #12, #13, #22, and #28 at `ready` and unassigned, #29 at `ready` held by `wilsonkichoi`, and fixtures #70 to #103 all `CLOSED`.
+
+```
+TRACKER VALIDATION
+backend: local                   harness: codex
+date: 2026-09-22T08:44:06-07:00  skill ref: 156a913 (feat/tracker)
+
+PASS  18
+FAIL  0
+SKIP  0
+
+failures:
+  none
+skipped:
+  none
+
+VERDICT: GREEN
+```
+
+Scope: B2, B3, B4, B6, B7, B9, B10, B11, B12, B12b, B13, B14, B15, B16, B17, B18, B19, and B20 in
+`~/tmp/tracker-s-local`.
+
+| Case | Verdict | Independent evidence |
+|---|---|---|
+| B2 | PASS | `001-ticket-a.md` parsed `id: '001'`, `status: 'backlog'`. |
+| B3 | PASS | Fixtures `002` to `011`. A separate PyYAML parse of the archived files after the run read every title back as the exact string, including `'0123'`, `'null'`, `'2026-09-18'`, `'- leading dash'`, `'[bracketed] {braced}'`, and `'It''s a "mixed" quote: 100% and 日本語 ✅'`. Filenames followed the Unicode slug rule, for example `010-émoji-and-日本語-and-ünïcödé.md`. |
+| B4 | PASS | `012-ticket-b.md` parsed `blocked_by: ['001']`; the body had `## Blocked by` with `- 001`. |
+| B6 | PASS | `015-has-section.md` gained `blocked_by: ['001']` and `- 001`. `016-no-section.md` gained the frontmatter edge and its body stayed byte-identical. |
+| B7 | PASS | After moving `001` and `012` to `ready`, the independent frontier parse read `['001']`. |
+| B9 | PASS | After `001` moved to `done`, the frontier parse read `['012']`. |
+| B10 | PASS | `012` held `### 2026-09-22 tracker` followed by `a note`. |
+| B11 | PASS | The commit count stayed 2, and `git status --porcelain` showed only ` M docs/dev-agents/issues/012-ticket-b.md`. |
+| B12 | PASS | Hand-written `099-hand.md` read as `backlog`. After the move, the new frontmatter held only `status: 'ready'` and `assignee: ''`; the body was unchanged. |
+| B12b | PASS | Partial `098-partial.md` read as backlog and unassigned. The move kept `id`, `title`, and `milestone`; the assign added `assignee: 'someone'` and kept `status: 'ready'`. |
+| B13 | PASS | `show 99`, `show 099`, and `show #99` all resolved to `099-hand.md`. |
+| B14 | PASS | The milestone parse read only `M1`; `list ready M1` returned `098`; the unknown milestone stopped. |
+| B15 | PASS | `099` stayed `ready` with `some-colleague`, off the frontier and in `list ready`. The wrong-holder refusal kept the checksum; the handover wrote `Wilson Choi`. |
+| B16 | PASS | Bare assign set `012` to `in-progress` with `Wilson Choi`; the move to `ready` cleared the assignee; the frontier read `['012']`. |
+| B17 | PASS | `015` had no `## Comments` before; after `show probe`, exactly one comment, with body and blocker intact. |
+| B18 | PASS | `100-b18-horizontal-rule.md` parsed `status: 'backlog'`; both body `---` lines and the pasted `status: 'done'` text survived. |
+| B19 | PASS | Reads showed `101: []`, `102: ['101']`, `103: ['102']`. The cycle and self-link attempts left all three checksums unchanged. |
+| B20 | PASS | With `012` moved to backlog, the independent frontier read `[]`. `104`, `106`, and `107` were held for the expected reasons, and the cycle `107 -> 108 -> 109 -> 107` was named. All six checksums were unchanged; `012` was restored to `ready` and unassigned. |
+
+Deviations:
+
+- D-1 one codex exec process per skill call, gate as shipped.
+- D-2 the scratch repository had no root commit, so the driver made a setup baseline commit and a ticket baseline commit for B11's two-commit precondition.
+- D-3 B6 used the runbook's hand-written `015` and `016`. B20 used hand-written fixtures `104` to `109`.
+- D-4 three unquoted prompts, the B3 brace title, B3 `0123`, and B19 `B19 Z`, were read as a title plus a status argument. Each created nothing; quoted retries created the scored fixtures. This is correct behaviour, and 0.0.25 makes it a stated rule.
+- D-5 existing issue files were moved aside before the run and restored after it; the run's fixtures were cancelled through `$tracker move <id> cancel` and archived outside the repository.
+
+```
+TRACKER VALIDATION
+backend: linear                  harness: codex
+date: 2026-09-22T08:17:07-07:00  skill ref: 156a913 (feat/tracker)
+
+PASS  17
+FAIL  1
+SKIP  0
+
+failures:
+  C6  expected a refusal and CLE-22 still Backlog  actual `in reviewww` moved CLE-22 to In Review
+skipped:
+  none
+
+VERDICT: RED
+```
+
+Scope: C4, C6, C7, C8, C9, C10, C11, C13, C14 first half, C15, C16, C17, C19, C20, C21, C22, C23,
+and C24 in `~/tmp/tracker-cleg`, team `c-leg`, project `cleg test`.
+
+| Case | Verdict | Independent evidence |
+|---|---|---|
+| C4 | PASS | CLE-21 `get_issue` read `In Progress`. |
+| C6 | FAIL | CLE-22 read `Backlog` before `$tracker move CLE-22 in reviewww`, `In Review` after it, and `In Progress` after `in progress`. The child said "I will set it to Linear's `In Review` status". |
+| C7 | PASS | CLE-23 and CLE-24, CLE-24 blocked by CLE-23, both `Todo`. After CLE-23 went to `Done`, `$tracker next` returned CLE-24. |
+| C8 | PASS | CLE-26 `get_issue(includeRelations: true)` read `blockedBy` exactly CLE-25. |
+| C9 | PASS | CLE-28 read `Duplicate`, `duplicateOf` CLE-27, `relatedTo` empty. |
+| C10 | PASS | CLE-29 carried milestone `VAL-20260922-TRACKER-C10-MILESTONE`; CLE-30 had none. `list_milestones` returned the completed `VAL-20260922-TRACKER-C10-COMPLETED`. The archived-project subcheck was not measured. |
+| C11 | PASS | CLE-32 `list_comments` read `runbook note` once, `hasNextPage: false`. |
+| C13 | PASS | CLE-33 read `In Progress`, assignee `wilson choi`. |
+| C14 first half | PASS | CLE-34 read `Todo`, assignee `wilson choi`. A `Todo` read included it; the same read with `assignee: null` excluded it. |
+| C15 | PASS | CLE-35 read `Todo`, no assignee; the first `$tracker next` after the move included it. |
+| C16 | PASS | CLE-36 stayed `Todo` and unassigned after the invalid assignee. |
+| C17 | PASS | CLE-37 appeared in the first `next` after the move; the first `list in-progress` after the bare assign showed it `In Progress` with `wilson choi`. |
+| C19 | PASS | CLE-38 had no comments before; afterwards exactly one, `show probe`. |
+| C20 | PASS | CLE-44 kept all five headings, the fence `alpha {beta}`, and `café 日本語`, with `blockedBy` CLE-39 and `relatedTo` CLE-27. |
+| C21 | PASS | Final reads: CLE-40 blocked by nothing, CLE-41 by CLE-40, CLE-42 by CLE-41. The reverse, three-cycle, and self-link calls left that graph unchanged. |
+| C22 | PASS | CLE-50 `Todo` blocked by CLE-46 `In Review`; CLE-47 `Todo` held by `wilson choi`; CLE-51 -> CLE-48 -> CLE-49 -> CLE-51 stored. After the frontier was cleared, `$tracker next` said "Frontier is empty", named CLE-50 blocked by CLE-46 `In Review`, CLE-47 reserved by `wilson choi`, and the cycle `CLE-51 → CLE-48 → CLE-49 → CLE-51`. |
+| C23 | PASS | CLE-45 read `Todo`, project `cleg test`, milestone `VAL-20260922-TRACKER-C23-MILESTONE`; the filtered read returned it. |
+| C24 | PASS | `list_issues` for the exact title returned nothing, `hasNextPage: false`. |
+
+C6 root cause. `SKILL.md` never said that a status argument must be one of the seven statuses. The
+`linear.md` rule "never substitute a similar status" covers a team status that has gone missing, not
+a mistyped argument, so the child mapped `in reviewww` to the nearest status. This is not from the
+trim: 0.0.22 had no such rule either. Earlier C6 passes wrote `state: "in reviewww"` straight to
+`save_issue` and measured the server, which does reject it with `Could not find state "in reviewww"`.
+This run drove C6 through `$tracker` and exposed the gap. Fixed in 0.0.25: `SKILL.md` refuses any
+status argument that is not one of the seven, compared case-insensitively with a space read as a
+hyphen, lists the seven, and writes nothing. C6 now states the check through the skill. A17b and B9b
+add the same check for GitHub and local.
+
+Deviations:
+
+- D-1 one codex exec process per skill call, gate as shipped.
+- D-2 C7, C21, and C22 used hand-built relation graphs. The first C21 link attempt ran against hand-built edges and was not scored; the edges were removed and the scored sequence ran on a fresh graph.
+- D-3 some children called the `codex_apps` Linear connector instead of `linear-wkc-sandbox`: C15 `next`, C17 `move`, C21's Z link, C23 `list`, and the C22 frontier reads. Both reach the same workspace, and every independent read used `linear-wkc-sandbox`.
+- D-4 C22 moved the existing CLE-2, CLE-17, and CLE-19 to `Backlog` to clear the frontier, then restored them. A read after the run showed all three at `Todo` and every fixture from CLE-21 to CLE-51 in `Canceled`, `Done`, or `Duplicate`.
+
 
 ### 2026-09-22T01:06:12-07:00 Post-trim run at 0.0.24, Codex, VOID
 
