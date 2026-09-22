@@ -282,7 +282,7 @@ with `gh api repos/<R>/milestones -f title=...`, and put one open issue in each.
    open statuses only.
 5. `$tracker list M1`, `$tracker list "in reviewww"`: expect each milestone's issue, scoped. The
    second names an existing milestone, so it is that milestone, not a status typo.
-6. `$tracker list no-such-thing`: expect a stop naming both the milestones and the seven statuses.
+6. `$tracker list no-such-thing`: expect a stop that names the milestones that exist, and no list.
 7. `$tracker list "in progress" M1`: expect both filters applied, with the milestone text unchanged.
 
 Interactive Kiro CLI strips double quotes from `/tracker` arguments before the model sees them, so
