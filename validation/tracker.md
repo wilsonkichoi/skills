@@ -1112,6 +1112,21 @@ shape `CHANGELOG.md` uses, so two runs on one day stay distinguishable. One entr
 runbook above is the reusable procedure and is not edited by a run; everything a run learned goes
 here.
 
+### 2026-09-22T21:33:12-07:00 Manual 0.0.38 run, Kiro CLI interactive
+
+Skill ref `b541b7d` in all three directories, by hand in interactive Kiro CLI, model `auto`, a
+fresh session per directory. The session files `b8ebab5f...` (GitHub) and `14914356...` (local)
+carry the 0.0.38 `create` row and none of 0.0.37's. The Bravo prompt arrived unquoted, as before.
+
+| Case | Verdict | Independent evidence |
+|---|---|---|
+| A17b | SKIP | Partial, step 2 did not run. Step 1 passed: `move 181 in reviewww` asked "Did you mean move 181 in-review?", and the last #181 label event is still the 03:01:38Z reset. |
+| A17c | SKIP | Partial: step 2 ran twice of the three required, and steps 1, 3, 4, and 5 did not run. Both runs passed: `create Alpha manual6 in review` made #188 with that title and no label, and `create ticket with title Bravo manual6 in progress` made #189 `Bravo manual6 in progress` with no label. Kiro quoted the new row as its reason for keeping the status words in the title. |
+| B9b | SKIP | Partial, only step 3 ran, and it passed: `create Echo manual6 in review` wrote `145-echo-manual6-in-review.md`, whose YAML parse read `title: Echo manual6 in review`, `status: backlog`. |
+
+No FAIL, against two FAILs on 0.0.36 and 0.0.37 for the same prompts. #188 and #189 are closed, local
+file 145 is removed, and #181 stays at `backlog`.
+
 ### 2026-09-22T20:47:04-07:00 Manual 0.0.37 run, Kiro CLI interactive
 
 Skill ref `5e0cb41` in all three directories, by hand in interactive Kiro CLI, model `auto`, a
