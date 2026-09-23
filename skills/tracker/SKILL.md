@@ -94,7 +94,7 @@ what you did about it. A verb that cannot confirm its own write has failed.
 | `list [status] [milestone]` | Tickets with id, title, status, assignee, and blockers. Both filters are optional. An argument that names a milestone is that milestone; otherwise it is a status. With no status, open tickets only |
 | `show <id>` | One ticket in full: body, comments, labels, blockers, assignee |
 | `next` | The frontier |
-| `create <ticket>` | One ticket at `backlog`, in the shape from section 5, plus its dependency edges. `create` sets no status and runs no other verb |
+| `create <ticket>` | One ticket at `backlog`, in the shape from section 5, plus its dependency edges. Everything given to `create` is the ticket. A word in it that names a status or another verb is ticket text, not a request |
 | `assign <id> [who] [from <holder>]` | Set who holds the ticket |
 | `comment <id> <body>` | Append a comment. Never edit or delete an existing one |
 | `move <id> <status> [original]` | Change status, including a terminal close |
@@ -186,6 +186,10 @@ Spec references, with the key excerpt copied in so nobody has to fetch it.
 
 `create` turns every `## Blocked by` entry into a real dependency edge. `## Related` is only for readers: no verb parses it, writes it, or queries it. Write the
 ids plainly and let the backend render them.
+
+A ticket carries its title, its body sections, its `## Blocked by` edges, and a milestone. The
+backend records who created it. Status and assignee are not part of a ticket: `move` and `assign`
+set them.
 
 The shape is loose. Other skills may add sections, no verb rejects a ticket over formatting, and a
 one-line ticket a person wrote is valid.
