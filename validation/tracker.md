@@ -1112,6 +1112,24 @@ shape `CHANGELOG.md` uses, so two runs on one day stay distinguishable. One entr
 runbook above is the reusable procedure and is not edited by a run; everything a run learned goes
 here.
 
+### 2026-09-22T21:52:40-07:00 Manual 0.0.38 run, Claude Code interactive
+
+Skill ref `b541b7d` in `~/tmp/tracker-val-a3` and `~/tmp/tracker-s-local`, by hand in interactive
+Claude Code, a fresh session per directory. The session file `885934ec...` carries the 0.0.38
+`create` row. Claude Code keeps quotes, so the Bravo prompt arrived quoted. Only selected steps ran,
+as in the Kiro run.
+
+| Case | Verdict | Independent evidence |
+|---|---|---|
+| A17b | SKIP | Partial, step 2 did not run. Step 1 passed: `move 181 in reviewww` asked whether `in-review` was meant and wrote nothing; the last #181 label event is still the 03:01:38Z reset. Its picker call had one option and was rejected as `Invalid tool parameters` (the picker needs two), so it asked in plain text. |
+| A17c | SKIP | Partial: step 2 ran once of the three required, and steps 1, 3, 4, and 5 did not run. Both creates passed: `create Alpha manual7 in review` made #190 with that title and no label, and `create ticket with title "Bravo manual7 in progress"` made #191 with that title and no label. Each reply said the status words were ticket text and named the `move` to run instead. |
+| B9b | SKIP | Partial, only step 3 ran, and it passed: `create Echo manual7 in review` wrote `145-echo-manual7-in-review.md`, whose YAML parse read `title: Echo manual7 in review`, `status: backlog`. |
+
+With the Kiro run above, 0.0.38 passed every prompt that failed on 0.0.36, on both harnesses. Claude
+Code wrote an empty body for #190, #191, and file 145, where Kiro filled in placeholder sections;
+both are valid, since a one-line ticket is. #190 and #191 are closed, local file 145 is removed, and
+#181 stays at `backlog`.
+
 ### 2026-09-22T21:33:12-07:00 Manual 0.0.38 run, Kiro CLI interactive
 
 Skill ref `b541b7d` in all three directories, by hand in interactive Kiro CLI, model `auto`, a
