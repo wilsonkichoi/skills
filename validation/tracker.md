@@ -1112,6 +1112,22 @@ shape `CHANGELOG.md` uses, so two runs on one day stay distinguishable. One entr
 runbook above is the reusable procedure and is not edited by a run; everything a run learned goes
 here.
 
+### 2026-09-22T20:47:04-07:00 Manual 0.0.37 run, Kiro CLI interactive
+
+Skill ref `5e0cb41` in all three directories, by hand in interactive Kiro CLI, model `auto`, a
+fresh session per directory. The session files `9065e597...` (GitHub) and `aa67e473...` (local)
+carry the 0.0.37 `create` row and none of 0.0.36's. Only selected steps ran, as in the 0.0.36 run.
+
+| Case | Verdict | Independent evidence |
+|---|---|---|
+| A17b | SKIP | Partial, step 2 did not run. Step 1 passed: `move 181 in reviewww` asked "Did you mean in-review?", and the #181 timeline has no label event after the reset at 03:01:38Z. |
+| A17c | FAIL | `create Alpha manual5 in review` first asked, saying `create` sets no status and that create then move "is two operations. I can do both". Given the title `"Alpha manual5 in review"`, it made #186 with that title and then added `in-review`. `create ticket with title "Bravo manual5 in progress"` made #187 with the full title and then added `in-progress`. |
+| B9b | SKIP | Partial, only step 3 ran, and it passed: `create Echo manual5 in review` wrote `145-echo-manual5-in-review.md`, whose YAML parse read `title: Echo manual5 in review`, `status: backlog`. |
+
+0.0.37 fixed the title, which now keeps every word, but not the status. The row constrained the
+verb, and the model ran `move` as a second step of its own, reading the status words as a request.
+#186 and #187 are closed, local file 145 is removed, and #181 stays at `backlog`.
+
 ### 2026-09-22T20:01:17-07:00 Manual 0.0.36 run, Kiro CLI and Claude Code interactive
 
 Skill ref `3e678ed` in all three directories, by hand, one session per harness per directory.
