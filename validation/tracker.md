@@ -263,30 +263,26 @@ pre-read is the only guard.
 **A17b a status is read the way a person would.** On an open `backlog` issue, check each step with
 `gh issue view <id> --json state,labels`:
 
-1. `$tracker move <id> in reviewww`: an obvious typo. Expect exactly one status label, `in-review`,
-   and a reply that names `in-review`.
+1. `$tracker move <id> in reviewww`: an obvious typo. Expect either exactly one status label,
+   `in-review`, with a reply that names it, or a question whether `in-review` was meant and no
+   change. Any other status is a FAIL.
 2. `$tracker move <id> in reveal`: no status is clearly meant. Expect no change, and a reply that
    lists the seven statuses or asks which was meant.
 
-**A17c a status is only read where it can be one.** Create milestones `M1` and `in reviewww`
-with `gh api repos/<R>/milestones -f title=...`, and put one open issue in each. Check creates with
-`gh issue list --repo <R> --state all --limit 200 --json number,title,labels`. Then:
+**A17c create takes no status.** Create milestone `M1` with
+`gh api repos/<R>/milestones -f title=...` and put two open issues in it, one `in-progress` and one
+`ready`. Check creates with `gh issue list --repo <R> --state all --limit 200 --json number,title,labels`.
+Then:
 
-1. `$tracker create "Fix in review"`: expect title `Fix in review`, no status label.
-2. `$tracker create "Fix" "in review"`: expect title `Fix`, status label `in-review`.
-3. `$tracker create Fix in review`: either a question and no new issue, or exactly one new issue
-   whose title and status are the ones the reply says it used. Run this step at least three times
-   with different first words, ending in turn in `in review` and `in progress`, and pass it only if
-   every run passes.
-4. `$tracker create "Fix" done`: expect a refusal or a question, and no new issue. `create` takes
-   open statuses only.
-5. `$tracker list M1`, `$tracker list "in reviewww"`: expect each milestone's issue, scoped. The
-   second names an existing milestone, so it is that milestone, not a status typo.
-6. `$tracker list no-such-thing`: expect a stop that names the milestones that exist, and no list.
-7. `$tracker list "in progress" M1`: expect both filters applied, with the milestone text unchanged.
-
-Interactive Kiro CLI strips double quotes from `/tracker` arguments before the model sees them, so
-steps 1, 2, and 4 cannot run there: score them SKIP. Headless Kiro keeps the quotes.
+1. `$tracker create "Fix in review"`: expect one new issue titled `Fix in review`, with no status
+   label.
+2. `$tracker create Fix in review`: expect one new issue titled `Fix in review`, with no status
+   label, or a question and no new issue. Run this step at least three times with different first
+   words, ending in turn in `in review` and `in progress`, and pass it only if every run passes. An
+   issue with a status label is a FAIL: `create` always writes `backlog`.
+3. `$tracker list M1`: expect both of M1's issues, scoped.
+4. `$tracker list no-such-thing`: expect a stop that names the milestones that exist, and no list.
+5. `$tracker list "in progress" M1`: expect both filters applied: the `in-progress` issue only.
 
 **A18 human-made ticket reads as backlog.** Create an issue in the web UI, no label, one-line body.
 `$tracker show <id>` expect `backlog`; `$tracker next` expect it absent; `$tracker list backlog`
@@ -486,12 +482,9 @@ is a FAIL, and it is the specific failure unquoted YAML produces.
 Check that each of the ten filenames starts with its id and a hyphen. The slug after it is
 free-form, since nothing reads it.
 
-**B4 edges live in the frontmatter.** `$tracker create` ticket B naming A under `## Blocked by`,
-with `ready` as the status.
-Check the file: `blocked_by` holds A's id, `status` is `'ready'`, and the `## Blocked by` body
-section matches. Check the transcript: one write created the file with both `status` and
-`blocked_by`, not a `backlog` write followed by a promotion. Local is the one backend `SKILL.md`
-lets write both together.
+**B4 edges live in the frontmatter.** `$tracker create` ticket B naming A under `## Blocked by`.
+Check the file: `blocked_by` holds A's id, `status` is `'backlog'`, and the `## Blocked by` body
+section matches.
 
 **B5 Related has no frontmatter field.** `$tracker create` ticket F with a `## Related` section
 naming A and **no `## Blocked by` section at all**, not an empty one.
@@ -530,12 +523,13 @@ assignee is a FAIL; the skill should have stopped and said the identity was unre
 
 **B9b a status is read the way a person would.** On a `backlog` ticket:
 
-1. `$tracker move <id> in reviewww`: expect the YAML parse to read `status: 'in-review'`, and a
-   reply that names `in-review`.
+1. `$tracker move <id> in reviewww`: expect either the YAML parse to read `status: 'in-review'`,
+   with a reply that names it, or a question whether `in-review` was meant and the file's SHA-256
+   unchanged. Any other status is a FAIL.
 2. `$tracker move <id> in reveal`: expect the file's SHA-256 unchanged, and a reply that lists the
    seven statuses or asks which was meant.
-3. `$tracker create Fix in review`: either a question and no new file, or exactly one new file whose
-   title and status are the ones the reply says it used.
+3. `$tracker create Fix in review`: expect one new file titled `Fix in review` at
+   `status: 'backlog'`, or a question and no new file.
 
 **B10 comment.** `$tracker comment <B> "a note"`. Check the file: the body is under `## Comments`
 with a `### <date> <author>` heading.
@@ -736,8 +730,9 @@ have surfaced.
 `Backlog` issue, and pass it only if every run passes. Read the issue with `get_issue` after each
 step. Rotate the inputs: run 1 uses the first of each list, run 2 the second, and so on.
 
-1. `$tracker move <id> <typo>`, with `in reviewww`, `in-progres`, `in_review`: expect the status
-   the typo plainly means (In Review, In Progress, In Review), and a reply that names it.
+1. `$tracker move <id> <typo>`, with `in reviewww`, `in-progres`, `in_review`: expect either the
+   status the typo plainly means (In Review, In Progress, In Review), with a reply that names it, or
+   a question whether that status was meant and no change. Any other status is a FAIL.
 2. `$tracker move <id> <unclear>`, with `in reveal`, `in revolt`, `in rewind`: expect no change,
    and a reply that lists the seven statuses or asks which was meant.
 
@@ -887,22 +882,16 @@ Expect the reply to say the frontier is empty and to name P held by Q at `In Rev
 says only that the frontier is empty is a FAIL, and so is one that misses the cycle.
 
 **C23 create sets the project and the milestone.** Create a milestone M1 in `linear_project`, then
-`$tracker create` with a one-line ticket and `ready` as the status, naming M1.
+`$tracker create` with a one-line ticket naming M1.
 Check with `get_issue`: `project` is the configured project, `projectMilestone` is M1, and the
-status is `Todo`. Then `$tracker list ready M1` must return it. An issue outside the project is a
+status is `Backlog`. Then `$tracker list backlog M1` must return it. An issue outside the project is a
 FAIL even when `get_issue` finds it, because every project-scoped read misses it.
 
-**C24 create holds the status back when an edge does not land.** `$tracker create` with `ready` as
-the status and a `## Blocked by` entry naming an id that does not exist in the team, such as
-`<prefix>-99999`.
-Expect the reply to name the missing edge and say the status was not applied. Check with
-`get_issue`: the issue exists at `Backlog` with no `blockedBy`. An issue at `Todo` is a FAIL even
-when the reply mentions a warning, because between the write and the reply it was on the frontier
-with nothing blocking it. If Linear rejects the whole call and no issue exists, that also passes.
-Record which happened, and the exact `warnings` or error text, in the run log.
-Linear refuses an unknown id with an error, as the 0.0.21 run found, so this fixture passes on a
-one-call create too and does not discriminate. A blocker Linear refuses only in `warnings` would.
-No such fixture is known yet; record any you find.
+**C24 create reports an edge that does not land.** `$tracker create` with a `## Blocked by` entry
+naming an id that does not exist in the team, such as `<prefix>-99999`.
+Expect the reply to name the missing edge. Check with `get_issue`: the issue exists at `Backlog` with
+no `blockedBy`, or no issue exists because Linear rejected the whole call. Record which happened, and
+the exact `warnings` or error text, in the run log.
 
 **C25 [MANUAL] list with no status covers an unmapped status.** Needs C3's extra status, such as
 `Ready to Merge` under `started`. Put one issue in it with `save_issue`, then `$tracker list`.

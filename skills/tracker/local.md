@@ -66,7 +66,7 @@ Terminal statuses are `done`, `cancel`, and `duplicate`.
 | `list` | Read every frontmatter in `issues_dir` and filter |
 | `show` | Read the one file whole |
 | `next` | Keep `status: ready` with an empty `assignee` and every `blocked_by` id terminal. Sort by id |
-| `create` | Write one file with the requested `status` and `blocked_by` together, in one write, as `SKILL.md` allows for a backend that keeps both in one record. No cycle walk |
+| `create` | Write one file with `status: 'backlog'` and its `blocked_by`, in one write. No cycle walk |
 | `assign` | Bare: require `ready` with no `assignee`, then set `in-progress` and `assignee` in one write. Explicit: set `assignee` only, `''` for `none`. Refuse a terminal status and an unnamed holder |
 | `comment` | Append under `## Comments`, adding the heading if missing |
 | `move` | Refuse a move out of a terminal status. `backlog` or `ready` also sets `assignee: ''`; `duplicate` also sets `duplicate_of` |
@@ -82,7 +82,7 @@ Re-read the file and parse its frontmatter with a YAML parser.
 
 | Verb | The parse must show |
 |---|---|
-| `create` | the new id, the requested `status`, every blocker in `blocked_by` |
+| `create` | the new id, `status: 'backlog'`, every blocker in `blocked_by` |
 | `link` | the blocker in `blocked_by`, and the blocker's own `blocked_by` unchanged |
 | `assign` | `assignee` exactly as asked, or empty; on the bare form, `in-progress` |
 | `comment` | the body under `## Comments` |

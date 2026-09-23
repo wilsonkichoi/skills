@@ -119,17 +119,15 @@ When `assign` refuses a frontier candidate, take the next one.
 gh issue create --repo <owner/repo> --title "<title>" --body-file <file> [--milestone "<title>"]
 ```
 
-Create with no status label, run `link` once per `## Blocked by` entry without the cycle walk, then
-add the requested status label. When the requested status is `backlog`, add no label. Verify by
-number:
+Create with no status label, then run `link` once per `## Blocked by` entry without the cycle walk.
+Verify by number:
 
 ```
 gh issue view <n> --repo <owner/repo> --json number,title,labels,blockedBy
 gh issue view <n> --repo <owner/repo> --json body | jq --rawfile sent <file> -e '.body == $sent'
 ```
 
-The first must show every blocker and the requested status label, or no status label for
-`backlog`. The second must print `true`. Compare
+The first must show every blocker and no status label. The second must print `true`. Compare
 exactly this way, never through a shell variable or `--jq .body`.
 
 ## assign, bare form

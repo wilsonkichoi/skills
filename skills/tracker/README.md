@@ -60,7 +60,7 @@ filed by hand in the web UI is a real ticket immediately, with no import step.
 tracker list [status] [milestone]
 tracker show <id>
 tracker next
-tracker create <ticket> [status]
+tracker create <ticket>
 tracker assign <id> [who] [from <holder>]
 tracker comment <id> <body>
 tracker move <id> <status> [original]
@@ -77,10 +77,8 @@ blocking it.
 
 **`next`** is the interesting one, and the reason the rest exists. See below.
 
-**`create`** makes a ticket from the shape below. It lands in `backlog` unless you name one of the
-four open statuses. If the body has a `## Blocked by` section, `create` writes those dependency
-edges too, and it writes them *before* applying the status, so a new ticket never appears as
-workable during the second it has no blockers recorded yet.
+**`create`** makes a ticket from the shape below, always at `backlog`. Use `move` to give it another
+status. If the body has a `## Blocked by` section, `create` writes those dependency edges too.
 
 **`assign`** says who holds a ticket. Bare, `tracker assign 42`, it takes the ticket for you: it
 requires `ready` with nobody on it, and sets the assignee and `in-progress` together. That is the

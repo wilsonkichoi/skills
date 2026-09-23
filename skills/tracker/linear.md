@@ -80,8 +80,7 @@ save_issue { team, project, title, description, state: 'Backlog', blockedBy, mil
 ```
 
 Check `warnings`, then `get_issue` with `includeRelations: true`: every `blockedBy` entry and every
-section. Only then, if the requested status is not Backlog, `save_issue { id, state }` and read the
-status back. A missing edge stops there, at Backlog.
+section. Report any edge that did not land.
 
 ### link
 

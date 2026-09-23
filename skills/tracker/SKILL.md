@@ -81,7 +81,7 @@ what you did about it. A verb that cannot confirm its own write has failed.
 
 | Verb | Precondition | Verification |
 |---|---|---|
-| `create` | a given status is one of the four open ones | the ticket exists by id, with the intended status and every section it was given. The backend file says how to compare the body |
+| `create` | the ticket text is given | the ticket exists by id, at `backlog`, with every section it was given. The backend file says how to compare the body |
 | `link` | both tickets exist, they differ, and the edge would not close a cycle | the edge is on the blocked ticket, and the blocker's own blockers are unchanged |
 | `assign` | not terminal. The bare form also needs `ready` with no assignee. Any other holder must be named | the assignee is exactly the one asked for, or nobody for `none`. The bare form also shows `in-progress` |
 | `comment` | the ticket exists | the comment body is on the ticket |
@@ -94,7 +94,7 @@ what you did about it. A verb that cannot confirm its own write has failed.
 | `list [status] [milestone]` | Tickets with id, title, status, assignee, and blockers. Both filters are optional. An argument that names a milestone is that milestone; otherwise it is a status. With no status, open tickets only |
 | `show <id>` | One ticket in full: body, comments, labels, blockers, assignee |
 | `next` | The frontier |
-| `create <ticket> [status]` | One ticket in the shape from section 5, plus its dependency edges. The status is an open one and defaults to `backlog` |
+| `create <ticket>` | One ticket at `backlog`, in the shape from section 5, plus its dependency edges. `move` gives it any other status |
 | `assign <id> [who] [from <holder>]` | Set who holds the ticket |
 | `comment <id> <body>` | Append a comment. Never edit or delete an existing one |
 | `move <id> <status> [original]` | Change status, including a terminal close |
@@ -120,12 +120,9 @@ path, such as `#12 → #14 → #15 → #12`. With no `ready` ticket at all, say 
 tickets in each other status. "Nothing to do" and "everything is stuck" must never give the same
 answer.
 
-**`create`** writes the ticket at `backlog`, then one `link` per `## Blocked by` entry, then the
-requested status last. A backend may write the edges together with the `backlog` status, but it
-applies the requested status only after a read confirms every edge. A backend that keeps the status
-and the edges in one record, as `local` does, writes both in one write instead, since no read can
-see one without the other. If a step fails, report the id, which edges landed, and the status the
-ticket now has.
+**`create`** writes the ticket at `backlog`, then one `link` per `## Blocked by` entry, or the edges
+together with the ticket where the backend can. If a step fails, report the id and which edges
+landed.
 
 **`link`** refuses a self-link. Before writing `link <A> blocked-by <B>`, start at B and follow its
 open blockers, then theirs, and so on. If the walk reaches A, refuse, write nothing, and name the
