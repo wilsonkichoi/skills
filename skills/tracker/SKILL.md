@@ -94,7 +94,7 @@ what you did about it. A verb that cannot confirm its own write has failed.
 | `list [status] [milestone]` | Tickets with id, title, status, assignee, and blockers. Both filters are optional. An argument that names a milestone is that milestone; otherwise it is a status. With no status, open tickets only |
 | `show <id>` | One ticket in full: body, comments, labels, blockers, assignee |
 | `next` | The frontier |
-| `create <ticket>` | One ticket at `backlog`, in the shape from section 5, plus its dependency edges. `move` gives it any other status |
+| `create <ticket>` | One ticket at `backlog`, in the shape from section 5, plus its dependency edges. `create` sets no status and runs no other verb |
 | `assign <id> [who] [from <holder>]` | Set who holds the ticket |
 | `comment <id> <body>` | Append a comment. Never edit or delete an existing one |
 | `move <id> <status> [original]` | Change status, including a terminal close |
