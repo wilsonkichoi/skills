@@ -1112,6 +1112,28 @@ shape `CHANGELOG.md` uses, so two runs on one day stay distinguishable. One entr
 runbook above is the reusable procedure and is not edited by a run; everything a run learned goes
 here.
 
+### 2026-09-22T20:01:17-07:00 Manual 0.0.36 run, Kiro CLI and Claude Code interactive
+
+Skill ref `3e678ed` in all three directories, by hand, one session per harness per directory.
+Kiro ran model `auto`. Only selected steps ran: A17b step 1, A17c step 2 (`Alpha`) and a quoted
+`create ticket with title "..."`, and B9b step 3. Verdicts come from the pasted sessions and the
+tracker state read afterwards. The Kiro session file `ae36cc3f...` shows the quoted Bravo prompt
+arrived as `create ticket with title Bravo manual4 in progress`.
+
+| Case | Verdict | Independent evidence |
+|---|---|---|
+| A17b, Kiro | SKIP | Partial, step 2 did not run. Step 1 passed: `move 181 in reviewww` asked "Did you mean in-review?", and the #181 timeline has no label event from that session. |
+| A17b, Claude Code | SKIP | Partial, step 2 did not run. Step 1 passed: `move 181 in reviewww` asked through the picker, and after the answer #181 read one label, `in-review`, labeled at 02:57:58Z. |
+| A17c, Kiro | FAIL | `create Alpha manual4 in review` made #182 `Alpha manual4` and then added `in-review`; the reply said it read the request as create then move. The quote-stripped Bravo prompt made #183 `Bravo manual4` at `in-progress`. |
+| A17c, Claude Code | FAIL | `create Alpha manual4 in review` made #184 `Alpha manual4` at `in-review`. The quoted `create ticket with title "Bravo manual4 in progress"` made #185 with that exact title and no label. |
+| B9b, Kiro | SKIP | Partial, only step 3 ran, and it passed: `create Echo manual4 in review` wrote `145-echo-manual4-in-review.md`, whose YAML parse read `title: Echo manual4 in review`, `status: backlog`. |
+
+Both A17c FAILs are one cause. The `create` row in `SKILL.md` section 4 ended "`move` gives it any
+other status", and both models read it as an instruction to run `move` after `create`. Kiro in the
+local directory also called `get_agent_skill` with id `tracker` on the Linear MCP server, got a 400,
+and then read `local.md`; it wrote nothing through Linear. #182 to #185 are closed, local file 145 is
+removed, and #181 is back at `backlog` as the A17b target.
+
 ### 2026-09-22T19:44:08-07:00 Manual 0.0.35 run, Kiro CLI interactive
 
 Skill ref `d409993` in all three directories, by hand in interactive Kiro CLI, model `auto`, one
