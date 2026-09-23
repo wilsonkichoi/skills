@@ -1112,6 +1112,24 @@ shape `CHANGELOG.md` uses, so two runs on one day stay distinguishable. One entr
 runbook above is the reusable procedure and is not edited by a run; everything a run learned goes
 here.
 
+### 2026-09-22T19:44:08-07:00 Manual 0.0.35 run, Kiro CLI interactive
+
+Skill ref `d409993` in all three directories, by hand in interactive Kiro CLI, model `auto`, one
+session per directory. Verdicts come from the pasted sessions and the tracker state read afterwards.
+The runbook text in force was 0.0.34's. 0.0.36 then made `create` take no status, so A17c is
+recorded against what it found, not re-scored.
+
+| Case | Verdict | Independent evidence |
+|---|---|---|
+| A17b | PASS | `move 174 in reviewww` moved #174 to one label, `in-review`, and said it read a typo. `move 174 in reveal` changed nothing and listed the seven. |
+| A17c | FAIL | Interactive Kiro strips quotes, so `create "Alpha manual3 in review"` arrived unquoted and made #175 `Alpha manual3` at `in-review`; `create title "..."` and `create ticket with title "..."` made #179 and #180 the same way. `list "in reviewww"` listed the `in-review` tickets, not the milestone #173 sits in. `create "Delta manual3" done` wrote nothing, `list M1-manual2` gave #171 and #172, `list "in progress" M1-manual2` gave #171, and `list ready no-such-milestone` named the seventeen milestones. `show #171` worked. |
+| B9b | FAIL | Against the 0.0.34 text, which expected the move: `move 144 in reviewww` asked "Did you mean in-review?" and wrote nothing. `move 144 in reveal` changed nothing, and ticket 144 read `status: 'backlog'` after both. `create Echo in review` asked. `create It's a colon: test with 日本語 ✅` wrote `145-it-s-a-colon-test-with.md`, whose YAML parse read the title back exactly. |
+| C6 | FAIL | Against the 0.0.34 text, which expected the move: all three typos (`in reviewww`, `in-progres`, `in_review`) asked instead of moving, and all three unclear words changed nothing. CLE-104 to CLE-106 read `Backlog` afterwards. `list ready no-such-milestone` named the four project milestones. |
+
+The two FAILs on asking are what 0.0.36 accepts: a question on an obvious typo writes
+nothing and is safe. #174 to #180 are closed, the local file 145 is removed, and #181 is the new
+A17b target.
+
 ### 2026-09-22T15:51:30-07:00 Manual 0.0.32 run, Kiro CLI interactive, GitHub only
 
 Skill ref `fdf2341` in `~/tmp/tracker-val-a3`, by hand in `kiro-cli chat --agent-engine v3 --mode
