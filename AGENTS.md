@@ -36,8 +36,8 @@ npx skills add wilsonkichoi/skills -a claude-code -a codex -a kiro-cli
 ```
 
 There is no `.claude-plugin/`, no `marketplace.json`, no per-harness distribution tree, and no
-build step. Adding one of those is a decision to maintain a second copy of every skill, so do not
-add one without a written reason.
+consumer build step. Adding one of those is a decision to maintain a second copy of every skill,
+so do not add one without a written reason.
 
 The installer copies and symlinks the same directory into whichever harness the user named:
 `.claude/skills/` for Claude Code, `.agents/skills/` for Codex, `.kiro/skills/` for Kiro CLI. One
@@ -83,6 +83,8 @@ it leaves behind before reading any step. The skeleton is in [Skill template](#s
 
 No scripts unless a skill genuinely cannot be written as prose. Script sprawl and the build steps
 around it are the main reason the previous toolkit became unmaintainable.
+`workflow-diagram` is the one recorded exception. Its reason and maintainer build live in
+[`tools/workflow-diagram/README.md`](./tools/workflow-diagram/README.md), outside the installed skill.
 
 Inputs and outputs between skills stay loose. A skill states what it expects and what it produces,
 but does not reject work over formatting. Following rigid steps for ceremony is not the point.

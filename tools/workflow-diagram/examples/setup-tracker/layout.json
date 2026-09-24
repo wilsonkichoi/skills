@@ -1,0 +1,12 @@
+{
+  "schemaVersion": 1,
+  "nodes": { "setup": { "x": 80, "y": 100 }, "tracker": { "x": 560, "y": 100 } },
+  "edges": {
+    "configured-backend": { "start": [320, 180], "segments": [[400, 180, 480, 180, 560, 180]], "labelOffset": [0, -22] },
+    "reconfigure": { "start": [680, 260], "segments": [[680, 380, 680, 380, 440, 380], [200, 380, 200, 380, 200, 260]], "labelOffset": [0, 20] }
+  },
+  "regions": [
+    { "lane": "foundation", "x": 56, "y": 48, "width": 288, "height": 236 },
+    { "lane": "coordination", "x": 536, "y": 48, "width": 288, "height": 236 }
+  ]
+}

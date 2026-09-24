@@ -9,8 +9,8 @@ metadata:
 # Setup
 
 - **What it does:** interviews the user about this repository, scaffolds `docs/dev-agents/`, and
-  writes `docs/dev-agents/config.md`, which every other skill reads.
-- **When to use it:** once per repository, before any other skill in this set. Re-run it to change
+  writes `docs/dev-agents/config.md`, which `tracker` reads.
+- **When to use it:** once per repository, before `tracker`. Re-run it to change
   the tracker or bring an older config up to the current fields.
 - **Dependencies:** `git`. `gh` for the GitHub tracker, the Linear MCP server for the Linear
   tracker, neither for the local tracker.
