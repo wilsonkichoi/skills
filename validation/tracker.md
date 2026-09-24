@@ -1133,6 +1133,10 @@ shape `CHANGELOG.md` uses, so two runs on one day stay distinguishable. One entr
 runbook above is the reusable procedure and is not edited by a run; everything a run learned goes
 here.
 
+Versions 0.0.9 to 0.0.41 below were development steps on the `feat/tracker` branch. They shipped
+together as 0.0.8, so an entry's version names a branch state, and its skill ref names the exact
+commit it tested.
+
 ### 2026-09-24T13:32:19-07:00 Manual 0.0.41 run, Kiro CLI interactive
 
 Skill ref `724ea5d`, installed byte-identical in all three directories (`.kiro`, `.claude`, and

@@ -12,6 +12,11 @@ All version fields use semver (`major.minor.patch`). Always use the minimum incr
 - Breaking changes (renamed skills, removed features, restructured plugin): major
 
 For now, use patch for everything including new features. Save minor/major bumps for after the plugin has real consumers.
+
+One version per pull request. The first commit on a branch that touches `skills/` bumps `VERSION`
+and adds its `CHANGELOG.md` line. Later commits on that branch keep the version and rewrite that
+line so it describes the branch as a whole. A version names what merges to `main`, not each step
+taken to get there.
 A version becomes a release when it is tagged `X.Y.Z` at its merged commit and published as a GitHub Release.
 
 A tag marks a release for people reading the history, and it is what a pinned install points at.
@@ -182,8 +187,8 @@ row in the same pull request and note the rename in `CHANGELOG.md`.
 
 Before any commit that adds, removes, or modifies files under `skills/`:
 
-1. Version bumped in `VERSION`
-2. Append short summary to `CHANGELOG.md` using this format `{version} {ISO 8601 standard with local time offset e.g. 2026-08-21T17:16:30-07:00} {change summary}`
+1. Version bumped in `VERSION`, once per pull request (see [Versioning](#versioning))
+2. That version's `CHANGELOG.md` line added, or rewritten to cover this commit, using this format `{version} {ISO 8601 standard with local time offset e.g. 2026-08-21T17:16:30-07:00} {change summary}`
 3. `README.md` (repo root) and `AGENTS.md` updated if skill behavior/description changed
 4. `README.md` roster row added or updated when a skill is added, renamed, or removed
 5. `validation/<skill-name>.md` updated when a verb, a command, or a guarantee changed. A runbook
