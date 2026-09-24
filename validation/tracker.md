@@ -1133,6 +1133,39 @@ shape `CHANGELOG.md` uses, so two runs on one day stay distinguishable. One entr
 runbook above is the reusable procedure and is not edited by a run; everything a run learned goes
 here.
 
+### 2026-09-24T13:32:19-07:00 Manual 0.0.41 run, Kiro CLI interactive
+
+Skill ref `724ea5d`, installed byte-identical in all three directories (`.kiro`, `.claude`, and
+`.agents` copies), by hand in interactive Kiro CLI, one session per directory under
+`~/.kiro/sessions/`: `sess_7b365300...` (GitHub), `sess_584cf385...` (local), `sess_68da3cf3...`
+(Linear). Every session ran model `auto` (`qdev::auto`), which records no underlying model. In each
+session only prompt 1 went through `/tracker`, which loaded the skill by `disclose_context` with the
+0.0.41 `move` row in the result. The rest were typed as plain text (`$tracker ...` or
+`tracker ...`) with the skill already in context, so Kiro's quote stripping did not apply and the
+A17c quotes reached the model intact. The local session stopped at step 3 on Kiro's monthly usage
+limit.
+
+A17b and C6 are scored under the rule `adf31b3` wrote into the runbook: a question that suggests the
+status a look-alike resembles still passes when nothing was written.
+
+| Case | Verdict | Independent evidence |
+|---|---|---|
+| A17b | PASS | Step 1: `move 181 in reviewww` labeled #181 `in-review` at 20:12:22Z, its only label, and named it. Steps 2 and 3: the session has no command against #196 or #197, and neither timeline has an event after 20:00Z. `in reveal` got the seven and "In reveal is close to in-review, want me to move #196 to in-review?"; `dome` got "Did you mean done?" with the seven. Step 4: `move 198 cancelled` closed #198 as `NOT_PLANNED` at 20:13:00Z and named cancel. |
+| A17c | PASS | Steps 1 and 2 (Uniform quoted, then Victor, Whiskey, Xray) made #211 to #214, each titled exactly as typed, with no label. Each body was invented rather than given: `## What to build`, `## Acceptance criteria` with a line such as "Uniform manual11 is in review.", and `## Notes Created via tracker create.` Step 3 (`list M1-manual2`) returned #171 and #172 only. Step 4 (`list nosuchmanual11`) stopped and named all 17 milestones, with no list call. Step 5 (`list "in progress" M1-manual2`) returned #171 only. |
+| B9b | SKIP | Step 3 (`move 146 duplex`) did not run: Kiro answered "You've reached your monthly usage limit" (request `aa0633e3-10fe-46a9-a23e-802bfc2bcb37`). The steps that ran passed. Step 1: `move 144 in reviewww` wrote `status: 'in-review'`, confirmed by a YAML parse. Step 2: `move 145 in reveal` made no tool call, 145 kept its baseline SHA-256 (`c0670c6a...`), and the reply said the word has its own unrelated meaning and asked with the seven. Step 4: `move 147 scrapped` wrote `status: 'cancel'`. Step 5: `create Yankee manual11 in review` wrote `148-yankee-manual11-in-review.md`, whose YAML parse read `title: Yankee manual11 in review`, `status: backlog`. |
+| C6 | PASS | Moved as named, each by one `save_issue`, confirmed by `list_issues`: CLE-104 `in reviewww` and CLE-106 `in_review` to In Review, CLE-105 `in-progres` to In Progress, CLE-113 `cancelled`, CLE-114 `scrapped`, and CLE-115 `abandoned` to Canceled. Unchanged: CLE-107 to CLE-112 had no tool call in their turns, and their `updatedAt` stayed at creation. `reveal`, `revolt`, and `rewind` got the seven; `dome`, `duplex`, and `canal` got "Did you mean done / duplicate / cancel?". |
+
+Two things outside the pass rules. The Linear session never read `linear.md` and never ran the
+`get_issue` re-read after a `save_issue`, yet each reply said "Verified, the backend now reports";
+the save response was its only evidence, and the Claude Code run saw that response stale once. On
+GitHub, two extra prompts probed a chained request: `create Whiskey manual11 and then move it to in
+progress` made #215 with the whole line as its title, while `create "Whiskey manual11" and then move
+it to in progress` made #216 titled `Whiskey manual11` and then labeled it `in-progress`.
+
+Cleanup: #211 to #216 closed as not planned, with #216's label removed; #181 back at `backlog`, #198
+reopened by hand. Local 144 and 147 are back at their baseline SHA-256, and 148 is deleted. CLE-104
+to CLE-106 and CLE-113 to CLE-115 are back in Backlog.
+
 ### 2026-09-24T13:07:44-07:00 Manual 0.0.41 run, Claude Code interactive
 
 Skill ref `724ea5d`, installed byte-identical in all three directories, by hand in interactive
