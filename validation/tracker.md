@@ -1133,6 +1133,36 @@ shape `CHANGELOG.md` uses, so two runs on one day stay distinguishable. One entr
 runbook above is the reusable procedure and is not edited by a run; everything a run learned goes
 here.
 
+### 2026-09-23T22:51:03-07:00 Manual 0.0.40 run, Codex interactive, GitHub only
+
+Skill ref `45c3b7e` in `~/tmp/tracker-val-a3`, by hand in interactive Codex with `-m gpt-6-luna`,
+session `01a0d1ec...`. Every turn ran `gpt-6-luna`, and the loaded `SKILL.md` carries the 0.0.40
+`move` row ("only looks like a status name"). The local and Linear sessions did not run.
+
+| Case | Verdict | Independent evidence |
+|---|---|---|
+| A17b | FAIL | Steps 2 and 3 passed: `move 196 in reveal` and `move 197 dome` each replied that the word "does not name a valid status", listed the seven, and ran no command; the session has no command for either, and neither timeline has an event between the session start at 05:38Z and the extra probes below. Steps 1 and 4 failed the other way: `move 181 in reviewww` replied "in reviewww does not name a valid status" and `move 198 cancelled` replied "cancelled is not a valid status". Neither moved nor asked whether `in-review` or `cancel` was meant; both refused a word that names a status. |
+| A17c | PASS | Steps 1 and 2 (Papa quoted, then Quebec, Romeo, Sierra) made #199 to #202, each titled exactly as typed, with no label and an empty body. Step 3 (`list M1-manual2`) returned #171 and #172 only. Step 4 (`list nosuchmanual10`) stopped and named all 17 milestones, with no list call. Step 5 (`list "in progress" M1-manual2`) returned #171 only. |
+| B9b | SKIP | Did not run. |
+| C6 | SKIP | Did not run. |
+
+Probes typed outside the sheet, on the same fixtures, show where the line fell. `move 181 in review`
+and `move 196 to review` moved to `in-review` (labeled 05:41:54Z and 05:42:27Z). `move 197 to
+finished` was refused as "not a valid status", then `move 197 to completed` closed #197 as
+`COMPLETED`. `move 198 to "won't do"` closed #198 as `NOT_PLANNED`. So a correctly spelled phrase
+that means a status still works, but a misspelling or a plain inflection of a status name
+(`reviewww`, `cancelled`) is now treated as a look-alike, and `finished` and `completed` land on
+opposite sides.
+
+0.0.40 over-corrected. "A word that only looks like a status name expresses none" gives the model no
+way to tell a misspelled status name from a different word that shares its letters, so it refuses
+both. "Neither does one you had to pick a status for" then catches any word that is not an exact
+name. The row needs to say what separates the two: a misspelling or another form of a status name
+means that status, and a real word with its own unrelated meaning does not.
+
+Cleanup: #199 to #202 closed as not planned. #181 and #196 are back at `backlog`; #197 and #198
+were reopened by hand and have no label.
+
 ### 2026-09-23T22:35:34-07:00 Manual 0.0.39 run, Codex interactive, stopped early
 
 Skill ref `327ebde` in `~/tmp/tracker-val-a3`, by hand in interactive Codex with `-m gpt-6-luna`,
