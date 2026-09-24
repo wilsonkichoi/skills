@@ -85,7 +85,7 @@ what you did about it. A verb that cannot confirm its own write has failed.
 | `link` | both tickets exist, they differ, and the edge would not close a cycle | the edge is on the blocked ticket, and the blocker's own blockers are unchanged |
 | `assign` | not terminal. The bare form also needs `ready` with no assignee. Any other holder must be named | the assignee is exactly the one asked for, or nobody for `none`. The bare form also shows `in-progress` |
 | `comment` | the ticket exists | the comment body is on the ticket |
-| `move` | the user's words express one of the seven statuses. A word that only looks like a status name expresses none, and neither does one you had to pick a status for: change nothing and ask, listing the seven. The current status is not terminal. Other people act on a status, and no verb reverses a terminal move | the backend reports the new status |
+| `move` | the user's words mean one of the seven statuses: its name, misspelled or in another form, or a word with the same meaning. A real word with its own unrelated meaning that shares letters with a status name means none: change nothing and ask, listing the seven. The current status is not terminal. Other people act on a status, and no verb reverses a terminal move | the backend reports the new status |
 
 ## 4. Verbs
 
