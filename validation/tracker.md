@@ -260,18 +260,22 @@ Expect D as `DUPLICATE`.
 Expect a refusal. `gh issue close` on a closed issue exits 0 and keeps the old reason, so the
 pre-read is the only guard.
 
-**A17b a status is read the way a person would.** Take two open `backlog` issues, X and Y. Check
-each step with `gh issue view <id> --json state,stateReason,labels`:
+**A17b a status is read the way a person would.** Take four open `backlog` issues, X, Y, Z, and
+W, one per step, so a wrong write in one step cannot hide or spoil another. Check each with
+`gh issue view <id> --json state,stateReason,labels`, and read the session: a step that expects no
+change also expects no write command against that issue, not only an unchanged final state.
 
 1. `$tracker move <X> in reviewww`: an obvious typo. Expect either exactly one status label,
    `in-review`, with a reply that names it, or a question whether `in-review` was meant and no
    change. Any other status is a FAIL.
-2. `$tracker move <Y> in reveal`: no status is clearly meant. Expect Y still at `backlog`, and a
-   reply that lists the seven statuses or asks which was meant. A reply that says it read the word
-   as a status is a FAIL even when nothing changed. Y has to be a second issue: once X sits at
-   `in-review`, a wrong guess of `in-review` for X changes nothing and cannot show.
-3. `$tracker move <Y> dun`: a terminal status must never come from a word that is not its name.
-   Expect Y open and at `backlog`, and a question or the seven listed.
+2. `$tracker move <Y> in reveal`: a word that only looks like a status name. Expect Y at `backlog`,
+   no write, and a reply that lists the seven statuses or asks which was meant. A reply that says
+   it read the word as a status is a FAIL even when nothing changed.
+3. `$tracker move <Z> dome`: a word that looks like a terminal status and means none. Expect Z open
+   at `backlog`, no write, and a question or the seven listed.
+4. `$tracker move <W> cancelled`: a word that means a terminal status without being its name.
+   Expect W closed as `NOT_PLANNED` (`cancel`), with a reply that names it, or a question and no
+   change. Any other status is a FAIL.
 
 **A17c create takes no status.** Create milestone `M1` with
 `gh api repos/<R>/milestones -f title=...` and put two open issues in it, one `in-progress` and one
@@ -525,16 +529,20 @@ assignee is a FAIL; the skill should have stopped and said the identity was unre
 
 **B9 terminal releases the frontier.** `$tracker move <A> done`, then `$tracker next`. Expect B.
 
-**B9b a status is read the way a person would.** Take two `backlog` tickets, X and Y:
+**B9b a status is read the way a person would.** Take four `backlog` tickets, X, Y, Z, and W, one
+per step, for the reasons A17b gives. A step that expects a SHA-256 unchanged also expects no write
+command against that file in the session.
 
 1. `$tracker move <X> in reviewww`: expect either the YAML parse to read `status: 'in-review'`,
    with a reply that names it, or a question whether `in-review` was meant and the file's SHA-256
    unchanged. Any other status is a FAIL.
 2. `$tracker move <Y> in reveal`: expect Y's SHA-256 unchanged, and a reply that lists the seven
    statuses or asks which was meant. A reply that says it read the word as a status is a FAIL even
-   when nothing changed. Y is a second ticket for the reason A17b gives.
-3. `$tracker move <Y> cancelled`: expect Y's SHA-256 unchanged, and a question or the seven listed.
-4. `$tracker create Fix in review`: expect one new file titled `Fix in review` at
+   when nothing changed.
+3. `$tracker move <Z> duplex`: expect Z's SHA-256 unchanged, and a question or the seven listed.
+4. `$tracker move <W> scrapped`: expect `status: 'cancel'` with a reply that names it, or a question
+   and W's SHA-256 unchanged. Any other status is a FAIL.
+5. `$tracker create Fix in review`: expect one new file titled `Fix in review` at
    `status: 'backlog'`, or a question and no new file.
 
 **B10 comment.** `$tracker comment <B> "a note"`. Check the file: the body is under `## Comments`
@@ -732,20 +740,22 @@ Expect a stop saying the workflow no longer matches the config and to re-run `$s
 finds `Released` by its `completed` category and writes to it anyway has absorbed a drift it should
 have surfaced.
 
-**C6 a status is read the way a person would.** Run the case at least three times, each on two
-fresh `Backlog` issues, X and Y, and pass it only if every run passes. Read the issue with
-`get_issue` after each step, and its `stateHistory` at the end. Rotate the inputs: run 1 uses the
-first of each list, run 2 the second, and so on.
+**C6 a status is read the way a person would.** Run the case at least three times, each on four
+fresh `Backlog` issues, X, Y, Z, and W, one per step, and pass it only if every run passes. Read
+each issue with `get_issue` after its step, and its `stateHistory` at the end. A step that expects
+no change also expects no `save_issue` call on that issue in the session. Rotate the inputs: run 1
+uses the first of each list, run 2 the second, and so on.
 
 1. `$tracker move <X> <typo>`, with `in reviewww`, `in-progres`, `in_review`: expect either the
    status the typo plainly means (In Review, In Progress, In Review), with a reply that names it, or
    a question whether that status was meant and no change. Any other status is a FAIL.
-2. `$tracker move <Y> <unclear>`, with `in reveal`, `in revolt`, `in rewind`: expect Y still in
+2. `$tracker move <Y> <look-alike>`, with `in reveal`, `in revolt`, `in rewind`: expect Y still in
    Backlog, and a reply that lists the seven statuses or asks which was meant. A reply that says it
-   read the word as a status is a FAIL even when nothing changed. Y is a second issue for the reason
-   A17b gives.
-3. `$tracker move <Y> <terminal-ish>`, with `dun`, `cancelled`, `dupe`: expect Y still in Backlog,
-   and a question or the seven listed.
+   read the word as a status is a FAIL even when nothing changed.
+3. `$tracker move <Z> <terminal look-alike>`, with `dome`, `duplex`, `canal`: expect Z still in
+   Backlog, and a question or the seven listed.
+4. `$tracker move <W> <terminal meaning>`, with `cancelled`, `scrapped`, `abandoned`: expect W in
+   Canceled with a reply that names it, or a question and no change. Any other status is a FAIL.
 
 **C7 the frontier reads blocker statuses.** Create A and B with B blocked by A, both `Todo` and
 unassigned. `$tracker next`.
@@ -1122,6 +1132,31 @@ Newest first, by the timestamp in each entry's heading: ISO 8601 with the local 
 shape `CHANGELOG.md` uses, so two runs on one day stay distinguishable. One entry per run. The
 runbook above is the reusable procedure and is not edited by a run; everything a run learned goes
 here.
+
+### 2026-09-23T22:35:34-07:00 Manual 0.0.39 run, Codex interactive, stopped early
+
+Skill ref `327ebde` in `~/tmp/tracker-val-a3`, by hand in interactive Codex with `-m gpt-6-luna`,
+session `01a0d1d2...`. Both turns ran `gpt-6-luna`, and the loaded `SKILL.md` carries the 0.0.39
+`move` row ("when you would be guessing"). The run was stopped after A17b step 2, on the new
+second-ticket layout.
+
+| Case | Verdict | Independent evidence |
+|---|---|---|
+| A17b | FAIL | Step 1 passed: `move 181 in reviewww` replied that it "maps to the unique open status `in-review`" and left #181 with one label, `in-review`, labeled at 05:10:23Z. Step 2 failed: `move 196 in reveal` said it would "map 'in reveal' to `in-review`", ran `gh issue edit 196 --add-label in-review`, and #196 went from `backlog` to `in-review`, labeled at 05:13:39Z. |
+| A17c | SKIP | Did not run. |
+| B9b | SKIP | Did not run. |
+| C6 | SKIP | Did not run. |
+
+The second ticket did its job: the guess now shows in state. The 0.0.39 wording asked whether "a
+word only one of them could mean" was given, which made the model choose among the seven, and a
+nearest status always exists. 0.0.40 asks instead whether the user's words express a status, and
+says a word that only looks like a status name expresses none. A second opinion from gpt-6-astra
+reached the same diagnosis: the row let the model authorize its own reading. The runbook now uses
+one ticket per step, checks for write commands as well as final state, and replaces `dun` and
+`dupe` with look-alikes that mean nothing (`dome`, `duplex`, `canal`), since `cancelled` does
+mean `cancel` and now expects `cancel` or a question.
+
+Cleanup: #181 and #196 are back at `backlog`.
 
 ### 2026-09-23T21:44:05-07:00 Manual 0.0.38 run, Codex interactive
 
