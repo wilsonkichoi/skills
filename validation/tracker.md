@@ -1133,6 +1133,36 @@ shape `CHANGELOG.md` uses, so two runs on one day stay distinguishable. One entr
 runbook above is the reusable procedure and is not edited by a run; everything a run learned goes
 here.
 
+### 2026-09-24T13:07:44-07:00 Manual 0.0.41 run, Claude Code interactive
+
+Skill ref `724ea5d`, installed byte-identical in all three directories, by hand in interactive
+Claude Code, one session per directory: `6dc82afe...` (GitHub), `cb392f4c...` (local), `ff795929...`
+(Linear). Every turn in all three ran `claude-sonnet-5`, and every loaded `SKILL.md` carries the
+0.0.41 `move` row ("shares letters with a status name"). In the GitHub session, prompts 2 to 10 were
+typed while turn 1 ran, so Claude Code queued them as plain messages and the model handled them
+inside the turn-1 skill load. Local step 1 was typed `$tracker`, which Claude Code does not run as a
+skill; the model read `.agents/skills/tracker/SKILL.md` on its own, and that copy is also
+byte-identical. A first Linear session (`0d653ad0...`) was discarded: it started without the Linear
+MCP connected and switched from `claude-sonnet-5` to `claude-opus-5-5` after `/mcp`, so no one model
+ran all twelve steps. Its outcomes were all correct.
+
+| Case | Verdict | Independent evidence |
+|---|---|---|
+| A17b | PASS | Step 1: `move 181 in reviewww` labeled #181 `in-review` at 15:38:53Z, its only label, and the reply named it. Steps 2 and 3: `move 196 in reveal` and `move 197 dome` changed nothing; the reply said both are real words with unrelated meanings that share letters, and listed the seven. The session has no command against #196 or #197, and neither timeline has an event after the 06:07Z reset. A later standalone `/tracker move 196 in reveal` gave the same answer with no tool call. Step 4: `move 198 cancelled` closed #198 as `NOT_PLANNED` at 15:39:11Z and named cancel. |
+| A17c | FAIL | Step 4 failed: `list nosuchmanual11` stopped with no list call, but named 16 of the 17 milestones. The `--jq '.[].title'` output it received included `in reviewww` (number 11), and the reply dropped it without a word, keeping the API order for the rest. A later `$tracker list nosuchmanual11` in the same session, the only request in its turn, named all 17. Steps 1 and 2 (Uniform quoted, then Victor, Whiskey, Xray) made #207 to #210, each titled exactly as typed, with no label and no milestone; each body repeats the title. Step 3 (`list M1-manual2`) returned #171 and #172 only. Step 5 (`list "in progress" M1-manual2`) returned #171 only. |
+| B9b | PASS | Step 1: `move 144 in reviewww` wrote `status: 'in-review'`, confirmed by a YAML parse. Steps 2 and 3: `move 145 in reveal` and `move 146 duplex` made no tool call at all; 145 and 146 kept their baseline SHA-256 (`c0670c6a...`, `80ac15a8...`), and each reply said the word has its own meaning and asked with the seven. Step 4: `move 147 scrapped` said it means cancel and wrote `status: 'cancel'`. Step 5: `create Yankee manual11 in review` wrote `148-yankee-manual11-in-review.md`, whose YAML parse read `title: Yankee manual11 in review`, `status: backlog`. |
+| C6 | PASS | Moved as named, each by one `save_issue` and a re-read, confirmed by `stateHistory`: CLE-104 `in reviewww` (20:05:04Z) and CLE-106 `in_review` (20:06:30Z) to In Review, CLE-105 `in-progres` to In Progress (20:06:02Z), CLE-113 `cancelled`, CLE-114 `scrapped`, and CLE-115 `abandoned` to Canceled (20:05:49Z, 20:06:21Z, 20:06:50Z). Unchanged: CLE-107 `in reveal`, CLE-108 `in revolt`, CLE-109 `in rewind`, CLE-110 `dome`, CLE-111 `duplex`, CLE-112 `canal` each got a reply that the word is a real word with its own meaning, with the seven listed. The session has no tool call in those turns, and each one's `stateHistory` holds a single Backlog entry since creation. |
+
+The `move` row holds on a second harness and model: all 20 status words across the three backends
+went where the 0.0.41 Codex run sent them. The one failure is outside `move`. `SKILL.md` says a
+milestone that matches none "names the milestones that exist", and the model dropped one it had just
+read, in a turn that carried nine queued requests. The same request alone in its turn named every
+milestone, so the omission is not reproducible on demand.
+
+Cleanup: #207 to #210 closed as not planned; #181 back at `backlog`, #198 reopened by hand. Local
+144 and 147 are back at their baseline SHA-256, and 148 is deleted. CLE-104 to CLE-106 and
+CLE-113 to CLE-115 are back in Backlog.
+
 ### 2026-09-23T23:07:54-07:00 Manual 0.0.41 run, Codex interactive
 
 Skill ref `724ea5d`, installed byte-identical in all three directories, by hand in interactive
