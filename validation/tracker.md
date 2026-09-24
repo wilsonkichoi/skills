@@ -1133,6 +1133,31 @@ shape `CHANGELOG.md` uses, so two runs on one day stay distinguishable. One entr
 runbook above is the reusable procedure and is not edited by a run; everything a run learned goes
 here.
 
+### 2026-09-23T23:07:54-07:00 Manual 0.0.41 run, Codex interactive
+
+Skill ref `724ea5d`, installed byte-identical in all three directories, by hand in interactive
+Codex with `-m gpt-6-luna`, one session per directory: `01a0d1fa...` (GitHub), `01a0d203-2cd5...`
+(local), `01a0d203-cf55...` (Linear). Every turn in all three ran `gpt-6-luna`, and every loaded
+`SKILL.md` carries the 0.0.41 `move` row ("shares letters with a status name"). The Linear session
+reached Linear through Codex's built-in app (`mcp__codex_apps__linear_*`), on the same `wkc-sandbox`
+workspace.
+
+| Case | Verdict | Independent evidence |
+|---|---|---|
+| A17b | PASS | Step 1: `move 181 in reviewww` labeled #181 `in-review` at 05:55:42Z, its only label, and the reply named it. Steps 2 and 3: `move 196 in reveal` and `move 197 dome` changed nothing and listed the seven; the reply to `dome` said it "is a real word with a meaning unrelated to done". The session has no command against #196 or #197, and neither timeline has an event after the 05:35Z reset. Step 4: `move 198 cancelled` said it "means cancel" and closed #198 as `NOT_PLANNED` at 05:56:34Z. |
+| A17c | PASS | Steps 1 and 2 (Uniform quoted, then Victor, Whiskey, Xray) made #203 to #206, each titled exactly as typed, with no label; each body repeats the title, where the 0.0.40 run left it empty, and the skill allows either. Step 3 (`list M1-manual2`) returned #171 and #172 only. Step 4 (`list nosuchmanual11`) stopped and named all 17 milestones, with no list call. Step 5 (`list "in progress" M1-manual2`) returned #171 only. |
+| B9b | PASS | Step 1: `move 144 in reviewww` wrote `status: 'in-review'`, confirmed by a YAML parse. Steps 2 and 3: `move 145 in reveal` and `move 146 duplex` changed nothing and listed the seven; 145 and 146 kept their baseline SHA-256 (`c0670c6a...`, `80ac15a8...`), and the session has no command touching either file. Step 4: `move 147 scrapped` said it "means cancel" and wrote `status: 'cancel'`. Step 5: `create Yankee manual11 in review` wrote `148-yankee-manual11-in-review.md`, whose YAML parse read `title: Yankee manual11 in review`, `status: backlog`. |
+| C6 | PASS | Moved as named: CLE-104 `in reviewww` and CLE-106 `in_review` to In Review, CLE-105 `in-progres` to In Progress, CLE-113 `cancelled`, CLE-114 `scrapped`, and CLE-115 `abandoned` to Canceled, each by one `save_issue` and re-read. Unchanged: CLE-107 `in reveal`, CLE-108 `in revolt`, CLE-109 `in rewind`, CLE-110 `dome`, CLE-111 `duplex`, CLE-112 `canal` each got a reply that the word has an unrelated meaning, with the seven listed. The session has no `save_issue` for any of them, and their `updatedAt` stayed at the 04:44Z and 05:36Z fixture resets. |
+
+The 0.0.41 row separates the two kinds of word that 0.0.38 to 0.0.40 each got half right. Every
+misspelling, inflection, and synonym moved to the status it means, and every unrelated word that
+shares letters with a status name changed nothing. The replies to the second kind give that reason
+in the row's own terms, which 0.0.40's replies ("does not name a valid status") did not.
+
+Cleanup: #203 to #206 closed as not planned; #181 back at `backlog`, #198 reopened by hand. Local
+144 and 147 are back at their baseline SHA-256, and 148 is deleted. CLE-104 to CLE-106 and
+CLE-113 to CLE-115 are back in Backlog.
+
 ### 2026-09-23T22:51:03-07:00 Manual 0.0.40 run, Codex interactive, GitHub only
 
 Skill ref `45c3b7e` in `~/tmp/tracker-val-a3`, by hand in interactive Codex with `-m gpt-6-luna`,
