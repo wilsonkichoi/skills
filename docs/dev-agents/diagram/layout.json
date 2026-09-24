@@ -5,10 +5,20 @@
       "x": 0,
       "y": 0
     },
+    "tracker": {
+      "x": 0,
+      "y": 360
+    },
     "workflow-diagram": {
       "x": 400,
       "y": 0
     }
   },
-  "edges": {}
+  "edges": {
+    "configured-backend": {
+      "start": [120, 160],
+      "segments": [[120, 230, 120, 290, 120, 360]],
+      "labelOffset": [65, 0]
+    }
+  }
 }

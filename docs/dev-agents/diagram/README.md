@@ -1,22 +1,22 @@
 # Shipped skills workflow
 
 Open [diagram.html](diagram.html) in a browser, including directly from disk without networking.
-The map contains `setup` and `workflow-diagram`, the two shipped definitions in this repository.
-Tracker and the remaining roster are planned and are excluded.
-There is no dependency edge: workflow-diagram explicitly supports projects without setup or config.
-Setup's older “before any other skill” wording predates this independent diagram tool.
+The map contains the three shipped definitions in this repository: `setup`, `tracker`, and
+`workflow-diagram`. Planned skills are excluded. `setup` writes the config that `tracker` requires.
+`workflow-diagram` supports projects without setup or config, so it remains independent.
 
 ## Sources and ownership
 
 | Node | Definition | Relevant contract |
 | --- | --- | --- |
 | setup | [skills/setup/SKILL.md](../../../skills/setup/SKILL.md) | Interview, configuration, scaffolding, and tracker initialization |
+| tracker | [skills/tracker/SKILL.md](../../../skills/tracker/SKILL.md) | Reads the backend from setup's config; manages tickets in seven statuses |
 | workflow-diagram | [skills/workflow-diagram/SKILL.md](../../../skills/workflow-diagram/SKILL.md) | Read definitions and update offline diagrams without executing the skills |
 
 Inputs are [workflow.json](workflow.json) and [layout.json](layout.json).
 All positions and content are authored data; HTML is generated.
-The generator version is **0.0.10**, recorded in the installed skill's `assets/manifest.json`.
-The reusable renderer remains inside the skill.
+The generator version is **0.0.11**, recorded in the installed skill's `assets/manifest.json`.
+The renderer source and maintainer build are in `tools/workflow-diagram/`; the skill ships generated assets.
 
 Documentation base:
 `https://github.com/wilsonkichoi/skills/blob/main/`.
@@ -52,9 +52,10 @@ Do not edit diagram.html directly. Keep temporary artifacts in the ignored `.cac
 | Phone overview | [Image](screenshots/phone-light.png) | [Image](screenshots/phone-dark.png) |
 | Phone details | [Image](screenshots/phone-light-details.png) | [Image](screenshots/phone-dark-details.png) |
 
-Chromium loaded this generated HTML offline at 1440 × 900, 768 × 1024, and 390 × 844 in both themes.
-Assertions checked fitted card bounds, selected-card placement, Escape, page errors, and absence of dependency requests.
-Desktop and phone screenshots were visually inspected in both themes, including fitted and selected states.
+On 2026-09-24, Chromium loaded the three-node HTML offline at 1440 × 900, 768 × 1024, and
+390 × 844 in both themes. All 12 screenshots were regenerated. Assertions checked fitted card
+bounds, the edge count, selection, Escape, page errors, and absence of network requests.
+Desktop light overview and phone dark details screenshots were visually inspected.
 The phone sheet scrolls independently; commands below the fold remain reachable.
 
 ## Implementation verification
@@ -62,14 +63,36 @@ The phone sheet scrolls independently; commands below the fold remain reachable.
 See the [public runbook](../../../validation/workflow-diagram.md) for independent acceptance checks.
 Results below distinguish automated behavior from actual harness invocation.
 
-Validated on 2026-09-21 on branch `feat/workflow-diagram`, based on `origin/main` at `12513b3`.
+### Current integration, 2026-09-24
+
+This branch includes `origin/main` commit `aa59566`, which merged `tracker` at released tag `v0.0.8`.
+`VERSION` is `0.0.9` for this pull request. The shipped definitions are `setup`, `tracker`, and
+`workflow-diagram`. The source contracts establish `setup → tracker` through
+`docs/dev-agents/config.md`; `workflow-diagram` remains independent.
+
+| Check | Result | Evidence |
+| --- | --- | --- |
+| Diagram `check` and `build` | PASS | The shipped helper validated both JSON files and regenerated `diagram.html` with the `main` documentation base |
+| Generated asset freshness | PASS | `npm run check:assets` found every renderer asset current |
+| Unit and package tests | PASS | `npm test`: 76 passed, 0 failed |
+| Browser tests | PASS | `npm run test:browser`: 29 passed, 0 failed, using local Chrome |
+| Repository diagram browser check | PASS | Offline file load at three sizes and two themes; three visible nodes, one edge, selected tracker panel, Escape, no page errors or network requests |
+| Visual review | PASS | Inspected desktop light overview and phone dark tracker details; labels, route, and panels were readable |
+| Installer discovery and package | PASS | Clean working-tree export listed exactly three skills; workflow-diagram installed to Codex with Claude Code and Kiro CLI symlinks |
+| Skill invocation on each harness | SKIP | This integration run checked the installed package and helper, not a fresh interactive invocation in each harness |
+| External tracker backends | SKIP | This integration did not repeat the tracker runbook against GitHub, Linear, and local fixtures; the tracker files came from `origin/main` unchanged |
+
+### Historical validation, 2026-09-21
+
+This run predates the tracker merge. Its two-skill count and base do not describe the current branch.
+It used branch `feat/workflow-diagram`, based on `origin/main` at `12513b3`.
 Rechecked at 0.0.10 after the renderer moved to `tools/workflow-diagram/`: asset freshness, 76 unit/packaging tests, and 29 browser tests passed.
 Runtime: Node.js 26.7.0 and npm 11.19.0. Minimum-runtime packaging checks also passed on Node.js 22.23.2.
 Browser automation used Playwright 1.63.0 with local Google Chrome. The renderer retains a configurable Chromium fallback.
 
 | Runbook case | Result | Evidence |
 | --- | --- | --- |
-| 1. Discovery/install | PASS | Clean source and pushed GitHub branch each discovered two shipped skills; workflow-diagram installed once, shared by all three harness paths |
+| 1. Discovery/install | PASS | At that revision, clean source and pushed GitHub branch each discovered two shipped skills; workflow-diagram installed once, shared by all three harness paths |
 | 2. Explicit target/symlink | PASS | Foreign working directory, spaces and Unicode, installed directory symlink; regression covers the resolved CLI entry-detection defect |
 | 3. Read-only/offline | PASS | macOS sandbox-exec denied network and installation writes; check/build ran with Node and empty PATH |
 | 4. Containment | PASS | Inventory found only diagram output; source data and unrelated project files remained unchanged |
@@ -88,7 +111,7 @@ Browser automation used Playwright 1.63.0 with local Google Chrome. The renderer
 | 17. Visual/input | PASS, with limits | 29 browser cases retain original 25 regressions; project screenshots inspected as described above |
 | 18. Project record | PASS | Portable source paths, regeneration commands, generator version, chosen base, and local screenshots |
 | 19. Harness behavior | Mixed | Codex subagent and Claude Code CLI passed; Kiro invocation and interactive ambiguity checks have limits below |
-| 20. Integration | PASS | [PR #7](https://github.com/wilsonkichoi/skills/pull/7) is open and unmerged; separate branch from refreshed main, with no tracker commits |
+| 20. Integration | PASS | At that revision, [PR #7](https://github.com/wilsonkichoi/skills/pull/7) was open and unmerged; the branch had no tracker commits |
 
 The pushed GitHub package also passed source/output hash verification and check/build through the Claude symlink with network and installation writes denied.
 No node_modules, caches, browser binaries, or test output were shipped.

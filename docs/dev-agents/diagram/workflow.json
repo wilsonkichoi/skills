@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "title": "Shipped skills",
-  "subtitle": "Independent tools available in this repository; planned skills are not shown.",
+  "subtitle": "Setup configures the tracker; workflow-diagram can run independently. Planned skills are not shown.",
   "lanes": [
     {
       "id": "configuration",
@@ -9,6 +9,14 @@
       "color": {
         "light": "#7a4fa8",
         "dark": "#ad83da"
+      }
+    },
+    {
+      "id": "coordination",
+      "label": "Coordination",
+      "color": {
+        "light": "#12775e",
+        "dark": "#2aa787"
       }
     },
     {
@@ -48,12 +56,42 @@
       }
     },
     {
+      "id": "tracker",
+      "label": "tracker",
+      "lane": "coordination",
+      "summary": "Read and update tickets in the configured GitHub, Linear, or local backend.",
+      "details": {
+        "body": "Reads issue_tracker from docs/dev-agents/config.md, which setup writes. Provides list, show, next, create, assign, comment, move, and link across seven statuses.",
+        "when": "Use after setup to read tickets, change ticket state, or find work ready to start.",
+        "commands": [
+          {
+            "label": "Codex",
+            "text": "$tracker list"
+          },
+          {
+            "label": "Claude Code / Kiro CLI",
+            "text": "/tracker list"
+          }
+        ],
+        "links": [
+          {
+            "label": "Read the tracker skill",
+            "href": "skills/tracker/SKILL.md"
+          },
+          {
+            "label": "Tracker reference",
+            "href": "skills/tracker/README.md"
+          }
+        ]
+      }
+    },
+    {
       "id": "workflow-diagram",
       "label": "workflow-diagram",
       "lane": "documentation",
       "summary": "Create or update an offline map from actual workflow definitions and authored diagram data.",
       "details": {
-        "body": "Keep project inputs, HTML, notes, and screenshots under docs/dev-agents/diagram/. Setup and tracker configuration are optional.",
+        "body": "Keep project inputs, HTML, notes, and screenshots under docs/dev-agents/diagram/. Setup and config are optional.",
         "when": "Use to explain project skills or update a map after workflow changes.",
         "commands": [
           {
@@ -78,5 +116,12 @@
       }
     }
   ],
-  "edges": []
+  "edges": [
+    {
+      "id": "configured-backend",
+      "from": "setup",
+      "to": "tracker",
+      "label": "Writes config"
+    }
+  ]
 }

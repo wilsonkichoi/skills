@@ -19,7 +19,7 @@ npx skills@latest add "<clean-candidate>" --skill workflow-diagram -a claude-cod
 ```
 
 Run the maintainer checks from `tools/workflow-diagram/` before testing the installed copy.
-Use the browser fallback described in root AGENTS.md if Chrome is unavailable.
+Use the browser fallback described in `tools/workflow-diagram/README.md` if Chrome is unavailable.
 
 ```sh
 npm ci

@@ -1,0 +1,5 @@
+interface:
+  display_name: "tracker"
+  short_description: "Read and write ticket state in this project's issue tracker, whether that is GitHub Issues, Linear, or local markdown files"
+policy:
+  allow_implicit_invocation: false
