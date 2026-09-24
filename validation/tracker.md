@@ -269,8 +269,8 @@ change also expects no write command against that issue, not only an unchanged f
    `in-review`, with a reply that names it, or a question whether `in-review` was meant and no
    change. Any other status is a FAIL.
 2. `$tracker move <Y> in reveal`: a word that only looks like a status name. Expect Y at `backlog`,
-   no write, and a reply that lists the seven statuses or asks which was meant. A reply that says
-   it read the word as a status is a FAIL even when nothing changed.
+   no write, and a reply that lists the seven statuses or asks which was meant. A question that
+   suggests the status the word resembles still passes, as long as nothing was written.
 3. `$tracker move <Z> dome`: a word that looks like a terminal status and means none. Expect Z open
    at `backlog`, no write, and a question or the seven listed.
 4. `$tracker move <W> cancelled`: a word that means a terminal status without being its name.
@@ -537,8 +537,8 @@ command against that file in the session.
    with a reply that names it, or a question whether `in-review` was meant and the file's SHA-256
    unchanged. Any other status is a FAIL.
 2. `$tracker move <Y> in reveal`: expect Y's SHA-256 unchanged, and a reply that lists the seven
-   statuses or asks which was meant. A reply that says it read the word as a status is a FAIL even
-   when nothing changed.
+   statuses or asks which was meant. A question that suggests the status the word resembles still
+   passes, as long as nothing was written.
 3. `$tracker move <Z> duplex`: expect Z's SHA-256 unchanged, and a question or the seven listed.
 4. `$tracker move <W> scrapped`: expect `status: 'cancel'` with a reply that names it, or a question
    and W's SHA-256 unchanged. Any other status is a FAIL.
@@ -750,8 +750,8 @@ uses the first of each list, run 2 the second, and so on.
    status the typo plainly means (In Review, In Progress, In Review), with a reply that names it, or
    a question whether that status was meant and no change. Any other status is a FAIL.
 2. `$tracker move <Y> <look-alike>`, with `in reveal`, `in revolt`, `in rewind`: expect Y still in
-   Backlog, and a reply that lists the seven statuses or asks which was meant. A reply that says it
-   read the word as a status is a FAIL even when nothing changed.
+   Backlog, and a reply that lists the seven statuses or asks which was meant. A question that
+   suggests the status the word resembles still passes, as long as nothing was written.
 3. `$tracker move <Z> <terminal look-alike>`, with `dome`, `duplex`, `canal`: expect Z still in
    Backlog, and a question or the seven listed.
 4. `$tracker move <W> <terminal meaning>`, with `cancelled`, `scrapped`, `abandoned`: expect W in
