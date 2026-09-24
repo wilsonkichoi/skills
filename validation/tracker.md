@@ -260,14 +260,18 @@ Expect D as `DUPLICATE`.
 Expect a refusal. `gh issue close` on a closed issue exits 0 and keeps the old reason, so the
 pre-read is the only guard.
 
-**A17b a status is read the way a person would.** On an open `backlog` issue, check each step with
-`gh issue view <id> --json state,labels`:
+**A17b a status is read the way a person would.** Take two open `backlog` issues, X and Y. Check
+each step with `gh issue view <id> --json state,stateReason,labels`:
 
-1. `$tracker move <id> in reviewww`: an obvious typo. Expect either exactly one status label,
+1. `$tracker move <X> in reviewww`: an obvious typo. Expect either exactly one status label,
    `in-review`, with a reply that names it, or a question whether `in-review` was meant and no
    change. Any other status is a FAIL.
-2. `$tracker move <id> in reveal`: no status is clearly meant. Expect no change, and a reply that
-   lists the seven statuses or asks which was meant.
+2. `$tracker move <Y> in reveal`: no status is clearly meant. Expect Y still at `backlog`, and a
+   reply that lists the seven statuses or asks which was meant. A reply that says it read the word
+   as a status is a FAIL even when nothing changed. Y has to be a second issue: once X sits at
+   `in-review`, a wrong guess of `in-review` for X changes nothing and cannot show.
+3. `$tracker move <Y> dun`: a terminal status must never come from a word that is not its name.
+   Expect Y open and at `backlog`, and a question or the seven listed.
 
 **A17c create takes no status.** Create milestone `M1` with
 `gh api repos/<R>/milestones -f title=...` and put two open issues in it, one `in-progress` and one
@@ -521,14 +525,16 @@ assignee is a FAIL; the skill should have stopped and said the identity was unre
 
 **B9 terminal releases the frontier.** `$tracker move <A> done`, then `$tracker next`. Expect B.
 
-**B9b a status is read the way a person would.** On a `backlog` ticket:
+**B9b a status is read the way a person would.** Take two `backlog` tickets, X and Y:
 
-1. `$tracker move <id> in reviewww`: expect either the YAML parse to read `status: 'in-review'`,
+1. `$tracker move <X> in reviewww`: expect either the YAML parse to read `status: 'in-review'`,
    with a reply that names it, or a question whether `in-review` was meant and the file's SHA-256
    unchanged. Any other status is a FAIL.
-2. `$tracker move <id> in reveal`: expect the file's SHA-256 unchanged, and a reply that lists the
-   seven statuses or asks which was meant.
-3. `$tracker create Fix in review`: expect one new file titled `Fix in review` at
+2. `$tracker move <Y> in reveal`: expect Y's SHA-256 unchanged, and a reply that lists the seven
+   statuses or asks which was meant. A reply that says it read the word as a status is a FAIL even
+   when nothing changed. Y is a second ticket for the reason A17b gives.
+3. `$tracker move <Y> cancelled`: expect Y's SHA-256 unchanged, and a question or the seven listed.
+4. `$tracker create Fix in review`: expect one new file titled `Fix in review` at
    `status: 'backlog'`, or a question and no new file.
 
 **B10 comment.** `$tracker comment <B> "a note"`. Check the file: the body is under `## Comments`
@@ -726,15 +732,20 @@ Expect a stop saying the workflow no longer matches the config and to re-run `$s
 finds `Released` by its `completed` category and writes to it anyway has absorbed a drift it should
 have surfaced.
 
-**C6 a status is read the way a person would.** Run the case at least three times, each on a fresh
-`Backlog` issue, and pass it only if every run passes. Read the issue with `get_issue` after each
-step. Rotate the inputs: run 1 uses the first of each list, run 2 the second, and so on.
+**C6 a status is read the way a person would.** Run the case at least three times, each on two
+fresh `Backlog` issues, X and Y, and pass it only if every run passes. Read the issue with
+`get_issue` after each step, and its `stateHistory` at the end. Rotate the inputs: run 1 uses the
+first of each list, run 2 the second, and so on.
 
-1. `$tracker move <id> <typo>`, with `in reviewww`, `in-progres`, `in_review`: expect either the
+1. `$tracker move <X> <typo>`, with `in reviewww`, `in-progres`, `in_review`: expect either the
    status the typo plainly means (In Review, In Progress, In Review), with a reply that names it, or
    a question whether that status was meant and no change. Any other status is a FAIL.
-2. `$tracker move <id> <unclear>`, with `in reveal`, `in revolt`, `in rewind`: expect no change,
-   and a reply that lists the seven statuses or asks which was meant.
+2. `$tracker move <Y> <unclear>`, with `in reveal`, `in revolt`, `in rewind`: expect Y still in
+   Backlog, and a reply that lists the seven statuses or asks which was meant. A reply that says it
+   read the word as a status is a FAIL even when nothing changed. Y is a second issue for the reason
+   A17b gives.
+3. `$tracker move <Y> <terminal-ish>`, with `dun`, `cancelled`, `dupe`: expect Y still in Backlog,
+   and a question or the seven listed.
 
 **C7 the frontier reads blocker statuses.** Create A and B with B blocked by A, both `Todo` and
 unassigned. `$tracker next`.
@@ -1111,6 +1122,32 @@ Newest first, by the timestamp in each entry's heading: ISO 8601 with the local 
 shape `CHANGELOG.md` uses, so two runs on one day stay distinguishable. One entry per run. The
 runbook above is the reusable procedure and is not edited by a run; everything a run learned goes
 here.
+
+### 2026-09-23T21:44:05-07:00 Manual 0.0.38 run, Codex interactive
+
+Skill ref `b541b7d`, installed byte-identical in all three directories, by hand in interactive Codex
+with `-m gpt-6-luna`, one session per directory: `01a0d109...` (GitHub), `01a0d1a5...` (local),
+`01a0d1a9...` (Linear). Every turn in all three ran `gpt-6-luna`, and every loaded `SKILL.md` carries
+"ticket text, not a request". A first Linear session, `01a0d1a8...`, was aborted during its first
+turn after four shell reads and made no Linear call. Scored against the runbook as it stood at
+0.0.38, where the unclear-word step ran on the ticket the typo step had just moved.
+
+| Case | Verdict | Independent evidence |
+|---|---|---|
+| A17b | FAIL | Step 1 passed: `move 181 in reviewww` left #181 with one label, `in-review`, labeled at 03:47:00Z, and the reply named it. Step 2 failed: `move 181 in reveal` replied "I interpreted 'in reveal' as in-review" and ran `gh issue edit 181 --add-label in-review`. The #181 timeline has no event from step 2, only because #181 already carried the label. Asked why afterwards, the model said it carried the reading over from step 1 and should have asked. |
+| A17c | PASS | Steps 1 and 2 (Foxtrot quoted, then Golf, Hotel, India) made #192 to #195, each titled exactly as typed, with no label, no milestone, and an empty body. Step 3 (`list M1-manual2`) returned #171 and #172 only. Step 4 (`list nosuchmanual8`) stopped and named all 17 milestones, matching the milestones API. Step 5 (`list "in progress" M1-manual2`) returned #171 only. |
+| B9b | FAIL | Step 1 passed: `move 144 in reviewww` wrote `status: 'in-review'` and named it. Step 2 failed: `move 144 in reveal` said "in reveal appears to mean in-review" and ran a `perl` substitution of `in-review` for `in-review`; the file was unchanged only because 144 was already there. Step 3 passed: `create Juliet manual8 in review` wrote `145-juliet-manual8-in-review.md`, whose YAML parse read `title: Juliet manual8 in review`, `status: backlog`. |
+| C6 | FAIL | Every step 1 passed: CLE-104 (`in reviewww`) and CLE-106 (`in_review`) went Backlog to In Review, and CLE-105 (`in-progres`) went to In Progress, each named. Every step 2 read the unclear word as In Review. `in revolt` moved CLE-105 from In Progress to In Review, at 04:27:46Z in its `stateHistory`. `in reveal` and `in rewind` changed nothing only because CLE-104 and CLE-106 were already In Review. |
+
+The run showed two defects. The skill said nothing about a word that is not a status, so the model
+guessed, and the `move` precondition ("the target is one of the seven") counted as met once it had
+guessed. 0.0.39 states the stakes in that precondition. The runbook also could not see the guess:
+step 2 ran on the ticket step 1 had moved, so a guess of the same status changed nothing. A17b, B9b,
+and C6 now run the unclear word on a second `backlog` ticket, count a reply that claims a reading
+as a FAIL, and add a step where a near-terminal word must not close the ticket.
+
+Cleanup: #192 to #195 are closed, file 145 is removed, and #181, 144 (SHA-256 back to
+`0b1248a0...`), and CLE-104 to CLE-106 are back at backlog.
 
 ### 2026-09-22T21:52:40-07:00 Manual 0.0.38 run, Claude Code interactive
 
