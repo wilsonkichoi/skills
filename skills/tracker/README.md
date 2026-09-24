@@ -96,7 +96,9 @@ purpose.
 
 **`comment`** appends to a ticket. It never edits or deletes an existing comment.
 
-**`move`** changes status, including closing. Moving to `backlog` or to `ready` also clears the
+**`move`** changes status, including closing. An obvious typo may move, but a word the tracker
+would have to guess at gets a question listing the seven instead. It never closes a ticket from a
+word that is not the terminal status's name. Moving to `backlog` or to `ready` also clears the
 assignee, which is how you hand work back when you cannot finish it, or take it off someone who
 did half of it. `ready` has to clear it: `next` looks for `ready` with nobody assigned, so a
 `ready` ticket with a name still on it is invisible to the frontier and to that person both.

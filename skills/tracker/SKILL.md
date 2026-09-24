@@ -85,7 +85,7 @@ what you did about it. A verb that cannot confirm its own write has failed.
 | `link` | both tickets exist, they differ, and the edge would not close a cycle | the edge is on the blocked ticket, and the blocker's own blockers are unchanged |
 | `assign` | not terminal. The bare form also needs `ready` with no assignee. Any other holder must be named | the assignee is exactly the one asked for, or nobody for `none`. The bare form also shows `in-progress` |
 | `comment` | the ticket exists | the comment body is on the ticket |
-| `move` | the target is one of the seven statuses. The current status is not terminal | the backend reports the new status |
+| `move` | the user named one of the seven statuses, or a word only one of them could mean. The current status is not terminal. A status is what everyone else acts on, and a terminal one cannot be undone: when you would be guessing, ask and list the seven. Never reach a terminal status from a word that is not its name | the backend reports the new status |
 
 ## 4. Verbs
 
