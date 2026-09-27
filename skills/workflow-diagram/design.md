@@ -19,7 +19,8 @@ You cannot change these; know them so you can check the result.
 - System sans-serif for text; system monospace for names, commands, and small numbers.
 - Light theme: background `#f3f2f2`, surface `#ffffff`, ink `#201e1d`, accent `#ec3013`.
   Dark theme: background `#141313`, surface `#1e1c1b`, ink `#f0eeec`, accent `#ff4a2c`.
-- Red marks only selection, keyboard focus, and the selected node's relationships.
+- Red marks selection, keyboard focus, card hover, the selected node's relationships, and links.
+  Avoid red for lane colors so it keeps that meaning.
 - Cards show a 6px lane bar. Lane chips and regions use the lane's colors.
 - Skills have solid borders. Auxiliary nodes have dashed borders and a kind badge.
 - `primary` and `loop` edges are solid, `optional` edges are dashed, and all have arrows.
