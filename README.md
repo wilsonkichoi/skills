@@ -83,9 +83,10 @@ validated before the next starts. See [AGENTS.md](./AGENTS.md) for how a skill i
 
 Invoke `$workflow-diagram` in Codex or `/workflow-diagram` in Claude Code and Kiro CLI.
 The skill reads actual definitions and preserves authored content when updating an existing diagram.
+When a changed definition contradicts existing text, it reports the conflict with suggested wording instead of rewriting it.
 It does not invoke diagrammed skills. Node.js 22 or newer is required; consumers need no npm installation.
 
-Inputs, offline HTML, notes, and screenshots stay under `docs/dev-agents/diagram/` in the target project.
+Inputs, offline HTML, notes, screenshots, and temporary files stay under `docs/dev-agents/diagram/` in the target project.
 See [this repository's map](docs/dev-agents/diagram/README.md) and the
 [diagram reference](skills/workflow-diagram/README.md).
 

@@ -30,15 +30,28 @@ node "<installed-skill>/scripts/diagram.mjs" check --project "<project>"
 node "<installed-skill>/scripts/diagram.mjs" build --project "<project>"
 ```
 
+In a terminal, run `preview` in the foreground and stop it with Ctrl+C. An agent runs it in the background,
+logging to the diagram directory's `.cache/`, so the printed process ID belongs to the helper itself:
+
 ```sh
-node "<installed-skill>/scripts/diagram.mjs" preview --project "<project>" --port 0
+mkdir -p "<project>/docs/dev-agents/diagram/.cache"
+node "<installed-skill>/scripts/diagram.mjs" preview --project "<project>" --port 0 \
+  > "<project>/docs/dev-agents/diagram/.cache/preview.log" 2>&1 &
+echo "preview pid $!"
+```
+
+Read the URL from `preview.log`. Check that it answers, and after `kill -TERM <pid>` confirm that it stopped,
+with Node instead of saving a response file anywhere:
+
+```sh
+node -e "fetch(process.argv[1]).then(r => console.log('answers', r.status), () => console.log('stopped'))" "<url>"
 ```
 
 - `check` validates both JSON files and writes nothing.
 - `build` validates, then replaces `diagram.html` atomically. On failure the previous HTML stays.
 - `preview` serves only the diagram on `127.0.0.1` and prints its URL. Valid JSON edits reload the
   page; invalid edits print an error and keep the last valid page. `--port 0` picks a free port, and
-  a busy port is an error. Stop it with Ctrl+C.
+  a busy port is an error. SIGINT (Ctrl+C) and SIGTERM stop it.
 - All three reject symlinks inside the diagram path.
 - The helper needs Node.js 22 or newer, uses only Node built-ins and this skill's `assets/`, and
   works from a read-only install without network access.

@@ -9,6 +9,8 @@ Browser tests do not establish successful agent invocation. Harness installation
 Use a clean candidate checkout or source export without node_modules, caches, traces, or browser binaries.
 The skills installer copies ignored files from local directories, so do not install a populated maintainer workspace.
 Replace placeholders with absolute paths. Use an isolated target containing spaces and Unicode.
+Keep raw run evidence (logs, fixtures, screenshots) in an ignored directory such as `.local/runs/workflow-diagram/<date>/`.
+It is scratch, not a record: this runbook defines the cases, and the report named at the end holds the results.
 
 ```sh
 npx skills@latest add "<clean-candidate>" --list
@@ -49,6 +51,8 @@ Keep test outputs within the target's diagram directory; harness installation fi
 
 4. **Project containment.** Inventory the target before and after generation and preview.
    PASS: all new diagram files and temporary artifacts are under `docs/dev-agents/diagram/`; unrelated files are unchanged.
+   After each agent turn, no preview server or browser it started is still running, and its transcript writes nothing to
+   `/tmp` or the project root, not even briefly. Files the harness itself writes, such as Kiro's `.kiro/agents/`, are not skill output.
    FAIL if a renderer fork, package installation, application build edit, or config file appears in the project.
 
 5. **Symlink escape.** In separate copies, replace the output, an input, the diagram directory, and its `docs` ancestor with external symlinks.
@@ -68,18 +72,21 @@ Keep test outputs within the target's diagram directory; harness installation fi
 
 9. **Add while preserving edits.** Customize a description and position; add `audit`, which reads `report.md` and writes `findings.md`.
    Invoke an update and inspect JSON diffs independently.
-   PASS: existing IDs, intentional text, unaffected positions, and auxiliary nodes survive; new relationships have valid routes.
+   PASS: existing IDs, text, positions, routes, and auxiliary nodes survive byte-for-byte; new relationships have valid routes.
+   If the addition makes existing text wrong, it is reported with suggested wording, not rewritten.
 
 10. **Source conflict.** Change a source contract and separately edit its diagram description to conflict with that change.
-    PASS: the skill names the conflict and preserves disputed text pending resolution.
-    FAIL if it silently replaces all descriptions or treats generated HTML as authoritative.
+    PASS: the skill names the conflict with suggested wording, records it in the README, keeps the disputed text,
+    and ends on a numbered question.
+    Answering with a digit applies or keeps the text as chosen, and the README records the outcome.
+    FAIL if it rewrites existing text without that answer, or treats generated HTML as authoritative.
 
 11. **Removal versus access failure.** Confirm one source removal, then separately make another definition unreadable.
     PASS: only confirmed removal deletes a node; its position, incident edges, and routes are removed together.
-    The unreadable source remains represented, with the access problem reported.
+    The unreadable source remains represented, with the access problem reported and recorded in the README.
 
-12. **Unchanged invocation.** Hash both JSON inputs and HTML; invoke again with unchanged sources and intent.
-    PASS: JSON stays byte-identical and identical build inputs produce identical HTML.
+12. **Unchanged invocation.** Hash both JSON inputs, the README, and HTML; invoke again with unchanged sources and intent.
+    PASS: JSON and README stay byte-identical, screenshots are not retaken, and identical build inputs produce identical HTML.
     Review wording, IDs, array order, positions, and routes, not only node counts.
 
 13. **Last valid output.** Start with valid HTML; separately supply invalid JSON, a missing route, and an unresolved relative link.
@@ -109,12 +116,15 @@ Keep test outputs within the target's diagram directory; harness installation fi
 
 18. **Portable project record.** Inspect the generated README and screenshots.
     PASS: they identify this project, its source paths, generator version, regeneration commands, documentation base, and actual verification.
-    FAIL if they reference an implementation worktree, the ignored MVP, or overwrite unrelated notes.
+    The commands run from the project root with `--project .` and a project-relative or `<installed-skill>` helper path.
+    FAIL if they record absolute paths, temporary directories, or preview ports, reference an implementation worktree or the
+    ignored MVP, or overwrite unrelated notes.
 
 19. **Harness invocation [MANUAL when credentials or an interactive session are required].** Invoke on Codex, Claude Code, and Kiro CLI.
     PASS per harness only when the installed skill was actually loaded and produced valid output.
     Record authentication failures and unavailable browser tools as specific SKIPs, separate from helper and browser results.
-    Confirm ambiguous scope ends the turn on a numbered question; supplied scope does not trigger redundant questions.
+    Confirm ambiguous scope (separate sets of skills, no choice given) ends the turn on a numbered question.
+    Supplied scope does not trigger redundant questions.
 
 20. **Repository integration.** Inspect this repository's generated map and candidate diff.
     PASS: only actual scoped skills appear, no dependency is invented, and files stay under the fixed project directory.

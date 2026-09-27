@@ -60,92 +60,57 @@ The phone sheet scrolls independently; commands below the fold remain reachable.
 
 ## Implementation verification
 
-See the [public runbook](../../../validation/workflow-diagram.md) for independent acceptance checks.
-Results below distinguish automated behavior from actual harness invocation.
+The [public runbook](../../../validation/workflow-diagram.md) defines the cases. Results below separate
+renderer checks, installed-helper checks, and agent behavior. Raw evidence stays in the ignored
+`.local/runs/workflow-diagram/` directory of the checkout that ran it.
 
-### Current integration, 2026-09-24
+### Validation, 2026-09-26
 
-This branch includes `origin/main` commit `aa59566`, which merged `tracker` at released tag `v0.0.8`.
-`VERSION` is `0.0.9` for this pull request. The shipped definitions are `setup`, `tracker`, and
-`workflow-diagram`. The source contracts establish `setup → tracker` through
-`docs/dev-agents/config.md`; `workflow-diagram` remains independent.
+The skill was installed from a clean export of this branch on macOS 27.0 with Node.js 24.11.1
+(packaging also on 22.23.1), Chrome 153, and `skills` 1.7.0. Agents: Kiro CLI 2.24.1 (`auto` model),
+Claude Code 2.1.282, and Codex CLI 0.156.1, each on isolated fixtures whose paths contain spaces and Unicode.
 
-| Check | Result | Evidence |
-| --- | --- | --- |
-| Diagram `check` and `build` | PASS | The shipped helper validated both JSON files and regenerated `diagram.html` with the `main` documentation base |
-| Generated asset freshness | PASS | `npm run check:assets` found every renderer asset current |
-| Unit and package tests | PASS | `npm test`: 76 passed, 0 failed |
-| Browser tests | PASS | `npm run test:browser`: 29 passed, 0 failed, using local Chrome |
-| Repository diagram browser check | PASS | Offline file load at three sizes and two themes; three visible nodes, one edge, selected tracker panel, Escape, no page errors or network requests |
-| Visual review | PASS | Inspected desktop light overview and phone dark tracker details; labels, route, and panels were readable |
-| Installer discovery and package | PASS | Clean working-tree export listed exactly three skills; workflow-diagram installed to Codex with Claude Code and Kiro CLI symlinks |
-| Skill invocation on each harness | SKIP | This integration run checked the installed package and helper, not a fresh interactive invocation in each harness |
-| External tracker backends | SKIP | This integration did not repeat the tracker runbook against GitHub, Linear, and local fixtures; the tracker files came from `origin/main` unchanged |
+The first pass failed three cases, and SKILL.md was revised until reruns passed:
 
-### Historical validation, 2026-09-21
+- Case 10: Kiro rewrote authored text that a changed source contradicted. The skill now never rewrites
+  existing text; it reports the conflict with suggested wording and ends on a numbered question.
+- Case 4: agents wrote temporary files to `/tmp` or the project root and left preview servers running.
+  Every file now stays in the diagram directory's `.cache/`, and the reference documents a background
+  preview command whose process ID is the helper's, with a Node check that it stopped.
+- Case 18: Codex recorded absolute paths in regeneration commands. Commands now use `--project .`.
 
-This run predates the tracker merge. Its two-skill count and base do not describe the current branch.
-It used branch `feat/workflow-diagram`, based on `origin/main` at `12513b3`.
-Rechecked at 0.0.10 after the renderer moved to `tools/workflow-diagram/`: asset freshness, 76 unit/packaging tests, and 29 browser tests passed.
-Runtime: Node.js 26.7.0 and npm 11.19.0. Minimum-runtime packaging checks also passed on Node.js 22.23.2.
-Browser automation used Playwright 1.63.0 with local Google Chrome. The renderer retains a configurable Chromium fallback.
+Reruns also settled when the README stays untouched, that commands come only from sources, and what
+makes scope ambiguous. The final text passed a 28-invocation sweep across the three harnesses; one
+Kiro miss (a conflict reported but not recorded in the README) led to one added sentence, and its
+cases (10 twice with answers, 11 unreadable, 12) then passed on Kiro.
 
 | Runbook case | Result | Evidence |
 | --- | --- | --- |
-| 1. Discovery/install | PASS | At that revision, clean source and pushed GitHub branch each discovered two shipped skills; workflow-diagram installed once, shared by all three harness paths |
-| 2. Explicit target/symlink | PASS | Foreign working directory, spaces and Unicode, installed directory symlink; regression covers the resolved CLI entry-detection defect |
-| 3. Read-only/offline | PASS | macOS sandbox-exec denied network and installation writes; check/build ran with Node and empty PATH |
-| 4. Containment | PASS | Inventory found only diagram output; source data and unrelated project files remained unchanged |
-| 5. Symlink escape | PASS | Input, output, dangling output, diagram directory, and docs ancestor rejected; external sentinel preserved |
-| 6. No-config creation | PASS | Independent Codex execution and Claude Code CLI both created valid maps from collect/publish definitions without config |
-| 7. No relevant input | PASS | Codex preserved an existing diagram for empty scope; a fresh empty scope produced no graph |
-| 8. Unrelated workflows | PASS | Minimal and branching fixtures built through shipped assets and opened offline |
-| 9. Preserve additions | PASS | Added audit while preserving authored descriptions, positions, edges, and routes; separate artifact node survived an unchanged update |
-| 10. Source conflict | PASS | Changed collect output conflicted with authored notes.md references; disputed data remained unchanged and conflict was recorded |
-| 11. Removal/access | PASS | Confirmed audit removal cleaned node/position/edge/route; publish EACCES preserved its diagram content |
-| 12. Determinism | PASS | Codex unchanged rerun preserved JSON and HTML bytes; helper repeat builds were identical |
-| 13. Last valid output | PASS | Invalid JSON, missing route, and unresolved documentation link failed without changing prior HTML |
-| 14. Offline/text safety | PASS | Packaged output made no sibling requests under offline file loading; hostile titles, summaries, and commands stayed literal |
-| 15. Preview | PASS | Browser refresh, invalid-edit retention, file-request rejection, port conflict, signal shutdown, and port reuse |
-| 16. Assets | PASS | Source/schema changes failed freshness; rebuild repaired it; repeated generation was byte-identical |
-| 17. Visual/input | PASS, with limits | 29 browser cases retain original 25 regressions; project screenshots inspected as described above |
-| 18. Project record | PASS | Portable source paths, regeneration commands, generator version, chosen base, and local screenshots |
-| 19. Harness behavior | Mixed | Codex subagent and Claude Code CLI passed; Kiro invocation and interactive ambiguity checks have limits below |
-| 20. Integration | PASS | At that revision, [PR #7](https://github.com/wilsonkichoi/skills/pull/7) was open and unmerged; the branch had no tracker commits |
+| 1. Discovery/install | PASS | Exactly three skills discovered; canonical `.agents` copy with Claude Code and Kiro CLI symlinks, identical to source; all manual settings and contract lines present |
+| 2. Explicit target/symlink | PASS | `check`/`build` through all three install paths from a third directory; missing `--project` exits 1 and writes nothing |
+| 3. Read-only/offline | PASS | `sandbox-exec` denied network (DNS and TCP) and writes outside the diagram directory; empty `PATH`; Node 24 and 22; install hashes unchanged |
+| 4. Containment | PASS | Helper added only `diagram.html`; after every agent turn no preview or browser remained and no write landed outside the diagram directory |
+| 5. Symlink escape | PASS | Six symlink variants refused, including a dangling output; sentinels unchanged |
+| 6. No-config creation | PASS | All three harnesses built valid maps without config, running no diagrammed skill and inventing no commands |
+| 7. No relevant input | PASS | Empty scope created nothing; an existing diagram stayed byte-identical |
+| 8. Unrelated workflows | PASS | Minimal and branching examples: 96/96 browser checks each |
+| 9. Preserve additions | PASS | Existing nodes, positions, and routes byte-identical; `audit` added with valid routes (all three harnesses) |
+| 10. Source conflict | PASS | Disputed text kept, conflict recorded with suggestions, numbered question; answering `1` applied the wording only |
+| 11. Removal/access | PASS | Confirmed removal cleaned node, position, edges, and routes; unreadable source kept the JSON and was recorded in the README |
+| 12. Determinism | PASS | Unchanged runs left JSON, README, HTML, and screenshots byte-identical (all three harnesses) |
+| 13. Last valid output | PASS | Eight invalid inputs failed with file and field errors, kept the prior HTML, and left no temp files |
+| 14. Offline/text safety | PASS | Hostile text rendered literally; no script ran; only the HTML file was requested; Unicode deep link and copy verified |
+| 15. Preview | PASS | Refresh, error retention, 404 for project files, EADDRINUSE, SIGTERM and SIGINT exit, port reuse |
+| 16. Assets | PASS | Source, schema, helper, and asset edits fail freshness; rebuilds are byte-identical; notices match the bundle |
+| 17. Visual/input | PASS, with limits | Renderer suite 76 + 29 passed; installed-helper maps passed 96/96 checks at three sizes in both themes |
+| 18. Project record | PASS | Every README the agents wrote uses portable commands and no absolute paths or ports |
+| 19. Harness behavior | PASS | All three loaded the installed skill; an ambiguous monorepo prompt ended on a numbered question, and `1` was accepted |
+| 20. Integration | PASS | Map shows only `setup`, `tracker`, and `workflow-diagram`; committed HTML equals a rebuild; branch current with `main` |
 
-The pushed GitHub package also passed source/output hash verification and check/build through the Claude symlink with network and installation writes denied.
-No node_modules, caches, browser binaries, or test output were shipped.
+SKIP: physical touch hardware, screen readers, Safari, and Firefox. Codex's sandbox blocked its own
+preview bind and browser, and some Kiro and Claude runs had no browser tool; those in-agent visual
+checks are SKIP, separate from the browser checks above. Chrome 153's command-line screenshot mode
+never exited on the test machine, so a watchdog stopped it after 15 seconds during agent runs.
 
-The automated suite passed **76 unit/packaging tests and 29 browser tests**.
-All 16 packaging tests also passed on Node.js 22.23.2.
-The original 60 unit and 25 browser cases remain, with setup/tracker assertions isolated in a historical fixture.
-Generic interaction tests use a five-node synthetic workflow. Embedding tests load the shipped ESM asset.
-
-The deterministic notices cover bundled Ajv 8.20.0, fast-deep-equal 3.1.3, fast-uri 3.1.8, and json-schema-traverse 1.0.0.
-The generated JavaScript carries the complete license notices, so standalone HTML retains them when copied alone.
-Esbuild and Playwright are maintainer dependencies, not installed runtime requirements.
-
-## Harness evidence and limits
-
-Codex executed the installed skill through an independent subagent with an isolated collect/publish project.
-It verified creation, unchanged invocation, authored additions, auxiliary preservation, conflicts, confirmed removals, unreadable sources, and empty scope.
-The parent independently checked retained JSON objects and geometry against snapshots and validated the resulting model.
-This was actual skill execution by Codex, not a separate Codex CLI launch.
-Its browser checks were SKIP because the browser inventory was empty and IAB reported unavailable.
-A numbered scope question was checked in a conversational dry run; actual interactive turn termination remains SKIP.
-
-Claude Code 2.1.278 loaded `/workflow-diagram` from the installed package and completed a collect/publish map.
-Its source-backed artifact nodes explain notes.md and report.md. Neither skill was executed.
-It also checked offline headless Chrome, viewport bounds, selected states, keyboard navigation, history, and one touch tap.
-Its multi-touch and command-copy checks were SKIP; those behaviors are covered separately by the renderer suite.
-
-Kiro CLI 2.22.0 installation was verified. Actual invocation is **SKIP** because `kiro-cli whoami` returned `Not logged in`.
-No authentication settings were changed.
-
-The generic skill-creator validator rejected the repository-required `disable-model-invocation` extension.
-A template-aware YAML check passed the name, description, all manual settings, six contract lines, and length requirement.
-The extension was preserved as required by the repository template and verified by actual installation and Claude invocation.
-
-Physical touch hardware, Firefox, Safari, screen-reader audio, and operating-system clipboard permission dialogs were not tested.
-Those are SKIP, not evidence supplied by Chromium automation.
-The original ignored MVP remained unchanged; its 43-file handoff manifest matched before migration.
+Earlier results from 2026-09-21 and 2026-09-24 are in this file's history. The original ignored MVP
+was left unchanged during migration.
