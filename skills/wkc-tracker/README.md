@@ -1,4 +1,4 @@
-# tracker
+# wkc-tracker
 
 Read and write ticket state, against GitHub Issues, Linear, or markdown files in your own repository,
 through one set of verbs that does not change when the backend does.
@@ -17,19 +17,19 @@ either.
 
 ## Setup
 
-Run `setup` once. It writes `docs/dev-agents/config.md`, and the field that matters here is
+Run `wkc-setup` once. It writes `docs/dev-agents/config.md`, and the field that matters here is
 `issue_tracker`, one of `github`, `linear`, `local`, or `other`. Everything below behaves the same
 whichever you picked.
 
 Until that file exists with one of those four values, every verb stops, writes nothing, and asks you
-to run `setup`. It never guesses a backend, and it never borrows another tool's config or ticket
+to run `wkc-setup`. It never guesses a backend, and it never borrows another tool's config or ticket
 format, because tickets written anywhere else are invisible to every verb here.
 
 | Harness | How you call it |
 |---|---|
-| Claude Code | `/tracker list` |
-| Codex | `$tracker list` |
-| Kiro CLI | `/tracker list` |
+| Claude Code | `/wkc-tracker list` |
+| Codex | `$wkc-tracker list` |
+| Kiro CLI | `/wkc-tracker list` |
 
 Examples below use the Claude Code prefix. Substitute yours.
 
@@ -57,14 +57,14 @@ filed by hand in the web UI is a real ticket immediately, with no import step.
 ## The eight verbs
 
 ```
-tracker list [status] [milestone]
-tracker show <id>
-tracker next
-tracker create <ticket>
-tracker assign <id> [who] [from <holder>]
-tracker comment <id> <body>
-tracker move <id> <status> [original]
-tracker link <id> blocked-by <id>
+/wkc-tracker list [status] [milestone]
+/wkc-tracker show <id>
+/wkc-tracker next
+/wkc-tracker create <ticket>
+/wkc-tracker assign <id> [who] [from <holder>]
+/wkc-tracker comment <id> <body>
+/wkc-tracker move <id> <status> [original]
+/wkc-tracker link <id> blocked-by <id>
 ```
 
 **`list`** shows tickets with their id, title, status, assignee, and blockers. Both arguments are
@@ -80,14 +80,14 @@ blocking it.
 **`create`** makes a ticket from the shape below, always at `backlog`. Use `move` to give it another
 status. If the body has a `## Blocked by` section, `create` writes those dependency edges too.
 
-**`assign`** says who holds a ticket. Bare, `tracker assign 42`, it takes the ticket for you: it
+**`assign`** says who holds a ticket. Bare, `/wkc-tracker assign 42`, it takes the ticket for you: it
 requires `ready` with nobody on it, and sets the assignee and `in-progress` together. That is the
 one form that changes status, because a ticket that is assigned but still `ready` belongs to nobody
 and shows up in nobody's queue.
 
-The other forms only move the name. `tracker assign 42 wilson` hands it over, `tracker assign 42
+The other forms only move the name. `/wkc-tracker assign 42 wilson` hands it over, `/wkc-tracker assign 42
 none` clears it, and taking a ticket away from whoever has it needs them named:
-`tracker assign 42 me from alex`. That last one is deliberate. Picking up free work and taking work
+`/wkc-tracker assign 42 me from alex`. That last one is deliberate. Picking up free work and taking work
 out of someone's hands are different acts, and the second should have to be spelled out.
 
 Handing a `ready` ticket to someone reserves it: it drops off the frontier, so nobody else picks it
@@ -102,11 +102,11 @@ a question listing the seven, never a guess. Moving to `backlog` or to `ready` a
 assignee, which is how you hand work back when you cannot finish it, or take it off someone who
 did half of it. `ready` has to clear it: `next` looks for `ready` with nobody assigned, so a
 `ready` ticket with a name still on it is invisible to the frontier and to that person both.
-Marking a duplicate takes the original's id: `tracker move 42 duplicate 17`. On Linear, that moves
-42's blockers, blocked tickets, and related tickets onto 17. The tracker names them before it writes,
+Marking a duplicate takes the original's id: `/wkc-tracker move 42 duplicate 17`. On Linear, that moves
+42's blockers, blocked tickets, and related tickets onto 17. `wkc-tracker` names them before it writes,
 and refuses when a moved edge would close a cycle.
 
-**`link`** records that one ticket is blocked by another: `tracker link 42 blocked-by 17`. It
+**`link`** records that one ticket is blocked by another: `/wkc-tracker link 42 blocked-by 17`. It
 refuses an edge that would close a cycle and names the loop it found, because tickets in a cycle
 wait on each other forever. It runs this check itself, because neither GitHub nor Linear refuses
 every cycle.

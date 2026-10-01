@@ -45,10 +45,13 @@ source tree, no per-harness variants.
 
 ## Skills
 
-Each skill is a directory under `skills/<skill-name>/`:
+Every skill identifier must start with `wkc-`. Use the same identifier for the directory,
+frontmatter `name`, `interface.display_name`, main heading, invocations, and references between skills.
+
+Each skill is a directory under `skills/wkc-<name>/`:
 
 ```
-skills/<skill-name>/
+skills/wkc-<name>/
   SKILL.md              # frontmatter: name, description, disable-model-invocation: true
   agents/openai.yaml    # interface + policy.allow_implicit_invocation: false
   <supporting>.md       # templates and references, linked relatively from SKILL.md
@@ -56,7 +59,7 @@ skills/<skill-name>/
 ```
 
 Documentation *about* a skill lives in that skill's directory. When `SKILL.md` cannot carry an
-explanation without growing past its own length budget, the answer is `skills/<skill-name>/README.md`.
+explanation without growing past its own length budget, the answer is `skills/wkc-<name>/README.md`.
 Be deliberate about one: the installer copies the **whole skill directory** into every consumer, so
 a README ships with it. Write it for someone using the skill. Anything written for someone changing
 the skill belongs in this file instead.
@@ -68,13 +71,24 @@ one file per skill, named after it.
 Adding any *other* top-level directory is a decision about the shape of the repository. It is the
 maintainer's call and not a thing to do in passing.
 
-Skills in this project are only triggered manually. Every harness reads its own setting, so each
-skill carries all of them:
+Manual invocation is the default. The shipped skills keep these settings:
+
 - claude code: `SKILL.md` frontmatter `disable-model-invocation: true`
 - codex cli: `agents/openai.yaml` -> `policy: allow_implicit_invocation: false`
 - kiro cli: no documented setting exists. `SKILL.md` frontmatter carries
   `metadata: allow_implicit_invocation: "false"` in case a harness starts reading it. Nothing is
   known to read it today, so a Kiro user can still trigger a skill by conversation alone.
+
+Future skills may explicitly opt into model invocation, one skill at a time. Authors must declare
+the intended callers in the skill body: people, models, or named skills. Enable supported invocation
+settings for each harness when models are intended callers:
+
+- Claude Code: set `disable-model-invocation: false` or omit the restriction.
+- Codex implicit selection: set `policy.allow_implicit_invocation: true` or use its documented default, `true`.
+- Kiro CLI: the metadata flag is not known to be enforced. Do not claim it controls invocation.
+
+Dependencies must name the exact `wkc-` identifier. Report an unavailable or blocked dependency
+instead of substituting an unprefixed skill. A dependency declaration does not bypass invocation settings.
 
 Every `SKILL.md` body opens with the same doc block, so a reader knows what a skill needs and what
 it leaves behind before reading any step. The skeleton is in [Skill template](#skill-template).
@@ -91,7 +105,7 @@ A skill that asks the user something ends its turn on the question. Asking and t
 leaves the harness working, and a working harness cannot take a plain reply. Make the answer cheap
 too: numbered options with the recommended one first, and a digit accepted. Use a harness's own
 picker only where it has one that a skill can actually invoke, which most do not. Every skill on
-the roster interviews somebody, so this belongs to all of them rather than to `setup`.
+the roster interviews somebody, so this belongs to all of them rather than to `wkc-setup`.
 
 A picker that takes several questions at once, as Claude Code's does, does not reorder the
 interview. It asks one step faster; it does not turn a sequence of questions into one screen. Only
@@ -100,15 +114,15 @@ the later ones are worth asking is settled before they are presented.
 
 ## Skill template
 
-[`skill-template/`](./skill-template/) holds the copyable skeleton: `SKILL.md`, `agents/openai.yaml`,
+[`skill-template/`](./skill-template/) holds the copyable skeleton: `SKILL.md.template`, `agents/openai.yaml`,
 and a `README.md` that writes out the Agent Skills specification rules in full, so working in this
 repository never requires fetching the spec. Read it when creating a skill, checking an existing
 one, or porting one in. Do not read it unless knowing the spec and folder structure is needed;
 that is the point of it being a separate folder.
 
 ```
-cp -r skill-template skills/<skill-name>
-mv skills/<skill-name>/SKILL.md.template skills/<skill-name>/SKILL.md
+cp -r skill-template skills/wkc-<name>
+mv skills/wkc-<name>/SKILL.md.template skills/wkc-<name>/SKILL.md
 ```
 
 Follow the instructions from `skill-template/README.md`.
@@ -116,7 +130,7 @@ Follow the instructions from `skill-template/README.md`.
 `skill-template/` is authoring material, not a shipped skill. The installer finds skills by looking
 for `SKILL.md` anywhere in the repository, not by reading `skills/`, so the skeleton is named
 `SKILL.md.template` to stay out of the install. Verify with
-`npx skills add <gh-handle>/<skills-repo> -l`: nothing named `skill-name` may appear in that list,
+`npx skills add <gh-handle>/<skills-repo> -l`: nothing named `wkc-skill-name` may appear in that list,
 and the count must equal the number of shipped skills.
 
 That rule is why `validation/` is safe as a sibling of `skills/`: its files are named after the
@@ -155,7 +169,7 @@ and the order.
 1. **Read the source** `SKILL.md` and list its dependencies: runtime contracts, `scripts/*.py`,
    subagent definitions, `assets/`.
 2. **Rule on each dependency** before writing anything. Inline it into `SKILL.md`, keep it as a
-   sibling `.md` in the skill directory, replace it with a call to the `tracker` skill, or drop it.
+   sibling `.md` in the skill directory, replace it with a call to the `wkc-tracker` skill, or drop it.
    A ported script needs a written reason.
 3. **Rewrite, do not copy.** Cut agent-toolkit-specific policy on sight: fork contributions,
    canonical-repository permission boundaries, version migration sections, tuning knobs like
@@ -163,11 +177,11 @@ and the order.
    absence breaks the skill.
 4. **Apply the conventions above**: the [Skill template](#skill-template), every invocation setting,
    `agents/openai.yaml`.
-5. **Feed the contract back into `setup`.** A new config field means editing
-   `skills/setup/config-template.md` and the setup interview in the same pull request. No skill
-   reads a field `setup` never writes.
+5. **Feed the contract back into `wkc-setup`.** A new config field means editing
+   `skills/wkc-setup/config-template.md` and the `wkc-setup` interview in the same pull request. No skill
+   reads a field `wkc-setup` never writes.
 6. **Validate** in a throwaway repo: install with the installer, then work through the skill's
-   runbook at `validation/<skill-name>.md` on Codex, on Claude Code, and on Kiro CLI. A runbook is a
+   runbook at `validation/wkc-<name>.md` on Codex, on Claude Code, and on Kiro CLI. A runbook is a
    numbered list of cases, each with an independent check that decides PASS or FAIL, ending in a
    report. A case that could not run is SKIP and never PASS: an untested claim recorded as a pass is
    how a defect reaches a user. Cases needing a second terminal, a second account, or a service with
@@ -191,7 +205,7 @@ Before any commit that adds, removes, or modifies files under `skills/`:
 2. That version's `CHANGELOG.md` line added, or rewritten to cover this commit, using this format `{version} {ISO 8601 standard with local time offset e.g. 2026-08-21T17:16:30-07:00} {change summary}`
 3. `README.md` (repo root) and `AGENTS.md` updated if skill behavior/description changed
 4. `README.md` roster row added or updated when a skill is added, renamed, or removed
-5. `validation/<skill-name>.md` updated when a verb, a command, or a guarantee changed. A runbook
+5. `validation/wkc-<name>.md` updated when a verb, a command, or a guarantee changed. A runbook
    that still tests the old behaviour is worse than none, because it reports PASS
 
 Do not commit skill changes without completing this checklist. Read the checklist, don't rely on memory.

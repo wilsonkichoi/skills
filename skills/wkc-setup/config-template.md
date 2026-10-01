@@ -14,7 +14,7 @@ test_command: "npm test"                    # run before handing work back
 # Project development conventions
 
 Drop any field above that does not apply to this project. The `prd_file`, `spec_file`, and
-`roadmap_file` paths are where those documents belong; the `research`, `architect`, and `plan` skills create
+`roadmap_file` paths are where those documents belong; the `wkc-research`, `wkc-architect`, and `wkc-plan` skills create
 them later, so they can point at files that do not exist yet.
 
 ## Conventions
@@ -25,7 +25,7 @@ who merges, what "done" means here.
 ## Tracker notes
 
 Anything about this project's tracker that does not match what the skills expect, written down so
-it is a decision you can come back to rather than a surprise later. `setup` adds a note here when
+it is a decision you can come back to rather than a surprise later. `wkc-setup` adds a note here when
 it finds something, and leaves the section out when it does not.
 
 The case that produces one today: a Linear team carrying a status outside the seven this skill set

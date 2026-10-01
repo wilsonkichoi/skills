@@ -1,4 +1,4 @@
-# Tracker validation runbook
+# wkc-tracker validation runbook
 
 A repeatable run, driven by Codex, that ends in a PASS or FAIL line per case and a report at the
 bottom. Written for Codex because it is the harness this repository has verified least; run it on
@@ -6,11 +6,11 @@ Claude Code or Kiro CLI by swapping the prefix in the table below.
 
 | Harness | Prefix | Example |
 |---|---|---|
-| Codex | `$` | `$tracker list ready` |
-| Claude Code | `/` | `/tracker list ready` |
-| Kiro CLI | `/` | `/tracker list ready` |
+| Codex | `$` | `$wkc-tracker list ready` |
+| Claude Code | `/` | `/wkc-tracker list ready` |
+| Kiro CLI | `/` | `/wkc-tracker list ready` |
 
-Every `$tracker ...` below is the skill under test. Every `gh`, `cat`, or `jq` line is the
+Every `$wkc-tracker ...` below is the skill under test. Every `gh`, `cat`, or `jq` line is the
 **independent check**, and it is what decides PASS or FAIL. Never score a case on what the skill
 reported about itself: the whole point is that this skill's failure mode is reporting success while
 the backend disagrees.
@@ -29,7 +29,7 @@ and never folds SKIP into PASS.
 
 **A test input is never an example in the skill files.** When `SKILL.md` or a backend file uses
 the exact argument a case sends as an example, a pass shows the model matched the example, not that
-it applied the rule. Before a run, check with `grep -rnw -- '<input>' skills/tracker/`, and pick
+it applied the rule. Before a run, check with `grep -rnw -- '<input>' skills/wkc-tracker/`, and pick
 another input when a hit is an example. Ordinary prose, such as "a ticket in review", is not one.
 Repeated cases rotate their input for the same reason.
 
@@ -65,13 +65,16 @@ cases are all skipped is still GREEN, and the skipped list is what tells you wha
 
 ## Setup, once per backend
 
+Replace `<review-ref>` in every installer command with the branch or commit under review, never an
+old development branch. Record the installed commit in the report.
+
 ```
 mkdir -p ~/tmp/tracker-val && cd ~/tmp/tracker-val
-npx skills@latest add 'https://github.com/wilsonkichoi/skills.git#feat/tracker' -a claude-code -a codex -a kiro-cli
+npx skills@latest add 'https://github.com/wilsonkichoi/skills.git#<review-ref>' -a claude-code -a codex -a kiro-cli
 ```
 
 **Invoking the skill during a run.** Every skill here carries `disable-model-invocation: true`, so
-no harness invokes one on its own and each `$tracker ...` has to be typed. That is the shipped
+no harness invokes one on its own and each `$wkc-tracker ...` has to be typed. That is the shipped
 behaviour, not a defect, and a leading space is enough to stop a slash command firing, so check that
 an invocation actually fired before scoring what came back.
 
@@ -88,26 +91,26 @@ from which case onward, because the file under test now differs from the commit 
 changes no verb, and it is still not nothing. Restore it or reinstall before the run ends, and never
 edit the source tree to get it.
 
-**S1 install layout.** Check: `ls .agents/skills/tracker/`. Expect `SKILL.md`, `README.md`,
+**S1 install layout.** Check: `ls .agents/skills/wkc-tracker/`. Expect `SKILL.md`, `README.md`,
 `github.md`, `linear.md`, `local.md`, `agents`. The `README.md` is there on purpose: the installer
 copies the whole skill directory, so the human-facing explainer ships to every consumer.
 
-**S2 sibling resolution.** Check: `head -1 .claude/skills/tracker/github.md` and the same under
+**S2 sibling resolution.** Check: `head -1 .claude/skills/wkc-tracker/github.md` and the same under
 `.kiro/`. Expect `# Backend: GitHub Issues` from both.
 Both directories have to have been created by the installer, since nothing here pre-creates them.
 
 **S3 one skill per name.** Check:
-`npx skills@latest add 'https://github.com/wilsonkichoi/skills.git#feat/tracker' -l`.
-Expect exactly 2 skills and nothing named `skill-name`. Nothing from `validation/` may appear
-either.
+`npx skills@latest add 'https://github.com/wilsonkichoi/skills.git#<review-ref>' -l`.
+Expect exactly `wkc-setup` and `wkc-tracker`. The old names, planned skills, `wkc-skill-name`,
+and anything from `validation/` must not appear.
 
-S4 and S5 run here, straight after the install and before any `$setup`, because they need a
-directory with no config that setup wrote. The check is on disk, never the reply: the failure they
+S4 and S5 run here, straight after the install and before any `$wkc-setup`, because they need a
+directory with no config that `wkc-setup` wrote. The check is on disk, never the reply: the failure they
 exist for is a skill that writes tickets somewhere no verb can read and reports success.
 
 **S4 no config is a stop.** In the install directory, with no `docs/dev-agents/config.md`, run
-`$tracker list`, then `$tracker create Probe`.
-Expect each reply to say there is no config and to name `$setup`.
+`$wkc-tracker list`, then `$wkc-tracker create Probe`.
+Expect each reply to say there is no config and to name `$wkc-setup`.
 Check: this prints nothing.
 
 ```
@@ -123,15 +126,15 @@ directory. `ls -A` shows only `.agents`, `.claude`, `.kiro`, and `skills-lock.js
 mkdir -p docs/dev-agents && printf -- '---\nissue_tracker: jira\n---\n' > docs/dev-agents/config.md && cksum docs/dev-agents/config.md
 ```
 
-Run `$tracker list`, then `$tracker create Probe`.
-Expect each reply to name `jira` as not a backend it knows and to name `$setup`.
+Run `$wkc-tracker list`, then `$wkc-tracker create Probe`.
+Expect each reply to name `jira` as not a backend it knows and to name `$wkc-setup`.
 Check: this prints nothing, and `cksum docs/dev-agents/config.md` matches the value printed above.
 
 ```
 find . -mindepth 1 \( -path ./.agents -o -path ./.claude -o -path ./.kiro \) -prune -o -newer docs/dev-agents/config.md -print
 ```
 
-Then remove it, before any leg runs `$setup`. Setup keeps the choices an existing config already
+Then remove it, before any leg runs `$wkc-setup`. `wkc-setup` keeps the choices an existing config already
 made, so a leftover `jira` config would change what the leg tests.
 
 ```
@@ -147,14 +150,14 @@ have; the rest of the leg runs against A3's repository. The install block delibe
 `git init`, because the installer does not need one and because A1 has to find a directory without
 one.
 
-**A1 setup offers to create the git repository.** In this directory, which has no `.git`, run
-`$setup`.
+**A1 wkc-setup offers to create the git repository.** In this directory, which has no `.git`, run
+`$wkc-setup`.
 Expect it to say there is no git repository and offer `git init` before the interview reaches
 Section B. Nothing else in the run works without one: the `github` backend has nowhere to attach a
 remote, and step 7 has nothing to commit to.
-Check: `git rev-parse --git-dir` succeeds before setup reports.
+Check: `git rev-parse --git-dir` succeeds before `wkc-setup` reports.
 
-**A2 setup resolves a missing remote in Section A.** Carry on from A1, whose repository has no
+**A2 wkc-setup resolves a missing remote in Section A.** Carry on from A1, whose repository has no
 remote, and answer `github`.
 Expect it to ask which repository right there, offering both an existing one and
 `gh repo create`. A run that notes the missing remote and moves on to Section B is a FAIL: the user
@@ -163,7 +166,7 @@ Check: `git remote -v` names a GitHub remote, and `docs/dev-agents/config.md` re
 repository rather than an intention to add one.
 
 **A3 an existing repository asks nothing.** In a fresh directory, clone a repository you already
-own, empty or not, install the skills into it, and run `$setup`. This is the ordinary case, and the
+own, empty or not, install the skills into it, and run `$wkc-setup`. This is the ordinary case, and the
 two above are the edge cases.
 Expect Section A to ask for the backend and nothing else: the repository and the remote are already
 there, so there is nothing left to resolve.
@@ -175,10 +178,10 @@ Run the rest of the leg here. `<R>` below is this repository's `OWNER/REPO`.
 Check: `gh label list --repo <R> --json name --jq '[.[].name]|sort|join(" ")'`
 Expect `backlog`, `in-progress`, `in-review`, and `ready` present, and `done` and `cancel` absent.
 `duplicate` proves nothing either way: it ships in GitHub's own default label set, so a repository
-created through the web UI already has one before setup runs. What matters is that setup did not
+created through the web UI already has one before `wkc-setup` runs. What matters is that `wkc-setup` did not
 create it and that nothing reads it as a status, which A11 covers.
 
-**A5 create writes the ticket.** `$tracker create` with ticket A, from a body file you keep.
+**A5 create writes the ticket.** `$wkc-tracker create` with ticket A, from a body file you keep.
 Check the labels with `gh issue view <A> --repo <R> --json title,labels`, and the body with a byte
 comparison rather than by eye:
 
@@ -191,29 +194,29 @@ comparison. Do not substitute `--jq .body > file` or `"$(...)"` for that command
 a newline and the second strips one, so both report a difference on a byte-identical body and score
 a correct `create` as FAIL.
 
-**A6 create writes the edge.** `$tracker create` with ticket B naming `#<A>` under `## Blocked by`.
+**A6 create writes the edge.** `$wkc-tracker create` with ticket B naming `#<A>` under `## Blocked by`.
 Check: `gh issue view <B> --repo <R> --json blockedBy --jq '[.blockedBy.nodes[].number]'`
 Expect `[<A>]`. This is the edge `create` writes as a second call; its own exit code says nothing
 about it.
 
-**A7 link is its own verb.** Create E with no blockers, then `$tracker link <E> blocked-by <A>`.
+**A7 link is its own verb.** Create E with no blockers, then `$wkc-tracker link <E> blocked-by <A>`.
 Check: `gh issue view <E> --repo <R> --json blockedBy --jq '[.blockedBy.nodes[].number]'`
 Expect `[<A>]`. The dependency endpoint takes the blocker's numeric **database** id, which is
 neither `#<A>` nor its `node_id`, so a skill that passed the issue number here either errors or
 writes an edge to some unrelated issue. Check which one you got.
 
-**A8 Related is a reference, not an edge.** `$tracker create` with ticket F naming `#<A>` under
+**A8 Related is a reference, not an edge.** `$wkc-tracker create` with ticket F naming `#<A>` under
 `## Related` and nothing under `## Blocked by`.
 Check: `gh issue view <F> --repo <R> --json body,blockedBy`
 Expect the `## Related` line present in the body and `blockedBy.nodes` **empty**. A `## Related`
 entry that became a dependency edge is a FAIL: it would drop F off the frontier over a reference
 nothing is supposed to compute on.
 
-**A9 frontier excludes the blocked ticket.** `$tracker move <A> ready`, `$tracker move <B> ready`,
-then `$tracker next`.
+**A9 frontier excludes the blocked ticket.** `$wkc-tracker move <A> ready`, `$wkc-tracker move <B> ready`,
+then `$wkc-tracker next`.
 Expect A and not B.
 
-**A10 closed blocker releases the frontier.** `$tracker move <A> done`, then `$tracker next`.
+**A10 closed blocker releases the frontier.** `$wkc-tracker move <A> done`, then `$wkc-tracker next`.
 Expect B.
 Check the reason by hand:
 `gh issue list --repo <R> --state open --json number,blockedBy --jq '.[]|select(.number==<B>)'`
@@ -221,7 +224,7 @@ Expect `blockedBy.totalCount` still `1` with the node `CLOSED`. A `next` that fi
 `totalCount` would never return this ticket.
 
 **A11 topic labels do not block a pull, including one named after a status.**
-`gh issue edit <B> --repo <R> --add-label bug --add-label duplicate`, then `$tracker assign <B>`.
+`gh issue edit <B> --repo <R> --add-label bug --add-label duplicate`, then `$wkc-tracker assign <B>`.
 Check: `gh issue view <B> --repo <R> --json assignees,labels`
 Expect `bug`, `duplicate`, and `in-progress`, one assignee, you. A refusal means the pre-read counts
 topic labels as status labels. `duplicate` is the sharp half: it is a GitHub default label and it
@@ -230,33 +233,33 @@ it has to read as an ordinary topic label and survive every write untouched.
 
 **A12 multi-status issue never reaches a result, and all three verbs agree.**
 `gh issue create --repo <R> --title "two statuses" --body x --label ready --label in-progress`
-then `$tracker next`, `$tracker list ready`, `$tracker list backlog`, `$tracker list` with no
-status, and `$tracker show <that id>`.
+then `$wkc-tracker next`, `$wkc-tracker list ready`, `$wkc-tracker list backlog`, `$wkc-tracker list` with no
+status, and `$wkc-tracker show <that id>`.
 Expect the issue in none of the four result sets, named as inconsistent by all five verbs, and both
 labels named by `show`. The unfiltered `list` is its own branch of the query: before 0.0.26 it put
 the issue in both `tickets` and `inconsistent`. A verb that reports it as `ready`, as `backlog`, or not at all is a FAIL:
 one shared status test is supposed to make disagreement impossible.
 
-**A13 multi-status issue is repairable.** `$tracker move <that id> ready`.
+**A13 multi-status issue is repairable.** `$wkc-tracker move <that id> ready`.
 Check: `gh issue view <that id> --repo <R> --json labels --jq '[.labels[].name]|sort'`
 Expect exactly `ready`.
 
-**A14 the no-op move keeps its label.** `$tracker move <B> in-progress` on a ticket already there.
+**A14 the no-op move keeps its label.** `$wkc-tracker move <B> in-progress` on a ticket already there.
 Check: `gh issue view <B> --repo <R> --json labels --jq '[.labels[].name]|sort'`
 Expect `bug`, `duplicate`, and `in-progress` all three. A missing `in-progress` means the add and
 remove lists overlapped; a missing topic label means the move touched labels that were not its own.
 
-**A15 terminal move records the reason and strips the label.** `$tracker move <B> done`.
+**A15 terminal move records the reason and strips the label.** `$wkc-tracker move <B> done`.
 Check: `gh issue view <B> --repo <R> --json state,stateReason,labels`
 Expect `CLOSED`, `COMPLETED`, no status label, and both `bug` and `duplicate` retained. A ticket
 closed as `COMPLETED` while still carrying a `duplicate` label is correct: the label is a topic and
 the close reason is the status.
 
-**A16 duplicate records its original.** Create C and D, then `$tracker move <D> duplicate <C>`.
+**A16 duplicate records its original.** Create C and D, then `$wkc-tracker move <D> duplicate <C>`.
 Check: `gh issue list --repo <R> --state closed --json number,stateReason`
 Expect D as `DUPLICATE`.
 
-**A17 terminal is terminal.** `$tracker move <D> ready`.
+**A17 terminal is terminal.** `$wkc-tracker move <D> ready`.
 Expect a refusal. `gh issue close` on a closed issue exits 0 and keeps the old reason, so the
 pre-read is the only guard.
 
@@ -265,15 +268,15 @@ W, one per step, so a wrong write in one step cannot hide or spoil another. Chec
 `gh issue view <id> --json state,stateReason,labels`, and read the session: a step that expects no
 change also expects no write command against that issue, not only an unchanged final state.
 
-1. `$tracker move <X> in reviewww`: an obvious typo. Expect either exactly one status label,
+1. `$wkc-tracker move <X> in reviewww`: an obvious typo. Expect either exactly one status label,
    `in-review`, with a reply that names it, or a question whether `in-review` was meant and no
    change. Any other status is a FAIL.
-2. `$tracker move <Y> in reveal`: a word that only looks like a status name. Expect Y at `backlog`,
+2. `$wkc-tracker move <Y> in reveal`: a word that only looks like a status name. Expect Y at `backlog`,
    no write, and a reply that lists the seven statuses or asks which was meant. A question that
    suggests the status the word resembles still passes, as long as nothing was written.
-3. `$tracker move <Z> dome`: a word that looks like a terminal status and means none. Expect Z open
+3. `$wkc-tracker move <Z> dome`: a word that looks like a terminal status and means none. Expect Z open
    at `backlog`, no write, and a question or the seven listed.
-4. `$tracker move <W> cancelled`: a word that means a terminal status without being its name.
+4. `$wkc-tracker move <W> cancelled`: a word that means a terminal status without being its name.
    Expect W closed as `NOT_PLANNED` (`cancel`), with a reply that names it, or a question and no
    change. Any other status is a FAIL.
 
@@ -282,47 +285,47 @@ change also expects no write command against that issue, not only an unchanged f
 `ready`. Check creates with `gh issue list --repo <R> --state all --limit 200 --json number,title,labels`.
 Then:
 
-1. `$tracker create "Fix in review"`: expect one new issue titled `Fix in review`, with no status
+1. `$wkc-tracker create "Fix in review"`: expect one new issue titled `Fix in review`, with no status
    label.
-2. `$tracker create Fix in review`: expect one new issue titled `Fix in review`, with no status
+2. `$wkc-tracker create Fix in review`: expect one new issue titled `Fix in review`, with no status
    label, or a question and no new issue. Run this step at least three times with different first
    words, ending in turn in `in review` and `in progress`, and pass it only if every run passes. An
    issue with a status label is a FAIL: `create` always writes `backlog`.
-3. `$tracker list M1`: expect both of M1's issues, scoped.
-4. `$tracker list no-such-thing`: expect a stop that names the milestones that exist, and no list.
-5. `$tracker list "in progress" M1`: expect both filters applied: the `in-progress` issue only.
+3. `$wkc-tracker list M1`: expect both of M1's issues, scoped.
+4. `$wkc-tracker list no-such-thing`: expect a stop that names the milestones that exist, and no list.
+5. `$wkc-tracker list "in progress" M1`: expect both filters applied: the `in-progress` issue only.
 
 **A18 human-made ticket reads as backlog.** Create an issue in the web UI, no label, one-line body.
-`$tracker show <id>` expect `backlog`; `$tracker next` expect it absent; `$tracker list backlog`
+`$wkc-tracker show <id>` expect `backlog`; `$wkc-tracker next` expect it absent; `$wkc-tracker list backlog`
 expect it present.
 
 **A19 reopened ticket reads as backlog.** Reopen a closed issue in the web UI.
-`$tracker show <id>` expect `backlog`.
+`$wkc-tracker show <id>` expect `backlog`.
 
-**A20 backing off clears the assignee.** `$tracker assign <some ready ticket>`, then
-`$tracker move <it> backlog`.
+**A20 backing off clears the assignee.** `$wkc-tracker assign <some ready ticket>`, then
+`$wkc-tracker move <it> backlog`.
 Check: `gh issue view <it> --repo <R> --json assignees`
 Expect empty.
 
 **A21 stale label stays invisible.**
 `gh issue create --repo <R> --title stale --body x --label ready` then
 `gh issue close <it> --repo <R> --reason completed`.
-`$tracker list ready` and `$tracker next` expect it in neither.
+`$wkc-tracker list ready` and `$wkc-tracker next` expect it in neither.
 
-**A22 comment lands and is verified.** `$tracker comment <some id> "runbook note"`.
+**A22 comment lands and is verified.** `$wkc-tracker comment <some id> "runbook note"`.
 Check: `gh issue view <it> --repo <R> --json comments --jq '[.comments[].body]'`
 Expect the exact body present exactly once.
 
 **A23 a milestone scopes the list.** `gh api repos/<R>/milestones -f title=M1`, put one `ready`
-ticket in it with `gh issue edit <id> --repo <R> --milestone M1`, then `$tracker list ready M1`.
+ticket in it with `gh issue edit <id> --repo <R> --milestone M1`, then `$wkc-tracker list ready M1`.
 Expect only that ticket, with the second argument read as a milestone rather than rejected as an
-unknown status. Then `$tracker list ready no-such-milestone`: expect a stop naming the milestones
+unknown status. Then `$wkc-tracker list ready no-such-milestone`: expect a stop naming the milestones
 that do exist, not the whole `ready` list unscoped and not an empty list at exit 0.
 
 **A23b a closed milestone is not an unknown milestone.** `gh api repos/<R>/milestones -f title=M2`,
 put another `ready` ticket in it with `gh issue edit <id> --repo <R> --milestone M2`, close the
 milestone with `gh api --method PATCH repos/<R>/milestones/<its number> -f state=closed`, then
-`$tracker list ready M2`.
+`$wkc-tracker list ready M2`.
 Expect that ticket. A stop is the FAIL this case exists for, and it is a resolver bug rather than a
 query bug: `gh api repos/<R>/milestones` returns open milestones only, so without `?state=all` the
 skill reports a milestone that is right there, holding tickets, as a name nothing matches. Confirm
@@ -330,12 +333,12 @@ the trap is armed before scoring: `gh api repos/<R>/milestones --jq '[.[].title]
 while `gh api 'repos/<R>/milestones?state=all' --jq '[.[].title]'` lists it.
 
 **A24 [MANUAL] the tie-break, which is the only case that proves it.** Two accounts, both with push
-access to `<R>`, one `ready` unassigned ticket, and `$tracker assign <id>` run in two terminals
+access to `<R>`, one `ready` unassigned ticket, and `$wkc-tracker assign <id>` run in two terminals
 close enough together that both pre-reads land before either write.
 
 ```
 # terminal 1, as account A          # terminal 2, as account B
-GH_TOKEN=<A> $tracker assign <id>   GH_TOKEN=<B> $tracker assign <id>
+GH_TOKEN=<A> $wkc-tracker assign <id>   GH_TOKEN=<B> $wkc-tracker assign <id>
 ```
 
 Expect both sessions to name the same winner, the login that sorts first case-insensitively, and:
@@ -348,13 +351,13 @@ Two accounts is the requirement, not two terminals. Two sessions on one account 
 tie-break at all: `assignees` holds one login and each session reads it as its own, which is the
 documented blind spot rather than a defect to find here. A run with one account is SKIP.
 
-**A25 [MANUAL] host without issue dependencies.** Run `$tracker next` against a GitHub Enterprise
+**A25 [MANUAL] host without issue dependencies.** Run `$wkc-tracker next` against a GitHub Enterprise
 host that does not expose `blockedBy`. Expect a loud stop, never an empty frontier. Needs such a
 host.
 
-**A26 a write is visible to the very next read.** `$tracker move <a backlog ticket> ready`, then
-`$tracker next` **once**. Expect that ticket in the frontier on the first attempt, with no retry and
-no pause. Then `gh issue edit <it> --repo <R> --milestone M1` and `$tracker list ready M1` once, and
+**A26 a write is visible to the very next read.** `$wkc-tracker move <a backlog ticket> ready`, then
+`$wkc-tracker next` **once**. Expect that ticket in the frontier on the first attempt, with no retry and
+no pause. Then `gh issue edit <it> --repo <R> --milestone M1` and `$wkc-tracker list ready M1` once, and
 expect it there too.
 This is the case that catches a verb reading GitHub's search index instead of the primary store.
 Measured by hand against `gh` 2.97.0: an issue created with `--label ready` was in the unfiltered
@@ -364,7 +367,7 @@ ready` on all 3, and one trial later that index was still two tickets behind.
 exists to find, and an empty frontier reported to a user is indistinguishable from a real one.
 
 **A27 assigning someone the repository will not take is a stop, not a success.**
-`$tracker assign <some open ticket> octocat`, using any real GitHub account that is not a
+`$wkc-tracker assign <some open ticket> octocat`, using any real GitHub account that is not a
 collaborator on `<R>`.
 Check: `gh issue view <it> --repo <R> --json assignees --jq '[.assignees[].login]'`
 Expect `[]`, and expect the skill to say the assignment did not land. Measured on `gh` 2.97.0:
@@ -374,32 +377,32 @@ user or bot with the login`. The silent one is the ordinary mistake, a teammate 
 repository, so a run that reports success here is the FAIL this case exists for.
 
 **A28 a holder the caller did not name is a refusal.** `gh issue edit <it> --repo <R>
---add-assignee @me`, then `$tracker assign <it> none from someone-who-is-not-you`.
+--add-assignee @me`, then `$wkc-tracker assign <it> none from someone-who-is-not-you`.
 Expect a refusal naming the actual holder, and `[.assignees[].login]` unchanged. Then
-`$tracker assign <it> none`, which is the bare form on your own assignment, and expect `[]`.
+`$wkc-tracker assign <it> none`, which is the bare form on your own assignment, and expect `[]`.
 The `from` argument is checked against the read, so a wrong name is a stop whether the caller
 guessed, or the ticket changed hands since they looked. The other half of this case, a real holder
 who is not you, is **[MANUAL]** and needs a second collaborator.
 
-**A29 move to ready clears every assignee.** `$tracker assign <a ready ticket>`, which puts it at
-`in-progress` with you on it, then `$tracker move <it> ready`, then `$tracker next`.
+**A29 move to ready clears every assignee.** `$wkc-tracker assign <a ready ticket>`, which puts it at
+`in-progress` with you on it, then `$wkc-tracker move <it> ready`, then `$wkc-tracker next`.
 Check: `gh issue view <it> --repo <R> --json assignees,labels`
 Expect `assignees: []`, exactly one label `ready`, and the ticket present in the frontier. A ticket
 left `ready` with an assignee is the bug this case exists for: `next` filters on `ready` **and** no
 assignee, so it is off the frontier and off that person's queue at once, and nothing in `list` looks
 wrong.
 
-**A30 show reports a ticket whether or not it has comments.** `$tracker show <a ticket with no
-comments>`, then `$tracker comment <it> "show probe"`, then `$tracker show <it>` again.
+**A30 show reports a ticket whether or not it has comments.** `$wkc-tracker show <a ticket with no
+comments>`, then `$wkc-tracker comment <it> "show probe"`, then `$wkc-tracker show <it>` again.
 Expect the number, title, body, state, labels and blockers both times, no comments the first time
 and exactly one the second, with its author. Silence, or a report that the ticket could not be read,
 is the FAIL: `gh issue view <n> --comments` prints **nothing at all at exit 0** on a ticket with no
 comments, because the flag replaces the issue with its comments rather than adding them. The
 `--json ...,comments` field returns `[]` instead, which is why `show` is one call and not two.
 
-**A29b reserving a ticket is not the same as losing it.** `$tracker assign <a ready ticket> <who>`,
-where `<who>` may be **your own login**, then `$tracker next`, `$tracker list ready` and
-`$tracker show <it>`.
+**A29b reserving a ticket is not the same as losing it.** `$wkc-tracker assign <a ready ticket> <who>`,
+where `<who>` may be **your own login**, then `$wkc-tracker next`, `$wkc-tracker list ready` and
+`$wkc-tracker show <it>`.
 Expect the ticket absent from the frontier, present in `list ready`, still `ready` rather than
 `in-progress`, and named with its holder by `show`. A reserved ticket leaving the frontier is
 intended behaviour and not the A29 bug: the difference is that somebody put the name there on
@@ -409,7 +412,7 @@ same way. Whatever name you use has to have push access, or A27 happens instead 
 empty `assignees` as the reservation failing.
 
 **A29c [MANUAL] reserving for somebody else.** The same case with `<who>` a second collaborator.
-Expect the assignment to land, `show` to name them, and `$tracker assign <it> me` to refuse until it
+Expect the assignment to land, `show` to name them, and `$wkc-tracker assign <it> me` to refuse until it
 names them with `from`. When it lands, the label must still be `ready`: taking a ticket from its
 holder is a handover, and only the bare form sets `in-progress`. This is the half a one-account machine cannot reach, and it is the same
 missing identity that keeps A24 and half of A28 unrunnable: without it, nothing proves an assignment
@@ -417,9 +420,9 @@ lands for anybody but the caller, and A27 shows that is not academic, since a lo
 access is dropped at exit 0.
 
 **A31 link refuses a cycle, and one GitHub would accept.** Create three `backlog` tickets X, Y, Z.
-`$tracker link <Y> blocked-by <X>`, then `$tracker link <Z> blocked-by <Y>`, then
-`$tracker link <X> blocked-by <Z>`, which would close X → Z → Y → X. Then
-`$tracker link <X> blocked-by <X>`.
+`$wkc-tracker link <Y> blocked-by <X>`, then `$wkc-tracker link <Z> blocked-by <Y>`, then
+`$wkc-tracker link <X> blocked-by <Z>`, which would close X → Z → Y → X. Then
+`$wkc-tracker link <X> blocked-by <X>`.
 Expect the first two to land, and the last two to refuse: the third naming the path, the fourth
 naming a self-link.
 Check: `gh issue view <X> --repo <R> --json blockedBy --jq '[.blockedBy.nodes[].number]'` returns
@@ -428,7 +431,7 @@ the backend. The refusal must come from the skill: `gh` would print a 422 for th
 reply that relays that error has not run the check.
 
 **A32 an empty frontier says why.** This case needs a frontier with nothing on it, so run it after
-every other A case. For each ticket `$tracker next` returns, `gh issue edit <n> --repo <R>
+every other A case. For each ticket `$wkc-tracker next` returns, `gh issue edit <n> --repo <R>
 --remove-label ready` until it returns nothing. Then build three held tickets with `gh`, not the
 skill:
 
@@ -442,7 +445,7 @@ gh issue create --repo <R> --title "A32 U" --body "in a cycle"
 ```
 
 Make P blocked by Q, and S blocked by T, T by U, U by S, with the `gh api` pair from `github.md`'s
-`link` section for each edge. GitHub accepts that three-issue cycle. Then `$tracker next`.
+`link` section for each edge. GitHub accepts that three-issue cycle. Then `$wkc-tracker next`.
 Check first that the fixture is what it claims: the `next` query from `github.md`, run by hand,
 returns `frontier: []`, and `held` lists P, R, and S.
 Expect the reply to say the frontier is empty and to name all three: P with Q as its open blocker,
@@ -457,12 +460,12 @@ written so the leg can run against one you keep.
 
 ## B. Local backend
 
-Fresh scratch repo, `$setup`, answer `local`.
+Fresh scratch repo, `$wkc-setup`, answer `local`.
 
 **B1 scaffold.** Check `docs/dev-agents/issues/` exists and the config carries `issue_tracker:
 local` and `issues_dir`.
 
-**B2 create writes a parseable file.** `$tracker create` with ticket A.
+**B2 create writes a parseable file.** `$wkc-tracker create` with ticket A.
 Check: parse the frontmatter with a real YAML parser, not by eye:
 `uv run --with pyyaml python -c "import yaml,sys;print(yaml.safe_load(open(sys.argv[1]).read().split('---')[1]))" docs/dev-agents/issues/001-*.md`
 Expect a dict whose `id` is the string `'001'` and whose `status` is the string `'backlog'`.
@@ -490,11 +493,11 @@ is a FAIL, and it is the specific failure unquoted YAML produces.
 Check that each of the ten filenames starts with its id and a hyphen. The slug after it is
 free-form, since nothing reads it.
 
-**B4 edges live in the frontmatter.** `$tracker create` ticket B naming A under `## Blocked by`.
+**B4 edges live in the frontmatter.** `$wkc-tracker create` ticket B naming A under `## Blocked by`.
 Check the file: `blocked_by` holds A's id, `status` is `'backlog'`, and the `## Blocked by` body
 section matches.
 
-**B5 Related has no frontmatter field.** `$tracker create` ticket F with a `## Related` section
+**B5 Related has no frontmatter field.** `$wkc-tracker create` ticket F with a `## Related` section
 naming A and **no `## Blocked by` section at all**, not an empty one.
 Check the file: the `## Related` section is in the body, `blocked_by` is empty, and no `related`
 key was invented in the frontmatter. Nothing computes on `## Related`, so anything that parsed it
@@ -509,47 +512,47 @@ docs/dev-agents/issues/015-has-section.md    with a `## Blocked by` heading and 
 docs/dev-agents/issues/016-no-section.md     with no `## Blocked by` heading at all
 ```
 
-`$tracker link 15 blocked-by <A>`: expect `blocked_by` to hold A's id **and** the heading to list
+`$wkc-tracker link 15 blocked-by <A>`: expect `blocked_by` to hold A's id **and** the heading to list
 it, since this file has one.
-`$tracker link 16 blocked-by <A>`: expect `blocked_by` to hold A's id and the body to come back
+`$wkc-tracker link 16 blocked-by <A>`: expect `blocked_by` to hold A's id and the body to come back
 byte-identical, since this file has none.
 That is the whole rule `local.md` states, both branches, and neither needs a fixture repaired
 mid-case. Do not repair a fixture to make a branch runnable: if a file does not have the shape the
 branch needs, the case is wrong and that is the finding.
 
-**B7 frontier.** `$tracker move <A> ready`, `$tracker move <B> ready`, `$tracker next`.
+**B7 frontier.** `$wkc-tracker move <A> ready`, `$wkc-tracker move <B> ready`, `$wkc-tracker next`.
 Expect A only, **on the first read**, with no retry and no pause. The rule A26 exists for on GitHub
 applies everywhere: a ticket made `ready` a moment ago is exactly the ticket `next` is being asked
 about. Files have no index to lag, so a first read that misses A is a defect in this skill rather
 than in a backend.
 
-**B8 the bare assign resolves an identity.** `$tracker assign <A>`.
+**B8 the bare assign resolves an identity.** `$wkc-tracker assign <A>`.
 Check the file: `status: 'in-progress'` and `assignee` equal to `git config user.name`. An empty
 assignee is a FAIL; the skill should have stopped and said the identity was unresolvable.
 
-**B9 terminal releases the frontier.** `$tracker move <A> done`, then `$tracker next`. Expect B.
+**B9 terminal releases the frontier.** `$wkc-tracker move <A> done`, then `$wkc-tracker next`. Expect B.
 
 **B9b a status is read the way a person would.** Take four `backlog` tickets, X, Y, Z, and W, one
 per step, for the reasons A17b gives. A step that expects a SHA-256 unchanged also expects no write
 command against that file in the session.
 
-1. `$tracker move <X> in reviewww`: expect either the YAML parse to read `status: 'in-review'`,
+1. `$wkc-tracker move <X> in reviewww`: expect either the YAML parse to read `status: 'in-review'`,
    with a reply that names it, or a question whether `in-review` was meant and the file's SHA-256
    unchanged. Any other status is a FAIL.
-2. `$tracker move <Y> in reveal`: expect Y's SHA-256 unchanged, and a reply that lists the seven
+2. `$wkc-tracker move <Y> in reveal`: expect Y's SHA-256 unchanged, and a reply that lists the seven
    statuses or asks which was meant. A question that suggests the status the word resembles still
    passes, as long as nothing was written.
-3. `$tracker move <Z> duplex`: expect Z's SHA-256 unchanged, and a question or the seven listed.
-4. `$tracker move <W> scrapped`: expect `status: 'cancel'` with a reply that names it, or a question
+3. `$wkc-tracker move <Z> duplex`: expect Z's SHA-256 unchanged, and a question or the seven listed.
+4. `$wkc-tracker move <W> scrapped`: expect `status: 'cancel'` with a reply that names it, or a question
    and W's SHA-256 unchanged. Any other status is a FAIL.
-5. `$tracker create Fix in review`: expect one new file titled `Fix in review` at
+5. `$wkc-tracker create Fix in review`: expect one new file titled `Fix in review` at
    `status: 'backlog'`, or a question and no new file.
 
-**B10 comment.** `$tracker comment <B> "a note"`. Check the file: the body is under `## Comments`
+**B10 comment.** `$wkc-tracker comment <B> "a note"`. Check the file: the body is under `## Comments`
 with a `### <date> <author>` heading.
 
-**B11 the tracker never commits.** This one needs a committed baseline, or it cannot fail, and the
-baseline has to include the ticket files. Setup's step 7 commit happens back at B1, before any
+**B11 wkc-tracker never commits.** This one needs a committed baseline, or it cannot fail, and the
+baseline has to include the ticket files. `wkc-setup`'s step 7 commit happens back at B1, before any
 ticket exists, so it is not enough on its own: take that offer when it comes, and then commit the
 tickets B2 to B10 created as a second commit. Both commits are part of the case, not deviations.
 
@@ -558,7 +561,7 @@ git add docs/dev-agents/issues && git commit -m "baseline"
 git log --oneline | wc -l
 ```
 
-Then run one mutating verb, `$tracker comment <B> "commit probe"`, and check:
+Then run one mutating verb, `$wkc-tracker comment <B> "commit probe"`, and check:
 
 ```
 git log --oneline | wc -l
@@ -580,8 +583,8 @@ skill does, because `??` is what an untracked file shows either way. A clean tre
 a new commit, is the FAIL.
 
 **B12 hand-written file.** `printf '# just a title\n\nsome prose\n' > docs/dev-agents/issues/099-hand.md`
-then `$tracker show 99`. Expect `backlog` rather than an error.
-Then `$tracker move 99 ready` and check the file gained a frontmatter block carrying only the fields
+then `$wkc-tracker show 99`. Expect `backlog` rather than an error.
+Then `$wkc-tracker move 99 ready` and check the file gained a frontmatter block carrying only the fields
 that verb sets, with the prose untouched.
 
 **B12b a partial block is read field by field.** Hand-write a file whose frontmatter is real but
@@ -599,19 +602,19 @@ milestone: 'M1'
 No status and no assignee in the block above.
 ```
 
-`$tracker show 98`: expect `backlog` and unassigned, from the absence of those keys rather than an
-error. `$tracker next` after `$tracker move 98 ready`: expect it on the frontier, which it can only
-reach if the missing `assignee` read as nobody. Then `$tracker assign 98 someone`: expect the file
+`$wkc-tracker show 98`: expect `backlog` and unassigned, from the absence of those keys rather than an
+error. `$wkc-tracker next` after `$wkc-tracker move 98 ready`: expect it on the frontier, which it can only
+reach if the missing `assignee` read as nobody. Then `$wkc-tracker assign 98 someone`: expect the file
 to gain `assignee` and keep `milestone`, with `id` and `title` untouched.
 `local.md` gives each missing field its default and reads the fields that are present as written. B12 proves the filename fallback for a missing `id`, and
 this is the half B12 cannot reach, because a file with no frontmatter at all exercises the defaults
 by a different route.
 
-**B13 id forms are interchangeable.** `$tracker show 99`, `$tracker show 099`, `$tracker show '#99'`.
+**B13 id forms are interchangeable.** `$wkc-tracker show 99`, `$wkc-tracker show 099`, `$wkc-tracker show '#99'`.
 Expect the same ticket three times.
 
 **B14 an unknown milestone is a stop here too.** Give one ticket `milestone: 'M1'`, then
-`$tracker list ready M1` and `$tracker list ready no-such-milestone`.
+`$wkc-tracker list ready M1` and `$wkc-tracker list ready no-such-milestone`.
 Expect the ticket from the first, and a stop naming `M1` from the second. There is no milestone
 registry in this backend, so the set of milestones is whatever the files carry; an empty list for a
 name nothing carries is the same wrong answer GitHub gives, in a place where the whole set was
@@ -621,26 +624,26 @@ already read.
 **right now**, which by this point in the leg is #099 after B12, not A: B9 moved A to `done` and the
 terminal rule correctly refuses to bring it back. Call it `<R>`.
 
-Run `$tracker assign <R> some-colleague`, then `$tracker next` and `$tracker list ready`.
+Run `$wkc-tracker assign <R> some-colleague`, then `$wkc-tracker next` and `$wkc-tracker list ready`.
 Check the file: `assignee: 'some-colleague'` with `status: 'ready'` unchanged, since only the bare
 form moves the status. Expect `<R>` absent from the frontier and present in `list ready`. That is the
 reservation, the one case where `ready` and an assignee belong together, and it is what makes B16's
 clear-on-handback a separate rule rather than a contradiction.
 
-Then `$tracker assign <R> me from wrong-name`: expect a refusal and the file unchanged, byte for
-byte. Then `$tracker assign <R> me from some-colleague`: expect `assignee` holding
+Then `$wkc-tracker assign <R> me from wrong-name`: expect a refusal and the file unchanged, byte for
+byte. Then `$wkc-tracker assign <R> me from some-colleague`: expect `assignee` holding
 `git config user.name` and `status` still `ready`.
 
 There is no account to check a name against on this backend, so a name is written as given. That is
 documented behaviour and not a finding, and it is why A27 has no counterpart here: nothing can
 silently drop a name that no directory validates.
 
-**B16 move to ready clears the assignee here too.** `$tracker assign <B>`, then
-`$tracker move <B> ready`, then `$tracker next`.
+**B16 move to ready clears the assignee here too.** `$wkc-tracker assign <B>`, then
+`$wkc-tracker move <B> ready`, then `$wkc-tracker next`.
 Check the file: `assignee: ''` and `status: 'ready'`, with B back in the frontier.
 
 **B17 show reports a ticket that has no comments.** Take a ticket with no `## Comments` section and
-run `$tracker show` on it, then `$tracker comment <it> "show probe"`, then `$tracker show <it>` again.
+run `$wkc-tracker show` on it, then `$wkc-tracker comment <it> "show probe"`, then `$wkc-tracker show <it>` again.
 Expect the whole ticket both times, with no comments the first time and one the second. This is F9's
 shape on a backend that cannot have F9's cause: there is no flag here that replaces the ticket with
 its comments, so an empty or truncated report would be the skill inventing the problem rather than
@@ -663,7 +666,7 @@ id: '999'
 After.
 ```
 
-Then `$tracker show <it>` and `$tracker list backlog`.
+Then `$wkc-tracker show <it>` and `$wkc-tracker list backlog`.
 Expect the ticket's real `id` and `status`, the body intact including both `---` lines and the text
 between them, and no sign that `status: 'done'` was read as state. The frontmatter is the block
 between the **first** `---` and the next one, and everything after is body that is never parsed. A
@@ -672,15 +675,15 @@ or reads somebody's pasted YAML as the ticket's state. This is the same class as
 break are the ones that look harmless.
 
 **B19 link refuses a cycle.** Create three `backlog` tickets X, Y, Z.
-`$tracker link <Y> blocked-by <X>`, then `$tracker link <Z> blocked-by <Y>`, then
-`$tracker link <X> blocked-by <Z>`, then `$tracker link <X> blocked-by <X>`.
+`$wkc-tracker link <Y> blocked-by <X>`, then `$wkc-tracker link <Z> blocked-by <Y>`, then
+`$wkc-tracker link <X> blocked-by <Z>`, then `$wkc-tracker link <X> blocked-by <X>`.
 Expect the first two to land, the third to refuse naming the path X → Z → Y → X, and the fourth to
 refuse as a self-link.
 Check with the B2 parser, not by eye: X's `blocked_by` is still empty, Y's is exactly X's id, and
 Z's is exactly Y's id.
 
 **B20 an empty frontier says why.** Run it after every other B case. Move every ticket
-`$tracker next` returns to `backlog` by editing its `status`, until it returns nothing. Then write
+`$wkc-tracker next` returns to `backlog` by editing its `status`, until it returns nothing. Then write
 six files by hand, since the skill will not write the cycle:
 
 ```
@@ -693,7 +696,7 @@ six files by hand, since the skill will not write the cycle:
 ```
 
 Each file gets the full frontmatter shape from `local.md`, with every value single-quoted, and the
-ids renumbered past the highest id already in the directory. Then `$tracker next`.
+ids renumbered past the highest id already in the directory. Then `$wkc-tracker next`.
 Expect the reply to say the frontier is empty and to name P held by Q at `in-review`, R reserved
 for `someone-else`, and S with the cycle through S, T, and U as a path.
 Check: no file changed, compared with `cksum` before and after, since `next` only reads. A reply
@@ -711,32 +714,32 @@ The read and write paths in `linear.md` have all been executed against a live wo
 failure here is a regression rather than an expected gap. The one path still unproven is the
 assignment race, which needs two identities and is marked in the case list.
 
-**C1 a fresh team is missing In Review.** Run `$setup` against a newly created Linear team.
+**C1 a fresh team is missing In Review.** Run `$wkc-setup` against a newly created Linear team.
 Check: `list_issue_statuses` returns six statuses, no In Review.
 Expect a stop naming In Review and the `started` category, and **no** Linear fields in the config.
 This is the ordinary first run, not an edge case: Linear's default template does not include it.
-Add In Review in team settings, re-run, and expect setup to complete with no mapping questions.
+Add In Review in team settings, re-run, and expect `wkc-setup` to complete with no mapping questions.
 
 **C2 [MANUAL] a missing status is a stop.** Rename or delete the team's `In Review`, then re-run
-`$setup`.
+`$wkc-setup`.
 Expect a refusal that names the missing status and says what to add in team settings, and **no**
 Linear fields written to the config. A skill that invents a substitute here is the failure this case
 exists for.
 
 **C3 [MANUAL] an extra status warns and is recorded.** Add a status such as `Ready to Merge` under
-`Started`, then re-run `$setup`.
-Expect setup to complete, warn loudly by name and category, and write a note under **Tracker notes**
+`Started`, then re-run `$wkc-setup`.
+Expect `wkc-setup` to complete, warn loudly by name and category, and write a note under **Tracker notes**
 in `docs/dev-agents/config.md`. Check the file, not just the report.
-Then park an issue in that status and run `$tracker list` and `$tracker next`: it must be reported
+Then park an issue in that status and run `$wkc-tracker list` and `$wkc-tracker next`: it must be reported
 as unmapped by its Linear name, never counted as one of the seven and never silently dropped.
 
-**C4 operate by name.** `$tracker list ready`, then `$tracker move <id> in-progress`.
+**C4 operate by name.** `$wkc-tracker list ready`, then `$wkc-tracker move <id> in-progress`.
 Check with `get_issue`: the status is exactly `In Progress`. Nothing should be resolved by category
 at run time.
 
-**C5 [MANUAL] a renamed status is a stop, not a fallback.** Rename `Done` to `Released` after setup
-has run, then `$tracker move <id> done`.
-Expect a stop saying the workflow no longer matches the config and to re-run `$setup`. A skill that
+**C5 [MANUAL] a renamed status is a stop, not a fallback.** Rename `Done` to `Released` after `wkc-setup`
+has run, then `$wkc-tracker move <id> done`.
+Expect a stop saying the workflow no longer matches the config and to re-run `$wkc-setup`. A skill that
 finds `Released` by its `completed` category and writes to it anyway has absorbed a drift it should
 have surfaced.
 
@@ -746,46 +749,46 @@ each issue with `get_issue` after its step, and its `stateHistory` at the end. A
 no change also expects no `save_issue` call on that issue in the session. Rotate the inputs: run 1
 uses the first of each list, run 2 the second, and so on.
 
-1. `$tracker move <X> <typo>`, with `in reviewww`, `in-progres`, `in_review`: expect either the
+1. `$wkc-tracker move <X> <typo>`, with `in reviewww`, `in-progres`, `in_review`: expect either the
    status the typo plainly means (In Review, In Progress, In Review), with a reply that names it, or
    a question whether that status was meant and no change. Any other status is a FAIL.
-2. `$tracker move <Y> <look-alike>`, with `in reveal`, `in revolt`, `in rewind`: expect Y still in
+2. `$wkc-tracker move <Y> <look-alike>`, with `in reveal`, `in revolt`, `in rewind`: expect Y still in
    Backlog, and a reply that lists the seven statuses or asks which was meant. A question that
    suggests the status the word resembles still passes, as long as nothing was written.
-3. `$tracker move <Z> <terminal look-alike>`, with `dome`, `duplex`, `canal`: expect Z still in
+3. `$wkc-tracker move <Z> <terminal look-alike>`, with `dome`, `duplex`, `canal`: expect Z still in
    Backlog, and a question or the seven listed.
-4. `$tracker move <W> <terminal meaning>`, with `cancelled`, `scrapped`, `abandoned`: expect W in
+4. `$wkc-tracker move <W> <terminal meaning>`, with `cancelled`, `scrapped`, `abandoned`: expect W in
    Canceled with a reply that names it, or a question and no change. Any other status is a FAIL.
 
 **C7 the frontier reads blocker statuses.** Create A and B with B blocked by A, both `Todo` and
-unassigned. `$tracker next`.
+unassigned. `$wkc-tracker next`.
 Expect A and not B. Then move A to `Done` and re-run: expect B.
 A relation carries only the blocker's id and title, so a frontier that never fetched A's status
 cannot have filtered correctly, even if the answer looks right on one sample.
 
-**C8 relations are native.** `$tracker link <B> blocked-by <A>`, then `get_issue` on B with
+**C8 relations are native.** `$wkc-tracker link <B> blocked-by <A>`, then `get_issue` on B with
 `includeRelations: true`.
 Expect the edge under `relations.blockedBy`.
 
 **C9 the duplicate transition moves relations onto the original.** Create an original O, and a
 ticket X with `relatedTo` R, `blockedBy` B, and `blocks` D. Confirm with `get_issue`, then
-`$tracker move <X> duplicate <O>` and read X, O, and D again with `includeRelations: true`.
+`$wkc-tracker move <X> duplicate <O>` and read X, O, and D again with `includeRelations: true`.
 Expect X at `Duplicate` rather than `Canceled`, `duplicateOf` O, and no relations left on X. Expect O
 to carry `relatedTo` R, `blockedBy` B, and `blocks` D. Linear moves them with no mention in the
 response. Expect the skill to have named all three before the write, to have said that B now blocks
 O, and to have made no call with `state`. A reply that calls the relations lost, or reports a clean
 move, is a FAIL: it did not read the original afterwards.
 
-Then the dropped edge. Create M blocked by O, and Y blocked by M. `$tracker move <Y> duplicate <O>`
+Then the dropped edge. Create M blocked by O, and Y blocked by M. `$wkc-tracker move <Y> duplicate <O>`
 cannot move `blockedBy` M onto O, because O already blocks M. Expect the skill to name that edge as
 dropped before the write, and the move to go ahead. Afterwards O is still not blocked by M.
 
 Then the refusal half. Create N blocked by O, P blocked by N, and Z blocked by P.
-`$tracker move <Z> duplicate <O>` would make O blocked by P, closing O → P → N → O, and O has no
+`$wkc-tracker move <Z> duplicate <O>` would make O blocked by P, closing O → P → N → O, and O has no
 relation with P for Linear to drop it on. Expect a refusal naming that path, Z still at its old
 status, and O still not blocked by P. Linear writes long cycles, so this refusal is the skill's own.
 
-**C10 milestone scoping.** `$tracker list ready "<milestone name>"`.
+**C10 milestone scoping.** `$wkc-tracker list ready "<milestone name>"`.
 Expect only that milestone's issues. Then pass a milestone name that does not exist: expect a stop,
 not the whole project unscoped.
 Then the A23b question in Linear form: `list_milestones` takes only `project` and has no state or
@@ -795,48 +798,48 @@ name that does not exist, which stops the caller over a milestone that is real. 
 still returned (see the evidence section); a milestone in an archived project is unmeasured, so
 record what you find.
 
-**C11 comment lands and is verified.** `$tracker comment <id> "runbook note"`.
+**C11 comment lands and is verified.** `$wkc-tracker comment <id> "runbook note"`.
 Check with `list_comments`: the exact body present exactly once.
 
-**C12 [MANUAL] assignment race.** Two sessions, one `Todo` unassigned issue, `$tracker assign <id>`
+**C12 [MANUAL] assignment race.** Two sessions, one `Todo` unassigned issue, `$wkc-tracker assign <id>`
 in both. A Linear issue has a single assignee, so the loser cannot detect the race by counting
 assignees: expect the verification read to name the winner, and the loser to write nothing back and
 report. Needs two identities.
 
-**C13 the bare assign is one call.** `$tracker assign <a Todo issue with no assignee>`.
+**C13 the bare assign is one call.** `$wkc-tracker assign <a Todo issue with no assignee>`.
 Check with `get_issue`: `status` is exactly `In Progress` and `assignee` is you. `save_issue` takes
 `state` and `assignee` together, so this must not arrive as two writes: a ticket that is assigned
 while still `Todo` is off the frontier and in nobody's queue, which is the gap the single call
 exists to close.
 
 **C14 the explicit assign forms, and reservation.** On a `Todo` issue:
-`$tracker assign <id> <who>`, where `<who>` may be **your own name**.
+`$wkc-tracker assign <id> <who>`, where `<who>` may be **your own name**.
 Check with `get_issue`: `assignee` is that name and `status` is **still `Todo`**, since only the
-bare form moves the status. Then `$tracker next`: expect the issue absent, and `$tracker list ready`
+bare form moves the status. Then `$wkc-tracker next`: expect the issue absent, and `$wkc-tracker list ready`
 expect it present. That is the reservation, the one case where `ready` and an assignee belong
 together, and like A29b what it discriminates is the verb form rather than the identity.
 
-**[MANUAL] second half.** With `<who>` a different workspace member, `$tracker assign <id> me` with
-no `from` must refuse and name the holder, and `$tracker assign <id> me from <that member>` must
+**[MANUAL] second half.** With `<who>` a different workspace member, `$wkc-tracker assign <id> me` with
+no `from` must refuse and name the holder, and `$wkc-tracker assign <id> me from <that member>` must
 land with the status still `Todo`. A holder who is the caller makes the refusal unreachable, so this needs a second identity, the
 same one C12 needs.
 
-**C15 move to ready clears the assignee.** `$tracker assign <id>`, which puts it at `In Progress`
-with you on it, then `$tracker move <id> ready`, then `$tracker next`.
+**C15 move to ready clears the assignee.** `$wkc-tracker assign <id>`, which puts it at `In Progress`
+with you on it, then `$wkc-tracker move <id> ready`, then `$wkc-tracker next`.
 Check with `get_issue`: `assignee` is null and `status` is `Todo`, with the issue back on the
 frontier. `linear.md` says `move <id> backlog` and `move <id> ready` both write `assignee: null`; a
 run where `ready` keeps the assignee is the same invisible-ticket bug A29 catches on GitHub, in a
 backend where `next` filters on `assignee: null` just as hard.
 
 **C16 an assignee Linear cannot resolve is a stop, not a success.**
-`$tracker assign <id> someone-not-in-this-workspace`.
+`$wkc-tracker assign <id> someone-not-in-this-workspace`.
 Check with `get_issue`: the assignee is unchanged, and expect the skill to say the assignment did
 not land. This is A27's shape on a different backend, and what it establishes is which shape Linear
 has: an error, or a write that succeeds and silently keeps the old assignee. Record what you see
 either way, because `linear.md` currently says nothing about it.
 
-**C17 a write is visible to the very next read.** `$tracker move <a Backlog issue> ready`, then
-`$tracker next` **once**. Then `$tracker assign <it>` and `$tracker list in-progress` **once**.
+**C17 a write is visible to the very next read.** `$wkc-tracker move <a Backlog issue> ready`, then
+`$wkc-tracker next` **once**. Then `$wkc-tracker assign <it>` and `$wkc-tracker list in-progress` **once**.
 Expect the issue in the frontier on the first read and in the list on the first read, with no retry
 and no pause. Whether `list_issues` lags behind a write has never been measured on Linear; GitHub's
 search index does, by seconds, which is F7 and the reason `next` there stopped using it. **A retry
@@ -849,7 +852,7 @@ Recently deleted and sets the same `archivedAt` field that `includeArchived` fil
 the fixture, and it is restorable. The read-only half runs anywhere: list the team's `Done` issues
 with `includeArchived` both ways and compare the counts, remembering that equal counts on a young
 project prove only that nothing has archived yet, not the policy. Then delete a `Done` issue in the
-Linear UI, confirm `archivedAt` with `get_issue`, then `$tracker list done` and `$tracker show <it>`.
+Linear UI, confirm `archivedAt` with `get_issue`, then `$wkc-tracker list done` and `$wkc-tracker show <it>`.
 Expect `list done` to report it and mark it archived with its timestamp, and `show` to return it
 and say the same. `list_issues` takes `includeArchived` and **defaults it to `false`**, so a
 terminal list that leaves the argument unset comes back short with nothing to say it did, which is
@@ -861,14 +864,14 @@ Establish separately whether this workspace archives completed issues on its own
 age, because that decides whether the default is a papercut or a silent under-report of every
 `list done`. Nothing on this server answers it: `get_team` returns no auto-archive period.
 
-**C19 show reports an issue that has no comments.** `$tracker show <an issue with no comments>`,
-then `$tracker comment <it> "show probe"`, then `$tracker show <it>` again.
+**C19 show reports an issue that has no comments.** `$wkc-tracker show <an issue with no comments>`,
+then `$wkc-tracker comment <it> "show probe"`, then `$wkc-tracker show <it>` again.
 Expect the whole issue both times, with no comments the first time and one the second. `show` calls
 `get_issue` plus `list_comments`, and nobody has run `list_comments` against an issue with none.
 This is F9's shape: on GitHub the comment call returned nothing at all at exit 0, and `show` had to
 stop using it.
 
-**C20 create writes a description Linear keeps.** `$tracker create` with a ticket whose body has
+**C20 create writes a description Linear keeps.** `$wkc-tracker create` with a ticket whose body has
 every section, a code fence, a line of non-ASCII text, and a `## Blocked by` entry naming a real
 ticket.
 Check with `get_issue`, and not byte for byte: `linear.md` compares a description by its
@@ -882,10 +885,10 @@ pins down is which rewrites are survivable. F4 is the same case on GitHub, where
 method itself turned out to be the trap.
 
 **C21 link refuses a cycle, including the one Linear would flip.** Create three `Backlog` issues X,
-Y, Z. `$tracker link <Y> blocked-by <X>`, then `$tracker link <Z> blocked-by <Y>`. Then
-`$tracker link <X> blocked-by <Y>`, the reverse of an existing edge, then
-`$tracker link <X> blocked-by <Z>`, which would close a three-issue cycle, then
-`$tracker link <X> blocked-by <X>`.
+Y, Z. `$wkc-tracker link <Y> blocked-by <X>`, then `$wkc-tracker link <Z> blocked-by <Y>`. Then
+`$wkc-tracker link <X> blocked-by <Y>`, the reverse of an existing edge, then
+`$wkc-tracker link <X> blocked-by <Z>`, which would close a three-issue cycle, then
+`$wkc-tracker link <X> blocked-by <X>`.
 Expect the first two to land and the last three to refuse, each naming its path or the self-link.
 Check with `get_issue` and `includeRelations: true` on all three: X has an empty `blockedBy`, Y's
 `blockedBy` is still exactly X, and Z's is still exactly Y. Linear, given the reverse edge, replaces
@@ -893,29 +896,29 @@ Y's relation with X's and reports success, so a Y with an empty `blockedBy` mean
 write through.
 
 **C22 an empty frontier says why.** Run it after every other C case. Move every issue
-`$tracker next` returns out of `Todo`, until it returns nothing. Then build the fixture with
+`$wkc-tracker next` returns out of `Todo`, until it returns nothing. Then build the fixture with
 `save_issue` directly, since the skill will not write the cycle: P at `Todo` blocked by Q at
 `In Review`; R at `Todo` assigned to you; S at `Todo`, blocked by T, T by U, and U by S, with T and
-U at `Backlog`. Linear accepts that three-issue cycle. Then `$tracker next`.
+U at `Backlog`. Linear accepts that three-issue cycle. Then `$wkc-tracker next`.
 Check first with `get_issue` that every relation reads back as written.
 Expect the reply to say the frontier is empty and to name P held by Q at `In Review` or
 `in-review`, R reserved for you, and S with the cycle through S, T, and U as a path. A reply that
 says only that the frontier is empty is a FAIL, and so is one that misses the cycle.
 
 **C23 create sets the project and the milestone.** Create a milestone M1 in `linear_project`, then
-`$tracker create` with a one-line ticket naming M1.
+`$wkc-tracker create` with a one-line ticket naming M1.
 Check with `get_issue`: `project` is the configured project, `projectMilestone` is M1, and the
-status is `Backlog`. Then `$tracker list backlog M1` must return it. An issue outside the project is a
+status is `Backlog`. Then `$wkc-tracker list backlog M1` must return it. An issue outside the project is a
 FAIL even when `get_issue` finds it, because every project-scoped read misses it.
 
-**C24 create reports an edge that does not land.** `$tracker create` with a `## Blocked by` entry
+**C24 create reports an edge that does not land.** `$wkc-tracker create` with a `## Blocked by` entry
 naming an id that does not exist in the team, such as `<prefix>-99999`.
 Expect the reply to name the missing edge. Check with `get_issue`: the issue exists at `Backlog` with
 no `blockedBy`, or no issue exists because Linear rejected the whole call. Record which happened, and
 the exact `warnings` or error text, in the run log.
 
 **C25 [MANUAL] list with no status covers an unmapped status.** Needs C3's extra status, such as
-`Ready to Merge` under `started`. Put one issue in it with `save_issue`, then `$tracker list`.
+`Ready to Merge` under `started`. Put one issue in it with `save_issue`, then `$wkc-tracker list`.
 Expect the issue listed under its Linear name, not dropped and not folded into one of the seven.
 Check the calls: one `list_issues` per open team status, the extra one included, and none for Done,
 Canceled, or Duplicate.
@@ -929,18 +932,18 @@ Run the same one command from one install on each harness available.
 The case IDs are labels, not the run order. [Running leg D](#running-leg-d) gives the order the
 cases are actually run in, and why.
 
-**D1 Codex.** `$tracker list` expect the backend answers.
-**D2 Claude Code.** `/tracker list` expect the same result.
-**D3 [MANUAL] Kiro CLI.** `/tracker list`, and check the slash-command menu renders the one-line
+**D1 Codex.** `$wkc-tracker list` expect the backend answers.
+**D2 Claude Code.** `/wkc-tracker list` expect the same result.
+**D3 [MANUAL] Kiro CLI.** `/wkc-tracker list`, and check the slash-command menu renders the one-line
 description correctly rather than truncating it at a colon or showing `>`.
 
-**D4 setup asks the way the harness allows.** Run `$setup` and stop at Section A.
+**D4 wkc-setup asks the way the harness allows.** Run `$wkc-setup` and stop at Section A.
 Expect numbered options with the recommended one first and a digit accepted as the answer, or the
 harness's own picker where it has one a skill can invoke. Codex has none, so numbered text is the
 correct result there and not a failure. An unnumbered prose list is a FAIL.
 
 **D5 sections are not batched into one picker.** On a harness whose picker takes several questions,
-Claude Code included, run `$setup` in a directory with no `.git` and watch the first prompt.
+Claude Code included, run `$wkc-setup` in a directory with no `.git` and watch the first prompt.
 Expect the `git init` offer on its own, then Section A with its prerequisites resolved, and only
 then Section B. A single picker carrying `git init` plus Sections A to D is a FAIL even though every
 question in it is individually correct: the backend answer decides whether the later answers mean
@@ -953,8 +956,8 @@ holding the reply as a queued input, is a FAIL: the skill asked and then kept go
 ### Running leg D
 
 The numbered steps below are in run order, and the case IDs are not. D1 and D3 check that another
-harness returns the ticket Claude Code created, and that ticket needs a finished `/setup`, which is
-the same run that covers D4 to D6. D4, D5 and D6 are three facts about one setup interview, so they
+harness returns the ticket Claude Code created, and that ticket needs a finished `/wkc-setup`, which is
+the same run that covers D4 to D6. D4, D5 and D6 are three facts about one `wkc-setup` interview, so they
 cannot be split into separate runs. The interview only happens in a directory with no `.git`, so
 the Codex check of D4 and D6 needs a second directory of its own. Each step heading lists its cases
 in the order they are observed.
@@ -970,19 +973,19 @@ leg strips them so it can run unattended. Leg D must not, because being triggere
 it tests.
 
 ```
-mkdir -p ~/tmp/tracker-legd && cd ~/tmp/tracker-legd && npx skills@latest add 'https://github.com/wilsonkichoi/skills.git#<branch or tag>' -a claude-code -a codex -a kiro-cli -s '*' -y
+mkdir -p ~/tmp/tracker-legd && cd ~/tmp/tracker-legd && npx skills@latest add 'https://github.com/wilsonkichoi/skills.git#<review-ref>' -a claude-code -a codex -a kiro-cli -s '*' -y
 ```
 
 ```
-mkdir -p ~/tmp/tracker-legd-codex && cd ~/tmp/tracker-legd-codex && npx skills@latest add 'https://github.com/wilsonkichoi/skills.git#<branch or tag>' -a claude-code -a codex -a kiro-cli -s '*' -y
+mkdir -p ~/tmp/tracker-legd-codex && cd ~/tmp/tracker-legd-codex && npx skills@latest add 'https://github.com/wilsonkichoi/skills.git#<review-ref>' -a claude-code -a codex -a kiro-cli -s '*' -y
 ```
 
-Do not run `git init` in either. D5 needs setup to make that offer itself, and the second directory
+Do not run `git init` in either. D5 needs `wkc-setup` to make that offer itself, and the second directory
 has to stay in the same untouched state for D4 and D6.
 
 #### Step 1. Claude Code, first directory: D5, D4, D6, D2
 
-Launch it from that directory and type `/setup`. Answer live rather than pasting the answers
+Launch it from that directory and type `/wkc-setup`. Answer live rather than pasting the answers
 ahead, which is the thing every other leg does and the reason this leg has never run. Backend
 **Local markdown**, defaults for Section B, `AGENTS.md` for Section C, no test command for Section
 D, accept the commit offer at the end. Local is the right backend here because it has no
@@ -992,23 +995,23 @@ Watch the first three screens and record what each one carried, which is D5. Whi
 screen, record the form of the question for D4. Then, for D6, look at the harness itself rather
 than at the message.
 
-When setup finishes, create one ticket so the parity checks have something to find:
-`/tracker create` a ticket titled `legD parity probe`, at `ready`. Then `/tracker list ready`, which
+When `wkc-setup` finishes, create one ticket so the parity checks have something to find:
+`/wkc-tracker create` a ticket titled `legD parity probe`, at `ready`. Then `/wkc-tracker list ready`, which
 is **D2**: record the ticket id and that the list contains it.
 
 #### Step 2. Codex, first directory: D1
 
-`$tracker list ready`. It passes if it returns the same ticket from the same install with no setup
+`$wkc-tracker list ready`. It passes if it returns the same ticket from the same install with no `wkc-setup`
 re-run.
 
 #### Step 3. Kiro CLI, first directory: D3
 
-Before running anything, type `/` and read the command menu. Then `/tracker list ready` for the
+Before running anything, type `/` and read the command menu. Then `/wkc-tracker list ready` for the
 same ticket.
 
 #### Step 4. Codex, second directory: D4, D6
 
-Fresh directory, so setup interviews again. `$setup`, then answer the `git init` offer and
+Fresh directory, so `wkc-setup` interviews again. `$wkc-setup`, then answer the `git init` offer and
 Section A only; the run can be abandoned after that. Codex has no picker, so numbered options with
 the recommended one first and a bare digit accepted is the correct result here rather than a
 fallback to apologise for. Type `1` and confirm it is taken.
@@ -1025,7 +1028,7 @@ D2 Claude Code list ready:  output =
 step 2, Codex, first directory
 D1 Codex list ready:        output =
 step 3, Kiro CLI, first directory
-D3 Kiro menu:               tracker description rendered as =
+D3 Kiro menu:               wkc-tracker description rendered as =
 D3 Kiro list ready:         output =
 step 4, Codex, second directory
 D4 Codex:                   form of the Section A question =, digit accepted =

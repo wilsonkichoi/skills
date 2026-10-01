@@ -2,7 +2,7 @@
 
 Use the official Linear MCP server. Scope every call with `linear_team` from
 `docs/dev-agents/config.md`, and with `linear_project` wherever the tool takes a project. Never
-create, rename, or edit a team status; `setup` asks a person to.
+create, rename, or edit a team status; `wkc-setup` asks a person to.
 
 ## Statuses
 
@@ -17,7 +17,7 @@ create, rename, or edit a team status; `setup` asks a person to.
 | `duplicate` | Duplicate | `duplicate` |
 
 Pass `state` as the name from this table, never a category or id. If a name is missing from the
-team, which shows as `Could not find state "<name>"`, stop and say to re-run `setup`; never
+team, which shows as `Could not find state "<name>"`, stop and say to re-run `wkc-setup`; never
 substitute a similar status. Report an issue in any other status by its Linear name. Linear issues cannot be `inconsistent`.
 
 ## Tools
