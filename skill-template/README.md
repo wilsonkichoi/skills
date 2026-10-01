@@ -4,7 +4,7 @@ Read this when you are creating a skill, checking an existing one, or porting on
 part of the shipped skill set. The installer discovers a skill by finding a `SKILL.md` anywhere in
 the repository, not by looking under `skills/`, which is why the skeleton here is named
 `SKILL.md.template`. Rename that file and this folder becomes an installable skill called
-`skill-name`.
+`wkc-skill-name`.
 
 Everything the Agent Skills specification requires is written out below, so you never have to fetch
 the spec to work in this repository.
@@ -12,24 +12,24 @@ the spec to work in this repository.
 ## When creating or porting skill
 
 ```
-cp -r skill-template skills/<skill-name>
-mv skills/<skill-name>/SKILL.md.template skills/<skill-name>/SKILL.md
+cp -r skill-template skills/wkc-<name>
+mv skills/wkc-<name>/SKILL.md.template skills/wkc-<name>/SKILL.md
 ```
 
 Then, in the copy:
 
-1. Set `name` in the frontmatter to `<skill-name>`, matching the directory exactly.
+1. Set the directory, frontmatter `name`, main heading, and invocation examples to the same `wkc-<name>` identifier.
 2. Rewrite `description`. Two sentences: what it does, and when to use it in the words someone would
    actually type. Keep it on one physical line, unquoted.
 3. Fill in the six doc-block lines. Delete none of them; "none" is a fine answer for
    **Dependencies**, **Input**.
 4. Replace the numbered sections with the real run order, ending in a report step.
-5. Update `agents/openai.yaml`: `display_name` becomes `<skill-name>`, `short_description`
+5. Update `agents/openai.yaml`: `display_name` becomes `wkc-<name>`, `short_description`
    becomes the first sentence of the description.
 6. Delete this `README.md` from the copy.
 
 Check with `npx skills add <gh-handle>/<skills-repo> -l`, which lists what the repository exposes. A
-new skill should appear once, and nothing named `skill-name` should ever appear.
+new skill should appear once, and nothing named `wkc-skill-name` should ever appear.
 
 ## What the spec requires
 
@@ -58,9 +58,10 @@ paths from the skill root, one level deep, and avoid nested reference chains.
 
 ## What this repository adds
 
-Guidelines, not gates. The table above is the only part that will break an install. The rest is what
-makes skills here read alike, and a skill with a reason can depart from any of it.
+The `wkc-` identifier rule is required here. The remaining conventions are guidelines that help
+skills read alike; a skill with a reason can depart from those guidelines.
 
+- All skill identifiers start with `wkc-` and match across the directory, frontmatter, display name, main heading, and examples.
 - The doc block opens the body, one short line per item, in the order the template shows it. A
   reader should know what the skill needs and what it leaves behind before reading any step.
 - Numbered `## N.` sections in run order, one job each, ending in a step that reports back.
@@ -72,8 +73,7 @@ makes skills here read alike, and a skill with a reason can depart from any of i
 
 ## Manual invocation
 
-Skills here run only when invoked. Each harness reads its own setting, so a skill carries every one
-of them:
+Manual invocation is the default. Keep these template settings unless the skill explicitly opts into model invocation:
 
 - Claude Code: `disable-model-invocation: true` in the `SKILL.md` frontmatter.
 - Codex: `policy.allow_implicit_invocation: false` in `agents/openai.yaml`.
@@ -84,6 +84,18 @@ of them:
 None of these are part of the spec; they are harness extensions. The `metadata` value is quoted
 because the spec allows only string values there.
 
+Future skills may opt into model invocation individually. Declare intended callers in the skill
+body: people, models, or named skills. For model callers, enable supported settings for each harness:
+
+- Claude Code: set `disable-model-invocation: false` or omit the restriction, as documented in
+  [invocation control](https://code.claude.com/docs/en/skills#control-who-invokes-a-skill).
+- Codex implicit selection: set `policy.allow_implicit_invocation: true` or omit it to use the
+  documented default, `true`, in [skill settings](https://developers.openai.com/codex/skills).
+- Kiro CLI: no documented setting exists; do not claim the metadata flag enforces invocation.
+
+Name skill dependencies with their exact `wkc-` identifiers. Report an unavailable or blocked
+dependency instead of substituting an unprefixed skill. Invocation settings still apply to dependencies.
+
 ## Check the result
 
 Installing and running it is the only check that counts, and it is the same on every harness:
@@ -91,5 +103,5 @@ install the skill into a throwaway repository, invoke it on Claude Code, on Code
 and read what it produced. That is step 6 of the porting process in `AGENTS.md`.
 
 Before that, reread the frontmatter against the table above. Watch the name in particular: the
-template ships with `name: skill-name`, which is valid, so nothing will complain about a copy you
+template ships with `name: wkc-skill-name`, which is valid, so nothing will complain about a copy you
 have not renamed yet.

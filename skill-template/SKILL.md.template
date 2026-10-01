@@ -1,21 +1,21 @@
 ---
-name: skill-name
+name: wkc-skill-name
 description: What it does, one sentence. When to use it, in the words someone would actually type.
 disable-model-invocation: true
 metadata:
   allow_implicit_invocation: "false"
 ---
 
-# Skill name
+# wkc-skill-name
 
 - **What it does:** one line
-- **When to use it:** one line, including when to re-run it
+- **When to use it:** one line, including when to re-run it and intended callers (people, models, or named skills)
 - **Dependencies:** other skills, CLIs, MCP servers, config fields it reads. "none" is a fine answer.
-- **How to call it:** Claude Code `/skill-name`, Codex `$skill-name`, Kiro CLI `/skill-name`.
+- **How to call it:** Claude Code `/wkc-skill-name`, Codex `$wkc-skill-name`, Kiro CLI `/wkc-skill-name`.
 - **Input:** what the user or the calling skill supplies
 - **Output:** files written, tracker state changed, what the next skill can expect
 
-One line of standing behaviour that applies to every step, when the skill has any. `setup` uses
+One line of standing behaviour that applies to every step, when the skill has any. `wkc-setup` uses
 "Idempotent: safe to re-run; never overwrite existing files without asking." Delete this paragraph
 when it does not.
 

@@ -25,8 +25,8 @@ created: '2026-09-18'
 
 ## Comments
 
-### 2026-09-18 implement
-Append-only, newest last. The author is the calling skill, or `tracker`.
+### 2026-09-18 wkc-implement
+Append-only, newest last. The author is the calling skill, or `wkc-tracker`.
 ```
 
 The frontmatter is the block between the first `---` line and the next one. Never parse anything

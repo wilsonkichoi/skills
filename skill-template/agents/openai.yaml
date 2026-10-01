@@ -1,5 +1,5 @@
 interface:
-  display_name: "skill-name"
+  display_name: "wkc-skill-name"
   short_description: "the first sentence of the description"
 policy:
   allow_implicit_invocation: false
