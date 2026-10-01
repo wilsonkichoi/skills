@@ -1,6 +1,6 @@
 # workflow-diagram renderer
 
-Maintainer source for the [`workflow-diagram`](../../skills/workflow-diagram/SKILL.md) skill. This
+Maintainer source for the [`wkc-workflow-diagram`](../../skills/wkc-workflow-diagram/SKILL.md) skill. This
 directory is not installed: the installer ships only directories that contain a `SKILL.md`.
 
 ## Why this skill has code
@@ -12,7 +12,7 @@ adds no consumer build step and no per-harness source copies.
 ## Layout
 
 `src/` and `schema/` are canonical. The build writes these generated files into
-`skills/workflow-diagram/assets/`:
+`skills/wkc-workflow-diagram/assets/`:
 
 - `standalone.js`, the browser runtime inlined into `diagram.html`
 - `workflow-diagram.js`, the embeddable ESM library
@@ -22,7 +22,7 @@ adds no consumer build step and no per-harness source copies.
 
 Never edit those assets directly. The installed helper uses Node built-ins and those assets only.
 The manifest takes `generatorVersion` from this directory's `package.json` and hashes every source
-and output, including `skills/workflow-diagram/scripts/diagram.mjs`. The generator version is the
+and output, including `skills/wkc-workflow-diagram/scripts/diagram.mjs`. The generator version is the
 renderer's own version, independent of the repository `VERSION`. Bump it only when a change alters
 rendering, validation, or the helper, then rebuild the assets.
 
@@ -48,6 +48,6 @@ PLAYWRIGHT_BROWSERS_PATH=.cache/browsers npm run check
 Keep dependencies, browser binaries, caches, traces, and test screenshots out of the skill
 directory. Install a clean source export when testing a local directory, because the installer
 copies ignored files too. Verify installer discovery counts against shipped skills. Run
-[`validation/workflow-diagram.md`](../../validation/workflow-diagram.md) from the repository root
+[`validation/wkc-workflow-diagram.md`](../../validation/wkc-workflow-diagram.md) from the repository root
 after behavior changes, and update its cases when commands or guarantees change. Report unavailable
 harness or browser checks as SKIP, never PASS.

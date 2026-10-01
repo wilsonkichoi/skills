@@ -1,17 +1,17 @@
 ---
-name: workflow-diagram
+name: wkc-workflow-diagram
 description: Create and update offline workflow diagrams. Use when you want to explain project skills and their relationships visually.
 disable-model-invocation: true
 metadata:
   allow_implicit_invocation: "false"
 ---
 
-# Workflow diagram
+# wkc-workflow-diagram
 
 - **What it does:** Explain actual project skills with an interactive, offline workflow map.
 - **When to use it:** Create a map, or update it after skill definitions or authored diagram content change.
 - **Dependencies:** Node.js 22 or newer; browser tools for visual checks. No setup, config, npm install, or network.
-- **How to call it:** Claude Code `/workflow-diagram`, Codex `$workflow-diagram`, Kiro CLI `/workflow-diagram`.
+- **How to call it:** Claude Code `/wkc-workflow-diagram`, Codex `$wkc-workflow-diagram`, Kiro CLI `/wkc-workflow-diagram`.
 - **Input:** Target project, the skills to include, and existing diagram data when present.
 - **Output:** `workflow.json`, `layout.json`, `diagram.html`, `README.md`, and screenshots under `<project>/docs/dev-agents/diagram/`.
 
@@ -68,7 +68,7 @@ If sources and intent are unchanged, leave the JSON byte-identical.
 
 Run `check`, then `build`, with the commands in README.md's [helper section](README.md#check-build-and-preview).
 Locate `scripts/diagram.mjs` relative to this `SKILL.md`. If you were not told where this file is, look for
-`workflow-diagram/scripts/diagram.mjs` in the project's `.agents/skills/`, `.claude/skills/`, and `.kiro/skills/`,
+`wkc-workflow-diagram/scripts/diagram.mjs` in the project's `.agents/skills/`, `.claude/skills/`, and `.kiro/skills/`,
 then in the same directories under the home directory.
 Pass the helper's absolute path and the absolute project path.
 

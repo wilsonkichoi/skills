@@ -6,7 +6,7 @@ import { makeStandalone } from '../../build/standalone.mjs';
 
 test.beforeEach(async ({ page }) => {
   await page.route('**/library.js', route => route.fulfill({
-    contentType: 'text/javascript', path: resolve('../../skills/workflow-diagram/assets/workflow-diagram.js'),
+    contentType: 'text/javascript', path: resolve('../../skills/wkc-workflow-diagram/assets/workflow-diagram.js'),
   }));
 });
 

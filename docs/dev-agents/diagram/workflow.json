@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "title": "Shipped skills",
-  "subtitle": "Setup configures the tracker; workflow-diagram can run independently. Planned skills are not shown.",
+  "subtitle": "wkc-setup configures the wkc-tracker; wkc-workflow-diagram can run independently. Planned skills are not shown.",
   "lanes": [
     {
       "id": "configuration",
@@ -31,7 +31,7 @@
   "nodes": [
     {
       "id": "setup",
-      "label": "setup",
+      "label": "wkc-setup",
       "lane": "configuration",
       "summary": "Configure project conventions, document paths, and the selected issue tracker.",
       "details": {
@@ -40,77 +40,77 @@
         "commands": [
           {
             "label": "Codex",
-            "text": "$setup"
+            "text": "$wkc-setup"
           },
           {
             "label": "Claude Code / Kiro CLI",
-            "text": "/setup"
+            "text": "/wkc-setup"
           }
         ],
         "links": [
           {
-            "label": "Read the setup skill",
-            "href": "skills/setup/SKILL.md"
+            "label": "Read the wkc-setup skill",
+            "href": "skills/wkc-setup/SKILL.md"
           }
         ]
       }
     },
     {
       "id": "tracker",
-      "label": "tracker",
+      "label": "wkc-tracker",
       "lane": "coordination",
       "summary": "Read and update tickets in the configured GitHub, Linear, or local backend.",
       "details": {
-        "body": "Reads issue_tracker from docs/dev-agents/config.md, which setup writes. Provides list, show, next, create, assign, comment, move, and link across seven statuses.",
-        "when": "Use after setup to read tickets, change ticket state, or find work ready to start.",
+        "body": "Reads issue_tracker from docs/dev-agents/config.md, which wkc-setup writes. Provides list, show, next, create, assign, comment, move, and link across seven statuses.",
+        "when": "Use after wkc-setup to read tickets, change ticket state, or find work ready to start.",
         "commands": [
           {
             "label": "Codex",
-            "text": "$tracker list"
+            "text": "$wkc-tracker list"
           },
           {
             "label": "Claude Code / Kiro CLI",
-            "text": "/tracker list"
+            "text": "/wkc-tracker list"
           }
         ],
         "links": [
           {
-            "label": "Read the tracker skill",
-            "href": "skills/tracker/SKILL.md"
+            "label": "Read the wkc-tracker skill",
+            "href": "skills/wkc-tracker/SKILL.md"
           },
           {
             "label": "Tracker reference",
-            "href": "skills/tracker/README.md"
+            "href": "skills/wkc-tracker/README.md"
           }
         ]
       }
     },
     {
       "id": "workflow-diagram",
-      "label": "workflow-diagram",
+      "label": "wkc-workflow-diagram",
       "lane": "documentation",
       "summary": "Create or update an offline map from actual workflow definitions and authored diagram data.",
       "details": {
-        "body": "Keep project inputs, HTML, notes, and screenshots under docs/dev-agents/diagram/. Setup and config are optional.",
+        "body": "Keep project inputs, HTML, notes, and screenshots under docs/dev-agents/diagram/. wkc-setup and config are optional.",
         "when": "Use to explain project skills or update a map after workflow changes.",
         "commands": [
           {
             "label": "Codex",
-            "text": "$workflow-diagram"
+            "text": "$wkc-workflow-diagram"
           },
           {
             "label": "Claude Code / Kiro CLI",
-            "text": "/workflow-diagram"
+            "text": "/wkc-workflow-diagram"
           }
         ],
         "links": [
           {
             "label": "Read the diagram skill",
-            "href": "skills/workflow-diagram/SKILL.md"
+            "href": "skills/wkc-workflow-diagram/SKILL.md"
           },
           {
             "label": "Authoring guide",
-            "href": "skills/workflow-diagram/README.md"
+            "href": "skills/wkc-workflow-diagram/README.md"
           }
         ]
       }

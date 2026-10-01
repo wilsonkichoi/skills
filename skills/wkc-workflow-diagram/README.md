@@ -1,6 +1,6 @@
 # Workflow diagram reference
 
-The data contract and helper commands for the `workflow-diagram` skill. The procedure is in
+The data contract and helper commands for the `wkc-workflow-diagram` skill. The procedure is in
 [SKILL.md](SKILL.md), the visual rules are in [design.md](design.md), and embedding the map in
 another page is in [embed.md](embed.md).
 

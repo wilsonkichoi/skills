@@ -104,7 +104,7 @@ test('link rules distinguish embedded, standalone, and explicitly based links', 
   assert.equal(resolveLink('#node=hello', { standalone: true }), '#node=hello');
   assert.throws(() => resolveLink('guide.md', { standalone: true }), /documentationBase/);
   assert.throws(() => resolveLink('guide.md', { documentationBase: 'file:///tmp/' }), /HTTPS/);
-  assert.equal(resolveLink('skills/setup/SKILL.md', { standalone: true, documentationBase: 'https://example.com/project/' }), 'https://example.com/project/skills/setup/SKILL.md');
+  assert.equal(resolveLink('skills/wkc-setup/SKILL.md', { standalone: true, documentationBase: 'https://example.com/project/' }), 'https://example.com/project/skills/wkc-setup/SKILL.md');
 });
 
 test('standalone rejects unresolved documentation and missing routes', async () => {

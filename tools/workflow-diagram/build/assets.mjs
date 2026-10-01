@@ -6,7 +6,7 @@ import { createHash } from 'node:crypto';
 
 const root = fileURLToPath(new URL('../', import.meta.url));
 const repository = resolve(root, '../..');
-const skill = resolve(repository, 'skills/workflow-diagram');
+const skill = resolve(repository, 'skills/wkc-workflow-diagram');
 const hash = data => createHash('sha256').update(data).digest('hex');
 const outputs = {}, dependencies = new Map();
 const common = { absWorkingDir: root, bundle: true, write: false, metafile: true, minify: true,

@@ -6,12 +6,12 @@ import { fileURLToPath } from 'node:url';
 import { execFile, spawn } from 'node:child_process';
 import { promisify } from 'node:util';
 import { once } from 'node:events';
-import { checkProject, buildProject, previewProject } from '../../../skills/workflow-diagram/scripts/diagram.mjs';
+import { checkProject, buildProject, previewProject } from '../../../skills/wkc-workflow-diagram/scripts/diagram.mjs';
 
 const exec = promisify(execFile);
 const root = fileURLToPath(new URL('../', import.meta.url));
 const repositoryRoot = resolve(root, '../..');
-const skill = resolve(repositoryRoot, 'skills/workflow-diagram');
+const skill = resolve(repositoryRoot, 'skills/wkc-workflow-diagram');
 const cache = resolve(root, '.cache/package-tests');
 await mkdir(cache, { recursive: true });
 async function fixture(t, name = 'branching') {
@@ -158,7 +158,7 @@ test('standalone installed assets require no npm, network, or writable installat
 
 test('generated assets are deterministic and detect source or schema drift', async t => {
   const base = await mkdtemp(join(cache, 'assets-')); t.after(() => rm(base, { recursive: true, force: true }));
-  const repository = join(base, 'repository'), copy = join(repository, 'skills/workflow-diagram');
+  const repository = join(base, 'repository'), copy = join(repository, 'skills/wkc-workflow-diagram');
   const cwd = join(repository, 'tools/workflow-diagram');
   await mkdir(copy, { recursive: true });
   for (const dir of ['scripts', 'assets']) await cp(join(skill, dir), join(copy, dir), { recursive: true });

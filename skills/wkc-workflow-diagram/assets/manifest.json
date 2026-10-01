@@ -3,8 +3,8 @@
   "generatorVersion": "0.0.11",
   "sources": {
     "LICENSE": "62b39a3b4506b2223153ff0ccc9406dae0fa75c058781ae547937b6e57071804",
-    "skills/workflow-diagram/scripts/diagram.mjs": "8574cea1c2ec922dfa1645eb96b33b79a4b4d9bbf0509b6d6de783e10be54382",
-    "tools/workflow-diagram/build/assets.mjs": "f1027816ef08e4a4db17412221f816e79975158c800455d00ca75e9c80aef09c",
+    "skills/wkc-workflow-diagram/scripts/diagram.mjs": "8574cea1c2ec922dfa1645eb96b33b79a4b4d9bbf0509b6d6de783e10be54382",
+    "tools/workflow-diagram/build/assets.mjs": "1184969f874055674656b5ad8e9323b3b3ac5016cdf6a3e9c0a29e3739b32b06",
     "tools/workflow-diagram/build/preview.mjs": "73c3a63a70fa1e630a9222e34e5d61f86d532cb5e43e8673a928940595ce7255",
     "tools/workflow-diagram/build/standalone.mjs": "74775b8630bb1869ef4a288c430323af92f8aa8f6fdfd4c594b675484d7c7ece",
     "tools/workflow-diagram/package-lock.json": "a46e46c63c1389d33084fba16517607eaf7d375f0207da508e52dc601c8614bf",

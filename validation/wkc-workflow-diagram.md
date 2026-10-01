@@ -1,4 +1,4 @@
-# Workflow diagram validation
+# wkc-workflow-diagram validation
 
 Run this against the candidate skill in a throwaway project. Preserve the original project and installed skill.
 Each numbered case needs PASS, FAIL, or SKIP with evidence. An unavailable check is SKIP, never PASS.
@@ -17,7 +17,7 @@ npx skills@latest add "<clean-candidate>" --list
 ```
 
 ```sh
-npx skills@latest add "<clean-candidate>" --skill workflow-diagram -a claude-code -a codex -a kiro-cli -y
+npx skills@latest add "<clean-candidate>" --skill wkc-workflow-diagram -a claude-code -a codex -a kiro-cli -y
 ```
 
 Run the maintainer checks from `tools/workflow-diagram/` before testing the installed copy.
@@ -34,9 +34,10 @@ Keep test outputs within the target's diagram directory; harness installation fi
 
 ## Cases
 
-1. **Discovery and installation.** List the clean candidate and install only `workflow-diagram` on all three harness paths.
+1. **Discovery and installation.** List the clean candidate and install only `wkc-workflow-diagram` on all three harness paths.
    PASS: discovery count equals shipped skills, this skill appears once, and no template or fixture is discovered as a skill.
    Check real paths, all manual-invocation settings, and the six opening contract lines.
+   Confirm directory, frontmatter name, main heading, display name, and invocation examples use `wkc-workflow-diagram`.
    FAIL if an installed package contains node_modules, caches, binaries, traces, or developer paths.
 
 2. **Explicit target and symlink entry.** Run installed check/build from a third directory, using `--project` with spaces and Unicode.
@@ -60,14 +61,14 @@ Keep test outputs within the target's diagram directory; harness installation fi
    PASS: check/build reject the unsafe path, sentinel bytes remain unchanged, and no external output appears.
 
 6. **Create without config.** Invoke the installed skill against the two definitions with no dev config.
-   PASS: it produces valid workflow/layout JSON, standalone HTML, and a README without invoking setup or either diagrammed skill.
+   PASS: it produces valid workflow/layout JSON, standalone HTML, and a README without invoking wkc-setup or either diagrammed skill.
    Confirm the dependency comes from the definitions, not from directory order.
 
 7. **No relevant input.** Invoke against an explicitly empty scope, first without a diagram and then with an existing one.
    PASS: the skill reports missing input, invents no graph, and preserves existing files.
 
 8. **Unrelated workflows.** Build the minimal and branching examples through the installed helper.
-   PASS: both validate without setup/tracker nodes, a repository-specific base, or fixed canvas dimensions.
+   PASS: both validate without wkc-setup/wkc-tracker nodes, a repository-specific base, or fixed canvas dimensions.
    Open both and inspect all nodes and relationships; verify no missing routes are hidden.
 
 9. **Add while preserving edits.** Customize a description and position; add `audit`, which reads `report.md` and writes `findings.md`.
@@ -122,6 +123,7 @@ Keep test outputs within the target's diagram directory; harness installation fi
 
 19. **Harness invocation [MANUAL when credentials or an interactive session are required].** Invoke on Codex, Claude Code, and Kiro CLI.
     PASS per harness only when the installed skill was actually loaded and produced valid output.
+    Use the installed identifier: Codex `$wkc-workflow-diagram`, Claude Code and Kiro CLI `/wkc-workflow-diagram`.
     Record authentication failures and unavailable browser tools as specific SKIPs, separate from helper and browser results.
     Confirm ambiguous scope (separate sets of skills, no choice given) ends the turn on a numbered question.
     Supplied scope does not trigger redundant questions.
@@ -129,6 +131,7 @@ Keep test outputs within the target's diagram directory; harness installation fi
 20. **Repository integration.** Inspect this repository's generated map and candidate diff.
     PASS: only actual scoped skills appear, no dependency is invented, and files stay under the fixed project directory.
     Confirm version, timestamped changelog, roster, authoring rules, public runbook, fresh main ancestry, and an unmerged PR.
+    Labels, commands, and definition links must use the current `wkc-` identifiers; keep existing node IDs and routes stable.
     Re-read the implementation definition of done and map every requirement to evidence before reporting completion.
 
 ## Report

@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "title": "Skills / development workflow",
-  "subtitle": "Configure the project once. Read and manage ticket state through the chosen tracker.",
+  "subtitle": "Configure the project once. Read and manage ticket state through the chosen wkc-tracker.",
   "lanes": [
     {
       "id": "foundation",
@@ -23,33 +23,33 @@
   "nodes": [
     {
       "id": "setup",
-      "label": "setup",
+      "label": "wkc-setup",
       "lane": "foundation",
       "summary": "Configure the project, select its issue tracker, and write the shared development settings.",
       "details": {
         "body": "Creates `docs/dev-agents/config.md` and the directories used by the skills. Supports GitHub Issues, Linear, local markdown, or a documented custom workflow.",
-        "when": "Use once per repository, before tracker; run it again to change the backend or fill missing settings.",
+        "when": "Use once per repository, before wkc-tracker; run it again to change the backend or fill missing settings.",
         "commands": [
           {
             "label": "Codex",
-            "text": "$setup"
+            "text": "$wkc-setup"
           },
           {
             "label": "Claude Code / Kiro CLI",
-            "text": "/setup"
+            "text": "/wkc-setup"
           }
         ],
         "links": [
           {
-            "label": "Read the setup skill",
-            "href": "https://github.com/wilsonkichoi/skills/blob/main/skills/setup/SKILL.md"
+            "label": "Read the wkc-setup skill",
+            "href": "https://github.com/wilsonkichoi/skills/blob/main/skills/wkc-setup/SKILL.md"
           }
         ]
       }
     },
     {
       "id": "tracker",
-      "label": "tracker",
+      "label": "wkc-tracker",
       "lane": "coordination",
       "summary": "Read and update tickets, record dependencies, and find work that is ready to start.",
       "details": {
@@ -58,21 +58,21 @@
         "commands": [
           {
             "label": "Codex: ready, unassigned, unblocked tickets",
-            "text": "$tracker next"
+            "text": "$wkc-tracker next"
           },
           {
             "label": "Claude Code / Kiro CLI: open tickets",
-            "text": "/tracker list"
+            "text": "/wkc-tracker list"
           }
         ],
         "links": [
           {
-            "label": "Read the tracker skill",
-            "href": "https://github.com/wilsonkichoi/skills/blob/main/skills/tracker/SKILL.md"
+            "label": "Read the wkc-tracker skill",
+            "href": "https://github.com/wilsonkichoi/skills/blob/main/skills/wkc-tracker/SKILL.md"
           },
           {
             "label": "Tracker usage and guarantees",
-            "href": "https://github.com/wilsonkichoi/skills/blob/main/skills/tracker/README.md"
+            "href": "https://github.com/wilsonkichoi/skills/blob/main/skills/wkc-tracker/README.md"
           }
         ]
       }

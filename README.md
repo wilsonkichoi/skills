@@ -1,10 +1,14 @@
 # skills
 
 Skills for an AI software development lifecycle: research, architecture, planning, ticketing,
-implementation, review, and release. They use hand-maintained instructions. The workflow diagram
-skill also ships an offline renderer. Nothing here fires on its own; every skill runs only when you
-invoke it by name.
-note: Kiro has no setting to suppress automatic activation.
+implementation, review, and release. They are small, hand-maintainable markdown files rather than a
+framework. Manual invocation is the default. The shipped skills require explicit invocation on
+Claude Code and Codex; Kiro has no documented setting to suppress automatic activation.
+
+All skill identifiers use `wkc-` to distinguish this repository's skills from similarly named skills.
+Version 0.0.9 makes the breaking rename from `setup` and `tracker` to `wkc-setup` and `wkc-tracker`,
+without compatibility aliases. Future skills can opt into model invocation individually; authors
+must declare their intended callers and settings as described in [AGENTS.md](./AGENTS.md#skills).
 
 ## Install
 
@@ -39,13 +43,13 @@ Claude Code, Codex, Kiro CLI, and other agents. Tags come from the release proce
 
 ## Quickstart
 
-Run `setup` once per repository:
+Run `wkc-setup` once per repository:
 
-| Harness | `setup` | Any other skill |
+| Harness | `wkc-setup` | Any other skill |
 |---|---|---|
-| Claude Code | `/setup` | `/tracker list` |
-| Codex | `$setup` | `$tracker list` |
-| Kiro CLI | `/setup` (2.1 or later) | `/tracker list` |
+| Claude Code | `/wkc-setup` | `/wkc-tracker list` |
+| Codex | `$wkc-setup` | `$wkc-tracker list` |
+| Kiro CLI | `/wkc-setup` (2.1 or later) | `/wkc-tracker list` |
 
 Codex uses `$name`, not `/name`. Every example below is written for Claude Code; substitute the
 prefix for your harness.
@@ -54,7 +58,7 @@ It interviews you about your issue tracker and your product docs, writes
 `docs/dev-agents/config.md`, and adds one reference line to your `AGENTS.md` or `CLAUDE.md` so
 every session loads that config. Workflow diagrams can also be created without setup or config.
 
-Then run `tracker list` in your harness, with the prefix from the table above, to confirm the
+Then run `wkc-tracker list` in your harness, with the prefix from the table above, to confirm the
 backend answers.
 
 ## Skills
@@ -64,33 +68,33 @@ validated before the next starts. See [AGENTS.md](./AGENTS.md) for how a skill i
 
 | Skill | What it does | Status |
 |---|---|---|
-| [`setup`](./skills/setup/SKILL.md) | Configure a repository to use these skills | shipped |
-| [`tracker`](./skills/tracker/SKILL.md) | Read and write issues against GitHub, Linear, or local markdown | shipped |
-| [`workflow-diagram`](./skills/workflow-diagram/SKILL.md) | Create and update offline maps of actual project skills | shipped |
-| `research` | Gather raw material, transcripts, and prior art into notes | planned |
-| `architect` | Turn product intent into `SPEC.md` | planned |
-| `plan` | Break a spec into milestones and tasks with dependencies | planned |
-| `create-ticket` | Write one well-formed ticket into the tracker | planned |
-| `backlog` | Groom, refine, and re-order the queue | planned |
-| `implement` | Take a ticket to a pull request | planned |
-| `code-review` | Review a pull request against its ticket | planned |
-| `verify` | Check the work against the ticket's acceptance criteria | planned |
-| `git-fu` | Branch, rebase, merge, and conflict work | planned |
-| `release` | Cut a tagged release | planned |
-| `yolo` | Run the loop unattended across several tickets | planned |
+| [`wkc-setup`](./skills/wkc-setup/SKILL.md) | Configure a repository to use these skills | shipped |
+| [`wkc-tracker`](./skills/wkc-tracker/SKILL.md) | Read and write issues against GitHub, Linear, or local markdown | shipped |
+| [`wkc-workflow-diagram`](./skills/wkc-workflow-diagram/SKILL.md) | Create and update offline maps of actual project skills | shipped |
+| `wkc-research` | Gather raw material, transcripts, and prior art into notes | planned |
+| `wkc-architect` | Turn product intent into `SPEC.md` | planned |
+| `wkc-plan` | Break a spec into milestones and tasks with dependencies | planned |
+| `wkc-create-ticket` | Write one well-formed ticket into the tracker | planned |
+| `wkc-backlog` | Groom, refine, and re-order the queue | planned |
+| `wkc-implement` | Take a ticket to a pull request | planned |
+| `wkc-code-review` | Review a pull request against its ticket | planned |
+| `wkc-verify` | Check the work against the ticket's acceptance criteria | planned |
+| `wkc-git-fu` | Branch, rebase, merge, and conflict work | planned |
+| `wkc-release` | Cut a tagged release | planned |
+| `wkc-yolo` | Run the loop unattended across several tickets | planned |
 
 ## Workflow diagrams
 
-Invoke `$workflow-diagram` in Codex or `/workflow-diagram` in Claude Code and Kiro CLI.
+Invoke `$wkc-workflow-diagram` in Codex or `/wkc-workflow-diagram` in Claude Code and Kiro CLI.
 The skill reads actual definitions and preserves authored content when updating an existing diagram.
 When a changed definition contradicts existing text, it reports the conflict with suggested wording instead of rewriting it.
 It does not invoke diagrammed skills. Node.js 22 or newer is required; consumers need no npm installation.
 
 Inputs, offline HTML, notes, screenshots, and temporary files stay under `docs/dev-agents/diagram/` in the target project.
 See [this repository's map](docs/dev-agents/diagram/README.md) and the
-[diagram reference](skills/workflow-diagram/README.md).
+[diagram reference](skills/wkc-workflow-diagram/README.md).
 
-## What `setup` writes
+## What `wkc-setup` writes
 
 ```
 docs/dev-agents/
@@ -100,19 +104,19 @@ docs/dev-agents/
 ```
 
 Plus one line in your `AGENTS.md` or `CLAUDE.md` pointing at `config.md`. `PRD.md`, `SPEC.md`, and
-`ROADMAP.md` live wherever you tell `setup` they live, and are written by `research`, `architect`,
-and `plan` rather than by `setup`.
+`ROADMAP.md` live wherever you tell `wkc-setup` they live, and are written by `wkc-research`, `wkc-architect`,
+and `wkc-plan` rather than by `wkc-setup`.
 
 ## Uninstall
 
 Name the skills and the agents you installed to:
 
 ```
-npx skills@latest remove setup tracker workflow-diagram -a claude-code -a codex -a kiro-cli
+npx skills@latest remove wkc-setup wkc-tracker wkc-workflow-diagram -a claude-code -a codex -a kiro-cli
 ```
 
 The other forms are documented under
-[`skills remove`](https://github.com/vercel-labs/skills#skills-remove). Then delete what `setup`
+[`skills remove`](https://github.com/vercel-labs/skills#skills-remove). Then delete what `wkc-setup`
 wrote: `docs/dev-agents/` and the one reference line it added to your `AGENTS.md` or `CLAUDE.md`.
 
 Do not run `npx skills remove --all`, and do not leave `-a` off, inside a repository that keeps its

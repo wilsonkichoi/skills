@@ -1,20 +1,20 @@
 ---
-name: setup
+name: wkc-setup
 description: Configure this project to utilize skills for AI-SDLC. Scaffolds the project layout, selects the tracker backend, and writes docs/dev-agents/config.md
 disable-model-invocation: true
 metadata:
   allow_implicit_invocation: "false"
 ---
 
-# Setup
+# wkc-setup
 
 - **What it does:** interviews the user about this repository, scaffolds `docs/dev-agents/`, and
-  writes `docs/dev-agents/config.md`, which `tracker` reads.
-- **When to use it:** once per repository, before `tracker`. Re-run it to change
+  writes `docs/dev-agents/config.md`, which `wkc-tracker` reads.
+- **When to use it:** once per repository, before `wkc-tracker`. Re-run it to change
   the tracker or bring an older config up to the current fields.
 - **Dependencies:** `git`. `gh` for the GitHub tracker, the Linear MCP server for the Linear
   tracker, neither for the local tracker.
-- **How to call it:** Claude Code `/setup`, Codex `$setup`, Kiro CLI `/setup`.
+- **How to call it:** Claude Code `/wkc-setup`, Codex `$wkc-setup`, Kiro CLI `/wkc-setup`.
 - **Input:** the current repository, plus the user's answers to the interview.
 - **Output:** `docs/dev-agents/config.md`, `docs/dev-agents/rules/`, one reference line in the
   project's context file, and any one-time tracker setup.
@@ -70,7 +70,7 @@ only questions from one section whose answers cannot change each other.
 **Section A: Issue tracker.**
 
 > Explainer: where issues live for this repo. Every other skill reads and writes them through
-> `tracker`. Pick the place you actually track work.
+> `wkc-tracker`. Pick the place you actually track work.
 
 - **GitHub**: issues live in the repo's GitHub Issues (uses the `gh` CLI)
 - **Linear**: issues live in linear.app (uses the Linear MCP server). Ask for the team key and the
@@ -121,7 +121,7 @@ docs/dev-agents/issues/               # only when issue_tracker: local
 Add `docs/dev-agents/rules/.gitkeep` so git tracks the directory before the first rule lands.
 
 Do not create empty `PRD.md`, `SPEC.md`, or `ROADMAP.md`. Their paths are recorded in the config;
-`research`, `architect`, and `plan` write them. The one exception is step 6, which writes a spec
+`wkc-research`, `wkc-architect`, and `wkc-plan` write them. The one exception is step 6, which writes a spec
 from an existing codebase.
 
 **Template:** write `docs/dev-agents/config.md` from
@@ -131,7 +131,7 @@ from the interview or from step 1. Never guess a path into configuration.
 **Existing projects:** an existing `config.md` keeps the choices the project already made. Add the
 fields it is missing and report what changed; do not rewrite the body.
 
-**Ownership rule:** the project owns `AGENTS.md` and `CLAUDE.md`. Setup adds at most the step 4
+**Ownership rule:** the project owns `AGENTS.md` and `CLAUDE.md`. `wkc-setup` adds at most the step 4
 reference line and never moves, consolidates, or rewrites what is already there. `rules_dir`
 defaults to `docs/dev-agents/rules/`, and a project with its own convention may point it elsewhere,
 such as `.claude/rules/`, which Claude Code auto-loads. Never migrate rule files uninvited.
@@ -161,7 +161,7 @@ to abandon the rest of setup.
 - **github:** the remote and `gh auth status` were settled in Section A. Create the four status
   labels with `gh label create`, skipping any that already exist: `backlog`, `ready`,
   `in-progress`, `in-review`. There is no label for `done`, `cancel`, or `duplicate`; those three
-  are GitHub close reasons, which is what `tracker` reads and writes. If the authenticated user
+  are GitHub close reasons, which is what `wkc-tracker` reads and writes. If the authenticated user
   cannot write to the repository, create nothing and report the exact commands a maintainer needs
   to run.
 - **linear:** the MCP connection was settled in Section A. Check the team's statuses with
@@ -202,7 +202,7 @@ Offer (do not force) to reverse-engineer the current state into the configured `
    components, test layout, build and deploy path.
 2. Write the spec describing the **current** architecture: components, interfaces, data flow, known
    debt and gaps, marked clearly as debt rather than requirements.
-3. Do not invent forward-looking requirements. That is `architect`'s job.
+3. Do not invent forward-looking requirements. That is `wkc-architect`'s job.
 
 ## 7. Report
 
@@ -212,5 +212,5 @@ task branches need.
 Then summarize: mode, tracker backend, files created, one-time tracker setup performed, and
 anything the user still has to do themselves.
 
-Next step: confirm the backend responds, using this project's harness. Claude Code `/tracker list`,
-Codex `$tracker list`, Kiro CLI `/tracker list`.
+Next step: confirm the backend responds, using this project's harness. Claude Code `/wkc-tracker list`,
+Codex `$wkc-tracker list`, Kiro CLI `/wkc-tracker list`.

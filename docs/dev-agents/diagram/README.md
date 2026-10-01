@@ -1,17 +1,17 @@
 # Shipped skills workflow
 
 Open [diagram.html](diagram.html) in a browser, including directly from disk without networking.
-The map contains the three shipped definitions in this repository: `setup`, `tracker`, and
-`workflow-diagram`. Planned skills are excluded. `setup` writes the config that `tracker` requires.
-`workflow-diagram` supports projects without setup or config, so it remains independent.
+The map contains the three shipped definitions in this repository: `wkc-setup`, `wkc-tracker`, and
+`wkc-workflow-diagram`. Planned skills are excluded. `wkc-setup` writes the config that `wkc-tracker` requires.
+`wkc-workflow-diagram` supports projects without setup or config, so it remains independent.
 
 ## Sources and ownership
 
 | Node | Definition | Relevant contract |
 | --- | --- | --- |
-| setup | [skills/setup/SKILL.md](../../../skills/setup/SKILL.md) | Interview, configuration, scaffolding, and tracker initialization |
-| tracker | [skills/tracker/SKILL.md](../../../skills/tracker/SKILL.md) | Reads the backend from setup's config; manages tickets in seven statuses |
-| workflow-diagram | [skills/workflow-diagram/SKILL.md](../../../skills/workflow-diagram/SKILL.md) | Read definitions and update offline diagrams without executing the skills |
+| wkc-setup | [skills/wkc-setup/SKILL.md](../../../skills/wkc-setup/SKILL.md) | Interview, configuration, scaffolding, and tracker initialization |
+| wkc-tracker | [skills/wkc-tracker/SKILL.md](../../../skills/wkc-tracker/SKILL.md) | Reads the backend from setup's config; manages tickets in seven statuses |
+| wkc-workflow-diagram | [skills/wkc-workflow-diagram/SKILL.md](../../../skills/wkc-workflow-diagram/SKILL.md) | Read definitions and update offline diagrams without executing the skills |
 
 Inputs are [workflow.json](workflow.json) and [layout.json](layout.json).
 All positions and content are authored data; HTML is generated.
@@ -27,15 +27,15 @@ The repository remote and its default branch establish this base. Rendering does
 Run from the repository root. These commands use the repository's skill; an installed copy can use its absolute helper path.
 
 ```sh
-node skills/workflow-diagram/scripts/diagram.mjs check --project . --documentation-base https://github.com/wilsonkichoi/skills/blob/main/
+node skills/wkc-workflow-diagram/scripts/diagram.mjs check --project . --documentation-base https://github.com/wilsonkichoi/skills/blob/main/
 ```
 
 ```sh
-node skills/workflow-diagram/scripts/diagram.mjs build --project . --documentation-base https://github.com/wilsonkichoi/skills/blob/main/
+node skills/wkc-workflow-diagram/scripts/diagram.mjs build --project . --documentation-base https://github.com/wilsonkichoi/skills/blob/main/
 ```
 
 ```sh
-node skills/workflow-diagram/scripts/diagram.mjs preview --project . --documentation-base https://github.com/wilsonkichoi/skills/blob/main/ --port 0
+node skills/wkc-workflow-diagram/scripts/diagram.mjs preview --project . --documentation-base https://github.com/wilsonkichoi/skills/blob/main/ --port 0
 ```
 
 Open the printed loopback URL and stop preview after inspection.
@@ -60,9 +60,59 @@ The phone sheet scrolls independently; commands below the fold remain reachable.
 
 ## Implementation verification
 
-The [public runbook](../../../validation/workflow-diagram.md) defines the cases. Results below separate
+The [public runbook](../../../validation/wkc-workflow-diagram.md) defines the cases. Results below separate
 renderer checks, installed-helper checks, and agent behavior. Raw evidence stays in the ignored
 `.local/runs/workflow-diagram/` directory of the checkout that ran it.
+
+### Merge validation, 2026-10-01
+
+This candidate combines workflow branch `fc12830` with main `6aad9eb` (PR #8), at repository
+version **0.0.10**. Main's 0.0.9 changelog entry remains unchanged. The new skill identifier is
+`wkc-workflow-diagram`; the renderer remains version **0.0.11** because its behavior is unchanged.
+Existing node IDs, coordinates, routes, and relationships are unchanged. Labels, commands, source
+links, helper paths, examples, and active runbook instructions now use the current identifiers.
+The results below cover this merge and rename; the earlier full validation remains historical evidence.
+
+Environment: Node.js 24.11.1, skills 1.7.0, Chrome 154.0.8037.59, Codex CLI 0.159.3,
+Claude Code 2.1.287, and Kiro CLI 2.26.0. Clean candidate exports and isolated project paths
+containing spaces and Unicode were used. Raw logs and fixtures are under the ignored
+`.local/runs/main-merge/` directory, never inside the installed skill.
+
+| Check | Result | Independent evidence |
+| --- | --- | --- |
+| Main integration and version | PASS | Merge resolves both README and changelog conflicts; main's naming policy, renamed skills, templates, and historical changelog are retained; this branch uses 0.0.10 |
+| Naming and invocation settings | PASS | All three directories, frontmatter names, headings, and display names agree; manual invocation settings remain unchanged; six contract lines are present |
+| Discovery and installation, case 1 | PASS | Clean export lists exactly wkc-setup, wkc-tracker, and wkc-workflow-diagram; nine installed harness paths match the clean source byte-for-byte |
+| Installed helper paths, case 2 | PASS | Generated Codex and Claude Code maps validate through canonical, Claude Code, and Kiro CLI paths from an unrelated directory |
+| Assets and maintainer suite, case 16 | PASS | Assets rebuilt; freshness check passed; all 76 unit/package tests and 29 browser tests passed, including renamed fixture links |
+| Repository HTML and screenshots, case 17 | PASS | Rebuilt HTML opened through file:// with networking disabled; 156 assertions across three sizes and both themes; all 12 screenshots regenerated |
+| Visual review | PASS, with limits | Desktop light overview and phone dark details inspected; long skill names fit, selected card remains above the phone sheet, and controls remain visible |
+| Codex invocation, case 19 | PASS, with limits | Explicit `$wkc-workflow-diagram` loaded the installed skill and generated a valid collect/publish map; check/build passed; browser and preview checks were SKIP because no connected browser was available and its sandbox blocked preview |
+| Claude Code invocation, case 19 | PASS, with limits | Explicit `/wkc-workflow-diagram` loaded the installed skill and generated a valid collect/notes.md/publish map; check/build, screenshots, and preview lifecycle passed; fixture lacks commands and filters; drag/pinch and auto-reload were SKIP |
+| Kiro CLI invocation, case 19 | SKIP | CLI required interactive browser authentication and never reached the skill; the stalled login process was stopped; installation and helper checks passed independently |
+
+The repository commands are the three commands in [Regenerate](#regenerate). Maintainer commands,
+run from `tools/workflow-diagram/`:
+
+```sh
+npm ci
+npm run build:assets
+npm run check
+```
+
+Clean candidate discovery and installation, run from an isolated project:
+
+```sh
+npx skills@latest add "<clean-candidate>" --list
+npx skills@latest add "<clean-candidate>" --skill wkc-workflow-diagram -a claude-code -a codex -a kiro-cli -y
+```
+
+The generic skill-creator validator rejects the repository's required Claude Code extension,
+`disable-model-invocation`. The repository metadata check accepts and verifies this extension;
+no invocation setting was removed to make the generic validator pass.
+Physical touch hardware, screen readers, Safari, and Firefox were not rerun. Earlier behavior
+cases were not rerun as agent interviews for this naming change; their earlier results below do
+not claim a new pass for this candidate.
 
 ### Validation, 2026-09-26
 
