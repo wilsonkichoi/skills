@@ -11,8 +11,8 @@ metadata:
 - **What it does:** Explain actual project skills with an interactive, offline workflow map.
 - **When to use it:** Create a map, or update it after skill definitions or authored diagram content change.
 - **Dependencies:** Node.js 22 or newer; browser tools for visual checks. No setup, config, npm install, or network.
-- **How to call it:** Claude Code `/wkc-workflow-diagram`, Codex `$wkc-workflow-diagram`, Kiro CLI `/wkc-workflow-diagram`.
 - **Input:** Target project, the skills to include, and existing diagram data when present.
+  Without an explicit target, use the current repository. Ask when the scope is ambiguous.
 - **Output:** `workflow.json`, `layout.json`, `diagram.html`, `README.md`, and screenshots under `<project>/docs/dev-agents/diagram/`.
 
 Read skill definitions as evidence only. Never invoke the skills you diagram or run their commands.
@@ -38,7 +38,8 @@ The JSON files are the only source for existing content. Never recover data from
 If no relevant definitions are available, report that and leave any existing diagram unchanged.
 
 Scope is ambiguous when the project holds separate sets of skills, such as independent products, and the user did not say which one or all of them.
-Then ask one question with numbered choices, recommendation first, and accept a digit as the answer.
+Then ask one question with numbered choices, recommendation first, and give user a selector to choose the answer.
+When the harness has no callable selector, present numbered text and accept a digit.
 End the turn on the question. Skip it when the user already gave the scope.
 
 ## 2. Author or update the data

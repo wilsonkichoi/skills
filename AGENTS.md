@@ -90,8 +90,16 @@ settings for each harness when models are intended callers:
 Dependencies must name the exact `wkc-` identifier. Report an unavailable or blocked dependency
 instead of substituting an unprefixed skill. A dependency declaration does not bypass invocation settings.
 
-Every `SKILL.md` body opens with the same doc block, so a reader knows what a skill needs and what
-it leaves behind before reading any step. The skeleton is in [Skill template](#skill-template).
+Every `SKILL.md` body opens with five fields, in order: **What it does**, **When to use it**,
+**Dependencies**, **Input**, and **Output**. The skeleton is in [Skill template](#skill-template).
+**Input** explains accepted arguments, their meanings, required context, and existing behaviour
+when arguments are omitted. Do not invent arguments or defaults while documenting them.
+
+Optional `argument-hint` frontmatter is a Claude Code extension, outside the Agent Skills standard.
+Quote its string value; use `[]` for optional arguments and `<>` for required values.
+Replace the template placeholder with accepted arguments, or remove the field when arguments are unnecessary.
+Hints guide autocomplete; they do not validate arguments or change runtime behaviour.
+Do not promise that Codex or Kiro displays them. Keep harness prefix guidance in the root README's invocation table.
 
 `description` goes on one unquoted physical line, however long.
 

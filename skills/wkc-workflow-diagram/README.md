@@ -71,9 +71,35 @@ The formal contracts are [workflow.schema.json](assets/workflow.schema.json) and
 A workflow needs a nonblank `title`, a nonempty `nodes` array, and an `edges` array. `subtitle` and
 `lanes` are optional. Array order sets the Previous/Next order and the lane chip order.
 
+This is a complete `workflow.json` with two nodes and one edge. Its matching `layout.json` is in the next section.
+
+```json
+{
+  "schemaVersion": 1,
+  "title": "Example workflow",
+  "nodes": [
+    {
+      "id": "collect",
+      "label": "Collect",
+      "summary": "Collect information and write notes.md."
+    },
+    {
+      "id": "publish",
+      "label": "Publish",
+      "summary": "Read notes.md and write report.md."
+    }
+  ],
+  "edges": [
+    { "id": "collect-publish", "from": "collect", "to": "publish", "label": "notes.md" }
+  ]
+}
+```
+
 A node needs `id`, `label`, and `summary`. IDs must be unique and may contain any characters.
 `kind` is `skill` by default. `mode`, `artifact`, and `system` nodes are auxiliary: they draw with a
 dashed border and a kind badge. A node without `lane` uses neutral styling.
+
+The following example is one node object inside `workflow.json.nodes`, not a complete file.
 
 ```json
 {
@@ -113,6 +139,26 @@ all. A route must start and end on its cards' borders, within half a pixel. `lab
 the label relative to the route's midpoint and defaults to `[0, -18]`. `labelAngle` rotates it, in
 degrees.
 
+This is the complete `layout.json` for the workflow above. Node and edge IDs match across both files.
+
+```json
+{
+  "schemaVersion": 1,
+  "nodes": {
+    "collect": { "x": 0, "y": 0 },
+    "publish": { "x": 480, "y": 0 }
+  },
+  "edges": {
+    "collect-publish": {
+      "start": [240, 80],
+      "segments": [[320, 80, 400, 80, 480, 80]]
+    }
+  }
+}
+```
+
+Each following example is one route object inside `layout.json.edges`, not a complete file.
+
 Forward edge, from a card at `(0, 0)` to a card at `(480, 0)`:
 
 ```json
@@ -150,6 +196,18 @@ The fitted view includes curve control points, so it can leave more margin than 
 needs.
 
 ## Package
+
+Installing the skill includes the helper and prebuilt renderer files:
+
+| File inside the installed skill | Purpose |
+| --- | --- |
+| `scripts/diagram.mjs` | Reads both JSON files and writes `diagram.html` |
+| `assets/model.mjs` | Validates the data and contains the HTML template through `renderStandalone()` |
+| `assets/standalone.js` | Contains the browser renderer, CSS, cards, and details panel behavior |
+| `assets/workflow-diagram.js` | Provides the library described in [embed.md](embed.md) |
+
+The helper embeds the JSON and browser renderer into `diagram.html`, which works offline.
+No separate template download is needed. Users need Node.js 22 or newer, without npm packages or a maintainer build.
 
 The helper and generated assets are ready to use; consumers install nothing. Their source, build,
 and maintainer tests are in `tools/workflow-diagram/` of the skills repository, not in this

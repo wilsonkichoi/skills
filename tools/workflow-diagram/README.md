@@ -36,6 +36,11 @@ npm run build:assets
 npm run check
 ```
 
+Nothing runs these commands for you: no CI job or git hook exists. Commit the regenerated
+`skills/wkc-workflow-diagram/assets/` in the same commit as the source change, because consumers
+install those files and never run this build. That commit touches `skills/`, so the pre-commit
+checklist in [AGENTS.md](../../AGENTS.md) applies.
+
 `check` rejects stale generated assets, then runs unit, packaging, and browser checks. Its browser
 uses `PLAYWRIGHT_CHROMIUM_EXECUTABLE` when set, available macOS Chrome otherwise, and Playwright's
 Chromium fallback. Install that fallback locally when needed:

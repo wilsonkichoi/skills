@@ -21,8 +21,10 @@ Then, in the copy:
 1. Set the directory, frontmatter `name`, main heading, and invocation examples to the same `wkc-<name>` identifier.
 2. Rewrite `description`. Two sentences: what it does, and when to use it in the words someone would
    actually type. Keep it on one physical line, unquoted.
-3. Fill in the six doc-block lines. Delete none of them; "none" is a fine answer for
-   **Dependencies**, **Input**.
+3. Fill in the five doc-block fields: **What it does**, **When to use it**, **Dependencies**, **Input**, and **Output**.
+   Keep that order. "none" is a fine answer for **Dependencies** or **Input**.
+   **Input** explains accepted arguments, their meanings, required context, and existing behaviour when arguments are omitted.
+   Replace `argument-hint: "[arguments]"` with actual accepted arguments, or remove the field when arguments are unnecessary.
 4. Replace the numbered sections with the real run order, ending in a report step.
 5. Update `agents/openai.yaml`: `display_name` becomes `wkc-<name>`, `short_description`
    becomes the first sentence of the description.
@@ -72,6 +74,12 @@ skills read alike; a skill with a reason can depart from those guidelines.
 - `scripts/`, `references/`, `assets/` are optional. Add when it is useful and easy to maintain.
 
 ## Manual invocation
+
+Optional `argument-hint` is a Claude Code extension, not an Agent Skills standard field.
+Its quoted string describes existing arguments, with `[]` for optional arguments and `<>` for required values.
+Claude Code shows it during autocomplete.
+The hint does not validate arguments, define parsing rules, or change runtime behaviour.
+Do not promise hint display in Codex or Kiro. Keep prefix guidance in the root README's invocation table.
 
 Manual invocation is the default. Keep these template settings unless the skill explicitly opts into model invocation:
 

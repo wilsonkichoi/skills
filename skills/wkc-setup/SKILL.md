@@ -14,8 +14,8 @@ metadata:
   the tracker or bring an older config up to the current fields.
 - **Dependencies:** `git`. `gh` for the GitHub tracker, the Linear MCP server for the Linear
   tracker, neither for the local tracker.
-- **How to call it:** Claude Code `/wkc-setup`, Codex `$wkc-setup`, Kiro CLI `/wkc-setup`.
-- **Input:** the current repository, plus the user's answers to the interview.
+- **Input:** no invocation arguments. Context comes from the current repository and existing config,
+  plus the user's answers to the interview. Invoke it without arguments to start or resume setup.
 - **Output:** `docs/dev-agents/config.md`, `docs/dev-agents/rules/`, one reference line in the
   project's context file, and any one-time tracker setup.
 

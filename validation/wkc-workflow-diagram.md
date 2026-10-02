@@ -36,7 +36,8 @@ Keep test outputs within the target's diagram directory; harness installation fi
 
 1. **Discovery and installation.** List the clean candidate and install only `wkc-workflow-diagram` on all three harness paths.
    PASS: discovery count equals shipped skills, this skill appears once, and no template or fixture is discovered as a skill.
-   Check real paths, all manual-invocation settings, and the six opening contract lines.
+   Check real paths, all manual-invocation settings, and the five opening fields in the order required by AGENTS.md.
+   Confirm Input explains the supplied context, the omitted target, and ambiguous scope; no How to call it field remains.
    Confirm directory, frontmatter name, main heading, display name, and invocation examples use `wkc-workflow-diagram`.
    FAIL if an installed package contains node_modules, caches, binaries, traces, or developer paths.
 
@@ -68,7 +69,9 @@ Keep test outputs within the target's diagram directory; harness installation fi
    PASS: the skill reports missing input, invents no graph, and preserves existing files.
 
 8. **Unrelated workflows.** Build the minimal and branching examples through the installed helper.
+   Extract the complete `workflow.json` and matching `layout.json` examples from the skill README and check/build them together.
    PASS: both validate without wkc-setup/wkc-tracker nodes, a repository-specific base, or fixed canvas dimensions.
+   The README examples also pass check/build; node and route snippets are explicitly labeled as individual objects.
    Open both and inspect all nodes and relationships; verify no missing routes are hidden.
 
 9. **Add while preserving edits.** Customize a description and position; add `audit`, which reads `report.md` and writes `findings.md`.
@@ -126,6 +129,7 @@ Keep test outputs within the target's diagram directory; harness installation fi
     Use the installed identifier: Codex `$wkc-workflow-diagram`, Claude Code and Kiro CLI `/wkc-workflow-diagram`.
     Record authentication failures and unavailable browser tools as specific SKIPs, separate from helper and browser results.
     Confirm ambiguous scope (separate sets of skills, no choice given) ends the turn on a numbered question.
+    Use a callable harness selector when available; otherwise numbered text accepts a digit.
     Supplied scope does not trigger redundant questions.
 
 20. **Repository integration.** Inspect this repository's generated map and candidate diff.

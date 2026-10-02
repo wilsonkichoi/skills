@@ -1,6 +1,8 @@
 # Visual design
 
 The same visual rules apply to every project. Project facts belong only in its JSON files.
+The HTML template and details panel ship in the prebuilt renderer files listed in [README.md](README.md#package).
+The helper generates them from the JSON; users do not author HTML or popup code.
 
 ## What you control
 

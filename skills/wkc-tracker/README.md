@@ -25,14 +25,6 @@ Until that file exists with one of those four values, every verb stops, writes n
 to run `wkc-setup`. It never guesses a backend, and it never borrows another tool's config or ticket
 format, because tickets written anywhere else are invisible to every verb here.
 
-| Harness | How you call it |
-|---|---|
-| Claude Code | `/wkc-tracker list` |
-| Codex | `$wkc-tracker list` |
-| Kiro CLI | `/wkc-tracker list` |
-
-Examples below use the Claude Code prefix. Substitute yours.
-
 ## The seven statuses
 
 | Status | Means |

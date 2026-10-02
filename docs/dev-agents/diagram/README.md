@@ -64,6 +64,39 @@ The [public runbook](../../../validation/wkc-workflow-diagram.md) defines the ca
 renderer checks, installed-helper checks, and agent behavior. Raw evidence stays in the ignored
 `.local/runs/workflow-diagram/` directory of the checkout that ran it.
 
+### Main integration and manual review, 2026-10-01
+
+This candidate merges main `074f28c` (PR #9) into workflow branch `f34a39e` and includes the local review edits.
+Repository version is **0.0.11**; removing its changelog entry reproduces main's changelog byte-for-byte.
+The workflow skill now uses the five opening fields required by main, with context and omitted-target behavior under Input.
+Its manual invocation settings remain unchanged. Scope questions use a callable selector where available and numbered text otherwise.
+The skill README includes complete matching JSON examples, explicitly labels individual snippets, and lists the installed helper and renderer files.
+The maintainer README states that asset builds and checks must be run explicitly. The user confirmed completion of manual review.
+
+| Check | Result | Independent evidence |
+| --- | --- | --- |
+| Main integration and release history | PASS | Main's five-field conventions, template, tracker changes, runbook additions, and released 0.0.10 entry are retained |
+| Metadata and opening fields | PASS | PyYAML parsed all three shipped skills and Codex settings; names, five ordered fields, and manual invocation settings agree |
+| Complete README examples | PASS | Extracted both JSON examples into an isolated project; shipped helper check/build passed without warnings |
+| Repository diagram | PASS | Shipped helper check passed with the documented main documentation base; graph data and rendered output were not changed |
+| Asset freshness and unit/package suite | PASS | `npm run check` accepted existing generated assets and passed all 76 tests, including offline read-only installation and preview lifecycle |
+| Browser suite | PASS | The final `npm run check` passed all 29 browser tests, including details, keyboard focus, copy behavior, embedding, touch simulation, and offline output |
+| Current harness invocation and visual review | SKIP | No new installed-agent invocation or screenshot inspection was performed; earlier results below remain historical evidence |
+
+The first sandboxed suite could not bind loopback ports or create its nested OS sandbox.
+An authorized rerun passed all unit/package tests but exposed a browser cleanup race: restoring data could reload the page before the source restart.
+The test now waits for the source restart before restoring data, then waits for the original title.
+The full suite passed after that correction. Renderer behavior and generator version **0.0.11** are unchanged.
+
+Commands run from `tools/workflow-diagram/`:
+
+```sh
+npm run check
+```
+
+The repository helper command is the check command in [Regenerate](#regenerate).
+This focused run does not claim new passes for installer discovery, agent interviews, physical touch hardware, screen readers, Safari, or Firefox.
+
 ### Merge validation, 2026-10-01
 
 This candidate combines workflow branch `fc12830` with main `6aad9eb` (PR #8), at repository

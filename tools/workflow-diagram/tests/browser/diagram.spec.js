@@ -209,11 +209,13 @@ test('preview reloads data and reconnects after a source dependency restarts the
     await expect.poll(() => page.evaluate(() => window.beforeRestart), { timeout: 15_000 }).toBeUndefined();
     await expect(page.getByRole('heading', { level: 1 })).toHaveText(data.title);
   } finally {
-    await writeFile(dataPath, originalData);
     // Restoring the source restarts the server again; wait for it so later tests do not race it.
     await page.evaluate(() => window.beforeRestart = true);
     await writeFile(sourcePath, originalSource);
     await expect.poll(() => page.evaluate(() => window.beforeRestart).catch(() => true), { timeout: 15_000 }).toBeUndefined();
+    // Restore data after the restart so its reload cannot satisfy the restart check early.
+    await writeFile(dataPath, originalData);
+    await expect(page.getByRole('heading', { level: 1 })).toHaveText(JSON.parse(originalData).title);
   }
 });
 
