@@ -1,6 +1,7 @@
 ---
 name: wkc-tracker
 description: Read and write ticket state in this project's issue tracker, whether that is GitHub Issues, Linear, or local markdown files. Use it to list, show, create, assign, comment on, move, or link a ticket, and to ask what to work on next.
+argument-hint: "<verb> [args]"
 disable-model-invocation: true
 metadata:
   allow_implicit_invocation: "false"
@@ -15,9 +16,10 @@ metadata:
 - **Dependencies:** `docs/dev-agents/config.md` with `issue_tracker` set, written by `wkc-setup`.
   For GitHub, an authenticated `gh` against a host with native issue dependencies. For Linear, the
   Linear MCP server. For local, nothing.
-- **How to call it:** Claude Code `/wkc-tracker <verb> [args]`, Codex `$wkc-tracker <verb> [args]`,
-  Kiro CLI `/wkc-tracker <verb> [args]`.
-- **Input:** one verb and its arguments.
+- **Input:** one verb and its arguments, as documented in [section 4](#4-verbs), plus the configured
+  backend. The verb table explains ticket ids, text, statuses, milestones, holders, and dependency edges.
+  Optional arguments keep their existing behaviour: `list` without filters returns open tickets;
+  bare `assign <id>` takes the ticket. `next` needs no arguments.
 - **Output:** the tickets asked for, or the changed ticket state plus its URL or file path.
 
 ## 1. Resolve the backend

@@ -141,6 +141,23 @@ made, so a leftover `jira` config would change what the leg tests.
 rm -rf docs
 ```
 
+**S6 argument hint and input reference.** Parse the installed `SKILL.md` frontmatter with a YAML parser
+under `.agents/skills/`, `.claude/skills/`, and `.kiro/skills/`.
+Expect `wkc-tracker`'s `argument-hint` to be the string `<verb> [args]` and `wkc-setup` to omit that field.
+Check each opening block for exactly five fields, in order: **What it does**, **When to use it**,
+**Dependencies**, **Input**, and **Output**, with no **How to call it** field.
+Compare the verb table against the pre-conversion source. Expect all eight existing forms and their semantics unchanged:
+`list`, `show`, `next`, `create`, `assign`, `comment`, `move`, and `link`.
+Expect **Input** to explain the existing omission behaviour and required context; setup requires no invocation arguments.
+Use a separate throwaway repository with `issue_tracker: local`, `issues_dir`, and known fixture files.
+Run `list ready`. Independently parse those files, compare returned ids, titles,
+statuses, assignees, and blockers, and confirm the config and ticket bytes did not change.
+Record each harness separately; an unavailable harness is SKIP with its reason.
+
+**S6a [MANUAL] Claude Code autocomplete.** In the installed repository, type `/wkc-tracker` without submitting it.
+Expect autocomplete to show `<verb> [args]`. Check `/wkc-setup` too; it must show no argument hint.
+This check is on the menu, not a model's claim about it. Record SKIP when the interactive menu is unavailable.
+
 ---
 
 ## A. GitHub backend
@@ -1139,6 +1156,40 @@ here.
 Versions 0.0.9 to 0.0.41 below were development steps on the `feat/tracker` branch. They shipped
 together as 0.0.8, so an entry's version names a branch state, and its skill ref names the exact
 commit it tested.
+
+### 2026-10-01T18:29:45-07:00 Focused 0.0.10 argument-hint conversion
+
+Candidate exported from `docs/skill-argument-hints`, based on `origin/main` at `6aad9eb`.
+Installed source blobs: `wkc-tracker/SKILL.md` `9bf1a7745d87f709084973d1f19e0fd5870e88e9`;
+`wkc-setup/SKILL.md` `70b4f29457d66d50b9f60bbbe2c05e08404c7327`. The export contained tracked candidate files only,
+with no `.git`, worktrees, or untracked files. Installer: `skills` 1.7.0.
+
+This run covers the conversion and read-only local fixture, not the full backend suite.
+Codex CLI 0.159.3 used `gpt-6.1-sol` with high reasoning and a read-only sandbox.
+Claude Code 2.1.287 used its default model, Opus 5.5, with only Read, Glob, Grep, and Skill tools.
+Kiro CLI 2.26.0 could install the candidate but could not run the fixture without login.
+No installed skill or invocation setting was changed for these checks.
+
+| Check | Verdict | Independent evidence |
+|---|---|---|
+| Source frontmatter and opening fields | PASS | Parsed both shipped definitions and the template with PyYAML. Every hint is a quoted string. Each body opens with exactly the five fields, in order, and has no invocation field. |
+| Contracts, version, and history | PASS | Both skill bodies from section 1 onward match main byte-for-byte. All eight verb forms and semantics remain. Setup requires no invocation arguments. VERSION is 0.0.10, one patch above fetched main; removing the new changelog line reproduces main's changelog. |
+| S3 discovery | PASS | Clean export discovery found exactly wkc-setup and wkc-tracker. No template, planned skill, or validation file appeared. |
+| S1/S2 install layout | PASS | Installed both skills into .agents, .claude, and .kiro paths in a new throwaway repository. Every installed file matched its exported source bytes, including sibling references and agents/openai.yaml. |
+| S6 installed hint and settings | PASS | Byte equality preserves the parsed tracker hint, setup's absent hint, Claude Code restriction, Codex policy, and quoted metadata flag across all three paths. |
+| S6 local fixture, Codex | PASS | list ready returned 041, 042, 043, and 046. Independently parsed fixture YAML matched all ids, titles, statuses, assignees, and blocked_by values exactly. Trace read the project's .agents skill. |
+| S6 local fixture, Claude Code | PASS | list ready returned the same four exact rows. Config and all six ticket SHA-256 hashes matched their pre-run values. |
+| S6 omitted filters, Claude Code | PASS | list returned 041, 042, 043, 044, and 046; terminal 045 was excluded. All five rows matched parsed fixture YAML, and trace read the project's .claude backend reference. Config and ticket hashes remained unchanged. |
+| S6 local fixture, Kiro CLI | SKIP | whoami reported "Not logged in". Non-interactive chat waited on browser login and was cancelled. No runtime result was scored. |
+| S6a Claude Code autocomplete | PASS | Typed each project command and pressed Tab without submitting. Tracker displayed <verb> [args]; setup displayed no argument hint. |
+| Diff and repository checklist | PASS | git diff --check passed. Re-read the checklist: one patch bump, local-offset changelog entry, root README and AGENTS guidance, unchanged roster, and focused runbook case. |
+
+PASS 10, FAIL 0, SKIP 1. Focused coverage is incomplete because the Kiro runtime check requires authentication.
+
+Validator limitation: skill-creator's quick_validate.py ran against both skills. Its standard-field allowlist
+rejects the existing disable-model-invocation extension and the requested argument-hint extension.
+It cannot validate this repository's harness fields. Direct YAML parsing, contract comparisons,
+installer checks, and harness checks above verified the candidate without removing those fields.
 
 ### 2026-09-24T13:32:19-07:00 Manual 0.0.41 run, Kiro CLI interactive
 

@@ -54,7 +54,12 @@ Run `wkc-setup` once per repository:
 Codex uses `$name`, not `/name`. Every example below is written for Claude Code; substitute the
 prefix for your harness.
 
-It interviews you about your issue tracker and your product docs, writes
+Optional `argument-hint` metadata is a Claude Code extension that describes existing arguments during
+autocomplete. It does not validate arguments or change skill behaviour. `wkc-tracker` shows
+`<verb> [args]`; `wkc-setup` needs no invocation arguments and has no hint.
+`[]` marks optional arguments, and `<>` marks required values. Hint display in Codex or Kiro is not promised.
+
+`wkc-setup` interviews you about your issue tracker and your product docs, writes
 `docs/dev-agents/config.md`, and adds one reference line to your `AGENTS.md` or `CLAUDE.md` so
 every session loads that config. Every other skill reads the same file.
 
