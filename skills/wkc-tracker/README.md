@@ -25,9 +25,6 @@ Until that file exists with one of those four values, every verb stops, writes n
 to run `wkc-setup`. It never guesses a backend, and it never borrows another tool's config or ticket
 format, because tickets written anywhere else are invisible to every verb here.
 
-Examples below use Claude Code syntax. The repository's
-[invocation table](https://github.com/wilsonkichoi/skills#quickstart) covers each harness.
-
 ## The seven statuses
 
 | Status | Means |

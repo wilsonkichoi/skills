@@ -77,8 +77,7 @@ skills read alike; a skill with a reason can depart from those guidelines.
 
 Optional `argument-hint` is a Claude Code extension, not an Agent Skills standard field.
 Its quoted string describes existing arguments, with `[]` for optional arguments and `<>` for required values.
-Claude Code shows it during autocomplete, as documented in its
-[frontmatter reference](https://code.claude.com/docs/en/skills#frontmatter-reference).
+Claude Code shows it during autocomplete.
 The hint does not validate arguments, define parsing rules, or change runtime behaviour.
 Do not promise hint display in Codex or Kiro. Keep prefix guidance in the root README's invocation table.
 
