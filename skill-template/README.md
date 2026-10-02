@@ -43,7 +43,7 @@ Getting these wrong breaks the install, so they are not negotiable.
 | `description` | yes | 1 to 1024 characters. Covers what the skill does and when to use it. One physical line, unquoted. |
 | `license` | no | Not used here; the repository `LICENSE` covers it. |
 | `compatibility` | no | Not used here. Max 500 characters. Put environment requirements on the **Dependencies** line instead. |
-| `metadata` | no | Used here for `allow_implicit_invocation`, see [Manual invocation](#manual-invocation). A map of string keys to string values, so quote anything that would otherwise parse as a boolean or a number. |
+| `metadata` | no | Not used here. A map of string keys to string values. |
 | `allowed-tools` | no | Experimental, support varies by harness. Not used here. |
 
 **Dependencies** in the doc block is deliberately broad. It is everything that has to exist before
@@ -85,12 +85,8 @@ Manual invocation is the default. Keep these template settings unless the skill 
 
 - Claude Code: `disable-model-invocation: true` in the `SKILL.md` frontmatter.
 - Codex: `policy.allow_implicit_invocation: false` in `agents/openai.yaml`.
-- Kiro CLI: no documented setting exists. The template repeats the Codex key under `metadata` in
-  case a harness starts reading it, but nothing is known to read it today, so a Kiro user can
-  trigger a skill by conversation alone. That is accepted, not worked around.
 
-None of these are part of the spec; they are harness extensions. The `metadata` value is quoted
-because the spec allows only string values there.
+None of these are part of the spec; they are harness extensions.
 
 Future skills may opt into model invocation individually. Declare intended callers in the skill
 body: people, models, or named skills. For model callers, enable supported settings for each harness:
@@ -99,7 +95,6 @@ body: people, models, or named skills. For model callers, enable supported setti
   [invocation control](https://code.claude.com/docs/en/skills#control-who-invokes-a-skill).
 - Codex implicit selection: set `policy.allow_implicit_invocation: true` or omit it to use the
   documented default, `true`, in [skill settings](https://developers.openai.com/codex/skills).
-- Kiro CLI: no documented setting exists; do not claim the metadata flag enforces invocation.
 
 Name skill dependencies with their exact `wkc-` identifiers. Report an unavailable or blocked
 dependency instead of substituting an unprefixed skill. Invocation settings still apply to dependencies.

@@ -73,10 +73,11 @@ mkdir -p ~/tmp/tracker-val && cd ~/tmp/tracker-val
 npx skills@latest add 'https://github.com/wilsonkichoi/skills.git#<review-ref>' -a claude-code -a codex -a kiro-cli
 ```
 
-**Invoking the skill during a run.** Every skill here carries `disable-model-invocation: true`, so
-no harness invokes one on its own and each `$wkc-tracker ...` has to be typed. That is the shipped
-behaviour, not a defect, and a leading space is enough to stop a slash command firing, so check that
-an invocation actually fired before scoring what came back.
+**Invoking the skill during a run.** `wkc-tracker` opts into model invocation, so a harness may
+load it on its own. `wkc-setup` still carries `disable-model-invocation: true` and has to be typed.
+Type each `$wkc-tracker ...` anyway, so every case runs the same verb with the same arguments. A
+leading space is enough to stop a slash command firing, and a model can then answer from its own
+reading of the backend instead. Check that the skill actually fired before scoring what came back.
 
 Check that it fired the right skill, too. A harness can list a same-named skill from a plugin or a
 global install beside this project's own: Codex offered `$dev:setup` from the `dev@agent-toolkit`
@@ -85,10 +86,10 @@ project's install. In Codex, that is the entry whose path is under the scratch d
 `.agents/skills/`. A run that fired any other skill is void, not scored: record it as a deviation,
 and start again in a fresh directory.
 
-For a leg that would otherwise be hundreds of hand-typed commands, delete that one line from the
-**installed** `SKILL.md` and restart the harness. Then say so in the report as a deviation, and say
-from which case onward, because the file under test now differs from the commit by that line. It
-changes no verb, and it is still not nothing. Restore it or reinstall before the run ends, and never
+For an unattended leg whose driver cannot type `$wkc-setup` itself, delete that one line from the
+**installed** `wkc-setup/SKILL.md` and restart the harness. Then say so in the report as a
+deviation, and say from which case onward, because the file under test now differs from the commit
+by that line. It changes no verb, and it is still not nothing. Restore it or reinstall before the run ends, and never
 edit the source tree to get it.
 
 **S1 install layout.** Check: `ls .agents/skills/wkc-tracker/`. Expect `SKILL.md`, `README.md`,
@@ -101,8 +102,8 @@ Both directories have to have been created by the installer, since nothing here 
 
 **S3 one skill per name.** Check:
 `npx skills@latest add 'https://github.com/wilsonkichoi/skills.git#<review-ref>' -l`.
-Expect exactly `wkc-setup` and `wkc-tracker`. The old names, planned skills, `wkc-skill-name`,
-and anything from `validation/` must not appear.
+Expect exactly `wkc-setup`, `wkc-tracker`, and `wkc-workflow-diagram`. The old names, planned
+skills, `wkc-skill-name`, and anything from `validation/` must not appear.
 
 S4 and S5 run here, straight after the install and before any `$wkc-setup`, because they need a
 directory with no config that `wkc-setup` wrote. The check is on disk, never the reply: the failure they
@@ -157,6 +158,14 @@ Record each harness separately; an unavailable harness is SKIP with its reason.
 **S6a [MANUAL] Claude Code autocomplete.** In the installed repository, type `/wkc-tracker` without submitting it.
 Expect autocomplete to show `<verb> [args]`. Check `/wkc-setup` too; it must show no argument hint.
 This check is on the menu, not a model's claim about it. Record SKIP when the interactive menu is unavailable.
+
+**S7 invocation settings.** Parse the installed `SKILL.md` frontmatter and `agents/openai.yaml` of
+both skills with a YAML parser, under `.agents/skills/`, `.claude/skills/`, and `.kiro/skills/`.
+Expect `wkc-tracker` to have `disable-model-invocation` the boolean `false` and
+`policy.allow_implicit_invocation` the boolean `true`. Expect `wkc-setup` to have `true` and
+`false` for the same two keys. Expect neither `SKILL.md` to have a `metadata` key. A quoted string
+such as `"false"` is a FAIL. Record any installer rewrite of these keys as a deviation with the
+committed and installed values side by side.
 
 ---
 
@@ -970,6 +979,26 @@ anything, and a missing remote has to be resolved before Section B is on screen.
 Expect it idle and waiting, so the answer is typed straight in. A harness still reporting work, or
 holding the reply as a queued input, is a FAIL: the skill asked and then kept going.
 
+**D7 a model invokes wkc-tracker on its own.** In a new session in the first directory, with no
+prefix and no skill name, ask `which ticket should I pick up now?`. Expect the harness to load
+`wkc-tracker` itself and answer with the `next` frontier. Claude Code shows a Skill tool call naming
+`wkc-tracker`; Codex shows the skill being read from the project's `.agents/skills/`. Check the
+answer against an independent read of the backend, as in the B cases. An answer built from reading
+`docs/dev-agents/issues/` directly, without loading the skill, is a FAIL even when the ticket list
+is correct. Run it on Claude Code and on Codex and record each separately.
+
+**D8 a model changes state when asked in plain words.** Move one ticket to `ready` with no assignee
+first. In a new session, with no prefix and no skill name, ask `I'll take ticket <id>, mark it as
+mine`. Expect the harness to load `wkc-tracker` and run the take form, `assign <id>` or
+`assign <id> me`. Check the backend independently: the ticket is `in-progress` and the session's
+identity is its only assignee. A write made without loading the skill is a FAIL, even when the end
+state is correct.
+
+**D9 talk about a ticket changes nothing.** Record the backend state of every ticket first. In a new
+session, with no prefix and no skill name, ask `what does ticket <id> say, and does it look ready
+to you?` about an open, unassigned ticket. Expect a read at most. Read the backend again: any status,
+assignee, comment, or edge that differs from the first read is a FAIL, whatever the reply said.
+
 ### Running leg D
 
 The numbered steps below are in run order, and the case IDs are not. D1 and D3 check that another
@@ -985,9 +1014,9 @@ taken. A model reporting on its own turn is exactly the self-assessment `How to 
 these are watched from outside and written down by whoever watched. D1 to D3 are lighter, one
 command each with the verdict in the output, but every harness still has to be launched by hand.
 
-Two scratch directories, both installed with the invocation gates **left as shipped**. Every other
-leg strips them so it can run unattended. Leg D must not, because being triggered by name is what
-it tests.
+Two scratch directories, both installed with the invocation settings **left as shipped**. Another
+leg may strip the `wkc-setup` gate so it can run unattended. Leg D must not, because being triggered
+by name, and for D7 being triggered without one, is what it tests.
 
 ```
 mkdir -p ~/tmp/tracker-legd && cd ~/tmp/tracker-legd && npx skills@latest add 'https://github.com/wilsonkichoi/skills.git#<review-ref>' -a claude-code -a codex -a kiro-cli -s '*' -y
@@ -1033,6 +1062,19 @@ Section A only; the run can be abandoned after that. Codex has no picker, so num
 the recommended one first and a bare digit accepted is the correct result here rather than a
 fallback to apologise for. Type `1` and confirm it is taken.
 
+#### Step 5. Claude Code, then Codex, first directory: D7, D9, D8
+
+Run the three cases in one new session per harness, in the first directory. D7 needs a session in
+which `wkc-tracker` has not loaded yet, so a typed `/wkc-tracker` from step 1 must not be in context.
+D9 and D8 can follow in the same session. Ask each question as plain text, and record which skill
+loaded, if any. All three use the `legD parity probe` ticket, which is `ready` and unassigned after
+step 1.
+
+Before D9, copy the issues directory or note the ticket's state, so D9 has a before to compare.
+On Claude Code, run D7, then D9, then D8: D7 and D9 need the ticket unassigned, and D8 takes it.
+Then run `/wkc-tracker move <id> ready`, which clears the assignee. Start a new Codex session and
+run D7, D9, and D8 in the same order.
+
 The observation sheet, filled in by the person at the keyboard and carried into the Run log entry
 verbatim. Its lines follow the run order, so it fills top to bottom:
 
@@ -1050,6 +1092,13 @@ D3 Kiro list ready:         output =
 step 4, Codex, second directory
 D4 Codex:                   form of the Section A question =, digit accepted =
 D6 Codex:                   harness state at Section A =
+step 5, first directory
+D7 Claude Code:             skill loaded =, answer =
+D9 Claude Code:             skill loaded =, state before =, state after =
+D8 Claude Code:             skill loaded =, verb run =, state after =
+D7 Codex:                   skill loaded =, answer =
+D9 Codex:                   skill loaded =, state before =, state after =
+D8 Codex:                   skill loaded =, verb run =, state after =
 anything surprising:
 ```
 
@@ -1156,6 +1205,36 @@ here.
 Versions 0.0.9 to 0.0.41 below were development steps on the `feat/tracker` branch. They shipped
 together as 0.0.8, so an entry's version names a branch state, and its skill ref names the exact
 commit it tested.
+
+### 2026-10-02T14:27:21-07:00 Focused 0.0.12 model invocation run, Claude Code and Codex interactive
+
+Skill ref `2500d57` on `feat/tracker-model-invocation`, installed with `skills` 1.7.0 into
+`~/tmp/tracker-d7`. The installed `wkc-tracker` `SKILL.md`, `agents/openai.yaml`, and `local.md`
+under `.claude/skills/` and `.agents/skills/` are byte-identical to that commit. Backend: local,
+set up with `/wkc-setup` in a first Claude Code session that also created ticket 001 and moved it
+to `ready`. The person at the keyboard ran D7, D9, and D8 by hand in one new session per harness.
+Claude Code 2.1.288 ran `claude-sonnet-5-5`, session `17f18a61`. Codex CLI 0.160.0 ran
+`gpt-6-luna`, session `01a0fe80`. Only S7 and D7 to D9 ran. No installed file was edited. The
+`.kiro/skills/` copy was added after the sessions, for S7, and its `SKILL.md` matches the commit.
+
+| Case | Verdict | Independent evidence |
+|---|---|---|
+| S7 | PASS | PyYAML on all three install paths: `wkc-tracker` has `disable-model-invocation` `False` and policy `True`, `wkc-setup` has `True` and `False`, and neither `SKILL.md` has a `metadata` key. |
+| D7, Claude Code | PASS | The first tool call was `Skill(wkc-tracker)`. The answer named 001 as the whole frontier and offered `assign 001` without running it. |
+| D9, Claude Code | PASS | The turn ran only a Read, `ls`, and `grep`. It suggested moving 001 to `backlog` and asked first. D8's edit then showed the file still at `status: 'ready'` and `assignee: ''`, and the final `diff -r` against the pre-session copy showed only D8's two lines. |
+| D8, Claude Code | PASS | One edit set `status: 'in-progress'` and `assignee: 'Wilson Choi'`. `grep` on the file and `git config user.name` agreed. Nothing was committed. |
+| D7, Codex | PASS | The session log shows `/Users/wchoi/tmp/tracker-d7/.agents/skills/wkc-tracker/SKILL.md` read before `config.md` and `local.md`. The answer named 001 as ready, unassigned, and unblocked. |
+| D9, Codex | PASS | The turn ran only searches. `diff -r` against the pre-session copy, run straight after, printed nothing. |
+| D8, Codex | PASS | One edit changed the status and assignee lines. `grep` showed `status: 'in-progress'` and `assignee: 'Wilson Choi'`, matching `git config user.name`. |
+
+PASS 7, FAIL 0, SKIP 0 for the cases run.
+
+**Void run.** An earlier Codex session, `01a0fe79`, loaded the `dev@agent-toolkit` plugin's
+`status` skill and is not scored. The directory had been installed with `-a claude-code` only, so
+it had no `.agents/skills/` and Codex had no `wkc-tracker` to choose. That run wrote nothing: the
+issues directory still matched the pre-session copy. After `-a codex` was added, the scored session
+still listed the plugin's skills, and Codex chose `wkc-tracker` anyway. Leg D's own install
+command names `-a codex`; this run's install did not follow it.
 
 ### 2026-10-01T18:29:45-07:00 Focused 0.0.10 argument-hint conversion
 

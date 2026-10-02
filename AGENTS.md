@@ -52,8 +52,8 @@ Each skill is a directory under `skills/wkc-<name>/`:
 
 ```
 skills/wkc-<name>/
-  SKILL.md              # frontmatter: name, description, disable-model-invocation: true
-  agents/openai.yaml    # interface + policy.allow_implicit_invocation: false
+  SKILL.md              # frontmatter: name, description, disable-model-invocation (see below)
+  agents/openai.yaml    # interface + policy.allow_implicit_invocation (see below)
   <supporting>.md       # templates and references, linked relatively from SKILL.md
   README.md             # optional, only when the skill needs explaining beyond SKILL.md
 ```
@@ -71,21 +71,17 @@ one file per skill, named after it.
 Adding any *other* top-level directory is a decision about the shape of the repository. It is the
 maintainer's call and not a thing to do in passing.
 
-Manual invocation is the default. The shipped skills keep these settings:
+Manual invocation is the default. A manually invoked skill keeps these settings:
 
 - claude code: `SKILL.md` frontmatter `disable-model-invocation: true`
 - codex cli: `agents/openai.yaml` -> `policy: allow_implicit_invocation: false`
-- kiro cli: no documented setting exists. `SKILL.md` frontmatter carries
-  `metadata: allow_implicit_invocation: "false"` in case a harness starts reading it. Nothing is
-  known to read it today, so a Kiro user can still trigger a skill by conversation alone.
 
-Future skills may explicitly opt into model invocation, one skill at a time. Authors must declare
-the intended callers in the skill body: people, models, or named skills. Enable supported invocation
-settings for each harness when models are intended callers:
+A skill may explicitly opt into model invocation, one skill at a time. `wkc-tracker` does. Authors
+must declare the intended callers in the skill body: people, models, or named skills. Enable
+supported invocation settings for each harness when models are intended callers:
 
 - Claude Code: set `disable-model-invocation: false` or omit the restriction.
 - Codex implicit selection: set `policy.allow_implicit_invocation: true` or use its documented default, `true`.
-- Kiro CLI: the metadata flag is not known to be enforced. Do not claim it controls invocation.
 
 Dependencies must name the exact `wkc-` identifier. Report an unavailable or blocked dependency
 instead of substituting an unprefixed skill. A dependency declaration does not bypass invocation settings.
