@@ -115,6 +115,9 @@ Keep test outputs within the target's diagram directory; harness installation fi
 17. **Visual and input contract.** Inspect fitted and selected states at desktop, tablet, and phone sizes in both themes.
     PASS: square cards, flat palettes, lane colors, visible focus, readable selected cards, and unobscured controls remain intact.
     Verify fit, pan, zoom, filtering, textual relationships, panel scrolling, focus trapping/restoration, and navigation.
+    Open a node, navigate to a distant node, then close with Escape, the close button, and the backdrop.
+    PASS: focus returns to the visible opening card and its previous view is restored, including manual pan and zoom.
+    Resize while details are open from a fitted view; closing must fit the new canvas and keep the opening card visible.
     Test touch drag from a card, pinch, cancellation, and same-node selection with hash synchronization.
     Check copy success, pending state, and failure. Record physical-device or screen-reader checks separately if performed.
 

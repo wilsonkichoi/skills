@@ -15,7 +15,7 @@ The map contains the three shipped definitions in this repository: `wkc-setup`, 
 
 Inputs are [workflow.json](workflow.json) and [layout.json](layout.json).
 All positions and content are authored data; HTML is generated.
-The generator version is **0.0.11**, recorded in the installed skill's `assets/manifest.json`.
+The generator version is **0.0.12**, recorded in the installed skill's `assets/manifest.json`.
 The renderer source and maintainer build are in `tools/workflow-diagram/`; the skill ships generated assets.
 
 Documentation base:
@@ -63,6 +63,25 @@ The phone sheet scrolls independently; commands below the fold remain reachable.
 The [public runbook](../../../validation/wkc-workflow-diagram.md) defines the cases. Results below separate
 renderer checks, installed-helper checks, and agent behavior. Raw evidence stays in the ignored
 `.local/runs/workflow-diagram/` directory of the checkout that ran it.
+
+### Focus restoration fix, 2026-10-01
+
+This follow-up to reviewed commit `0f0cc22` restores the view saved before details opened.
+Previous/Next retains that saved view. Closing restores manual pan and zoom, or fits the current canvas
+when the opening view was fitted, before returning keyboard focus. Repository version remains **0.0.11**
+under the one-version-per-PR rule; renderer version is **0.0.12**. The repository HTML was rebuilt without changing its JSON.
+
+Validation used Node **v26.7.0** and Chromium **154.0.8037.93**.
+
+| Check | Result | Independent evidence |
+| --- | --- | --- |
+| Regression reproduction | PASS | Both new browser cases failed before the fix because the opening card had viewport intersection ratio 0 |
+| Focus and view restoration | PASS | Fitted and manual pan/zoom cases exercise Escape, Close details, and backdrop after four Next selections; the fitted case also resizes to phone dimensions |
+| Assets and unit/package suite | PASS | `npm ci`, `npm run build:assets`, and the asset, unit, package, and build stages of `npm run check` passed, including all 76 tests |
+| Browser suite | PASS | All 31 tests passed with `npm run test:browser` after allowing fractional rounding in the new visibility assertion |
+| Repository diagram | PASS | Documented check/build commands passed; offline HTML restored the original view and focus after navigation at 1440 × 900, 768 × 1024, and 390 × 844 |
+| Installer, harness invocation, and manual visual checks | SKIP | Not rerun for this renderer fix; earlier evidence below is historical |
+| Physical touch, screen readers, Safari, and Firefox | SKIP | Not tested in this follow-up |
 
 ### Main integration and manual review, 2026-10-01
 

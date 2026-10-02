@@ -107,6 +107,7 @@ No scripts unless a skill genuinely cannot be written as prose. Script sprawl an
 around it are the main reason the previous toolkit became unmaintainable.
 `wkc-workflow-diagram` is the one recorded exception. Its reason and maintainer build live in
 [`tools/workflow-diagram/README.md`](./tools/workflow-diagram/README.md), outside the installed skill.
+Renderer changes must preserve visible keyboard focus when closing details after node navigation.
 
 Inputs and outputs between skills stay loose. A skill states what it expects and what it produces,
 but does not reject work over formatting. Following rigid steps for ceremony is not the point.

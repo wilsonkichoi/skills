@@ -42,4 +42,5 @@ You cannot change these; know them so you can check the result.
 - The panel body scrolls; its close button and Previous/Next stay fixed. Previous/Next follow node
   array order, including dimmed and disconnected nodes.
 - While the panel is open, Tab stays inside it and the map behind it is inert. Escape, the close
-  button, and the backdrop close it and return focus.
+  button, and the backdrop close it and restore the previous view before returning focus.
+  A previously fitted view fits the current canvas size; a manual view keeps its pan and zoom.

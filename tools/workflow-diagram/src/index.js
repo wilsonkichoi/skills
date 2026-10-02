@@ -21,7 +21,7 @@ export function mountDiagram(container, { workflow: inputWorkflow, layout: input
   const media = matchMedia('(prefers-color-scheme: dark)');
   const bounds = canvasBounds(workflow, layout);
   let view = { x: 0, y: 0, scale: 1 }, selected = null, lane = null, hovered = null, focused = null;
-  let destroyed = false, fitted = true, returnFocus = null;
+  let destroyed = false, fitted = true, returnFocus = null, returnView = null;
   function listen(el, type, listener) { el.addEventListener(type, listener, { signal }); }
   function setView(next) {
     if (destroyed) return;
@@ -89,7 +89,10 @@ export function mountDiagram(container, { workflow: inputWorkflow, layout: input
     const node = workflow.nodes.find(n => n.id === nodeId);
     if (!node) throw new Error(`Unknown node ID: ${JSON.stringify(nodeId)}`);
     if (selected === nodeId) return;
-    if (selected === null) returnFocus = shadow.activeElement ?? ui.cards.get(nodeId);
+    if (selected === null) {
+      returnFocus = shadow.activeElement ?? ui.cards.get(nodeId);
+      returnView = { view, fitted };
+    }
     selected = nodeId; fitted = false; hovered = null;
     ui.panel.hidden = false; ui.backdrop.hidden = false;
     ui.header.inert = true; ui.viewport.inert = true; ui.footer.inert = true;
@@ -106,6 +109,9 @@ export function mountDiagram(container, { workflow: inputWorkflow, layout: input
     const last = selected; selected = null;
     ui.panel.hidden = true; ui.backdrop.hidden = true;
     ui.header.inert = false; ui.viewport.inert = false; ui.footer.inert = false;
+    fitted = returnView.fitted;
+    if (fitted) resetView(); else setView(returnView.view);
+    returnView = null;
     (returnFocus?.isConnected ? returnFocus : ui.cards.get(last)).focus({ preventScroll: true });
     returnFocus = null; emphasize(); notifySelection();
   }

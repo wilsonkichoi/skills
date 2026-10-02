@@ -72,6 +72,40 @@ test('backdrop closes and returns focus without selecting another node', async (
   await expect(page.getByRole('dialog')).toBeHidden(); await expect(card(page, 'source')).toBeFocused();
 });
 
+for (const fitted of [true, false]) test(`closing after node navigation restores the ${fitted ? 'fitted' : 'manual'} view and visible focus`, async ({ page }) => {
+  await page.goto('/branching');
+  if (!fitted) {
+    await page.getByRole('button', { name: 'Zoom out', exact: true }).click();
+    const box = await page.locator('.wd-viewport').boundingBox();
+    await page.mouse.move(box.x + 20, box.y + 20); await page.mouse.down();
+    await page.mouse.move(box.x + 60, box.y + 40, { steps: 8 }); await page.mouse.up();
+  }
+  const before = await transform(page);
+  for (const method of ['escape', 'button', 'backdrop']) {
+    await card(page, 'source').focus(); await page.keyboard.press('Enter');
+    for (let i = 0; i < 4; i++) await page.getByRole('button', { name: 'Next node' }).click();
+    if (method === 'escape') await page.keyboard.press('Escape');
+    else if (method === 'button') await page.getByRole('button', { name: 'Close details' }).click();
+    else await page.locator('.wd-backdrop').click({ position: { x: 10, y: 10 } });
+    await expect(page.getByRole('dialog')).toBeHidden();
+    await expect(card(page, 'source')).toBeFocused();
+    // IntersectionObserver can round a fully visible, scaled card just below 1.
+    await expect(card(page, 'source')).toBeInViewport({ ratio: .9999 });
+    expect(await transform(page)).toEqual(before);
+  }
+  if (fitted) {
+    await card(page, 'source').click();
+    await page.getByRole('button', { name: 'Next node' }).click();
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.keyboard.press('Escape');
+    await expect(card(page, 'source')).toBeFocused();
+    for (const node of await page.locator('.wd-card').all()) await expect(node).toBeInViewport({ ratio: .9999 });
+    const resized = await transform(page);
+    await page.getByRole('button', { name: 'Reset view' }).click();
+    expect(await transform(page)).toEqual(resized);
+  }
+});
+
 test('mouse pans, small movement remains a click, wheel retains its zoom anchor, reset fits', async ({ page }) => {
   await open(page);
   const initial = await transform(page), box = await page.locator('.wd-viewport').boundingBox();
