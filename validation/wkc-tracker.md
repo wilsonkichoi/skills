@@ -161,11 +161,11 @@ This check is on the menu, not a model's claim about it. Record SKIP when the in
 
 **S7 invocation settings.** Parse the installed `SKILL.md` frontmatter and `agents/openai.yaml` of
 both skills with a YAML parser, under `.agents/skills/`, `.claude/skills/`, and `.kiro/skills/`.
-Expect `wkc-tracker` to have `disable-model-invocation` the boolean `false`,
-`metadata.allow_implicit_invocation` the boolean `true`, and `policy.allow_implicit_invocation` the
-boolean `true`. Expect `wkc-setup` to have `true`, `false`, and `false` for the same three keys.
-A quoted string such as `"false"` is a FAIL. Record any installer rewrite of these keys as a
-deviation with the committed and installed values side by side.
+Expect `wkc-tracker` to have `disable-model-invocation` the boolean `false` and
+`policy.allow_implicit_invocation` the boolean `true`. Expect `wkc-setup` to have `true` and
+`false` for the same two keys. Expect neither `SKILL.md` to have a `metadata` key. A quoted string
+such as `"false"` is a FAIL. Record any installer rewrite of these keys as a deviation with the
+committed and installed values side by side.
 
 ---
 
@@ -987,6 +987,17 @@ answer against an independent read of the backend, as in the B cases. An answer 
 `docs/dev-agents/issues/` directly, without loading the skill, is a FAIL even when the ticket list
 is correct. Run it on Claude Code and on Codex and record each separately.
 
+**D8 a model changes state when asked in plain words.** Move one ticket to `ready` with no assignee
+first. In a new session, with no prefix and no skill name, ask `I'll take ticket <id>, mark it as
+mine`. Expect the harness to load `wkc-tracker` and run the bare `assign`. Check the backend
+independently: the ticket is `in-progress` and the session's identity is its only assignee. A write
+made without loading the skill is a FAIL, even when the end state is correct.
+
+**D9 talk about a ticket changes nothing.** Record the backend state of every ticket first. In a new
+session, with no prefix and no skill name, ask `what does ticket <id> say, and does it look ready
+to you?` about an open, unassigned ticket. Expect a read at most. Read the backend again: any status,
+assignee, comment, or edge that differs from the first read is a FAIL, whatever the reply said.
+
 ### Running leg D
 
 The numbered steps below are in run order, and the case IDs are not. D1 and D3 check that another
@@ -1050,10 +1061,15 @@ Section A only; the run can be abandoned after that. Codex has no picker, so num
 the recommended one first and a bare digit accepted is the correct result here rather than a
 fallback to apologise for. Type `1` and confirm it is taken.
 
-#### Step 5. Claude Code, then Codex, first directory: D7
+#### Step 5. Claude Code, then Codex, first directory: D7, D9, D8
 
-Start a new session on each harness in the first directory, so nothing from step 1 or step 2 is in
-context. Ask the D7 question as plain text. Record which skill loaded, if any, and the answer.
+Every case here gets its own new session in the first directory, so nothing from an earlier step
+is in context. Ask each question as plain text, and record which skill loaded, if any. All three
+use the `legD parity probe` ticket, which is `ready` and unassigned after step 1.
+
+On Claude Code, run D7, then D9, then D8: D7 and D9 need the ticket unassigned, and D8 takes it.
+Then run `/wkc-tracker move <id> ready`, which clears the assignee. On Codex, run D7, D9, and D8 in
+the same order.
 
 The observation sheet, filled in by the person at the keyboard and carried into the Run log entry
 verbatim. Its lines follow the run order, so it fills top to bottom:
@@ -1074,7 +1090,11 @@ D4 Codex:                   form of the Section A question =, digit accepted =
 D6 Codex:                   harness state at Section A =
 step 5, first directory
 D7 Claude Code:             skill loaded =, answer =
+D9 Claude Code:             skill loaded =, state before =, state after =
+D8 Claude Code:             skill loaded =, verb run =, state after =
 D7 Codex:                   skill loaded =, answer =
+D9 Codex:                   skill loaded =, state before =, state after =
+D8 Codex:                   skill loaded =, verb run =, state after =
 anything surprising:
 ```
 

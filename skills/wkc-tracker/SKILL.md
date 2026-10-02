@@ -3,8 +3,6 @@ name: wkc-tracker
 description: Read and write ticket state in this project's issue tracker, whether that is GitHub Issues, Linear, or local markdown files. Use it to list, show, create, assign, comment on, move, or link a ticket, and to ask what to work on next.
 argument-hint: "<verb> [args]"
 disable-model-invocation: false
-metadata:
-  allow_implicit_invocation: true
 ---
 
 # wkc-tracker
@@ -13,7 +11,8 @@ metadata:
   `docs/dev-agents/config.md`: GitHub Issues, Linear, or local markdown files.
 - **When to use it:** any time a skill or a person needs to see or change ticket state. Every other
   skill in this set goes through these verbs instead of touching the backend directly. Callers are
-  people, models acting on their own, and any `wkc-` skill that reads or changes ticket state.
+  people, models, and any `wkc-` skill that needs ticket state. A model may read on its own, but
+  runs a verb that changes state only when a person or a calling skill asked for that change.
 - **Dependencies:** `docs/dev-agents/config.md` with `issue_tracker` set, written by `wkc-setup`.
   For GitHub, an authenticated `gh` against a host with native issue dependencies. For Linear, the
   Linear MCP server. For local, nothing.

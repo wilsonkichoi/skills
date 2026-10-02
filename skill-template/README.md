@@ -43,7 +43,7 @@ Getting these wrong breaks the install, so they are not negotiable.
 | `description` | yes | 1 to 1024 characters. Covers what the skill does and when to use it. One physical line, unquoted. |
 | `license` | no | Not used here; the repository `LICENSE` covers it. |
 | `compatibility` | no | Not used here. Max 500 characters. Put environment requirements on the **Dependencies** line instead. |
-| `metadata` | no | Used here for `allow_implicit_invocation`, a boolean that mirrors the Codex policy, see [Manual invocation](#manual-invocation). |
+| `metadata` | no | Not used here. A map of string keys to string values. |
 | `allowed-tools` | no | Experimental, support varies by harness. Not used here. |
 
 **Dependencies** in the doc block is deliberately broad. It is everything that has to exist before
@@ -86,8 +86,7 @@ Manual invocation is the default. Keep these template settings unless the skill 
 - Claude Code: `disable-model-invocation: true` in the `SKILL.md` frontmatter.
 - Codex: `policy.allow_implicit_invocation: false` in `agents/openai.yaml`.
 
-None of these are part of the spec; they are harness extensions. The template also sets
-`metadata.allow_implicit_invocation` to the same boolean as the Codex policy.
+None of these are part of the spec; they are harness extensions.
 
 Future skills may opt into model invocation individually. Declare intended callers in the skill
 body: people, models, or named skills. For model callers, enable supported settings for each harness:
