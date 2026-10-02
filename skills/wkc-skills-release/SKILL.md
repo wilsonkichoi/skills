@@ -51,7 +51,7 @@ With neither ref present, require the requested version to equal `VERSION` at sy
 The target is that main commit. Refuse historical backfill even when the requested version once existed on main.
 With either ref present, use its SHA, even after main advances.
 Require the target to be an ancestor of recorded main, and its committed `VERSION` to equal the tag's version.
-Read `VERSION` and `CHANGELOG.md` using `git show "$target:VERSION"` and `git show "$target:CHANGELOG.md"`.
+Read `VERSION` and `CHANGELOG.md` using `git show "${target}:VERSION"` and `git show "${target}:CHANGELOG.md"`.
 Never use working-copy release data for an older target.
 
 ## 3. Prepare notes and Latest
@@ -116,7 +116,7 @@ git -c tag.gpgSign=false tag --no-sign "$tag" "$target"
 Push only a missing remote tag, never branches or all tags:
 
 ```sh
-git push origin "refs/tags/$tag:refs/tags/$tag"
+git push origin "refs/tags/${tag}:refs/tags/${tag}"
 ```
 
 Re-read the remote tag and require its SHA and lightweight type to match the target before creating the release.

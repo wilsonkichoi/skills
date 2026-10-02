@@ -80,6 +80,7 @@ For each invocation, record remote refs, release fields, Latest, local status, a
    PASS: a lightweight tag identifies that exact commit, title equals tag, and the stable release body contains rows `0.0.2` through `0.0.4`.
    The heading records `v0.0.1` as the boundary. The command-looking summary stays literal.
    Transcript uses signing disabled, one tag ref push, `--verify-tag`, `--notes-file`, and explicit `--latest`.
+   Execute the documented variable commands in both Bash and zsh; colon-adjacent variables must use braces.
    Verify Latest and release fields through separate API reads; compare installed hashes and checkout status.
 
 8. **Interrupted publication.** In separate fixtures, pre-create only a matching local tag and only a matching remote tag.
@@ -160,7 +161,8 @@ Report lives below so no parallel status file or additional top-level directory 
 
 ### 2026-10-02 candidate, initial evidence
 
-Base: `750995d3fa4213165cbd6b7c7e3386d78aeba0c9`. Candidate skill hashes:
+Base: `750995d3fa4213165cbd6b7c7e3386d78aeba0c9`. Initial publication source: `0b1546769c6c883484e524ba8f3eabee1dc1684a`.
+Skill hashes before the shell correction:
 
 | File | SHA-256 |
 |---|---|
@@ -194,6 +196,15 @@ The transcript shows `--verify-tag`, `--notes-file`, disabled tag signing, and `
 No command-looking changelog text executed; the checkout stayed clean and the notes file was removed after verification.
 Codex separately refused untagged historical `v0.0.3`, a conflicting local SHA, an annotated local tag, and an untracked sentinel.
 Claude Code prepared the fixture release, showed complete notes and Latest, and ended on the numbered authorization question without publishing.
+
+Claude Code published fixture `v0.0.10` at `a292193bf32079f3d9ec1c7a3ca46ec3b8edbcd6`, release ID `402194325`.
+The preceding stable release was `v0.0.9`; numeric comparison correctly selected `--latest` and notes containing only `0.0.10`.
+An initial push attempt exposed zsh's `$tag:r` modifier parsing in the documented refspec.
+The harness verified that the remote tag was still absent, corrected the quoting, and completed publication.
+The candidate now uses `${tag}` before the refspec colon and `${target}` before committed file paths.
+Independent Bash and zsh checks both resolve the exact refspec and committed VERSION correctly.
+The corrected `SKILL.md` SHA-256 is `ce83381530178c7e6869e4432145c5c65e3b797ff3e4633c391d3145988e4dc8`.
+README and interface hashes are unchanged. The first-attempt push is recorded as a corrected failure, never a clean pass.
 
 Remaining cases are SKIP until their runs and independent verification finish. The final matrix will replace this interim statement.
 Collection bootstrap and publication remain SKIP until merge and explicit authorization for the actual merged target.
