@@ -52,8 +52,8 @@ Each skill is a directory under `skills/wkc-<name>/`:
 
 ```
 skills/wkc-<name>/
-  SKILL.md              # frontmatter: name, description, disable-model-invocation: true
-  agents/openai.yaml    # interface + policy.allow_implicit_invocation: false
+  SKILL.md              # frontmatter: name, description, disable-model-invocation (see below)
+  agents/openai.yaml    # interface + policy.allow_implicit_invocation (see below)
   <supporting>.md       # templates and references, linked relatively from SKILL.md
   README.md             # optional, only when the skill needs explaining beyond SKILL.md
 ```

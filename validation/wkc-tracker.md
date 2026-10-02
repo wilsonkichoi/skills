@@ -102,8 +102,8 @@ Both directories have to have been created by the installer, since nothing here 
 
 **S3 one skill per name.** Check:
 `npx skills@latest add 'https://github.com/wilsonkichoi/skills.git#<review-ref>' -l`.
-Expect exactly `wkc-setup` and `wkc-tracker`. The old names, planned skills, `wkc-skill-name`,
-and anything from `validation/` must not appear.
+Expect exactly `wkc-setup`, `wkc-tracker`, and `wkc-workflow-diagram`. The old names, planned
+skills, `wkc-skill-name`, and anything from `validation/` must not appear.
 
 S4 and S5 run here, straight after the install and before any `$wkc-setup`, because they need a
 directory with no config that `wkc-setup` wrote. The check is on disk, never the reply: the failure they
@@ -989,9 +989,10 @@ is correct. Run it on Claude Code and on Codex and record each separately.
 
 **D8 a model changes state when asked in plain words.** Move one ticket to `ready` with no assignee
 first. In a new session, with no prefix and no skill name, ask `I'll take ticket <id>, mark it as
-mine`. Expect the harness to load `wkc-tracker` and run the bare `assign`. Check the backend
-independently: the ticket is `in-progress` and the session's identity is its only assignee. A write
-made without loading the skill is a FAIL, even when the end state is correct.
+mine`. Expect the harness to load `wkc-tracker` and run the take form, `assign <id>` or
+`assign <id> me`. Check the backend independently: the ticket is `in-progress` and the session's
+identity is its only assignee. A write made without loading the skill is a FAIL, even when the end
+state is correct.
 
 **D9 talk about a ticket changes nothing.** Record the backend state of every ticket first. In a new
 session, with no prefix and no skill name, ask `what does ticket <id> say, and does it look ready
