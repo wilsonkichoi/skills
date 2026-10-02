@@ -15,7 +15,7 @@ The map contains the three shipped definitions in this repository: `wkc-setup`, 
 
 Inputs are [workflow.json](workflow.json) and [layout.json](layout.json).
 All positions and content are authored data; HTML is generated.
-The generator version is **0.0.12**, recorded in the installed skill's `assets/manifest.json`.
+The generator version is **0.0.11**, recorded in the installed skill's `assets/manifest.json`.
 The renderer source and maintainer build are in `tools/workflow-diagram/`; the skill ships generated assets.
 
 Documentation base:
@@ -69,7 +69,7 @@ renderer checks, installed-helper checks, and agent behavior. Raw evidence stays
 This follow-up to reviewed commit `0f0cc22` restores the view saved before details opened.
 Previous/Next retains that saved view. Closing restores manual pan and zoom, or fits the current canvas
 when the opening view was fitted, before returning keyboard focus. Repository version remains **0.0.11**
-under the one-version-per-PR rule; renderer version is **0.0.12**. The repository HTML was rebuilt without changing its JSON.
+under the one-version-per-PR rule; renderer version is **0.0.11**. The repository HTML was rebuilt without changing its JSON.
 
 Validation used Node **v26.7.0** and Chromium **154.0.8037.93**.
 

@@ -1,14 +1,14 @@
 {
   "schemaVersion": 1,
-  "generatorVersion": "0.0.12",
+  "generatorVersion": "0.0.11",
   "sources": {
     "LICENSE": "62b39a3b4506b2223153ff0ccc9406dae0fa75c058781ae547937b6e57071804",
     "skills/wkc-workflow-diagram/scripts/diagram.mjs": "8574cea1c2ec922dfa1645eb96b33b79a4b4d9bbf0509b6d6de783e10be54382",
     "tools/workflow-diagram/build/assets.mjs": "1184969f874055674656b5ad8e9323b3b3ac5016cdf6a3e9c0a29e3739b32b06",
     "tools/workflow-diagram/build/preview.mjs": "73c3a63a70fa1e630a9222e34e5d61f86d532cb5e43e8673a928940595ce7255",
     "tools/workflow-diagram/build/standalone.mjs": "74775b8630bb1869ef4a288c430323af92f8aa8f6fdfd4c594b675484d7c7ece",
-    "tools/workflow-diagram/package-lock.json": "14f6e6a4fb6edb77bbae3b8adb706730a3216b7f16f3ccda5c4a1a3f33695eda",
-    "tools/workflow-diagram/package.json": "644f7e9928deef4dff8d4db637eaf3deb4dc5f21653609387754f06bdb0439fe",
+    "tools/workflow-diagram/package-lock.json": "a46e46c63c1389d33084fba16517607eaf7d375f0207da508e52dc601c8614bf",
+    "tools/workflow-diagram/package.json": "611395d2e0bff89771e967b93495cb001b4abce13c9a872a7aa9b17266765135",
     "tools/workflow-diagram/schema/layout.schema.json": "cbfd15225d5cebf8ad1698d19055f1ca5a9f0d9455ea6446036a56ce1d2449a6",
     "tools/workflow-diagram/schema/workflow.schema.json": "d47116b485de6a91ca4080110623238bce323ab508d8adbe26e2e1908a3026c7",
     "tools/workflow-diagram/src/export.js": "be44f2db0243dfb7f4af374d310d4d68cc9e39f7f41b4dee95db2d1fb7c78e70",
