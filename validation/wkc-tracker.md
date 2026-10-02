@@ -1214,10 +1214,12 @@ under `.claude/skills/` and `.agents/skills/` are byte-identical to that commit.
 set up with `/wkc-setup` in a first Claude Code session that also created ticket 001 and moved it
 to `ready`. The person at the keyboard ran D7, D9, and D8 by hand in one new session per harness.
 Claude Code 2.1.288 ran `claude-sonnet-5-5`, session `17f18a61`. Codex CLI 0.160.0 ran
-`gpt-6-luna`, session `01a0fe80`. Only D7 to D9 ran. No installed file was edited.
+`gpt-6-luna`, session `01a0fe80`. Only S7 and D7 to D9 ran. No installed file was edited. The
+`.kiro/skills/` copy was added after the sessions, for S7, and its `SKILL.md` matches the commit.
 
 | Case | Verdict | Independent evidence |
 |---|---|---|
+| S7 | PASS | PyYAML on all three install paths: `wkc-tracker` has `disable-model-invocation` `False` and policy `True`, `wkc-setup` has `True` and `False`, and neither `SKILL.md` has a `metadata` key. |
 | D7, Claude Code | PASS | The first tool call was `Skill(wkc-tracker)`. The answer named 001 as the whole frontier and offered `assign 001` without running it. |
 | D9, Claude Code | PASS | The turn ran only a Read, `ls`, and `grep`. It suggested moving 001 to `backlog` and asked first. D8's edit then showed the file still at `status: 'ready'` and `assignee: ''`, and the final `diff -r` against the pre-session copy showed only D8's two lines. |
 | D8, Claude Code | PASS | One edit set `status: 'in-progress'` and `assignee: 'Wilson Choi'`. `grep` on the file and `git config user.name` agreed. Nothing was committed. |
@@ -1225,7 +1227,7 @@ Claude Code 2.1.288 ran `claude-sonnet-5-5`, session `17f18a61`. Codex CLI 0.160
 | D9, Codex | PASS | The turn ran only searches. `diff -r` against the pre-session copy, run straight after, printed nothing. |
 | D8, Codex | PASS | One edit changed the status and assignee lines. `grep` showed `status: 'in-progress'` and `assignee: 'Wilson Choi'`, matching `git config user.name`. |
 
-PASS 6, FAIL 0, SKIP 0 for the cases run.
+PASS 7, FAIL 0, SKIP 0 for the cases run.
 
 **Void run.** An earlier Codex session, `01a0fe79`, loaded the `dev@agent-toolkit` plugin's
 `status` skill and is not scored. The directory had been installed with `-a claude-code` only, so
