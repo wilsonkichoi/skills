@@ -69,6 +69,8 @@ For each invocation, record remote refs, release fields, Latest, local status, a
    Test missing VERSION, malformed VERSION, malformed tags, suffixes, leading zeroes, and empty or duplicate changelog entries.
    PASS: each names the failed check and stops before publication, without switching, pulling, stashing, or resetting.
    Network and authorization failures are never interpreted as absent tags, releases, or Latest.
+   Set `status.showUntrackedFiles=no` and create a nested untracked sentinel before invocation.
+   Require refusal from `git status --porcelain --untracked-files=all`; preserve the sentinel and verify no publication.
 
 6. **Authorization.** Invoke without publication authorization on valid main.
    PASS: repository, tag, SHA, complete notes, boundary, and Latest are shown, then the turn ends on a numbered question.
@@ -79,7 +81,10 @@ For each invocation, record remote refs, release fields, Latest, local status, a
 7. **New publication and literal notes.** Authorize fixture `v0.0.4` on synchronized main.
    PASS: a lightweight tag identifies that exact commit, title equals tag, and the stable release body contains rows `0.0.2` through `0.0.4`.
    The heading records `v0.0.1` as the boundary. The command-looking summary stays literal.
-   Transcript uses signing disabled, one tag ref push, `--verify-tag`, `--notes-file`, and explicit `--latest`.
+   Set `push.followTags=true` and create an unrelated reachable annotated tag that is absent remotely.
+   Transcript uses signing disabled, one tag ref push with `--no-follow-tags`, `--verify-tag`, `--notes-file`, and explicit `--latest`.
+   Compare every remote ref before and after; only the authorized lightweight tag may be added.
+   The unrelated annotated tag must remain absent remotely and unchanged locally.
    Execute the documented variable commands in both Bash and zsh; colon-adjacent variables must use braces.
    Verify Latest and release fields through separate API reads; compare installed hashes and checkout status.
 
@@ -133,6 +138,8 @@ For each invocation, record remote refs, release fields, Latest, local status, a
     A concurrent correct release is a verified no-op. Concurrent Latest changes must be reported when post-verification detects them.
     No failure permits rollback of immutable tags or editing a conflicting release.
     Inspect tool ordering: every read permitting a write must finish and be checked before that write starts.
+    Set `status.showUntrackedFiles=no` and add a nested untracked sentinel after preparation, before the first publication write.
+    Require revalidation with `--untracked-files=all`, refusal, an unchanged sentinel, and no new remote tag or release.
 
 18. **Fixture bootstrap and pin.** Record the fixture's main SHA, install from its unpinned tip, and compare every installed skill file.
     Publish the authorized fixture version, reinstall through its full Git URL with `#vX.Y.Z`, and compare against the remote tagged SHA.
@@ -207,12 +214,12 @@ Independent Bash and zsh checks both resolve the exact refspec and committed VER
 The corrected `SKILL.md` SHA-256 is `ce83381530178c7e6869e4432145c5c65e3b797ff3e4633c391d3145988e4dc8`.
 README and interface hashes are unchanged. The first-attempt push is recorded as a corrected failure, never a clean pass.
 
-### 2026-10-02 final candidate and completed runs
+### 2026-10-02 candidate before Git configuration corrections
 
-Final skill source: `8b564bb8cc5077d46a2c97cb4cd3fbee0015a2e2`, after the shell and sequential-read corrections.
-Documentation-only commits after this source do not change the packaged skill.
+Skill source for these runs: `8b564bb8cc5077d46a2c97cb4cd3fbee0015a2e2`, after the shell and sequential-read corrections.
+The later Git configuration corrections change the packaged skill; their evidence appears below.
 
-| File | Final SHA-256 |
+| File | SHA-256 before Git configuration corrections |
 |---|---|
 | `SKILL.md` | `8ae00b100349bb00bc88bc35886fb852973523b42aaa311dc2fc4d613c315e4b` |
 | `README.md` | `40c1a1091da90e96d3f5f3b2505b03488e83a68b6a31dbc82a85306dc1184849` |
@@ -349,7 +356,7 @@ gh api repos/wilsonkichoi/skills-release-validation-20261002-1510/releases/lates
 /wkc-skills-release v0.0.1. Publish this disposable fixture release using the just-bootstrapped installed skill. I explicitly authorize repository wilsonkichoi/skills-release-bootstrap-20261002, tag v0.0.1, commit 2077f1cc781eaae155725be0e07cb898d2cf8914, with contract-generated notes and Latest decision. Execute the installed skill through verification. Do not modify versions or commits, create helper scripts, change installed skill files, or publish to the production collection. Do not request redundant authorization.
 ```
 
-#### Final case matrix
+#### Case matrix before Git configuration corrections
 
 PASS means the entire numbered case ran on that harness, or the stated shared package check applies to its installed path.
 SKIP includes partial cases. The evidence column identifies successful subchecks and every unrun part.
@@ -382,3 +389,84 @@ The broader unrun variants remain listed for future executions; this report does
 The requested release categories have actual evidence across the harnesses, with remaining subcases explicitly marked SKIP.
 Production `v0.0.12` already existed when implementation began; branch VERSION is `0.0.13`.
 Collection bootstrap and publication remain SKIP until merge and explicit authorization for the actual merged target.
+
+### 2026-10-02 Git configuration corrections
+
+Review of `bc6442135df35b79b9b1b7835e6cd440cd5492db` exposed two configuration-dependent defects.
+An explicit tag refspec still follows unrelated reachable annotated tags when `push.followTags=true`.
+Plain porcelain status hides untracked files when `status.showUntrackedFiles=no`.
+The candidate now pushes with `--no-follow-tags` and checks `--untracked-files=all` initially and during revalidation.
+Cases 5, 7, and 17 now require those configurations explicitly.
+The earlier case matrix records the earlier candidate; its PASS results do not cover these added variants.
+
+Candidate: working tree based on `bc6442135df35b79b9b1b7835e6cd440cd5492db`, with these packaged hashes:
+
+| File | SHA-256 |
+|---|---|
+| `SKILL.md` | `efde7f9d66b2cceebc4238aef27c36e7442aed6cf655eb6840b456e3ab0b8dd8` |
+| `README.md` | `d95348ffaa945adb1a8014c6b84eb5bbf70898d50634e7fe9ea92866d447f467` |
+| `agents/openai.yaml` | `fde020d7e204734067088e02af408b5e0a77e7498907a8b8ebc5ced92f98c468` |
+
+Tools: Git `2.54.0 (Apple Git-157)`, installer `skills@1.7.0`, and the same three harness versions recorded above.
+Raw commands, configuration, refs, outputs, installs, prompts, and transcripts remain under `.local/runs/release/git-config-regression/`.
+
+#### Independent command checks
+
+Separate local repositories and bare remotes were used for Bash and zsh.
+Each repository set `push.followTags=true` and contained reachable annotated `v0.0.1` plus lightweight target `v0.0.2`.
+The original push added both tags to its empty remote, reproducing the defect.
+The corrected command was extracted from the candidate and executed against a separate empty remote.
+Independent reads found only `refs/tags/v0.0.2`, with the exact target SHA; the local annotated tag remained unchanged.
+No GitHub repository was written during these command checks.
+
+Each repository also set `status.showUntrackedFiles=no`.
+The corrected status command first returned empty output, then detected `nested/untracked-sentinel` after preparation.
+The original status command returned empty output with the same sentinel present.
+Both repeated corrected reads returned `?? nested/untracked-sentinel`, and the sentinel bytes remained unchanged.
+
+| Command variant | Bash | zsh |
+|---|---|---|
+| Original push publishes the unrelated annotated tag | Reproduced | Reproduced |
+| Corrected push adds only the authorized lightweight tag | PASS | PASS |
+| Original status hides the nested sentinel | Reproduced | Reproduced |
+| Corrected initial check and repeated check detect the sentinel | PASS | PASS |
+
+Evidence: `evidence.json`, with every command and output, complete remote refs, configuration writes, and target SHAs.
+These are manual command checks, not harness publication results.
+
+#### Installed harness checks
+
+A clean candidate export was installed separately into three isolated fixture clones.
+Every installed file matched the candidate before the single Repository identity substitution recorded above.
+The publication identity was `wilsonkichoi/skills-release-validation-20261002-1510`.
+The installed `SKILL.md` hash after substitution was `2b0f8a8dc337d7028b6afc0bd87406d65d6fab510a07ced7d66672f8bfaf18ab` on every harness.
+Each clone set `status.showUntrackedFiles=no`, then received the same nested sentinel.
+Independent prechecks confirmed plain status was empty and explicit untracked status reported that file.
+
+Each harness loaded its installed skill, used `--untracked-files=all`, found the sentinel, and refused preparation.
+Independent afterchecks verified unchanged HEAD, local refs, installed bytes, configuration, and sentinel contents.
+Complete remote refs and paginated release snapshots were byte-identical before and after all three invocations.
+Kiro incorrectly resolved the bootstrap README against the checkout root before proceeding to the required checkout check.
+Its sentinel refusal passed; this run provides no bootstrap README resolution evidence.
+
+| Added variant | Codex | Claude Code | Kiro CLI |
+|---|---|---|---|
+| Case 5: hidden untracked sentinel causes refusal | PASS | PASS | PASS |
+| Case 7: publication with followed tags configured | SKIP | SKIP | SKIP |
+| Case 17: controlled sentinel insertion after harness preparation | SKIP | SKIP | SKIP |
+
+Cases 7 and 17 have manual command evidence above; their new complete harness variants were not executed.
+The complete case 5 remains SKIP because its other negative variants were not rerun.
+Production bootstrap remains SKIP pending merge and concrete release authorization.
+
+Commands, run from each corresponding `<harness>-dirty` fixture directory:
+
+```sh
+codex exec --ephemeral --json -s danger-full-access "$(cat ../codex.prompt)" </dev/null
+claude -p "$(cat ../claude.prompt)" --output-format stream-json --verbose --dangerously-skip-permissions </dev/null
+kiro-cli chat --no-interactive --trust-all-tools --output-format stream-json "$(cat ../kiro.prompt)" </dev/null
+```
+
+The prompt requests installed-skill preparation of `v0.0.10` without publication authorization or file, ref, or configuration changes.
+Evidence: `<harness>-install.log`, `<harness>.prompt`, `<harness>.jsonl`, `harness-before.json`, `harness-after.json`,
+`remote-refs-{before,after}.txt`, and `releases-{before,after}.txt`.

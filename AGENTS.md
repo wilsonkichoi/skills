@@ -51,6 +51,7 @@ generic release config because setup config belongs to adopting projects, not co
 The collection uses one `VERSION` and immutable tags for complete snapshots. Per-skill version stamps
 would create competing version records and cannot improve a pin that already selects the entire tree.
 No release hooks, helper scripts, build system, or per-harness copies are needed.
+Release checks explicitly include untracked files, and tag pushes disable followed tags regardless of Git configuration.
 
 `metadata` normally maps strings to strings under the Agent Skills specification. The sole exception
 is `wkc-skills-release`'s boolean `metadata.internal: true`, because `skills@1.7.0` checks

@@ -30,7 +30,7 @@ Inspect every configured fetch and push URL, not only the first.
 Verify with `gh repo view "$repo" --json nameWithOwner,url`.
 Stop on authentication, access, identity, or command failure. Never interpret an access failure as missing data.
 
-Require branch `main` and empty `git status --porcelain`, including untracked files.
+Require branch `main` and empty `git status --porcelain --untracked-files=all`, regardless of `status.showUntrackedFiles`.
 Fetch origin's `main` with `--no-tags` into `refs/remotes/origin/main`, preserving the checkout and local tags.
 Require `HEAD`, local `main`, and `origin/main` to identify the same commit; record its full SHA.
 Do not switch branches, reset, pull, or stash to satisfy this requirement.
@@ -103,6 +103,7 @@ Creating a pull request, approving a merge, or testing the skill does not author
 
 Finish and check each read before issuing the write it permits. Never batch or parallelize that read with its write.
 Immediately before writing, repeat the checkout, tag, release, and stable-release reads.
+Use `git status --porcelain --untracked-files=all` again for checkout revalidation.
 If main changed for a new tag, the target changed, or notes or intended Latest changed, stop and prepare the new result.
 Authorization for an old target does not authorize another commit.
 For an existing target, main may advance only if the target remains its ancestor and the checkout is synchronized.
@@ -114,10 +115,10 @@ Create a missing local lightweight tag with signing explicitly disabled:
 git -c tag.gpgSign=false tag --no-sign "$tag" "$target"
 ```
 
-Push only a missing remote tag, never branches or all tags:
+Push only a missing remote tag, never branches or all tags. Disable followed tags regardless of `push.followTags`:
 
 ```sh
-git push origin "refs/tags/${tag}:refs/tags/${tag}"
+git push --no-follow-tags origin "refs/tags/${tag}:refs/tags/${tag}"
 ```
 
 Re-read the remote tag and require its SHA and lightweight type to match the target before creating the release.

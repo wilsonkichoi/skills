@@ -47,6 +47,7 @@ The maintainer skill `wkc-skills-release` is hidden from ordinary discovery and 
 through boolean `metadata.internal: true`. Public discovery lists three skills; the source ships four.
 Install it explicitly by name when releasing this collection. See its
 [bootstrap and pin instructions](skills/wkc-skills-release/README.md).
+Release checks include untracked files, and publication pushes only the authorized tag regardless of Git configuration.
 
 ## Quickstart
 

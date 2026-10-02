@@ -16,6 +16,8 @@ npx skills@1.7.0 add wilsonkichoi/skills --skill wkc-skills-release -a claude-co
 Invoke `$wkc-skills-release` in Codex, or `/wkc-skills-release` in Claude Code and Kiro CLI.
 An optional exact tag resumes publication for that version. Omission selects the version on synchronized main.
 Use a clean main checkout of the collection, with Git and authenticated GitHub CLI available.
+Cleanliness checks explicitly include untracked files even when `status.showUntrackedFiles=no`.
+Tag pushes use `--no-follow-tags`, so `push.followTags=true` cannot publish unrelated annotated tags.
 
 ## Bootstrap after merge
 
