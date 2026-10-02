@@ -220,3 +220,5 @@ Before any commit that adds, removes, or modifies files under `skills/`:
    that still tests the old behaviour is worse than none, because it reports PASS
 
 Do not commit skill changes without completing this checklist. Read the checklist, don't rely on memory.
+
+Read dev workflow for AI-SDLC from docs/dev-agents/config.md
