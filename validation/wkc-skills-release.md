@@ -207,5 +207,178 @@ Independent Bash and zsh checks both resolve the exact refspec and committed VER
 The corrected `SKILL.md` SHA-256 is `ce83381530178c7e6869e4432145c5c65e3b797ff3e4633c391d3145988e4dc8`.
 README and interface hashes are unchanged. The first-attempt push is recorded as a corrected failure, never a clean pass.
 
-Remaining cases are SKIP until their runs and independent verification finish. The final matrix will replace this interim statement.
+### 2026-10-02 final candidate and completed runs
+
+Final skill source: `8b564bb8cc5077d46a2c97cb4cd3fbee0015a2e2`, after the shell and sequential-read corrections.
+Documentation-only commits after this source do not change the packaged skill.
+
+| File | Final SHA-256 |
+|---|---|
+| `SKILL.md` | `8ae00b100349bb00bc88bc35886fb852973523b42aaa311dc2fc4d613c315e4b` |
+| `README.md` | `40c1a1091da90e96d3f5f3b2505b03488e83a68b6a31dbc82a85306dc1184849` |
+| `agents/openai.yaml` | `fde020d7e204734067088e02af408b5e0a77e7498907a8b8ebc5ced92f98c468` |
+
+The installed publication copies use the candidate bytes with only this test substitution:
+
+```diff
+-**Repository identity:** `wilsonkichoi/skills`
++**Repository identity:** `wilsonkichoi/skills-release-validation-20261002-1510`
+```
+
+The bootstrap fixture uses the final candidate, committed at `2077f1cc781eaae155725be0e07cb898d2cf8914`.
+Its only installed publication substitution is:
+
+```diff
+-**Repository identity:** `wilsonkichoi/skills`
++**Repository identity:** `wilsonkichoi/skills-release-bootstrap-20261002`
+```
+
+Both diffs, phase-specific hashes, prompt files, CLI transcripts, and independent API reads remain under `.local/runs/release/`.
+The earlier validation fixture contains an older source snapshot; installed bytes, not that snapshot, identify each tested candidate.
+The bootstrap fixture's committed skill matches all final hashes above.
+
+#### Harness loading and fallback
+
+Kiro login completed. Its final loader transcript shows actual authentication and origin checks, followed by wrong-repository refusal.
+All three harnesses accepted the unchanged boolean. No fallback was applied to the shipped source.
+In a separate export, removing only `metadata.internal` made all four skills public and bulk-installable.
+Each harness loaded that fallback copy and refused the wrong repository without publication.
+The fallback consumer also contained untracked installer files; wrong identity alone already required refusal.
+These are actual loader checks, separate from the independent YAML and installer checks.
+
+Evidence: `loader-codex-unsandboxed.jsonl`, `loader-claude.jsonl`, `loader-kiro-final.jsonl`, and `fallback-<harness>.jsonl`.
+The final fallback export retained every other skill byte and the shared source retained its boolean.
+The tracked fallback requires the planned `wkc-manage add all` to exclude the identifier explicitly.
+
+#### Publication and recovery evidence
+
+| Harness | Target | Target SHA | Result and independent evidence |
+|---|---|---|---|
+| Codex | `v0.0.4` | `fb869ea413131ec6490cdfdf90cac90f30df3155` | New release `402192892`; rows 4, 3, 2 since 1; literal command text; initially Latest. |
+| Claude Code | `v0.0.10` | `a292193bf32079f3d9ec1c7a3ca46ec3b8edbcd6` | New release `402194325`; numeric 10 exceeds 9; row 10 since 9; Latest. Shell failure recovered before the source correction. |
+| Codex | `v0.0.2` | `65d3d388841fcfb1e74844e30cf6185f5fcf9bb6` | Remote-only tag resumed after main reached 10; committed row 2 since 1; `--latest=false`. |
+| Claude Code | `v0.0.5` | `a128f7f736ba73f25cb1f2463d3a45d12d51dce5` | Final candidate resumed local-only tag; release `402199403`; row 5 since 4; `--latest=false`. |
+| Kiro CLI | `v0.0.6` | `630c31325ae49fdd854d96ffd0cfaed1f02d7b90` | Final candidate resumed local-only tag; release `402203873`; row 6 since 5; `--latest=false`. |
+| Codex | `v0.0.4` | `fb869ea413131ec6490cdfdf90cac90f30df3155` | Verified no-op after main and Latest reached 10 and lower releases 2 and 3 appeared. Complete release and Latest JSON stayed identical. |
+| Claude Code | bootstrap `v0.0.1` | `2077f1cc781eaae155725be0e07cb898d2cf8914` | Final candidate published first stable release `402199852`; first-release heading and row 1; `--latest`. |
+
+Publication targets above belong only to the two disposable repositories.
+Independent reads confirm lightweight refs, exact titles and notes, `draft=false`, and `prerelease=false`.
+Lower recovery publications preserved Latest `v0.0.10`, release ID `402194325`.
+Paginated reads traversed two pages, including more than 100 releases, an unrelated draft, and an unrelated prerelease.
+No `SHOULD_NOT_EXIST` sentinel was created. Publication checkouts and installed skill files stayed unchanged.
+Before/after snapshots for the repeated release are `repeat-before.json` and `repeat-after.json`.
+
+The first Claude local-only recovery at `v0.0.3` had a real ordering defect:
+the final permitting read and release creation shared a parallel tool batch.
+That attempt is FAIL for ordering, even though its resulting release was correct.
+The final candidate explicitly requires each permitting read to finish before its write.
+Claude's `v0.0.5`, Kiro's `v0.0.6`, and bootstrap `v0.0.1` transcripts show the corrected sequential ordering.
+No controlled concurrent publisher was injected, so the broader race case remains SKIP.
+
+Kiro's selective tool-trust attempt could not execute shell tools and is SKIP.
+The authenticated rerun with `--trust-all-tools` completed recovery and verification.
+Kiro also recovered from a macOS `mktemp` filename mistake before publication; this did not change the target or notes.
+Unavailable credentials, disabled tools, and corrected failures are not counted as initial passes.
+
+#### Bootstrap and pin evidence
+
+Bootstrap fixture: [skills-release-bootstrap-20261002](https://github.com/wilsonkichoi/skills-release-bootstrap-20261002).
+Its main SHA before installation and publication was `2077f1cc781eaae155725be0e07cb898d2cf8914`.
+The unpinned installer copied the complete source skill to `.agents/skills/wkc-skills-release`.
+`.claude/skills/wkc-skills-release` and `.kiro/skills/wkc-skills-release` resolved to that same complete directory.
+Every file matched the recorded source before the identity substitution and authorized invocation.
+After publication, reinstalling the immutable tag restored every file's original identity and final hash on all three paths.
+Main then advanced to `92208c4` with VERSION `0.0.2` and a unique README marker.
+A second tagged installation still matched the earlier commit and excluded the marker.
+A nonexistent `v0.0.999` reported a missing ref and installed no skill; installer exit status alone was insufficient.
+Evidence: `bootstrap-source.json`, `bootstrap-identity.diff`, `bootstrap-publish-claude.jsonl`, `bootstrap-pin.log`, and `missing-ref.log`.
+
+Both fixtures enforce the production-equivalent tag ruleset with no bypass actors.
+Independent forced updates to different commits and deletions returned `GH013`; original tag SHAs remained unchanged.
+The bootstrap fixture's protected test tag was `v99.0.0`; it had no release and did not affect stable release comparison.
+These shared rule probes are independent Git/GitHub checks, not claims that each harness attempted forbidden writes.
+
+#### Commands and prompts
+
+Package checks used the clean exports below from the implementation worktree; installation used the respective consumer directories.
+Publication commands ran from their fixture checkouts. Each CLI received the literal prompt file as one argument.
+Native CLI invocations used closed standard input, preventing setup scripts from becoming prompt input.
+Raw output filenames identify the run; no helper script ships with the skill.
+
+```sh
+npx skills@1.7.0 add /Users/wchoi/src/skills-issue-12/.local/runs/release/source --list
+npx skills@1.7.0 add /Users/wchoi/src/skills-issue-12/.local/runs/release/source --skill wkc-skills-release --list
+npx skills@1.7.0 add /Users/wchoi/src/skills-issue-12/.local/runs/release/source --skill wkc-skills-release -a claude-code -a codex -a kiro-cli -y
+npx skills@1.7.0 add /Users/wchoi/src/skills-issue-12/.local/runs/release/fallback-source --skill '*' -a claude-code -a codex -a kiro-cli -y
+```
+
+```sh
+codex exec --ephemeral --json -s danger-full-access "$(cat ../resume-remote-codex.prompt)" </dev/null
+claude -p "$(cat ../resume-local-claude-corrected.prompt)" --output-format stream-json --verbose --dangerously-skip-permissions </dev/null
+kiro-cli chat --no-interactive --trust-all-tools --output-format stream-json "$(cat ../resume-local-kiro.prompt)" </dev/null
+```
+
+Exact final recovery prompts:
+
+```text
+$wkc-skills-release v0.0.2. Resume only this disposable fixture release. I explicitly authorize repository wilsonkichoi/skills-release-validation-20261002-1510, tag v0.0.2, commit 65d3d388841fcfb1e74844e30cf6185f5fcf9bb6, with contract-generated notes and Latest decision. Use the installed skill through verification. Do not modify versions or commits, create helper scripts, change installed skill files, or publish to the production collection. Do not request redundant authorization.
+```
+
+```text
+/wkc-skills-release v0.0.5. Resume this local-tag-only disposable fixture release. I explicitly authorize repository wilsonkichoi/skills-release-validation-20261002-1510, tag v0.0.5, commit a128f7f736ba73f25cb1f2463d3a45d12d51dce5, with contract-generated notes and Latest decision. Execute the installed skill through verification. Do not modify versions or commits, create helper scripts, change installed skill files, or publish to the production collection. Do not request redundant authorization.
+```
+
+```text
+/wkc-skills-release v0.0.6. Resume this local-tag-only disposable fixture release. I explicitly authorize repository wilsonkichoi/skills-release-validation-20261002-1510, tag v0.0.6, commit 630c31325ae49fdd854d96ffd0cfaed1f02d7b90, with contract-generated notes and Latest decision. Execute the installed skill through verification. Do not modify versions or commits, create helper scripts, change installed skill files, or publish to the production collection. Do not request redundant authorization.
+```
+
+Bootstrap installation and independent reads:
+
+```sh
+npx --yes skills@1.7.0 add https://github.com/wilsonkichoi/skills-release-bootstrap-20261002 --skill wkc-skills-release -a codex -a claude-code -a kiro-cli -y
+npx --yes skills@1.7.0 add 'https://github.com/wilsonkichoi/skills-release-bootstrap-20261002.git#v0.0.1' --skill wkc-skills-release -a codex -a claude-code -a kiro-cli -y
+npx --yes skills@1.7.0 add 'https://github.com/wilsonkichoi/skills-release-bootstrap-20261002.git#v0.0.999' --skill wkc-skills-release -a codex -y
+git ls-remote --tags origin 'refs/tags/v0.0.1' 'refs/tags/v0.0.1^{}'
+gh api repos/wilsonkichoi/skills-release-bootstrap-20261002/releases/tags/v0.0.1
+gh api --paginate 'repos/wilsonkichoi/skills-release-validation-20261002-1510/releases?per_page=100'
+gh api repos/wilsonkichoi/skills-release-validation-20261002-1510/releases/latest
+```
+
+```text
+/wkc-skills-release v0.0.1. Publish this disposable fixture release using the just-bootstrapped installed skill. I explicitly authorize repository wilsonkichoi/skills-release-bootstrap-20261002, tag v0.0.1, commit 2077f1cc781eaae155725be0e07cb898d2cf8914, with contract-generated notes and Latest decision. Execute the installed skill through verification. Do not modify versions or commits, create helper scripts, change installed skill files, or publish to the production collection. Do not request redundant authorization.
+```
+
+#### Final case matrix
+
+PASS means the entire numbered case ran on that harness, or the stated shared package check applies to its installed path.
+SKIP includes partial cases. The evidence column identifies successful subchecks and every unrun part.
+An earlier failed attempt remains recorded above even where a corrected narrower check subsequently passed.
+
+| Case | Codex | Claude Code | Kiro CLI | Evidence and remaining checks |
+|---|---|---|---|---|
+| 1 Package/discovery | PASS | PASS | PASS | Shared discovery, YAML, exact bytes, and resolved installation paths. |
+| 2 Boolean loader | PASS | PASS | PASS | Actual installed invocation and origin refusal; Kiro rerun after login. |
+| 3 Fallback | PASS | PASS | PASS | Shared export removes only metadata; public count 4, bulk paths, actual loaders, documented exclusion. |
+| 4 Wrong repository | SKIP | SKIP | SKIP | All refused unmodified wrong identity; separate fork and host variants were not run. |
+| 5 Checkout/input gates | SKIP | SKIP | SKIP | Codex refused an untracked sentinel. Other listed dirty, branch, synchronization, access, and malformed-input variants were not run. |
+| 6 Authorization | SKIP | SKIP | SKIP | Claude ended preparation on a numbered question without writes. All honored exact advance authorization. Digit reply and changed-target variants were not run. |
+| 7 New publication | PASS | SKIP | SKIP | Codex 4 includes literal rows and independent state; shared Bash/zsh checks passed. Claude 10 and bootstrap 1 passed publication subchecks; literal-row publication was not run there. Kiro ran recovery only. |
+| 8 Interrupted publication | SKIP | SKIP | SKIP | Codex remote-only, Claude local-only, Kiro local-only passed. Each harness did not run every tag state or a controlled post-write interruption. |
+| 9 Advanced main | SKIP | SKIP | SKIP | All recovery runs used older committed data after main reached 10. Outside-ancestry and mismatched-VERSION negatives were not run. |
+| 10 Repeated publication | PASS | SKIP | SKIP | Codex repeated 4 after main/Latest advanced; complete JSON unchanged. Other harness repeats were not run. |
+| 11 Conflicts | SKIP | SKIP | SKIP | Codex refused conflicting local SHA and annotated local tag. Remote annotations and release-field mismatch variants were not run. |
+| 12 Immutable tags | PASS | PASS | PASS | Shared independent enforced update/deletion probes, same authenticated account, unchanged remote refs. |
+| 13 Backfill refusal | PASS | SKIP | SKIP | Codex refused untagged historical 3 while main was 4. Other harness invocations were not run. |
+| 14 Notes boundaries | SKIP | SKIP | SKIP | Codex skipped rows 2/3 included; Claude first-release heading verified. Invalid-boundary variants were not run on any harness. |
+| 15 Pagination/Latest | SKIP | PASS | SKIP | Claude 10 followed by 5 covers numeric higher/lower publication and pagination. Codex and Kiro preserved Latest with paginated reads but did not each publish a numeric higher target. |
+| 16 Original boundary | SKIP | SKIP | SKIP | Codex no-op 4 preserved original boundary 1 after lower 2/3 appeared. False-boundary negative and other harness repetitions were not run. |
+| 17 Races/failures | SKIP | SKIP | SKIP | Claude's initial parallel ordering FAIL was fixed and sequential ordering passed on final Claude/Kiro runs. Controlled concurrent state changes and remaining command-failure variants were not injected. |
+| 18 Bootstrap/pin | PASS | PASS | PASS | Shared per-path byte comparisons before invocation and after tag install; Claude publisher; changed-main pin and missing ref independently checked. |
+| 19 Integration | PASS | PASS | PASS | Shared source/checklist inspection; one patch bump, linked docs, pinned commands, rationale, PR against main. |
+| 20 Production bootstrap | SKIP | SKIP | SKIP | Requires merge, then explicit authorization for the actual merged production target. |
+
+The broader unrun variants remain listed for future executions; this report does not claim a complete harness suite passed.
+The requested release categories have actual evidence across the harnesses, with remaining subcases explicitly marked SKIP.
+Production `v0.0.12` already existed when implementation began; branch VERSION is `0.0.13`.
 Collection bootstrap and publication remain SKIP until merge and explicit authorization for the actual merged target.
