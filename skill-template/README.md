@@ -30,8 +30,10 @@ Then, in the copy:
    becomes the first sentence of the description.
 6. Delete this `README.md` from the copy.
 
-Check with `npx skills add <gh-handle>/<skills-repo> -l`, which lists what the repository exposes. A
-new skill should appear once, and nothing named `wkc-skill-name` should ever appear.
+Check with `npx skills@1.7.0 add <gh-handle>/<skills-repo> -l`, which lists public skills. A new
+public skill should appear once, and nothing named `wkc-skill-name` should ever appear.
+Internal skills are excluded from that count; list and install them explicitly by exact name.
+Compare total source `SKILL.md` files separately. See the internal-metadata exception in `AGENTS.md`.
 
 ## What the spec requires
 
@@ -43,7 +45,7 @@ Getting these wrong breaks the install, so they are not negotiable.
 | `description` | yes | 1 to 1024 characters. Covers what the skill does and when to use it. One physical line, unquoted. |
 | `license` | no | Not used here; the repository `LICENSE` covers it. |
 | `compatibility` | no | Not used here. Max 500 characters. Put environment requirements on the **Dependencies** line instead. |
-| `metadata` | no | Not used here. A map of string keys to string values. |
+| `metadata` | no | A map of string keys to string values. The documented `wkc-skills-release` boolean exception is in `AGENTS.md`. |
 | `allowed-tools` | no | Experimental, support varies by harness. Not used here. |
 
 **Dependencies** in the doc block is deliberately broad. It is everything that has to exist before

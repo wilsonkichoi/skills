@@ -17,22 +17,22 @@ One version per pull request. The first commit on a branch that touches `skills/
 and adds its `CHANGELOG.md` line. Later commits on that branch keep the version and rewrite that
 line so it describes the branch as a whole. A version names what merges to `main`, not each step
 taken to get there.
-A version becomes a release when it is tagged `X.Y.Z` at its merged commit and published as a GitHub Release.
+A version becomes a release when it is tagged `vX.Y.Z` at its merged commit and published as a GitHub Release.
 
 A tag marks a release for people reading the history, and it is what a pinned install points at.
 A pushed `v*` tag cannot be moved or deleted, so a bad release costs a new patch version, never a
 re-tag.
 Pinning takes the full git URL with a `#ref`, quoted:
-`npx skills@latest add 'https://github.com/wilsonkichoi/skills.git#v0.0.3'`. A missing ref fails
+`npx skills@1.7.0 add 'https://github.com/wilsonkichoi/skills.git#v0.0.3'`. A missing ref fails
 loudly. The `owner/repo@v0.0.3` shorthand is not a pin, because `@` selects a skill name there.
-Adopters who want the tip use `npx skills@latest add wilsonkichoi/skills`.
+Adopters who want the tip use `npx skills@1.7.0 add wilsonkichoi/skills`.
 
 ## Distribution
 
 This repository ships as plain skill directories, installed with one command:
 
 ```
-npx skills add wilsonkichoi/skills -a claude-code -a codex -a kiro-cli
+npx skills@1.7.0 add wilsonkichoi/skills -a claude-code -a codex -a kiro-cli
 ```
 
 There is no `.claude-plugin/`, no `marketplace.json`, no per-harness distribution tree, and no
@@ -42,6 +42,24 @@ so do not add one without a written reason.
 The installer copies and symlinks the same directory into whichever harness the user named:
 `.claude/skills/` for Claude Code, `.agents/skills/` for Codex, `.kiro/skills/` for Kiro CLI. One
 source tree, no per-harness variants.
+
+### Collection releases
+
+`wkc-skills-release` publishes this collection only. Its one repository identity field lives in its
+`SKILL.md`; adopting projects keep their existing release and deployment processes. There is no
+generic release config because setup config belongs to adopting projects, not collection publication.
+The collection uses one `VERSION` and immutable tags for complete snapshots. Per-skill version stamps
+would create competing version records and cannot improve a pin that already selects the entire tree.
+No release hooks, helper scripts, build system, or per-harness copies are needed.
+
+`metadata` normally maps strings to strings under the Agent Skills specification. The sole exception
+is `wkc-skills-release`'s boolean `metadata.internal: true`, because `skills@1.7.0` checks
+`metadata.internal === true` to hide it from public discovery and bulk installation. A string
+`"true"` does not work. Explicit installation by name includes it; visibility does not authorize release writes.
+Confirm actual loading on Codex, Claude Code, and Kiro CLI. If any supported harness rejects the boolean,
+remove it from the one shared source and document that direct bulk installation includes the maintainer skill.
+The planned `wkc-manage add all` must still exclude `wkc-skills-release` by name under that fallback.
+Unavailable checks are SKIP, not proof of incompatibility. Record results in its validation runbook.
 
 ## Skills
 
@@ -137,8 +155,10 @@ Follow the instructions from `skill-template/README.md`.
 `skill-template/` is authoring material, not a shipped skill. The installer finds skills by looking
 for `SKILL.md` anywhere in the repository, not by reading `skills/`, so the skeleton is named
 `SKILL.md.template` to stay out of the install. Verify with
-`npx skills add <gh-handle>/<skills-repo> -l`: nothing named `wkc-skill-name` may appear in that list,
-and the count must equal the number of shipped skills.
+`npx skills@1.7.0 add <gh-handle>/<skills-repo> -l`: nothing named `wkc-skill-name` may appear in that list.
+The public discovery count equals shipped skills minus skills with boolean `metadata.internal: true`.
+List each internal skill explicitly with `--skill <name> -l` and verify it installs by exact name.
+Count all source `SKILL.md` files separately to verify total shipped skills; ordinary discovery is not that total.
 
 That rule is why `validation/` is safe as a sibling of `skills/`: its files are named after the
 skill, never `SKILL.md`, so nothing there is discovered or installed. Any future top-level
