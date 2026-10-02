@@ -1064,13 +1064,16 @@ fallback to apologise for. Type `1` and confirm it is taken.
 
 #### Step 5. Claude Code, then Codex, first directory: D7, D9, D8
 
-Every case here gets its own new session in the first directory, so nothing from an earlier step
-is in context. Ask each question as plain text, and record which skill loaded, if any. All three
-use the `legD parity probe` ticket, which is `ready` and unassigned after step 1.
+Run the three cases in one new session per harness, in the first directory. D7 needs a session in
+which `wkc-tracker` has not loaded yet, so a typed `/wkc-tracker` from step 1 must not be in context.
+D9 and D8 can follow in the same session. Ask each question as plain text, and record which skill
+loaded, if any. All three use the `legD parity probe` ticket, which is `ready` and unassigned after
+step 1.
 
+Before D9, copy the issues directory or note the ticket's state, so D9 has a before to compare.
 On Claude Code, run D7, then D9, then D8: D7 and D9 need the ticket unassigned, and D8 takes it.
-Then run `/wkc-tracker move <id> ready`, which clears the assignee. On Codex, run D7, D9, and D8 in
-the same order.
+Then run `/wkc-tracker move <id> ready`, which clears the assignee. Start a new Codex session and
+run D7, D9, and D8 in the same order.
 
 The observation sheet, filled in by the person at the keyboard and carried into the Run log entry
 verbatim. Its lines follow the run order, so it fills top to bottom:
@@ -1202,6 +1205,34 @@ here.
 Versions 0.0.9 to 0.0.41 below were development steps on the `feat/tracker` branch. They shipped
 together as 0.0.8, so an entry's version names a branch state, and its skill ref names the exact
 commit it tested.
+
+### 2026-10-02T14:27:21-07:00 Focused 0.0.12 model invocation run, Claude Code and Codex interactive
+
+Skill ref `2500d57` on `feat/tracker-model-invocation`, installed with `skills` 1.7.0 into
+`~/tmp/tracker-d7`. The installed `wkc-tracker` `SKILL.md`, `agents/openai.yaml`, and `local.md`
+under `.claude/skills/` and `.agents/skills/` are byte-identical to that commit. Backend: local,
+set up with `/wkc-setup` in a first Claude Code session that also created ticket 001 and moved it
+to `ready`. The person at the keyboard ran D7, D9, and D8 by hand in one new session per harness.
+Claude Code 2.1.288 ran `claude-sonnet-5-5`, session `17f18a61`. Codex CLI 0.160.0 ran
+`gpt-6-luna`, session `01a0fe80`. Only D7 to D9 ran. No installed file was edited.
+
+| Case | Verdict | Independent evidence |
+|---|---|---|
+| D7, Claude Code | PASS | The first tool call was `Skill(wkc-tracker)`. The answer named 001 as the whole frontier and offered `assign 001` without running it. |
+| D9, Claude Code | PASS | The turn ran only a Read, `ls`, and `grep`. It suggested moving 001 to `backlog` and asked first. D8's edit then showed the file still at `status: 'ready'` and `assignee: ''`, and the final `diff -r` against the pre-session copy showed only D8's two lines. |
+| D8, Claude Code | PASS | One edit set `status: 'in-progress'` and `assignee: 'Wilson Choi'`. `grep` on the file and `git config user.name` agreed. Nothing was committed. |
+| D7, Codex | PASS | The session log shows `/Users/wchoi/tmp/tracker-d7/.agents/skills/wkc-tracker/SKILL.md` read before `config.md` and `local.md`. The answer named 001 as ready, unassigned, and unblocked. |
+| D9, Codex | PASS | The turn ran only searches. `diff -r` against the pre-session copy, run straight after, printed nothing. |
+| D8, Codex | PASS | One edit changed the status and assignee lines. `grep` showed `status: 'in-progress'` and `assignee: 'Wilson Choi'`, matching `git config user.name`. |
+
+PASS 6, FAIL 0, SKIP 0 for the cases run.
+
+**Void run.** An earlier Codex session, `01a0fe79`, loaded the `dev@agent-toolkit` plugin's
+`status` skill and is not scored. The directory had been installed with `-a claude-code` only, so
+it had no `.agents/skills/` and Codex had no `wkc-tracker` to choose. That run wrote nothing: the
+issues directory still matched the pre-session copy. After `-a codex` was added, the scored session
+still listed the plugin's skills, and Codex chose `wkc-tracker` anyway. Leg D's own install
+command names `-a codex`; this run's install did not follow it.
 
 ### 2026-10-01T18:29:45-07:00 Focused 0.0.10 argument-hint conversion
 
