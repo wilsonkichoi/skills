@@ -101,6 +101,7 @@ Creating a pull request, approving a merge, or testing the skill does not author
 
 ## 5. Publish and verify
 
+Finish and check each read before issuing the write it permits. Never batch or parallelize that read with its write.
 Immediately before writing, repeat the checkout, tag, release, and stable-release reads.
 If main changed for a new tag, the target changed, or notes or intended Latest changed, stop and prepare the new result.
 Authorization for an old target does not authorize another commit.

@@ -132,6 +132,7 @@ For each invocation, record remote refs, release fields, Latest, local status, a
     PASS: changed preparation stops for review; failures report actual remote state and retain the notes file for matching recovery.
     A concurrent correct release is a verified no-op. Concurrent Latest changes must be reported when post-verification detects them.
     No failure permits rollback of immutable tags or editing a conflicting release.
+    Inspect tool ordering: every read permitting a write must finish and be checked before that write starts.
 
 18. **Fixture bootstrap and pin.** Record the fixture's main SHA, install from its unpinned tip, and compare every installed skill file.
     Publish the authorized fixture version, reinstall through its full Git URL with `#vX.Y.Z`, and compare against the remote tagged SHA.
