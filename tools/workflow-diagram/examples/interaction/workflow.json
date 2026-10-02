@@ -1,0 +1,116 @@
+{
+  "schemaVersion": 1,
+  "title": "Branching example",
+  "subtitle": "Synthetic data for primary, optional, return, parallel, and disconnected relationships.",
+  "lanes": [
+    {
+      "id": "input",
+      "label": "Input",
+      "color": {
+        "light": "#7a4fa8",
+        "dark": "#ad83da"
+      }
+    },
+    {
+      "id": "processing",
+      "label": "Processing",
+      "color": {
+        "light": "#a97400",
+        "dark": "#d4a12b"
+      }
+    }
+  ],
+  "nodes": [
+    {
+      "id": "source",
+      "label": "Source",
+      "kind": "artifact",
+      "lane": "input",
+      "summary": "A synthetic input used to demonstrate reusable diagram data.",
+      "details": {
+        "when": "Use when the source is ready.",
+        "commands": [
+          {
+            "label": "Codex",
+            "text": "$ingest"
+          },
+          {
+            "label": "CLI",
+            "text": "ingest sample"
+          }
+        ],
+        "links": [
+          {
+            "label": "Source guide",
+            "href": "https://example.com/guide"
+          }
+        ]
+      }
+    },
+    {
+      "id": "transform",
+      "label": "Transform",
+      "kind": "mode",
+      "lane": "processing",
+      "summary": "A synthetic operation with a forward path and a return path.",
+      "details": {
+        "when": "Use this fixture to check branching routes and labels."
+      }
+    },
+    {
+      "id": "result",
+      "label": "Result",
+      "kind": "artifact",
+      "lane": "processing",
+      "summary": "The output of the synthetic operation."
+    },
+    {
+      "id": "store",
+      "label": "Archive",
+      "kind": "system",
+      "lane": "input",
+      "summary": "An optional external destination above the main path."
+    },
+    {
+      "id": "note",
+      "label": "Independent note",
+      "kind": "artifact",
+      "summary": "A disconnected node retains its place in authored navigation order."
+    }
+  ],
+  "edges": [
+    {
+      "id": "forward",
+      "from": "source",
+      "to": "transform",
+      "label": "Process"
+    },
+    {
+      "id": "result",
+      "from": "transform",
+      "to": "result",
+      "label": "Produce"
+    },
+    {
+      "id": "return",
+      "from": "result",
+      "to": "source",
+      "kind": "loop",
+      "label": "Revise input"
+    },
+    {
+      "id": "archive",
+      "from": "transform",
+      "to": "store",
+      "kind": "optional",
+      "label": "Archive a copy"
+    },
+    {
+      "id": "parallel",
+      "from": "source",
+      "to": "transform",
+      "kind": "optional",
+      "label": "Alternate input"
+    }
+  ]
+}

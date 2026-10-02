@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Two embedded workflow diagrams</title>
+  <style>
+    body { font: 16px sans-serif; margin: 24px; background: #e8e7e5; }
+    .maps { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+    .map { height: 680px; min-width: 0; }
+    @media (max-width: 900px) { .maps { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+  <h1>Embedded diagrams</h1>
+  <p>Each map owns its controls and styles. This page owns its URL and keyboard behavior.</p>
+  <label>Host input <input id="host-input" value="Text editing belongs to the host"></label>
+  <div class="maps"><div class="map" id="first" tabindex="-1"></div><div class="map" id="second" tabindex="-1"></div></div>
+  <script type="module">
+    import { mountDiagram } from '/library.js';
+    const load = async folder => {
+      const [workflow, layout] = await Promise.all(['workflow', 'layout'].map(name => fetch(`/${folder}/${name}.json`).then(r => r.json())));
+      return { workflow, layout };
+    };
+    window.firstData = await load('examples/minimal');
+    window.secondData = await load('examples/branching');
+    window.firstDiagram = mountDiagram(document.getElementById('first'), window.firstData);
+    window.secondDiagram = mountDiagram(document.getElementById('second'), { ...window.secondData, theme: 'dark' });
+    window.mountDiagram = mountDiagram;
+  </script>
+</body>
+</html>

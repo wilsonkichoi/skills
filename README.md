@@ -61,7 +61,7 @@ autocomplete. It does not validate arguments or change skill behaviour. `wkc-tra
 
 `wkc-setup` interviews you about your issue tracker and your product docs, writes
 `docs/dev-agents/config.md`, and adds one reference line to your `AGENTS.md` or `CLAUDE.md` so
-every session loads that config. Every other skill reads the same file.
+every session loads that config. Workflow diagrams can also be created without setup or config.
 
 Then run `wkc-tracker list` in your harness, with the prefix from the table above, to confirm the
 backend answers.
@@ -75,6 +75,7 @@ validated before the next starts. See [AGENTS.md](./AGENTS.md) for how a skill i
 |---|---|---|
 | [`wkc-setup`](./skills/wkc-setup/SKILL.md) | Configure a repository to use these skills | shipped |
 | [`wkc-tracker`](./skills/wkc-tracker/SKILL.md) | Read and write issues against GitHub, Linear, or local markdown | shipped |
+| [`wkc-workflow-diagram`](./skills/wkc-workflow-diagram/SKILL.md) | Create and update offline maps of actual project skills | shipped |
 | `wkc-research` | Gather raw material, transcripts, and prior art into notes | planned |
 | `wkc-architect` | Turn product intent into `SPEC.md` | planned |
 | `wkc-plan` | Break a spec into milestones and tasks with dependencies | planned |
@@ -86,6 +87,18 @@ validated before the next starts. See [AGENTS.md](./AGENTS.md) for how a skill i
 | `wkc-git-fu` | Branch, rebase, merge, and conflict work | planned |
 | `wkc-release` | Cut a tagged release | planned |
 | `wkc-yolo` | Run the loop unattended across several tickets | planned |
+
+## Workflow diagrams
+
+Invoke `$wkc-workflow-diagram` in Codex or `/wkc-workflow-diagram` in Claude Code and Kiro CLI.
+The skill reads actual definitions and preserves authored content when updating an existing diagram.
+When a changed definition contradicts existing text, it reports the conflict with suggested wording instead of rewriting it.
+It does not invoke diagrammed skills. Node.js 22 or newer is required; consumers need no npm installation.
+Closing diagram details restores the previous view before returning keyboard focus, including after Previous/Next navigation.
+
+Inputs, offline HTML, notes, screenshots, and temporary files stay under `docs/dev-agents/diagram/` in the target project.
+See [this repository's map](docs/dev-agents/diagram/README.md) and the
+[diagram reference](skills/wkc-workflow-diagram/README.md).
 
 ## What `wkc-setup` writes
 
@@ -105,7 +118,7 @@ and `wkc-plan` rather than by `wkc-setup`.
 Name the skills and the agents you installed to:
 
 ```
-npx skills@latest remove wkc-setup wkc-tracker -a claude-code -a codex -a kiro-cli
+npx skills@latest remove wkc-setup wkc-tracker wkc-workflow-diagram -a claude-code -a codex -a kiro-cli
 ```
 
 The other forms are documented under
