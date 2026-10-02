@@ -4,7 +4,7 @@ description: What it does, one sentence. When to use it, in the words someone wo
 argument-hint: "[arguments]"
 disable-model-invocation: true
 metadata:
-  allow_implicit_invocation: "false"
+  allow_implicit_invocation: false
 ---
 
 # wkc-skill-name

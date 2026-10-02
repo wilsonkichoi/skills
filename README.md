@@ -2,8 +2,10 @@
 
 Skills for an AI software development lifecycle: research, architecture, planning, ticketing,
 implementation, review, and release. They are small, hand-maintainable markdown files rather than a
-framework. Manual invocation is the default. The shipped skills require explicit invocation on
-Claude Code and Codex; Kiro has no documented setting to suppress automatic activation.
+framework. Manual invocation is the default. `wkc-setup` and `wkc-workflow-diagram` require
+explicit invocation on Claude Code and Codex; Kiro has no documented setting to suppress automatic
+activation. `wkc-tracker` opts into model invocation, so a model or another skill can read and
+change ticket state without a typed command.
 
 All skill identifiers use `wkc-` to distinguish this repository's skills from similarly named skills.
 Version 0.0.9 makes the breaking rename from `setup` and `tracker` to `wkc-setup` and `wkc-tracker`,

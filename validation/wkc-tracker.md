@@ -73,10 +73,11 @@ mkdir -p ~/tmp/tracker-val && cd ~/tmp/tracker-val
 npx skills@latest add 'https://github.com/wilsonkichoi/skills.git#<review-ref>' -a claude-code -a codex -a kiro-cli
 ```
 
-**Invoking the skill during a run.** Every skill here carries `disable-model-invocation: true`, so
-no harness invokes one on its own and each `$wkc-tracker ...` has to be typed. That is the shipped
-behaviour, not a defect, and a leading space is enough to stop a slash command firing, so check that
-an invocation actually fired before scoring what came back.
+**Invoking the skill during a run.** `wkc-tracker` opts into model invocation, so a harness may
+load it on its own. `wkc-setup` still carries `disable-model-invocation: true` and has to be typed.
+Type each `$wkc-tracker ...` anyway, so every case runs the same verb with the same arguments. A
+leading space is enough to stop a slash command firing, and a model can then answer from its own
+reading of the backend instead. Check that the skill actually fired before scoring what came back.
 
 Check that it fired the right skill, too. A harness can list a same-named skill from a plugin or a
 global install beside this project's own: Codex offered `$dev:setup` from the `dev@agent-toolkit`
@@ -85,10 +86,10 @@ project's install. In Codex, that is the entry whose path is under the scratch d
 `.agents/skills/`. A run that fired any other skill is void, not scored: record it as a deviation,
 and start again in a fresh directory.
 
-For a leg that would otherwise be hundreds of hand-typed commands, delete that one line from the
-**installed** `SKILL.md` and restart the harness. Then say so in the report as a deviation, and say
-from which case onward, because the file under test now differs from the commit by that line. It
-changes no verb, and it is still not nothing. Restore it or reinstall before the run ends, and never
+For an unattended leg whose driver cannot type `$wkc-setup` itself, delete that one line from the
+**installed** `wkc-setup/SKILL.md` and restart the harness. Then say so in the report as a
+deviation, and say from which case onward, because the file under test now differs from the commit
+by that line. It changes no verb, and it is still not nothing. Restore it or reinstall before the run ends, and never
 edit the source tree to get it.
 
 **S1 install layout.** Check: `ls .agents/skills/wkc-tracker/`. Expect `SKILL.md`, `README.md`,
@@ -157,6 +158,14 @@ Record each harness separately; an unavailable harness is SKIP with its reason.
 **S6a [MANUAL] Claude Code autocomplete.** In the installed repository, type `/wkc-tracker` without submitting it.
 Expect autocomplete to show `<verb> [args]`. Check `/wkc-setup` too; it must show no argument hint.
 This check is on the menu, not a model's claim about it. Record SKIP when the interactive menu is unavailable.
+
+**S7 invocation settings.** Parse the installed `SKILL.md` frontmatter and `agents/openai.yaml` of
+both skills with a YAML parser, under `.agents/skills/`, `.claude/skills/`, and `.kiro/skills/`.
+Expect `wkc-tracker` to have `disable-model-invocation` the boolean `false`,
+`metadata.allow_implicit_invocation` the boolean `true`, and `policy.allow_implicit_invocation` the
+boolean `true`. Expect `wkc-setup` to have `true`, `false`, and `false` for the same three keys.
+A quoted string such as `"false"` is a FAIL. Record any installer rewrite of these keys as a
+deviation with the committed and installed values side by side.
 
 ---
 
@@ -970,6 +979,14 @@ anything, and a missing remote has to be resolved before Section B is on screen.
 Expect it idle and waiting, so the answer is typed straight in. A harness still reporting work, or
 holding the reply as a queued input, is a FAIL: the skill asked and then kept going.
 
+**D7 a model invokes wkc-tracker on its own.** In a new session in the first directory, with no
+prefix and no skill name, ask `which ticket should I pick up now?`. Expect the harness to load
+`wkc-tracker` itself and answer with the `next` frontier. Claude Code shows a Skill tool call naming
+`wkc-tracker`; Codex shows the skill being read from the project's `.agents/skills/`. Check the
+answer against an independent read of the backend, as in the B cases. An answer built from reading
+`docs/dev-agents/issues/` directly, without loading the skill, is a FAIL even when the ticket list
+is correct. Run it on Claude Code and on Codex and record each separately.
+
 ### Running leg D
 
 The numbered steps below are in run order, and the case IDs are not. D1 and D3 check that another
@@ -985,9 +1002,9 @@ taken. A model reporting on its own turn is exactly the self-assessment `How to 
 these are watched from outside and written down by whoever watched. D1 to D3 are lighter, one
 command each with the verdict in the output, but every harness still has to be launched by hand.
 
-Two scratch directories, both installed with the invocation gates **left as shipped**. Every other
-leg strips them so it can run unattended. Leg D must not, because being triggered by name is what
-it tests.
+Two scratch directories, both installed with the invocation settings **left as shipped**. Another
+leg may strip the `wkc-setup` gate so it can run unattended. Leg D must not, because being triggered
+by name, and for D7 being triggered without one, is what it tests.
 
 ```
 mkdir -p ~/tmp/tracker-legd && cd ~/tmp/tracker-legd && npx skills@latest add 'https://github.com/wilsonkichoi/skills.git#<review-ref>' -a claude-code -a codex -a kiro-cli -s '*' -y
@@ -1033,6 +1050,11 @@ Section A only; the run can be abandoned after that. Codex has no picker, so num
 the recommended one first and a bare digit accepted is the correct result here rather than a
 fallback to apologise for. Type `1` and confirm it is taken.
 
+#### Step 5. Claude Code, then Codex, first directory: D7
+
+Start a new session on each harness in the first directory, so nothing from step 1 or step 2 is in
+context. Ask the D7 question as plain text. Record which skill loaded, if any, and the answer.
+
 The observation sheet, filled in by the person at the keyboard and carried into the Run log entry
 verbatim. Its lines follow the run order, so it fills top to bottom:
 
@@ -1050,6 +1072,9 @@ D3 Kiro list ready:         output =
 step 4, Codex, second directory
 D4 Codex:                   form of the Section A question =, digit accepted =
 D6 Codex:                   harness state at Section A =
+step 5, first directory
+D7 Claude Code:             skill loaded =, answer =
+D7 Codex:                   skill loaded =, answer =
 anything surprising:
 ```
 

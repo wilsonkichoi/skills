@@ -3,7 +3,7 @@ name: wkc-workflow-diagram
 description: Create and update offline workflow diagrams. Use when you want to explain project skills and their relationships visually.
 disable-model-invocation: true
 metadata:
-  allow_implicit_invocation: "false"
+  allow_implicit_invocation: false
 ---
 
 # wkc-workflow-diagram
