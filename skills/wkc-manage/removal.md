@@ -8,7 +8,8 @@ Show broken runtime dependencies and obtain informed confirmation before removal
 Removing `wkc-setup` leaves generated configuration and its context reference intact.
 Load all needed instructions before removing the manager itself.
 
-Require lock ownership, known content, and a verified backup before deleting a placement.
+Read `verification.md` and compare affected content with its recorded source archive before declaring removal safe.
+A lock ref alone does not verify content. Require lock ownership, known content, and a verified backup before deleting a placement.
 Every removal names individual skills and selected harnesses. For example:
 
 ```sh
@@ -28,6 +29,11 @@ The installer can print success while retaining the canonical directory and its 
 Propose independent copies for retained Claude Code and Kiro CLI placements.
 Show affected retained harnesses and explain the mode change; obtain approval before backup or mutation.
 Check other consumers of the canonical directory, including the installer's globally detected universal harnesses.
+Inspect the pinned installer's agent definitions and check their detection locations before declaring that no other consumer exists.
+Global copies of the selected skill are irrelevant to this detection.
+For example, OpenCode detection uses `~/.config/opencode`, Gemini CLI uses `~/.gemini`, and GitHub Copilot uses `~/.copilot`.
+Antigravity and Antigravity CLI use `~/.gemini/antigravity` and `~/.gemini/antigravity-cli`.
+Detected agents with project path `.agents/skills` retain any existing canonical skill, even with no global copy of that skill.
 If another harness requires the canonical path, report the layout constraint and stop before removing placements.
 Do not broaden the harness list, disable detection, remove global directories, or delete canonical files manually to bypass it.
 

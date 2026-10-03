@@ -175,6 +175,7 @@ Removing setup preserves the configuration and context reference it previously w
 Removing a runtime dependency requires informed confirmation.
 Codex-only removal with retained Claude Code or Kiro links requires approved conversion to independent copies.
 The installer can retain canonical files because other detected harnesses share them, even after reporting success.
+Detection uses harness configuration locations; an absent global skill copy does not establish that a harness is absent.
 The manager reports that layout constraint instead of claiming removal succeeded.
 Backups use `~/.cache/wkc-manage/backups/`, outside checkout and discovery roots, and survive failed operations.
 The other installer forms are documented under [`skills remove`](https://github.com/vercel-labs/skills#skills-remove).

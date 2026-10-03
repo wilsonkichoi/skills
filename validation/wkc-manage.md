@@ -91,6 +91,7 @@ Stop on an observation contradicting the approved design; settle it before writi
     Request selective and complete supported-harness removal.
     PASS: the constraint is identified before destructive conversion, remaining users and global directories stay intact,
     and the skill never treats installer success or a surviving lock entry as proof of removal.
+    Require actual agent detection checks; absent global copies of the selected skill cannot establish absent project consumers.
 
 13. **Dependencies and setup configuration.** Install a skill declaring a runtime dependency on a selected removal target.
     Separately remove setup after it produced project configuration.
@@ -205,3 +206,14 @@ npx skills@1.7.0 add 'https://github.com/wilsonkichoi/skills.git#v0.0.13' --skil
 Schema `0`: exit `0`; output lock became version `1`, with only the new tracker entry. Existing setup and sentinel provenance vanished.
 Schema `2`: exit `0`; output lock kept version `2`, setup, and sentinel, then added tracker without schema rejection.
 Both created tracker files. These observations require the manager's pre-installer raw lock gate on all operations.
+
+### Initial behavioral failure
+
+Candidate `37c91719460e323e6552ce5e9b5fa831d97a2d1e`, Kiro CLI case 12: **FAIL**.
+Kiro inspected global skill directories, but did not inspect the other harnesses' detection directories.
+It falsely reported no other canonical consumers and proposed a removal sequence that would leave canonical files behind.
+It also requested redundant confirmation despite advance authorization for the concrete conversion.
+No mutation occurred; locks, canonical files, and retained links remained unchanged.
+The removal reference now distinguishes global skill installation from agent detection and requires checking installer definitions.
+It also requires source archive comparisons before declaring removal safe. The main skill clarifies conversion authorization.
+This initial FAIL remains part of the report after corrected-candidate checks.

@@ -92,6 +92,7 @@ For removal, read [removal.md](./removal.md), including self-removal and canonic
 
 Show the exact release commit, names, affected harnesses, placement changes, and dependency effects before mutation.
 Honor existing authorization for that concrete operation. Migration, edit replacement, and copy conversion require informed confirmation.
+Approval of a concrete copy conversion also authorizes its necessary removal and reinstallation; do not request redundant approval.
 If authorization is missing, end on a numbered question. Do not create backups or begin mutation while awaiting an answer.
 
 ## 4. Apply and verify
