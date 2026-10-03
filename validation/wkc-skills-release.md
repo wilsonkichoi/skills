@@ -190,9 +190,10 @@ Shell and ordering corrections produced `8b564bb8cc5077d46a2c97cb4cd3fbee0015a2e
 Its `SKILL.md` hash was `8ae00b100349bb00bc88bc35886fb852973523b42aaa311dc2fc4d613c315e4b`.
 These results concern earlier candidates, before the draft-lookup correction; they do not prove current publication behavior.
 
-Fixtures retained for review:
-[publication fixture](https://github.com/wilsonkichoi/skills-release-validation-20261002-1510),
-[bootstrap fixture](https://github.com/wilsonkichoi/skills-release-bootstrap-20261002).
+Fixtures: `wilsonkichoi/skills-release-validation-20261002-1510` for publication and
+`wilsonkichoi/skills-release-bootstrap-20261002` for bootstrap. The maintainer authorized deleting both
+after the production release on 2026-10-02. Their release IDs, tags, and URLs in this report no longer resolve;
+this report is the remaining record.
 Only the installed Repository identity field changed to the corresponding fixture name.
 Every other installed file was compared against its candidate, separately for each harness.
 
@@ -353,7 +354,7 @@ The target draft for `v0.0.7` remained present throughout this run.
 Codex performed the complete publication path through the installed skill, including repeated complete-list reads before and after release creation.
 It pushed only `v0.0.8` with `--no-follow-tags`, then used `--verify-tag`, `--notes-file`, and `--latest=false`.
 Independent checks found exactly one new remote ref and one new stable release:
-[fixture `v0.0.8`](https://github.com/wilsonkichoi/skills-release-validation-20261002-1510/releases/tag/v0.0.8), ID `402303114`.
+fixture `v0.0.8`, ID `402303114`.
 The tag is lightweight and identifies the authorized SHA. Its title is `v0.0.8`; its body is:
 
 ```markdown
@@ -404,3 +405,50 @@ codex exec --ephemeral --json -s danger-full-access "$(cat ../publish.prompt)" <
 $wkc-skills-release v0.0.8
 Publish this disposable fixture release using the installed skill through final verification. I explicitly authorize repository wilsonkichoi/skills-release-validation-20261002-1510, tag v0.0.8, commit c729aac8356ab09c80e56152e938b4136fd89793, with contract-generated notes and Latest decision. I acknowledge this is an older local-only target that was never remotely published and is not main’s tip; this exact commit is the intended fixture release. Do not request redundant authorization. Publish only this fixture target, preserve other refs and releases, and do not modify versions, commits, installed skill files, or repository configuration. Do not create helper scripts or publish to the production collection.
 ```
+
+### Production publication at `57276ce`
+
+Pull request #14 merged as squash commit `57276ceb4a73b8b69a564ab9073a10ee48e70999`, with `VERSION` `0.0.13`.
+The packaged `SKILL.md` at that commit hashes to `40ee0ce51d692f3eec3123bd84b9987ef971f451505a6295c13ab1b6298dac9e`,
+the source verified by the full fixture publication above.
+
+Bootstrap ran in the maintainer checkout after a fast-forward to that commit.
+`git ls-remote origin refs/heads/main` matched it before and after installation.
+The skill was installed from the unpinned tip, then each installed path was compared recursively
+against `git archive` of the recorded commit. All three matched, and the checkout stayed clean.
+
+```sh
+npx skills@1.7.0 add wilsonkichoi/skills --skill wkc-skills-release -a claude-code -a codex -a kiro-cli -y
+```
+
+Claude Code invoked `/wkc-skills-release` with no tag. It prepared `v0.0.13` at the main tip, with
+preceding release `v0.0.12` at `750995d3fa4213165cbd6b7c7e3386d78aeba0c9`, notes covering only `0.0.13`, and `--latest`.
+No local-only warning appeared. It ended on the numbered question, and the maintainer replied `1`.
+It repeated the checks, created and pushed the lightweight tag, re-read the complete release list,
+created the release, verified the result, and removed its notes file.
+
+Independent checks after publication:
+
+- `git ls-remote origin 'refs/tags/v0.0.13' 'refs/tags/v0.0.13^{}'` returned one line at the merged commit, so the tag is lightweight.
+- Release `402318527` has title `v0.0.13`, `draft=false`, and `prerelease=false`. It was published at `2026-10-03T04:08:13Z`.
+- Its body equals `## Changes since v0.0.12`, a blank line, and the `0.0.13` changelog line, byte for byte.
+- Latest is `v0.0.13`, ID `402318527`.
+
+The pin was verified in an empty consumer directory:
+
+```sh
+npx skills@1.7.0 add 'https://github.com/wilsonkichoi/skills.git#v0.0.13' --skill wkc-skills-release -a claude-code -a codex -a kiro-cli -y
+```
+
+Its `skills-lock.json` records `"ref": "v0.0.13"`. All three installed paths matched `git archive` of the merged commit recursively.
+The maintainer checkout's three paths also still match.
+The nonexistent-ref negative was not repeated in production; case 18 covers it.
+
+| Case 20 step | Codex | Claude Code | Kiro CLI |
+|---|---|---|---|
+| Bootstrap install from main and file comparison | PASS | PASS | PASS |
+| Production publication with explicit authorization | SKIP | PASS | SKIP |
+| Tag reinstall and file comparison | PASS | PASS | PASS |
+
+One production release exists, so publication ran through one harness only.
+Codex and Kiro CLI publication SKIP records that fact; it is not a failure.
