@@ -262,9 +262,9 @@ Independent checks found unchanged HEAD, refs, installed bytes, configuration, a
 Complete remote ref and release snapshots were byte-identical before and after all three invocations.
 Publication under that configuration and controlled sentinel insertion during harness preparation remained SKIP as full harness cases.
 
-### Opus review candidate
+### Candidate `0172770`
 
-Candidate is based on `56b0e6c98d0d2b1755b99148e6ea6ec81ab13308`, with these packaged hashes:
+Source: `0172770796998492998fdb75dd9f8edfdcf8b23b`, with these packaged hashes:
 
 | File | SHA-256 |
 |---|---|

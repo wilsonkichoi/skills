@@ -51,7 +51,7 @@ generic release config because setup config belongs to adopting projects, not co
 The collection uses one `VERSION` and immutable tags for complete snapshots. Per-skill version stamps
 would create competing version records and cannot improve a pin that already selects the entire tree.
 No release hooks, helper scripts, build system, or per-harness copies are needed.
-Release checks explicitly include untracked files, and tag pushes disable followed tags regardless of Git configuration.
+Runtime publication rules live in [`skills/wkc-skills-release/SKILL.md`](./skills/wkc-skills-release/SKILL.md).
 
 `metadata` normally maps strings to strings under the Agent Skills specification. The sole exception
 is `wkc-skills-release`'s boolean `metadata.internal: true`, because `skills@1.7.0` checks
@@ -62,8 +62,6 @@ Recheck compatibility when metadata or supported harness versions change. If a s
 remove it from the one shared source and document that direct bulk installation includes the maintainer skill.
 The planned `wkc-manage add all` must still exclude `wkc-skills-release` by name under that fallback.
 Unavailable checks are SKIP, not proof of incompatibility. Record results in its validation runbook.
-Determine target release state from a complete paginated list with authenticated push access, including drafts.
-Older local-only targets must be flagged before authorization; ancestry alone does not establish the intended release commit.
 
 ## Skills
 

@@ -37,7 +37,7 @@ Do not switch branches, reset, pull, or stash to satisfy this requirement.
 ## 2. Resolve the target
 
 Accept only `v` followed by three dot-separated nonnegative decimal integers, without leading zeroes except `0`.
-No suffixes, leading zeroes, or shorthand. `VERSION` must contain the corresponding bare version and one optional final newline.
+No suffixes or shorthand. `VERSION` must contain the corresponding bare version and one optional final newline.
 For omitted input, read `VERSION` at the recorded main commit and add `v`.
 
 Read the exact local tag ref and exact remote tag ref independently, including their object types.
