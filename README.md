@@ -2,7 +2,7 @@
 
 Skills for an AI software development lifecycle: research, architecture, planning, ticketing,
 implementation, review, and release. They are small, hand-maintainable markdown files rather than a
-framework. Manual invocation is the default. `wkc-setup`, `wkc-workflow-diagram`, and `wkc-skills-release`
+framework. Manual invocation is the default. `wkc-setup`, `wkc-workflow-diagram`, `wkc-manage`, and `wkc-skills-release`
 require explicit invocation on Claude Code and Codex; Kiro has no documented setting to suppress automatic activation.
 `wkc-tracker` opts into model invocation, so a model or another skill can read and
 change ticket state without a typed command.
@@ -17,7 +17,7 @@ must declare their intended callers and settings as described in [AGENTS.md](./A
 Name the agents you want with `-a`:
 
 ```
-npx skills@1.7.0 add wilsonkichoi/skills -a claude-code -a codex -a kiro-cli
+npx skills@1.7.0 add wilsonkichoi/skills --skill wkc-setup wkc-tracker wkc-workflow-diagram wkc-manage -a claude-code -a codex -a kiro-cli
 ```
 
 The installer creates each agent's directory itself. It did not always: a project-scope install
@@ -31,7 +31,7 @@ Tracking the tip is fine for now. To pin a version, pass the full git URL with a
 because `#` starts a comment in most shells:
 
 ```
-npx skills@1.7.0 add 'https://github.com/wilsonkichoi/skills.git#v0.0.12' -a claude-code -a codex -a kiro-cli
+npx skills@1.7.0 add 'https://github.com/wilsonkichoi/skills.git#v0.0.13' --skill wkc-setup wkc-tracker wkc-workflow-diagram -a claude-code -a codex -a kiro-cli
 ```
 
 A ref that does not exist fails loudly, which is how you know the pin took effect. The
@@ -48,6 +48,40 @@ through boolean `metadata.internal: true`. Public discovery excludes internal sk
 Install it explicitly by name when releasing this collection. See its
 [bootstrap and pin instructions](skills/wkc-skills-release/README.md).
 Release checks include untracked files, and publication pushes only the authorized tag regardless of Git configuration.
+
+### Manage installations
+
+Invoke `$wkc-manage` in Codex, or `/wkc-manage` in Claude Code and Kiro CLI.
+No operation means read-only `status`. Natural-language requests can also select `update`, `add`, `remove`, or `reconcile`.
+Updates select the highest published stable version, preserve the installed set and placement, and reinstall from its exact tag.
+Additions name selected skills; `add all` selects public skills and explicitly excludes `wkc-skills-release`, including under the metadata fallback.
+
+Management supports only raw project lock schema `1`. Malformed locks and other versions stop every operation.
+The installer can discard older locks or modify newer ones, so the manager checks before invoking it.
+Ownership comes from the lock's source repository. Existing files without that evidence are not claimed by their names.
+Copy or symlink mode and accessible harnesses come from the filesystem, because the lock records neither.
+Local edits, divergent copies, unknown destinations, and unintended downgrades stop for a concrete decision.
+Content verification compares every installed file with an archive of the exact tag, including supporting files.
+Offline status reports local evidence with remote identity unverified.
+
+`reconcile` explicitly creates the optional `docs/dev-agents/installed-skills.local.md` diagnostic report.
+It uses Git's resolved local exclusion file, including in linked worktrees. The report is not project configuration.
+Ordinary sessions do not load it, status recomputes evidence, and mutations do not refresh it.
+See [the manager](skills/wkc-manage/SKILL.md) and [its validation report](validation/wkc-manage.md).
+
+### Bootstrap legacy installations
+
+Version `v0.0.8` ships `setup` and `tracker`. Bootstrap only the manager from a published release containing it.
+The first expected release is `v0.0.14`, pending merge and publication; `v0.0.13` does not contain the manager.
+Replace `vX.Y.Z` below with a verified published tag containing `wkc-manage`:
+
+```sh
+npx skills@1.7.0 add 'https://github.com/wilsonkichoi/skills.git#vX.Y.Z' --skill wkc-manage -a claude-code -a codex -a kiro-cli -y
+```
+
+Compare the complete installed manager against that tag's Git archive before invocation.
+The manager reads migration guidance from the target release, backs up, and verifies replacements before removing legacy names.
+Migration requires confirmation for `setup` to `wkc-setup` and `tracker` to `wkc-tracker`.
 
 ## Quickstart
 
@@ -94,7 +128,7 @@ validated before the next starts. See [AGENTS.md](./AGENTS.md) for how a skill i
 | `wkc-verify` | Check the work against the ticket's acceptance criteria | planned |
 | `wkc-git-fu` | Branch, rebase, merge, and conflict work | planned |
 | [`wkc-skills-release`](./skills/wkc-skills-release/SKILL.md) | Publish this collection's tags and GitHub Releases | shipped, internal |
-| `wkc-manage` | Install and manage this collection's skills in adopting projects | planned, issue [#13](https://github.com/wilsonkichoi/skills/issues/13) |
+| [`wkc-manage`](./skills/wkc-manage/SKILL.md) | Inspect, update, add, remove, migrate, and verify project installations | shipped |
 | `wkc-yolo` | Run the loop unattended across several tickets | planned |
 
 ## Workflow diagrams
@@ -124,10 +158,11 @@ and `wkc-plan` rather than by `wkc-setup`.
 
 ## Uninstall
 
-Name the skills and the agents you installed to:
+Use `wkc-manage remove` for dependency checks, backups, shared-file checks, and independent verification.
+For direct installer removal, name the skills and the agents you installed to:
 
 ```
-npx skills@1.7.0 remove wkc-setup wkc-tracker wkc-workflow-diagram -a claude-code -a codex -a kiro-cli
+npx skills@1.7.0 remove wkc-setup wkc-tracker wkc-workflow-diagram wkc-manage -a claude-code -a codex -a kiro-cli
 ```
 
 If you explicitly installed the internal release skill, remove it separately:
@@ -136,9 +171,13 @@ If you explicitly installed the internal release skill, remove it separately:
 npx skills@1.7.0 remove wkc-skills-release -a claude-code -a codex -a kiro-cli
 ```
 
-The other forms are documented under
-[`skills remove`](https://github.com/vercel-labs/skills#skills-remove). Then delete what `wkc-setup`
-wrote: `docs/dev-agents/` and the one reference line it added to your `AGENTS.md` or `CLAUDE.md`.
+Removing setup preserves the configuration and context reference it previously wrote.
+Removing a runtime dependency requires informed confirmation.
+Codex-only removal with retained Claude Code or Kiro links requires approved conversion to independent copies.
+The installer can retain canonical files because other detected harnesses share them, even after reporting success.
+The manager reports that layout constraint instead of claiming removal succeeded.
+Backups use `~/.cache/wkc-manage/backups/`, outside checkout and discovery roots, and survive failed operations.
+The other installer forms are documented under [`skills remove`](https://github.com/vercel-labs/skills#skills-remove).
 
 Do not run `npx skills@1.7.0 remove --all`, and do not leave `-a` off, inside a repository that keeps its
 own skills in a top-level `skills/` directory. OpenClaw's project path is a bare `skills/`, so a

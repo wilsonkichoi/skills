@@ -1,0 +1,5 @@
+interface:
+  display_name: "wkc-manage"
+  short_description: "Manage this collection's project installations."
+policy:
+  allow_implicit_invocation: false

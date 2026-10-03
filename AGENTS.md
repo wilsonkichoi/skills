@@ -60,10 +60,13 @@ is `wkc-skills-release`'s boolean `metadata.internal: true`, because `skills@1.7
 Codex, Claude Code, and Kiro CLI loaded the boolean in the recorded validation runs.
 Recheck compatibility when metadata or supported harness versions change. If a supported harness rejects the boolean,
 remove it from the one shared source and document that direct bulk installation includes the maintainer skill.
-The planned `wkc-manage add all` must still exclude `wkc-skills-release` by name under that fallback.
+Recheck `wkc-manage`'s explicit internal-skill exclusion in its validation runbook when applying that fallback.
 Unavailable checks are SKIP, not proof of incompatibility. Record results in its validation runbook.
 
 ## Skills
+
+`wkc-manage` is a manually invoked public skill. Keep its runtime management rules in its skill and sibling references.
+Record installer compatibility observations and behavioral results in `validation/wkc-manage.md`, not in authoring policy.
 
 Every skill identifier must start with `wkc-`. Use the same identifier for the directory,
 frontmatter `name`, `interface.display_name`, main heading, invocations, and references between skills.
