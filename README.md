@@ -44,7 +44,7 @@ Claude Code, Codex, Kiro CLI, and other agents. Tags come from the release proce
 [CONTRIBUTING.md](./CONTRIBUTING.md).
 
 The maintainer skill `wkc-skills-release` is hidden from ordinary discovery and bulk installation
-through boolean `metadata.internal: true`. Public discovery lists three skills; the source ships four.
+through boolean `metadata.internal: true`. Public discovery excludes internal skills; the roster identifies all shipped skills.
 Install it explicitly by name when releasing this collection. See its
 [bootstrap and pin instructions](skills/wkc-skills-release/README.md).
 Release checks include untracked files, and publication pushes only the authorized tag regardless of Git configuration.
@@ -94,6 +94,7 @@ validated before the next starts. See [AGENTS.md](./AGENTS.md) for how a skill i
 | `wkc-verify` | Check the work against the ticket's acceptance criteria | planned |
 | `wkc-git-fu` | Branch, rebase, merge, and conflict work | planned |
 | [`wkc-skills-release`](./skills/wkc-skills-release/SKILL.md) | Publish this collection's tags and GitHub Releases | shipped, internal |
+| `wkc-manage` | Install and manage this collection's skills in adopting projects | planned, issue [#13](https://github.com/wilsonkichoi/skills/issues/13) |
 | `wkc-yolo` | Run the loop unattended across several tickets | planned |
 
 ## Workflow diagrams
@@ -127,6 +128,12 @@ Name the skills and the agents you installed to:
 
 ```
 npx skills@1.7.0 remove wkc-setup wkc-tracker wkc-workflow-diagram -a claude-code -a codex -a kiro-cli
+```
+
+If you explicitly installed the internal release skill, remove it separately:
+
+```sh
+npx skills@1.7.0 remove wkc-skills-release -a claude-code -a codex -a kiro-cli
 ```
 
 The other forms are documented under

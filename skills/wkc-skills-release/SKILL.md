@@ -20,7 +20,6 @@ metadata:
 Use that field as `repo` throughout. Require no setup skill or project configuration.
 Publish merged work only. Never change versions, create commits or pull requests, or merge branches.
 Never move or delete tags, edit releases, or use force pushes to repair a conflict.
-Read [README.md](./README.md) for bootstrap installation before the first invocation.
 
 ## 1. Verify the checkout
 
@@ -37,7 +36,7 @@ Do not switch branches, reset, pull, or stash to satisfy this requirement.
 
 ## 2. Resolve the target
 
-Accept only canonical decimal semver: `v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)`.
+Accept only `v` followed by three dot-separated nonnegative decimal integers, without leading zeroes except `0`.
 No suffixes, leading zeroes, or shorthand. `VERSION` must contain the corresponding bare version and one optional final newline.
 For omitted input, read `VERSION` at the recorded main commit and add `v`.
 
@@ -50,20 +49,23 @@ If both refs exist, require identical SHAs. A missing ref is recoverable; a conf
 With neither ref present, require the requested version to equal `VERSION` at synchronized main.
 The target is that main commit. Refuse historical backfill even when the requested version once existed on main.
 With either ref present, use its SHA, even after main advances.
+Record whether the target exists remotely. A local-only tag is not evidence of prior remote publication.
 Require the target to be an ancestor of recorded main, and its committed `VERSION` to equal the tag's version.
 Read `VERSION` and `CHANGELOG.md` using `git show "${target}:VERSION"` and `git show "${target}:CHANGELOG.md"`.
 Never use working-copy release data for an older target.
 
 ## 3. Prepare notes and Latest
 
-Read any release for the exact target tag, including drafts and prereleases; only a confirmed 404 means absent.
-Authentication, network, and other API failures stop publication.
-Read every release page, not a fixed-size release list:
+Require authenticated push access from `gh api "repos/$repo"` so release listings include drafts; otherwise stop.
+Read every release page, not a fixed-size release list. Any API failure, including 404, stops publication:
 
 ```sh
 gh api --paginate "repos/$repo/releases?per_page=100"
 ```
 
+Find all exact target-tag matches in this complete list before excluding drafts and prereleases.
+Only a successful complete list with no target match means absent; a tag-endpoint 404 cannot establish absence.
+Multiple target matches, or any matching draft or prerelease, are conflicts. Stop without publication or release edits.
 Exclude drafts and prereleases from version comparisons and the notes boundary.
 Require stable release tags to use canonical `vX.Y.Z`; otherwise stop and name the unsupported tag.
 Compare integer `(major, minor, patch)` tuples, never text order or publication dates.
@@ -95,6 +97,8 @@ A matching release is a no-op, including after main or Latest advances. Report i
 Any mismatch is a conflict. Stop without altering the release or either tag.
 
 Show repository, tag, full target SHA, preceding release, complete notes, and intended Latest status before publication.
+For a local-only target older than main, prominently flag that it was never remotely published and is not main's tip.
+Explain that ancestry and matching VERSION do not prove this is the intended merged release commit.
 Honor existing explicit authorization for this repository, tag, and commit; do not ask twice.
 Otherwise end the turn on a numbered question: publish this target (recommended), or stop.
 Creating a pull request, approving a merge, or testing the skill does not authorize a collection release.
@@ -122,7 +126,7 @@ git push --no-follow-tags origin "refs/tags/${tag}:refs/tags/${tag}"
 ```
 
 Re-read the remote tag and require its SHA and lightweight type to match the target before creating the release.
-Re-read stable releases and Latest before release creation; stop if the prepared decision changed.
+Re-read the complete release list, including target drafts, and Latest before release creation; stop on conflict or changed preparation.
 Use the prepared file and explicit Latest flag:
 
 ```sh
@@ -130,6 +134,7 @@ gh release create "$tag" --repo "$repo" --verify-tag --title "$tag" --notes-file
 ```
 
 Re-read the remote tag, release, and Latest independently. Require the same tag commit, title, notes, and stable publication state.
+Use the complete release list for every target-release recheck, including recovery after a command failure.
 For `--latest`, Latest must be this tag. For `--latest=false`, Latest must equal the recorded prior Latest, or remain absent.
 On a command failure, read the actual tag and release state before reporting or retrying.
 Resume only matching state. Never roll back a pushed tag or repair a conflicting release.

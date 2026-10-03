@@ -47,20 +47,13 @@ An installer success message or lock entry alone does not establish the pin.
 Matching local and remote lightweight tags resume at the same commit, even after main advances.
 A missing remote tag can be pushed from a verified local tag. A missing local tag can be recreated from a verified remote tag.
 A matching stable release is unchanged. Conflicts stop without moving tags or editing releases.
+Matching requires the skill's notes heading and complete deterministic body.
+Earlier manually published releases without that heading are conflicts, even when their tags and versions are correct.
+A target draft or prerelease is also a conflict; the skill never publishes beside it or replaces it.
 A pushed mistake needs a new patch version through the normal pull request process.
+For an older local-only tag, the approval screen flags that the commit was never remotely published and differs from main's tip.
 
 Notes come from the target commit's changelog and cover every version since the preceding published stable release.
 The notes heading records that boundary, so later publication of an older tagged version preserves a correct release's no-op behavior.
 An older interrupted release uses `--latest=false` when a higher stable release exists.
 The skill verifies that publication preserves the previous Latest release in that case.
-
-## Harness compatibility
-
-`metadata.internal` deliberately uses a boolean, although the Agent Skills specification defines string metadata values.
-The installer checks strict boolean equality; the string `"true"` does not hide a skill.
-The authoring exception and rationale live in the repository's `AGENTS.md`.
-
-If a supported harness rejects the boolean during actual skill loading, remove this field from the shared source.
-Keep one source directory for all harnesses. Document that direct bulk installation then includes this maintainer skill.
-The planned `wkc-manage add all` must exclude `wkc-skills-release` by name even under that fallback.
-Record unavailable harness checks as SKIP; lack of access does not prove rejection or justify the fallback.
