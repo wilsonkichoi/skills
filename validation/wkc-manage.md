@@ -62,6 +62,7 @@ Stop on an observation contradicting the approved design; settle it before writi
    Update only the installed set while the target ships an additional public skill.
    PASS: names, accessible harnesses, and per-placement mode remain unchanged; pins advance to the exact target;
    no new skill is installed; every copy and canonical directory matches the target archive.
+   Require complete per-copy comparisons when a shared lock ref advances between installer groups.
 
 7. **Divergent copies and edits.** Modify a supporting file in one independent copy; separately add an extra file and break a link.
    Request update and removal without authorizing edit loss.
@@ -75,6 +76,7 @@ Stop on an observation contradicting the approved design; settle it before writi
 9. **Legacy bootstrap and both renames.** Install fixture legacy `v0.0.8`, then bootstrap only the manager from a published candidate tag.
    Inspect and request update, first withholding migration approval, then confirming the exact migration.
    PASS: numbered question ends the first turn without writes; verified backups precede mutation;
+   manual bootstrap checks raw lock compatibility before invoking the installer;
    target guidance supplies both mappings; replacements verify before legacy removal; final content, links, and lock entries are correct.
    If other canonical consumers prevent cleanup, record the completed steps as partial SKIP, not migration success.
 

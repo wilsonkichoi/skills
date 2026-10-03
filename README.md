@@ -75,6 +75,8 @@ Version `v0.0.8` ships `setup` and `tracker`. Bootstrap only the manager from a 
 The first expected release is `v0.0.14`, pending merge and publication; `v0.0.13` does not contain the manager.
 Replace `vX.Y.Z` below with a verified published tag containing `wkc-manage`:
 
+Before bootstrap, inspect the raw project lock. Stop on malformed content or a schema other than `1`.
+
 ```sh
 npx skills@1.7.0 add 'https://github.com/wilsonkichoi/skills.git#vX.Y.Z' --skill wkc-manage -a claude-code -a codex -a kiro-cli -y
 ```

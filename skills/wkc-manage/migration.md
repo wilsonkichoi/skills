@@ -30,6 +30,8 @@ Never delete legacy configuration previously produced by setup.
 ## Legacy bootstrap
 
 Adopters on `v0.0.8` have `setup` and `tracker`, without this manager.
+Before bootstrap, inspect the raw lock and stop on malformed content or a schema other than `1`.
+A missing lock permits fresh installation but does not establish ownership of legacy files.
 Install only `wkc-manage` from a published release containing it, using the full Git URL with that exact tag.
 Name the intended harnesses explicitly, then compare the complete installed manager with that tag's archive.
 Use the root README's bootstrap command. Do not reinstall the collection wholesale as bootstrap.

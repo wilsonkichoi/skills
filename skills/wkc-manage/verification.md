@@ -6,6 +6,8 @@ Read this for status, content verification, or reconciliation.
 
 Schema `1` entries identify `source`, `sourceType`, `skillPath`, `computedHash`, and optionally `ref`.
 The installer hash is useful local evidence, not proof of a release or selected harnesses.
+One lock entry is shared by all placements of a skill. An installer group can advance its ref before other copies change.
+Revalidate each group's expected files independently; a changed shared ref does not prove that untouched copies updated.
 Resolve each owned entry's recorded tag or commit independently of the proposed update target.
 Require a published stable release before calling a tag a managed release identity.
 Do not infer a pin from equal content, a branch name, or an unpinned source.
