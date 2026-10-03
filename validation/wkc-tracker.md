@@ -70,7 +70,7 @@ old development branch. Record the installed commit in the report.
 
 ```
 mkdir -p ~/tmp/tracker-val && cd ~/tmp/tracker-val
-npx skills@latest add 'https://github.com/wilsonkichoi/skills.git#<review-ref>' -a claude-code -a codex -a kiro-cli
+npx skills@1.7.0 add 'https://github.com/wilsonkichoi/skills.git#<review-ref>' -a claude-code -a codex -a kiro-cli
 ```
 
 **Invoking the skill during a run.** `wkc-tracker` opts into model invocation, so a harness may
@@ -101,8 +101,10 @@ copies the whole skill directory, so the human-facing explainer ships to every c
 Both directories have to have been created by the installer, since nothing here pre-creates them.
 
 **S3 one skill per name.** Check:
-`npx skills@latest add 'https://github.com/wilsonkichoi/skills.git#<review-ref>' -l`.
-Expect exactly `wkc-setup`, `wkc-tracker`, and `wkc-workflow-diagram`. The old names, planned
+`npx skills@1.7.0 add 'https://github.com/wilsonkichoi/skills.git#<review-ref>' -l`.
+Expect exactly the three public skills: `wkc-setup`, `wkc-tracker`, and `wkc-workflow-diagram`.
+The source also ships internal `wkc-skills-release`; list and install it explicitly by name, separately from the public count.
+The old names, planned
 skills, `wkc-skill-name`, and anything from `validation/` must not appear.
 
 S4 and S5 run here, straight after the install and before any `$wkc-setup`, because they need a
@@ -1019,11 +1021,11 @@ leg may strip the `wkc-setup` gate so it can run unattended. Leg D must not, bec
 by name, and for D7 being triggered without one, is what it tests.
 
 ```
-mkdir -p ~/tmp/tracker-legd && cd ~/tmp/tracker-legd && npx skills@latest add 'https://github.com/wilsonkichoi/skills.git#<review-ref>' -a claude-code -a codex -a kiro-cli -s '*' -y
+mkdir -p ~/tmp/tracker-legd && cd ~/tmp/tracker-legd && npx skills@1.7.0 add 'https://github.com/wilsonkichoi/skills.git#<review-ref>' -a claude-code -a codex -a kiro-cli -s '*' -y
 ```
 
 ```
-mkdir -p ~/tmp/tracker-legd-codex && cd ~/tmp/tracker-legd-codex && npx skills@latest add 'https://github.com/wilsonkichoi/skills.git#<review-ref>' -a claude-code -a codex -a kiro-cli -s '*' -y
+mkdir -p ~/tmp/tracker-legd-codex && cd ~/tmp/tracker-legd-codex && npx skills@1.7.0 add 'https://github.com/wilsonkichoi/skills.git#<review-ref>' -a claude-code -a codex -a kiro-cli -s '*' -y
 ```
 
 Do not run `git init` in either. D5 needs `wkc-setup` to make that offer itself, and the second directory

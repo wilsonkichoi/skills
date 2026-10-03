@@ -1,0 +1,5 @@
+interface:
+  display_name: "wkc-skills-release"
+  short_description: "Publish this collection's tags and GitHub Releases."
+policy:
+  allow_implicit_invocation: false

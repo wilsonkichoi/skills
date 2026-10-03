@@ -13,11 +13,11 @@ Keep raw run evidence (logs, fixtures, screenshots) in an ignored directory such
 It is scratch, not a record: this runbook defines the cases, and the report named at the end holds the results.
 
 ```sh
-npx skills@latest add "<clean-candidate>" --list
+npx skills@1.7.0 add "<clean-candidate>" --list
 ```
 
 ```sh
-npx skills@latest add "<clean-candidate>" --skill wkc-workflow-diagram -a claude-code -a codex -a kiro-cli -y
+npx skills@1.7.0 add "<clean-candidate>" --skill wkc-workflow-diagram -a claude-code -a codex -a kiro-cli -y
 ```
 
 Run the maintainer checks from `tools/workflow-diagram/` before testing the installed copy.
@@ -35,7 +35,8 @@ Keep test outputs within the target's diagram directory; harness installation fi
 ## Cases
 
 1. **Discovery and installation.** List the clean candidate and install only `wkc-workflow-diagram` on all three harness paths.
-   PASS: discovery count equals shipped skills, this skill appears once, and no template or fixture is discovered as a skill.
+   PASS: public discovery count equals shipped skills minus boolean-internal skills, and this skill appears once.
+   Count source `SKILL.md` files separately; list internal skills explicitly by name. No template or fixture appears.
    Check real paths, all manual-invocation settings, and the five opening fields in the order required by AGENTS.md.
    Confirm Input explains the supplied context, the omitted target, and ambiguous scope; no How to call it field remains.
    Confirm directory, frontmatter name, main heading, display name, and invocation examples use `wkc-workflow-diagram`.

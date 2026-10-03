@@ -107,19 +107,16 @@ Two plain repository settings, which live in GitHub's Settings page rather than 
 
 ## Releasing
 
-A version becomes a release when it is tagged at its merged commit. After the pull request lands:
+A version becomes a release when a lightweight `vX.Y.Z` tag and GitHub Release identify its merged commit.
+After the pull request lands, use the manually invoked
+[`wkc-skills-release`](./skills/wkc-skills-release/SKILL.md) skill on clean, synchronized `main`.
+It prepares the exact commit, all changelog entries since the preceding stable release, and the Latest decision.
+Publication requires explicit authorization for that concrete target. A request to implement or merge does not authorize publication.
 
-```
-git checkout main && git pull
-git tag "v$(cat VERSION)"
-git push origin "v$(cat VERSION)"
-gh release create "v$(cat VERSION)" --title "v$(cat VERSION)" --notes "$(grep -m1 "^$(cat VERSION) " CHANGELOG.md)"
-```
+Follow the skill's [bootstrap instructions](./skills/wkc-skills-release/README.md) for the first installation.
+Record main's SHA, install explicitly by name with `skills@1.7.0`, and compare all installed files against that commit.
+After publication, reinstall from the immutable tag and verify the installed files against the tag's SHA.
+The full Git URL with a quoted `#vX.Y.Z` pins installation; `owner/repo@vX.Y.Z` selects a skill name instead.
 
-The tag is what a pinned install points at:
-`npx skills@latest add 'https://github.com/wilsonkichoi/skills.git#vX.Y.Z'`, quoted because `#`
-starts a shell comment. The `owner/repo@vX.Y.Z` shorthand does not pin, since `@` selects a skill
-name. See the install section in `README.md`.
-
-The tag ruleset blocks moving or deleting it once pushed, so read `VERSION` and the `CHANGELOG.md`
-line before the `git push origin`. A wrong release is fixed by cutting the next patch version.
+The tag ruleset blocks moving or deleting a pushed tag. Matching publication state supports recovery;
+conflicts stop without rewriting tags or releases. A wrong release requires the next patch version.
