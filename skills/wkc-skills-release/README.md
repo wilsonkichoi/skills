@@ -8,6 +8,7 @@ It publishes already merged work and requires explicit authorization for the con
 
 The boolean `metadata.internal: true` hides this skill from ordinary installer discovery and bulk installation.
 It remains available by exact name. This is an installation convenience, not an authorization boundary.
+`wkc-manage add all` explicitly excludes this skill by name, including if the boolean metadata is removed for compatibility.
 
 ```sh
 npx skills@1.7.0 add wilsonkichoi/skills --skill wkc-skills-release -a claude-code -a codex -a kiro-cli -y

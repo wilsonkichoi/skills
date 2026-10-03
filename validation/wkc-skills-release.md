@@ -44,7 +44,7 @@ For each invocation, record remote refs, release fields, Latest, local status, a
 ## Cases
 
 1. **Discovery and package.** Compare ordinary discovery, explicit internal discovery, and source `SKILL.md` count.
-   PASS: three public skills, four total shipped skills, explicit internal availability, and no template or fixture skill.
+   PASS: four public skills, five total shipped skills, explicit internal availability, and no template or fixture skill.
    All three installed paths resolve correctly; every packaged file matches the candidate.
    Parse five opening fields, exact names, optional tag input, manual invocation settings, and boolean metadata.
    Check `metadata.internal` is boolean `true`, not string `"true"`.
@@ -56,7 +56,7 @@ For each invocation, record remote refs, release fields, Latest, local status, a
 
 3. **Metadata fallback.** In a separate test export, remove only the boolean metadata field.
    PASS: discovery and direct bulk installation include the maintainer skill, and the one shared source still loads on each harness.
-   Check the tracked fallback explicitly requires the planned `wkc-manage add all` to exclude this identifier by name.
+   Check the tracked fallback explicitly requires `wkc-manage add all` to exclude this identifier by name.
    Apply fallback to the candidate only if a supported harness actually rejects the boolean.
    An unavailable harness cannot justify fallback. No per-harness variant is permitted.
 
