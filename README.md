@@ -84,6 +84,8 @@ npx skills@1.7.0 add 'https://github.com/wilsonkichoi/skills.git#vX.Y.Z' --skill
 Compare the complete installed manager against that tag's Git archive before invocation.
 The manager reads migration guidance from the target release, backs up, and verifies replacements before removing legacy names.
 Migration requires confirmation for `setup` to `wkc-setup` and `tracker` to `wkc-tracker`.
+Other detected harnesses can keep canonical legacy directories accessible after installer removal.
+The manager reports incomplete migration when that constraint prevents legacy cleanup.
 
 ## Quickstart
 
@@ -174,9 +176,12 @@ npx skills@1.7.0 remove wkc-skills-release -a claude-code -a codex -a kiro-cli
 ```
 
 Removing setup preserves the configuration and context reference it previously wrote.
+For a full uninstall, manually delete `docs/dev-agents/` and remove its reference line from `AGENTS.md` or `CLAUDE.md`.
 Removing a runtime dependency requires informed confirmation.
 Codex-only removal with retained Claude Code or Kiro links requires approved conversion to independent copies.
 The installer can retain canonical files because other detected harnesses share them, even after reporting success.
+It can also delete canonical files and the lock entry when retained harnesses are not detected on the machine.
+The manager checks both outcomes before removal and requires approved source reinstallation when retained placements would lose files or ownership.
 Detection uses harness configuration locations; an absent global skill copy does not establish that a harness is absent.
 The manager reports that layout constraint instead of claiming removal succeeded.
 Backups use `~/.cache/wkc-manage/backups/`, outside checkout and discovery roots, and survive failed operations.

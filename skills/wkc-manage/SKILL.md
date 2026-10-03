@@ -41,6 +41,7 @@ The lock records source, optional ref, skill path, and content hash; it records 
 Record actual accessibility. Canonical files make a skill visible to Codex even if Codex was never selected.
 Check other consumers of canonical files and links outside these roots before changing shared content.
 Installer removal also considers other detected harnesses, including detection through their global directories.
+It can delete canonical files and ownership for retained but undetected harnesses; predict both outcomes using `removal.md`.
 Do not alter those global directories to influence removal.
 
 ## 2. Resolve evidence and a target
@@ -125,6 +126,6 @@ Report source identity, recorded refs, exact target and commit when used, affect
 Distinguish verified release identity, content match, local modification, unknown ownership, and offline or remote failure.
 Claim a common release only when every managed installation verifies against that release.
 Report actual changes, skipped new skills, unresolved constraints, partial steps, and any retained backup path.
-After self-update, state that this session still follows the previously loaded instructions.
+After any installer call writing the manager's own placement, including same-version reinstallation or recovery, state that this session still follows the previously loaded instructions.
 Only `reconcile` writes `docs/dev-agents/installed-skills.local.md`; other operations never create or refresh it.
 This report is optional diagnostic evidence for the user or an agent explicitly asked to inspect it, not shared configuration.

@@ -20,6 +20,20 @@ Never use broad, wildcard, global, or `-a`-less removal.
 OpenClaw uses a bare project `skills/` directory; broad removal can delete collection source directories.
 Check source sentinels and unrelated placements independently after removal.
 
+## Predict canonical deletion before removal
+
+Inspect the pinned installer's agent definitions, detection locations, and project install paths for every removal.
+For each selected skill, check every detected agent outside the selected harness list with `lstat` at its project install path.
+The installer retains canonical files and the lock entry if any such path exists, including a link or independent copy.
+Otherwise it deletes both, even when undetected harnesses have retained project placements.
+Project links alone do not make a harness detected. Check configured `CODEX_HOME` and `CLAUDE_CONFIG_DIR` as well as default locations.
+Predict both outcomes for the exact harness list before presenting the plan, and recheck before each removal call.
+If deletion would affect retained accessibility or ownership, stop before mutation unless a concrete preservation plan is approved.
+That plan must reinstall retained placements from verified original source tags, with explicit names, harnesses, and original modes.
+Load and verify those archives before removal; include canonical contents, retained placements, and affected lock evidence in the backup.
+Verify every retained placement and its restored ownership afterward. Never describe this operation as removing only a selected link.
+If retained source provenance cannot support a verified reinstall, stop without removing anything.
+
 ## Codex-only removal with retained links
 
 Canonical `.agents/skills/<name>` files are visible to Codex.
@@ -29,7 +43,6 @@ The installer can print success while retaining the canonical directory and its 
 Propose independent copies for retained Claude Code and Kiro CLI placements.
 Show affected retained harnesses and explain the mode change; obtain approval before backup or mutation.
 Check other consumers of the canonical directory, including the installer's globally detected universal harnesses.
-Inspect the pinned installer's agent definitions and check their detection locations before declaring that no other consumer exists.
 Global copies of the selected skill are irrelevant to this detection.
 For example, OpenCode detection uses `~/.config/opencode`, Gemini CLI uses `~/.gemini`, and GitHub Copilot uses `~/.copilot`.
 Antigravity and Antigravity CLI use `~/.gemini/antigravity` and `~/.gemini/antigravity-cli`.

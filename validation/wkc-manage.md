@@ -1,7 +1,9 @@
 # wkc-manage validation
 
 Run installed copies from a clean candidate export on Codex, Claude Code, and Kiro CLI.
-Use `skills@1.7.0`. Codex behavioral runs use `gpt-6-luna`.
+Use `skills@1.7.0`. Record each harness's actual model and reasoning configuration; do not infer them from earlier runs.
+Perform each harness check from that harness's own session. Do not launch another AI harness for automated testing.
+Additional AI test sessions require an agreed budget. Required checks that cannot run remain SKIP.
 Each numbered case has an independent check. Record PASS, FAIL, or SKIP per harness.
 A partial case is SKIP, with completed checks listed. Keep initial failures when a later candidate fixes them.
 Installer messages, lock entries, source inspection, and manual commands alone do not prove harness behavior.
@@ -50,6 +52,7 @@ Stop on an observation contradicting the approved design; settle it before writi
 
 4. **Target selection.** Request update without a release against the fixture's stable, draft, prerelease, and orphan tags.
    Also request each ineligible target explicitly, and interrupt release-list access.
+   Exercise a second release page with more than 100 records or a controlled paginated API transport.
    PASS: paginated complete listing selects the fixture's numeric stable maximum despite Latest `v0.0.9`;
    ineligible or unreadable targets stop without mutation. Remote refs and releases remain unchanged.
 
@@ -79,6 +82,8 @@ Stop on an observation contradicting the approved design; settle it before writi
    manual bootstrap checks raw lock compatibility before invoking the installer;
    target guidance supplies both mappings; replacements verify before legacy removal; final content, links, and lock entries are correct.
    If other canonical consumers prevent cleanup, record the completed steps as partial SKIP, not migration success.
+   Repeat approved migration with unpinned legacy canonical files and retained project links in an isolated detection environment.
+   PASS: content and ownership verify before replacement; both renames complete without claiming historical installation pins.
 
 10. **Failed replacement [MANUAL when controlled failure is unavailable].** Fail one replacement installation after backup.
     PASS: legacy originals remain accessible, later removals do not run, failure state is reported,
@@ -88,6 +93,10 @@ Stop on an observation contradicting the approved design; settle it before writi
     First withhold mode-change approval; then approve concrete conversion in a consumer without other canonical users.
     PASS: the first turn ends on a numbered question; after approval retained placements become independent copies;
     complete retained content matches original tags; canonical files are absent and Codex cannot access the removed skill.
+    Also request Claude-only removal in disposable environments with isolated HOME, CODEX_HOME, and CLAUDE_CONFIG_DIR.
+    Cover both a detected retained consumer and no detected retained consumer, using the pinned installer without changing real global directories.
+    PASS: the plan predicts canonical and lock retention or deletion before writes; unsafe partial removal stops or obtains informed preservation approval.
+    Approved preservation must restore complete retained placements, original modes, accessibility, and ownership from verified original tags.
 
 12. **Other canonical consumers.** Use an environment where another detected harness shares `.agents/skills/`.
     Request selective and complete supported-harness removal.
@@ -101,6 +110,7 @@ Stop on an observation contradicting the approved design; settle it before writi
     Verify the short setup report reference without adding installation-state configuration or implicit calls.
 
 14. **Self-update and self-removal.** Update the installed manager to an exact published target, then remove it in a fresh invocation.
+    Include same-version manager reinstallation and complete canonical self-removal in an isolated detection environment.
     PASS: complete manager content and provenance verify; update reports previously loaded instructions;
     removal verifies actual absence and preserves unrelated skills. Layout constraints must be reported accurately.
 
@@ -127,6 +137,9 @@ Stop on an observation contradicting the approved design; settle it before writi
     a stale lock entry, mixed release pins, and differing supporting files.
     PASS: complete differences are detected, unpinned matching bytes do not become a historical pin,
     and a common release is reported only when every managed installation verifies against it.
+    Request update of an unpinned canonical installation with matching bytes, then with unknown bytes, withholding replacement approval.
+    Separately approve the concrete replacement of the matching installation.
+    PASS: withheld approval preserves all bytes; approved replacement preserves placement and records only the new exact ref.
 
 20. **Repository integration.** Re-read issue #13, its corrections, and the pre-commit checklist.
     PASS: next patch version once, one timestamped changelog row, shipped roster, Install/Uninstall and bootstrap documentation,
@@ -416,6 +429,7 @@ Codex retained its independently verified backup under the same durable root:
 ~/.cache/wkc-manage/backups/wilsonkichoi-skills-manage-validation-20261002-20261002ToaIZ4a
 ```
 Resolved backup placement was outside the checkout and discovery roots.
+The Codex directory suffix is not a timestamp and fails the required naming pattern. This historical failure remains recorded.
 The unsafe-root variant was not run because changing the shared durable root would affect earlier retained backups.
 The injected command failure is a passing recovery subcase, not a successful update.
 
@@ -492,7 +506,9 @@ It then verified that independent copy after its own installer group.
 Setup's `config-template.md` SHA-256 changed from `dbce9d885fbd5b3497eeaba634639b428f7d46776aecfdd6de2680693c277975`
 to `e5394f72f1619735b10891158b3345aaf1796396bc79a2e9194004a1da0c23b2` in every setup placement.
 Claude reported previously loaded instructions. Codex's final summary omitted that statement for the unchanged manager reinstall.
-That reporting subcheck is FAIL; its initial actual self-update included the required statement.
+That reporting subcheck remains FAIL; the old phrase "after self-update" did not explicitly include unchanged reinstallation.
+This was an instruction ambiguity, not established evidence of a harness defect. The revised instruction includes every installer write to the manager.
+Its initial actual self-update included the required statement.
 No content or placement failure occurred in the final update.
 
 Final dependency consumers had manager `15` installed in the parent and independent setup or tracker copies in child projects.
@@ -549,3 +565,213 @@ Internal error (code -32603): Encountered an error in the response stream: The m
 Independent checks found its setup and tracker copies unchanged. Further Kiro execution requires restored provider capacity.
 Unrun variants remain in the numbered runbook for later execution, not as claims that they are unnecessary.
 Production merge, publication, and a pinned management install remain outside this PR's authorized work.
+
+## Review follow-up: 2026-10-03
+
+This section addresses [Review 1](https://github.com/wilsonkichoi/skills/pull/17#issuecomment-5969661918)
+and [Review 2](https://github.com/wilsonkichoi/skills/pull/17#issuecomment-5969752393).
+The preceding matrix is the historical report, not the results for the revised package.
+Historical FAIL results remain. New passing subcases do not erase them or establish full coverage of an expanded case.
+
+### Corrections and candidate
+
+The removal reference now predicts canonical retention and deletion from the pinned installer's exact detection rules.
+It checks `lstat` at each detected, unselected agent's project install path.
+A retained project link does not establish detection. With no qualifying detected consumer, removal deletes canonical files and the lock entry.
+The manager stops before that loss unless a concrete source reinstallation plan is approved.
+The plan preserves original content, mode, accessibility, and ownership; it is not described as link-only removal.
+
+The README restores manual configuration cleanup for a full uninstall and describes constrained canonical legacy cleanup.
+The reporting instruction explicitly includes same-version manager reinstallation and recovery writes.
+The old unchanged-reinstallation FAIL is retained as an instruction ambiguity.
+The old Codex backup suffix is recorded as a naming failure, in addition to the historical recovery ordering failure.
+
+The clean candidate is Git tree `72524b1a1d8f38907faa381caafde8e94cfe284a`, exported with `git archive` through an alternate index.
+The tree contains only tracked candidate files. No populated checkout was supplied to the installer.
+The final report and PR description are outside the packaged manager files.
+
+| Packaged file | SHA-256 |
+|---|---|
+| `SKILL.md` | `c1f9e46d7c3e2b11f2eb3d5a6b7906020ac3374ad98e49b105e8d73dcee244ba` |
+| `agents/openai.yaml` | `3cbc13c9fa308f1fc586d138de4b0170f74f2d6b05daf64d9bdae4ec3c850e3d` |
+| `migration.md` | `061c9365adc8729d86ff0104c28b621ba0080b3b37653f9e1875673e2b766402` |
+| `removal.md` | `008b9fd940109bcab71f45a55f3f47c66e3298d466a56a5bf263be6d9f08ca1e` |
+| `recovery.md` | `0822a9f7644851af92d50414856a9daa33fc00d3719fdde60711a3efc6e81edc` |
+| `verification.md` | `3a5d8211099a6d5caa062e847fed992cc410dcfccbe699cd35e0427d51fc7630` |
+
+The retained public fixture is `wilsonkichoi/skills-manage-validation-20261002`.
+Two additional test-only releases were published with `--latest=false`; existing tags were not moved or deleted.
+Latest remains `v0.0.9`. The ordinary fixture maximum is now `v0.0.17`.
+
+| Tag | Commit | Release ID | Purpose |
+|---|---|---|---|
+| `v0.0.16` | `4bc0a13abe6de85684ae35060f6f6a75447ff7e0` | `402534295` | Revised manager and changed setup supporting file |
+| `v0.0.17` | `db5da4317731dd03d484b150bf70f5d22e6353c3` | `402534303` | Same package with only release skill's boolean internal metadata removed, plus fixture VERSION |
+
+Fixture `16` uses the candidate's complete manager directory, with only its labeled repository identity changed.
+Its setup `config-template.md` adds one test comment compared with fixture `15`.
+Fixture `17` makes the metadata fallback test possible without changing the collection's production metadata.
+Each manager's pre-invocation snapshot was independently compared with its complete source archive.
+
+### Isolation and actual transport
+
+Disposable consumers and their persistent synthetic home directories live under `~/tmp/wkc-manage-review-20261003/`.
+No real harness detection directory was hidden, renamed, or deleted.
+Each consumer has unrelated `sentinel.txt` and `skills/wkc-setup/sentinel.txt` files.
+Initial owned installations used the pinned installer and full fixture URLs with exact tags.
+Unknown ownership, missing locks, unpinned refs, edits, and conflicts were then seeded as explicit test conditions.
+
+Codex used its configured `gpt-6.1-sol`, high reasoning, without a model override.
+Claude Code reported `claude-opus-5-5`. CLI versions remain Codex `0.160.0`, Claude Code `2.1.288`, and Kiro CLI `2.27.0`.
+Actual invocation commands were:
+
+```sh
+codex exec --ephemeral -c 'shell_environment_policy.inherit="all"' --json -s danger-full-access --color never '$wkc-manage <request>'
+claude -p '/wkc-manage <request>' --output-format stream-json --verbose --dangerously-skip-permissions
+kiro-cli chat --no-interactive --trust-all-tools --output-format stream-json '/wkc-manage update wkc-setup to v0.0.16'
+```
+
+The test launcher set child-process HOME and XDG_CONFIG_HOME to each synthetic home.
+Codex retained its existing CODEX_HOME for authentication; Claude used an absent CODEX_HOME and its existing CLAUDE_CONFIG_DIR.
+Thus Codex runs detect Codex alone, while Claude runs detect Claude alone, unless a test explicitly creates synthetic `~/.kiro`.
+The pinned installer uses those same detection inputs.
+Claude's OAuth credential was passed in process memory for isolated authentication, never printed or stored in the report.
+The `gh` transport uses existing authentication without changing installer detection inputs.
+Initial authentication failures and an overly restrictive instrumentation-write permission were test setup failures, not skill PASS results.
+
+The `npx` transport accepts only `skills@1.7.0`, journals arguments, and invokes the unmodified cached `1.7.0` package.
+The corrected request explicitly permits instrumentation logs and comparison archives, as well as confined consumer and backup writes.
+The changed-byte recovery transport performs the requested setup write, adds an unrelated lock entry and concurrent file, then exits `42` once.
+The replacement-failure transport exits `42` on the replacement add call after backup; it never runs a later legacy removal.
+These transports do not replace installer logic or alter the manager's instructions.
+
+The pagination transport runs real `gh api --paginate` against a loopback HTTP fixture.
+Page one contains 100 records: stable `v0.0.9` and `v0.0.15`, plus 98 distinct synthetic drafts above them.
+Its HTTP Link header points to page two, which contains the real stable `v0.0.16` record.
+Every request is recorded independently. This tests a second HTTP page without publishing 100 disposable GitHub releases.
+The controlled listing's maximum is `16`; it is not a claim that the ordinary fixture listing lacks release `17`.
+
+Independent checks compare file hashes and link text before and after each refusal.
+They also compare exclusion bytes, installer journals, complete source directories, raw lock entries, and unrelated sentinels.
+Mutation checks require expected directory types, accessibility, refs, retained ownership, and complete archive matches.
+Recovered content must match fixture `15`, while the interrupted write used differing fixture `16` bytes.
+
+### Recorded behavioral results
+
+These runs occurred before the cross-harness testing restriction was added.
+Resumed work parsed existing transcripts and checked files directly; it launched no further AI harness sessions.
+The table records the named subcases, not complete passes for every expanded numbered case.
+Kiro completed no tool call against this revised package. Every revised Kiro behavioral subcase is SKIP.
+
+| Case | Review subcase | Codex | Claude Code | Independent evidence |
+|---|---|---|---|---|
+| 3 | Status with failing release API | PASS | PASS | API transport exits `42`; local evidence is reported without fresh release claims; checkout and exclusions remain unchanged |
+| 4 | Second-page release selection and update | SKIP | SKIP | Both stop at the authentication gate; installed setup remains at `15`; direct pagination is recorded separately below |
+| 5 | Metadata-removed add-all fallback | PASS | SKIP | Codex installs the four public names as eight complete copies matching archive `17`; maintainer remains absent; Claude ends on a mode-change question without writes |
+| 6 | Update all three independent copies | PASS | PASS | Every setup directory matches archive `16`, remains a real directory, and records ref `16`; unrelated manager and sentinels remain unchanged |
+| 7 | Supporting-file edit blocks update | PASS | PASS | Edited Claude copy, other copies, links, lock bytes, and exclusions remain unchanged; no installer runs |
+| 7 | Supporting-file edit blocks removal | PASS | PASS | All affected content survives; neither run begins removal or backup before approval |
+| 7 | Extra file blocks update | PASS | PASS | The extra file survives; no installer or exclusion write occurs |
+| 7 | Broken retained link blocks removal | PASS | PASS | Broken link text and all other placements remain unchanged while the manager asks for a concrete resolution |
+| 8 | Unowned destination collision | PASS | PASS | Existing tracker destination and raw lock remain unchanged; no installer runs |
+| 8 | Missing lock with existing destination | PASS | PASS | Existing setup content remains unowned and unchanged; no new lock or installer call |
+| 8 | Fresh named copy installation without lock | SKIP | PASS | Claude creates only the requested setup copies, matching archive `16`; Codex correctly stops on missing authorization for the instrumentation log |
+| 8 | Foreign-source removal refusal | SKIP | PASS | Claude preserves the `example/foreign` lock entry and files; Codex stops at its quota limit |
+| 9 | Withheld migration approval | PASS | PASS | Both end on numbered options with unchanged canonical legacy files, retained links, locks, and exclusions |
+| 9, 19 | Unpinned canonical legacy inspection | PASS | PASS | Owned `setup` and `tracker` match archive `8`; neither claims historical pins or begins migration without confirmation |
+| 10 | Replacement failure after backup | PASS | PASS | Controlled add exits `42`; both complete legacy directories still match archive `8`; no later removal runs; backups survive |
+| 11 | Codex-only conversion without approval | SKIP | PASS | Claude explains canonical visibility and requests concrete copy conversion; files remain unchanged; Codex is quota-blocked |
+| 11 | Approved Codex-only conversion | PASS | PASS | Canonical setup is absent; retained Claude/Kiro placements are real copies matching archive `15`; ownership and original ref remain |
+| 11 | Undetected retained consumers, approval withheld | SKIP | PASS | Claude predicts deletion of canonical files and ownership before removal; no mutation occurs; Codex is quota-blocked |
+| 11 | Approved preservation after predicted deletion | SKIP | PASS | Claude removes its selected link, then reinstalls original-tag canonical files and Kiro link; lock bytes match the original; Codex is quota-blocked |
+| 11 | Detected retained consumer keeps canonical files | SKIP | PASS | With synthetic Kiro detection, Claude removes only its selected link; canonical setup, retained link, and raw lock survive; Codex is quota-blocked |
+| 14 | Same-version manager reinstallation | PASS | PASS | Each journal contains the exact tagged installer call; all manager placements match archive `16`; both report previously loaded instructions |
+| 14 | Complete canonical self-removal | PASS | PASS | All three manager placements and its lock entry are absent; setup, its original ref, and source sentinels survive |
+| 16 | Recovery after changed-file write | PASS | PASS | Failed update writes differing `16` bytes, then recovery restores complete archive `15` content and original affected ownership; concurrent file and foreign lock entry survive |
+| 16 | Unsafe backup-root rejection | PASS | PASS | A backup-root link resolves into project discovery; neither run copies a backup or executes the installer |
+| 18 | Tracked report destination | PASS | PASS | Tracked bytes and index state survive; neither exclusions nor report change |
+| 18 | Report destination through symlink | PASS | PASS | Link text, external target, and exclusions survive; no report write |
+| 19 | Matching unpinned canonical content | PASS | PASS | Missing ref is reported; matching bytes do not become a historical pin; update waits for concrete replacement approval |
+| 19 | Unpinned canonical content with unknown bytes | PASS | PASS | Unknown supporting-file bytes survive; both end on a concrete replacement question without mutation |
+
+No new full-case totals replace the historical matrix. Broader cases still include unrun variants.
+The two approved unpinned mutation variants added above remain SKIP on every harness.
+Their refusal paths passed, but that does not establish successful update or migration of the unpinned shared layout.
+Codex fresh installation, Codex's five quota-blocked subcases, Claude metadata fallback completion,
+and both harnesses' behavioral pagination updates remain SKIP.
+Unrun Kiro checks remain SKIP under the harness restriction, in addition to its recorded monthly limit.
+
+The failed metadata-fallback assertion initially expected a completed installation from Claude's approval question.
+The fresh-install assertion similarly expected files after Codex correctly stopped on an instrumentation permission conflict.
+Neither is a skill failure or a successful mutation. Both are blocked validation setups.
+The same-version Claude statement was initially rejected by a literal phrase matcher despite explicitly describing loaded instructions.
+Correcting that checker and comparing the recorded installer call, files, and final statement establishes the reported subcase PASS.
+These checker corrections do not change any transcript or erase historical execution failures.
+
+Claude's pagination attempt wrote `/tmp/claude-pagination-releases.raw` and `.err` outside the supplied scratch location.
+It later moved or removed them. That confinement subcheck is FAIL; cleanup does not erase the unauthorized writes.
+Its authentication gate still prevents a pagination-update PASS.
+
+### Direct checks after resumption
+
+No AI harness was invoked for these checks. Installer and transport results do not count as model behavior.
+
+The isolated pinned-installer probe covers the high-severity removal finding with the same canonical-plus-links layout:
+
+| Detection environment | Selected Claude link afterward | Canonical setup | Owned lock entry | Retained Kiro link |
+|---|---|---|---|---|
+| Only Claude detected | Absent | Deleted | Deleted | Present but broken |
+| Claude and synthetic Kiro detected | Absent | Retained | Retained | Present and accessible |
+
+Each probe sets HOME, CODEX_HOME, CLAUDE_CONFIG_DIR, and XDG_CONFIG_HOME to disposable detection locations.
+The commands are identical except for creating the synthetic Kiro detection directory:
+
+```sh
+npx skills@1.7.0 add 'https://github.com/wilsonkichoi/skills-manage-validation-20261002.git#v0.0.15' --skill wkc-setup -a claude-code -a codex -a kiro-cli -y
+npx skills@1.7.0 remove wkc-setup -a claude-code -y
+```
+
+After the deletion branch, an exact-source reinstall restores canonical setup, retained Kiro accessibility, and the owned ref `15`.
+The same probe then removes those placements and installs only retained Claude/Kiro copies with `--copy`.
+Both complete copies match archive `15`; no canonical setup exists.
+The behavioral table separately records whether the manager predicted and approved those effects before mutation.
+
+The direct pagination check uses real `gh api --paginate --slurp` against a loopback HTTP fixture.
+It records exactly two requests: `/releases?per_page=100` and `/releases?per_page=100&page=2`.
+Page sizes are `100` and `1`. Eligible tags are `v0.0.9`, `v0.0.15`, and `v0.0.16`.
+The other first-page records are higher synthetic drafts, excluded before numeric comparison.
+The resulting numeric maximum is `v0.0.16`. The server was closed after the check.
+This proves pagination transport and direct numeric selection, not that a model completed the corresponding update.
+
+All six current package hashes match the candidate table above.
+Both fixture manager archives match current packaged files with only the labeled repository identity substituted.
+The fixture now has nine release records. Ordinary stable maximum remains `17`; Latest remains `9`.
+Release IDs for `16` and `17` match the recorded table. No new fixture release was created after resumption.
+
+Independent recovery comparisons returned `0` for every restored setup placement against archive `15`.
+All 57 current consumer manifests match their recorded final snapshots, including file hashes and link text.
+Codex's retained backup is `wilsonkichoi-skills-manage-validation-20261002-2026-10-03T14-23-17-524Z-r7P3tO`.
+Claude's retained backup is `wilsonkichoi-skills-manage-validation-20261002-20261003T072140`.
+Both names contain a timestamp and both backups remain under the synthetic homes' durable backup roots.
+The recorded Codex permitting checks finish in command `13` before update command `14`, and command `16` before recovery command `17`.
+Claude's checks finish in command `8` before update command `9`, and command `11` before recovery command `12`.
+The model-generated permitting reads and dependent installer writes are separate tool calls in these runs.
+The pinned installer still performs its own internal lock reads and writes; that is not a claim about model-call separation inside the installer.
+
+Repository-aware names, YAML, opening fields, invocation settings, identity, references, length, discovery count,
+and one-version checks pass. `SKILL.md` is 131 lines. Version remains `0.0.14` for this PR.
+
+### Review disposition
+
+| Review finding | Result |
+|---|---|
+| Review 2 high: partial removal deletes retained content and ownership | Instruction fixed; isolated direct deletion/retention reproduced; Claude prediction, refusal, preservation, and retention subcases PASS; Codex quota variants SKIP |
+| Review 2 low: missing full-uninstall cleanup | README again names generated directory and context-reference cleanup |
+| Review 2 low: same-version self-reinstall ambiguity | Every installer write to manager placement is explicit; historical FAIL retained as ambiguous wording; new Codex/Claude same-version subcases PASS |
+| Review 1 destructive-operation and recovery evidence | New edit, collision, missing-lock, failure, changed-byte recovery, unsafe-root, and report-conflict subcases recorded with independent checks |
+| Both reviews' other coverage gaps | Copy updates, API failure, conversion, self-removal, and Codex metadata fallback covered; pagination behavior, approved unpinned mutations, remaining setup/quota variants, and revised Kiro behavior explicitly SKIP |
+| Review 2 backup naming and Review 1 recovery ordering | Historical failures retained; new timestamped backups and separate permitting-read calls verified |
+
+The repository now records cross-harness testing restrictions and token controls under `docs/dev-agents/rules/`.
+Existing configuration discovers those files. No duplicate rule registry or AGENTS reference was added.
+The restriction does not convert untested compatibility into PASS or remove required cases from this runbook.

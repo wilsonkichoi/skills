@@ -67,6 +67,7 @@ Unavailable checks are SKIP, not proof of incompatibility. Record results in its
 
 `wkc-manage` is a manually invoked public skill. Keep its runtime management rules in its skill and sibling references.
 Record installer compatibility observations and behavioral results in `validation/wkc-manage.md`, not in authoring policy.
+Removal validation must cover isolated detection environments with and without a retained consumer, not only the maintainer's installed harnesses.
 
 Every skill identifier must start with `wkc-`. Use the same identifier for the directory,
 frontmatter `name`, `interface.display_name`, main heading, invocations, and references between skills.
