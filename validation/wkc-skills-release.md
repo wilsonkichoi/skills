@@ -331,3 +331,76 @@ gh api repos/wilsonkichoi/skills-release-validation-20261002-1510/releases/40223
 git ls-remote --refs git@github.com:wilsonkichoi/skills-release-validation-20261002-1510.git
 gh api repos/wilsonkichoi/skills-release-validation-20261002-1510/releases/latest
 ```
+
+### Full fixture publication at `922e8a2`
+
+Source: `922e8a270473f9c2b8b9d104f80ff759101a9e7f`, after the wording and authoring-policy cleanup.
+The candidate was exported from that commit, installed with `skills@1.7.0` into Codex, and compared file by file.
+Only the installed Repository identity changed to the publication fixture.
+
+| File | Source SHA-256 |
+|---|---|
+| `SKILL.md` | `40ee0ce51d692f3eec3123bd84b9987ef971f451505a6295c13ab1b6298dac9e` |
+| `README.md` | `c4119baa5f60de86467337acb16de53eacec38e166dec20ad0ca649b44e119c0` |
+| `agents/openai.yaml` | `fde020d7e204734067088e02af408b5e0a77e7498907a8b8ebc5ced92f98c468` |
+
+Installed `SKILL.md` after the identity substitution: `dbaa20fc07a286b5d1d43f2d7ff3f57ffd6d1972148e4a9cc988b2e196cf2a2b`.
+Fixture main stayed at `a292193bf32079f3d9ec1c7a3ca46ec3b8edbcd6`.
+The explicitly authorized local-only `v0.0.8` target was `c729aac8356ab09c80e56152e938b4136fd89793`.
+The clone set `push.followTags=true` and contained unrelated reachable annotated `v200.0.1`, absent remotely.
+The target draft for `v0.0.7` remained present throughout this run.
+
+Codex performed the complete publication path through the installed skill, including repeated complete-list reads before and after release creation.
+It pushed only `v0.0.8` with `--no-follow-tags`, then used `--verify-tag`, `--notes-file`, and `--latest=false`.
+Independent checks found exactly one new remote ref and one new stable release:
+[fixture `v0.0.8`](https://github.com/wilsonkichoi/skills-release-validation-20261002-1510/releases/tag/v0.0.8), ID `402303114`.
+The tag is lightweight and identifies the authorized SHA. Its title is `v0.0.8`; its body is:
+
+```markdown
+## Changes since v0.0.6
+
+0.0.8 2026-10-02T14:00:00-07:00 Fixture 8.
+0.0.7 2026-10-02T14:00:00-07:00 Fixture 7.
+```
+
+Latest stayed byte-identical at `v0.0.10`, ID `402194325`.
+Every other remote ref and pre-existing release object stayed unchanged, including draft `402236995`.
+The unrelated annotated tag remained local-only with unchanged object SHA `d076a34425341313a82bb3b1f29b4d46501428e7`.
+HEAD, local refs, configuration, and installed files stayed unchanged; the checkout remained clean.
+Temporary publication notes were removed after verification.
+
+A supplemental preparation command combined incompatible `gh api --slurp` and `--jq` options.
+The CLI rejected it before an API request:
+
+```text
+the `--slurp` option is not supported with `--jq` or `--template`
+```
+
+A corrected complete paginated read succeeded before any publication write.
+This command failure is recorded; the publication result does not claim a clean first attempt.
+
+A separate fresh Codex invocation repeated the published target and reported a verified no-op.
+It read all 112 releases across two pages and preserved the original `v0.0.6` boundary.
+Independent repeat checks found identical remote refs, all release objects, Latest, local refs, and installed bytes.
+
+| Current-source variant | Codex | Claude Code | Kiro CLI |
+|---|---|---|---|
+| Complete local-only publication and post-verification | PASS | SKIP | SKIP |
+| Followed-tag suppression during actual publication | PASS | SKIP | SKIP |
+| Repeated published target is unchanged | PASS | SKIP | SKIP |
+
+The entire multi-variant cases remain SKIP where variants were not run.
+This run covers a complete older local-only publication and followed-tag suppression on Codex.
+Claude Code and Kiro CLI did not repeat publication against this source.
+Controlled draft insertion, missing push access, duplicate target releases, and production bootstrap remain SKIP.
+
+Command, from the installed fixture checkout, using the exact authorization below:
+
+```sh
+codex exec --ephemeral --json -s danger-full-access "$(cat ../publish.prompt)" </dev/null
+```
+
+```text
+$wkc-skills-release v0.0.8
+Publish this disposable fixture release using the installed skill through final verification. I explicitly authorize repository wilsonkichoi/skills-release-validation-20261002-1510, tag v0.0.8, commit c729aac8356ab09c80e56152e938b4136fd89793, with contract-generated notes and Latest decision. I acknowledge this is an older local-only target that was never remotely published and is not main’s tip; this exact commit is the intended fixture release. Do not request redundant authorization. Publish only this fixture target, preserve other refs and releases, and do not modify versions, commits, installed skill files, or repository configuration. Do not create helper scripts or publish to the production collection.
+```
