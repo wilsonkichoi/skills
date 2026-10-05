@@ -65,9 +65,13 @@ Unavailable checks are SKIP, not proof of incompatibility. Record results in its
 
 ## Skills
 
-`wkc-manage` is a manually invoked public skill. Keep its runtime management rules in its skill and sibling references.
+`wkc-manage` is a manually invoked public skill for status, add, update, and remove.
+Keep its runtime rules in `SKILL.md`. Report versions from lock refs without proving installed content or release identity.
 Record installer compatibility observations and behavioral results in `validation/wkc-manage.md`, not in authoring policy.
-Removal validation must cover isolated detection environments with and without a retained consumer, not only the maintainer's installed harnesses.
+When removal behavior changes, run affected source-preservation, ownership, and shared-file checks from `validation/wkc-manage.md`.
+Retained placements block selective removal; do not add global detection, conversion, or recovery workflows to work around installer limits.
+When release selection changes, run only affected checks from `validation/wkc-manage.md`.
+Use direct checks first and reuse unchanged evidence.
 
 Every skill identifier must start with `wkc-`. Use the same identifier for the directory,
 frontmatter `name`, `interface.display_name`, main heading, invocations, and references between skills.
@@ -177,6 +181,28 @@ directory has to clear the same check before it is added.
 - Keep skills short. A `SKILL.md` past roughly 150 lines is usually carrying policy that belongs
   to the project, not to the skill.
 
+## Validation
+
+Runbooks are case catalogs, not mandatory full test sequences for every change.
+For a new skill or port, plan baseline coverage across supported harnesses and relevant backends.
+For later changes, select changed behavior and directly affected regressions.
+State selected cases or subchecks, backends, and harnesses before testing.
+Wording and formatting changes need static checks unless they change instruction interpretation.
+Use direct checks for installer behavior, file preservation, API handling, schemas, and renderer behavior.
+Use model invocation only for instruction following or harness loading that direct checks cannot establish.
+Reuse evidence only when the relevant instructions, fixture, and tool or harness configuration remain unchanged; cite its source.
+Unavailable required checks within the selected scope are SKIP, never PASS. Cases outside that scope are not new SKIPs.
+Identify focused subchecks explicitly; a passing subcheck is not a full-case PASS.
+Do not claim complete compatibility from focused checks or count direct checks as model behavior.
+New AI sessions require explicit authorization and an agreed budget under [Token usage](docs/dev-agents/rules/token-usage.md).
+Validation requirements do not authorize those sessions or cross-harness launches.
+
+Prepare only fixtures needed by selected cases. Use local or controlled HTTP fixtures for mechanical checks.
+Use real service fixtures when testing service integration; reuse suitable existing fixtures before creating new ones.
+Read case headings and relevant report sections, not entire historical logs.
+Keep tracked reports concise: source and fixture identifiers, selected cases, independent checks, observed outcomes, and unresolved limits.
+Keep raw logs and repeated setup details outside tracked reports; preserve concise evidence of prior failures and skips.
+
 ## Git workflow
 
 Never commit or push directly to `main`, on any harness, even with admin rights. Always:
@@ -213,8 +239,9 @@ and the order.
 5. **Feed the contract back into `wkc-setup`.** A new config field means editing
    `skills/wkc-setup/config-template.md` and the `wkc-setup` interview in the same pull request. No skill
    reads a field `wkc-setup` never writes.
-6. **Validate** in a throwaway repo: install with the installer, then work through the skill's
-   runbook at `validation/wkc-<name>.md` on Codex, on Claude Code, and on Kiro CLI. A runbook is a
+6. **Validate** under [Validation](#validation): establish baseline coverage with the skill's
+   runbook at `validation/wkc-<name>.md`, including installed invocation on each supported harness where authorized and available.
+   Run installer and filesystem checks directly in throwaway projects. A runbook is a
    numbered list of cases, each with an independent check that decides PASS or FAIL, ending in a
    report. A case that could not run is SKIP and never PASS: an untested claim recorded as a pass is
    how a defect reaches a user. Cases needing a second terminal, a second account, or a service with

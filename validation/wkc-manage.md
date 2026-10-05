@@ -1,60 +1,334 @@
 # wkc-manage validation
 
-Run installed copies from a clean candidate export on Codex, Claude Code, and Kiro CLI.
-Use `skills@1.7.0`. Record each harness's actual model and reasoning configuration; do not infer them from earlier runs.
+Follow [Validation](../AGENTS.md#validation). These six cases cover the simplified four-operation contract.
+Select affected subchecks; do not rerun historical scenarios for removed features.
+Use `skills@1.7.0` and disposable projects outside the source checkout and real skill discovery directories.
+Direct checks establish installer behavior. They do not prove skill loading or instruction following by an untested harness.
+Additional AI sessions need explicit authorization and a budget; do not launch another harness for testing.
+
+## Preparation
+
+Export the current candidate, including uncommitted skill changes, into a disposable source directory.
+Keep only shipped skill files in that export; never install the authoring template or historical validation material.
+Prepare only layouts needed by the selected case: canonical links, independent copies, or a conflicting destination.
+Use isolated homes and harness configuration paths for installer probes; never modify the maintainer’s global directories.
+Keep source sentinels under `skills/<name>/` and unrelated installed skills and lock entries in consumers.
+Use local sources or controlled HTTP responses for mechanical checks. Public release access needs no login.
+Do not create remote repositories, publish releases, or change real installations for these checks.
+Read historical observations only when a specific unchanged installer behavior needs supporting evidence.
+
+## Cases
+
+1. **Local status and recorded versions.** Prepare owned entries with an exact tag, no ref, `main`, and mixed refs.
+   Include a stale entry, broken link, unknown destination, and two independent copies with different contents.
+   Also exercise a missing lock, unreadable JSON, and an unsupported lock format.
+   PASS: status reports refs literally, absent refs as “Unpinned, default branch”, and actual locations and missing paths.
+   It reports unavailable ownership or version information honestly, without claiming each copy matches its recorded ref.
+   It makes no network requests, installer calls, report writes, or exclusion changes. Compare consumer bytes before and after.
+
+2. **Scoped installation and update.** Exercise a fresh add, then updates in symlink, copy, and mixed layouts.
+   Use a target containing an additional public skill; update only existing selected skills.
+   Exercise GitHub Latest below the numeric maximum, a direct explicit release lookup, and explicit `main` without release lookup.
+   Cover a failed release lookup and an absent target skill. Neither may silently fall back or infer a rename.
+   PASS: release commands use the exact selected tag; `main` uses an unpinned source; public access needs no login.
+   No release listing or body enters context. Names, paths, modes, and recorded refs match the requested operation.
+   No new skill appears during update. An ordinary update replaces edited installed files without backup or approval ceremony.
+   Check actual files and relevant lock entries; do not require runtime archive comparisons or recovery workflows.
+
+3. **Public all and explicit maintainer.** Enumerate public skills at the target and install them with explicit names and harnesses.
+   Repeat discovery with only the maintainer’s internal metadata removed; also request that skill explicitly.
+   PASS: `add all` excludes internal skills and `wkc-skills-release` by name, including under metadata fallback.
+   Explicit maintainer installation succeeds. No wildcard, global flag, or `--all` is used for writes.
+
+4. **Ownership and incompatible locks.** Prepare a foreign `wkc-` entry, an owned legacy entry, and an unowned destination.
+   Include an occupied canonical destination, a missing lock with existing files, malformed JSON, and lock versions `0` and `2`.
+   PASS: write operations reject unknown ownership, malformed entries, and unsupported locks before invoking the installer.
+   A prefix does not establish ownership. Existing files and foreign entries remain unchanged; an empty project permits fresh installation.
+   Legacy ownership can be reported or removed, but absent target names never cause automatic migration.
+
+5. **Explicit removal and preservation.** Remove an owned skill from all requested existing supported placements.
+   Include source sentinels, unrelated skills, and setup-generated configuration. Exercise the manager’s own removal as a selected name.
+   PASS: every write names individual skills and explicit `-a` arguments. Source directories and unrelated content survive unchanged.
+   Inspect actual selected paths and lock entries; report retained files or ownership as incomplete removal.
+   Never run broad or agent-less removal, even as a destructive reproduction. Existing historical evidence covers that installer defect.
+
+6. **Retained placements and incomplete operations.** Request selective removal with retained links, then retained independent copies.
+   PASS: the manager stops before any installer call and explains the shared-file or lock-ownership risk.
+   It does not inspect global detection settings, convert copies, broaden the request, or reinstall retained skills.
+   For a complete-removal probe, use an isolated environment where an additional detected harness keeps canonical files.
+   PASS: actual remaining files and lock ownership produce an incomplete result despite an installer success message.
+   Exercise a failed installer call in a disposable consumer; later calls stop, actual state is reported, and no rollback begins.
+   Include a scoped update where one placement fails, the installer exits zero, and the lock ref still advances.
+   PASS: the printed failure makes the update incomplete although the path exists and the recorded ref changed.
+   Also inject a placement deletion failure that prints a warning and success, removes ownership, and leaves a broken link.
+   PASS: report incomplete removal from the warning and remaining link, even when its target and lock entry are absent.
+
+## Rewrite report
+
+The simplified contract replaces the former reconciliation, provenance, backup, migration, and recovery requirements.
+The initial rewrite ran no checks at the user's request. The focused checks below supersede that initial SKIP for their stated scope.
+Historical results below describe earlier instructions and do not validate this candidate.
+
+### Focused checks, 2026-10-04
+
+Authorization: `.local/wkc-manage-focused-checks-prompt.md`, using disposable fixtures and the current session only.
+Selected scope: current cases 1–6, including recorded refs, scoped updates, public discovery, ownership refusals,
+source preservation, retained placements, canonical retention, and controlled installer failure.
+Backends: local Git sources and a loopback HTTP fixture. Installer targets: Claude Code, Codex, and Kiro CLI project directories.
+No subagents, additional AI sessions, other harnesses, historical matrix, real installations, or remote writes were used.
+
+Candidate: working tree over `b694f8387e57c17f39e553cbbaeb4eb9660f8ec1`, version `0.0.14`.
+The export contains existing tracked files under `skills/`, including uncommitted bytes and excluding deleted files.
+No authoring template, ignored files, historical reports, or validation scripts were included.
+Manager SHA-256: `7e29af51448dd19b21d24af63ea3a742a1d5949f2a5d3d70debe601739fa9957`.
+Invocation metadata SHA-256: `3cbc13c9fa308f1fc586d138de4b0170f74f2d6b05daf64d9bdae4ec3c850e3d`.
+
+Disposable evidence root: `/private/tmp/wkc-manage-focused-rOZQFi/`.
+Local fixture commits: candidate `db811c794c06cb9c260bcee1cd06bae032b280be`;
+update `f721d8d4762451313feaeb8622e46789e88e9d49`.
+The update adds `wkc-added-fixture` and a tracker file. Candidate manager bytes and repository identity remain unchanged.
+Fixture tags `v0.0.14`, `v0.0.15`, and `v0.0.99` are local, not public collection releases.
+An isolated Git configuration redirects the collection URL to that local source.
+Controlled installer fetch responses prevent public API access; telemetry is disabled.
+These fixture locks establish no facts about a real public installation. No public exact-tag probe ran.
+The HTTP fixture returns Latest `v0.0.14`, below available fixture tag `v0.0.99`, and direct explicit-release responses.
+Its server was stopped after testing. Homes, harness configuration paths, Git configuration, npm cache, and temporary files are isolated.
+Tools: `skills@1.7.0`, Node `v24.11.1`, npm `11.19.0`, Git `2.54.0 (Apple Git-157)`; YAML parsed with the installer's dependency.
+
+### Direct checks
+
+These observations establish installer, transport, packaging, or filesystem behavior, not model behavior.
+`logs/installer.jsonl` records 24 commands, including discovery and three explicit removal calls.
+Every mutation names individual skills and explicit `-a` arguments. No wildcard, `--all`, global flag, or generic update command ran.
+
+| Scope | Result | Independent observation |
+|---|---|---|
+| 1, read-only inspection | PASS, focused | Five status consumers retain identical file hashes, modes, and link text. Installer and fetch journals remain unchanged during status inspection; exclusion sentinels survive. |
+| 2, fresh installation | PASS, focused | Valid-lock and missing-lock consumers install into unoccupied destinations. The latter receives numeric lock version `1`. |
+| 2, symlink, copy, and mixed updates | PASS, focused | Exact-tag scoped adds preserve installed names, locations, and per-placement modes. Edited files are replaced, refs advance to `v0.0.15`, and `wkc-added-fixture` is absent. Unrelated entries and sentinels survive. |
+| 2, release transport | PASS, controlled | Anonymous requests use one `/releases/latest` lookup and direct `/releases/tags/v0.0.15` lookup. No release listing occurs. Output contains selected tags or bounded errors; release bodies stay in external logs. HTTP 503, 404, malformed JSON, draft, and prerelease responses reject selection. |
+| 2, explicit main and absent name | PASS, focused | Unpinned shorthand installation records no ref and makes no release lookup. Target discovery lacks legacy `setup`; discovery changes no consumer files. |
+| 3, public discovery and exclusions | PASS, focused | Five source definitions produce four public names. Removing only maintainer internal metadata exposes five names; explicit installation of the four public names still excludes the maintainer. Explicit maintainer installation succeeds. |
+| 4 and 6, refusal integrity | PASS, focused | Twelve unsafe-write consumers and two retained-placement consumers remain identical to their snapshots. Their installer invocation count is zero. |
+| 5, complete removal and self-removal | PASS, focused | Explicit removal of setup and manager across all three harnesses deletes selected paths and entries. Source sentinels under both `skills/<name>/` directories, unrelated installation and entry, setup configuration, context reference, and exclusion sentinel survive. |
+| 6, canonical retention | PASS, reproduction; removal incomplete | An isolated Amp detection marker makes the installer retain canonical setup files and ownership despite exit zero and a success message. Claude and Kiro links are absent. No further mutation occurs in that consumer. |
+| 6, controlled deletion failure | PASS, reproduction; operation failed | Injected EIO at canonical deletion leaves setup files and ownership after both links disappear. Manager and unrelated content survive. No subsequent installer call, conversion, reinstallation, or rollback occurs in that consumer. |
+| 6, installer failure exit status | FAIL, installer defect | The controlled failure prints `Failed to remove 1 skill(s)` but exits zero. Exit status alone does not establish success. |
+| Packaging, metadata, and active documentation | PASS, static | Manager is 101 lines with five opening fields and matching identifiers. YAML preserves quoted `argument-hint`, `disable-model-invocation: true`, and `allow_implicit_invocation: false`. All three installed manager directories match the candidate. Active relative links resolve; callers to deleted runtime references are absent; version remains `0.0.14`. |
+
+Primary evidence: `logs/*-check.json`, `logs/refusal-checks.json`, `logs/*-preupdate.json`,
+`logs/*-before-removal.json`, `logs/package-check.json`, `logs/static-links-check.json`,
+`logs/status-journal-check.json`, `logs/api.jsonl`, and `logs/failure-injection.jsonl`.
+Raw command output and response bodies remain outside the repository.
+
+### Observed application in this session
+
+The current session read the candidate instructions and applied them to the prepared requests.
+Fixture helpers created states, invoked selected commands, and checked results; they did not implement a replacement manager.
+This is bounded application of the instructions, not an installed skill invocation or a harness compatibility result.
+
+| Scope | Result | Observed decision or report |
+|---|---|---|
+| 1, local status | PASS, session only | Reported literal tag, `main`, and another branch ref separately; missing ref as “Unpinned, default branch”; stale entry as missing; broken link as inaccessible. Foreign and unknown destinations were unmanaged. Missing, malformed, unsupported, and unreadable locks supplied unavailable ownership information. No content or public-release identity was claimed for divergent copies. |
+| 2, selection and update | PASS, session only | Selected designated Latest and direct explicit release; used unpinned main; preserved existing sets and modes; allowed replacement of local edits. Failed lookups stopped installation without fallback. Absent `setup` stopped without inferred rename. After manager update, stated that this session retains previously loaded instructions. |
+| 3, add all | PASS, session only | Expanded discovery into four explicit public names and explicit harnesses. Excluded the maintainer both by metadata and by name under fallback; installed it only on explicit request. |
+| 4, unsafe writes | PASS, session only | Rejected foreign ownership, unowned destinations including canonical paths, missing lock with occupied files, malformed JSON, versions `0` and `2`, string version, array skills mapping, null entry, and missing or non-string source. Owned legacy `setup` was recognized during status. No installer ran for rejected writes. |
+| 5 and 6, result handling | PASS, session only | Reported complete removal only after path and lock inspection. Reported canonical retention as incomplete and controlled failure as partial removal, despite zero exit codes. Stopped changes in affected consumers without rollback. |
+| 6, selective removal | PASS, session only | Rejected retained links and independent copies before installer calls because canonical files or shared lock ownership can be lost. No global detection inspection, conversion, broadened removal, or retained-skill reinstallation was used for these decisions. |
+
+### Reproduction and limits
+
+For canonical retention, install setup into all three directories, enable only isolated Amp detection, then remove setup with all three explicit harness arguments.
+For failure, use the same installation and inject `EIO` from `fs.promises.rm` at canonical setup deletion.
+The direct removal command in both probes is:
+
+```sh
+npx skills@1.7.0 remove wkc-setup -a claude-code -a codex -a kiro-cli -y
+```
+
+Both probes leave `.agents/skills/wkc-setup/` and its lock entry, with Claude and Kiro links absent.
+Retention prints success; failure prints an error; both exit zero. These installer limitations are not successful removal.
+The retained fixture helper reproduces each probe in a new disposable consumer with isolated transports and configuration:
+
+```sh
+node /private/tmp/wkc-manage-focused-rOZQFi/reproduce-removal.mjs retention
+```
+
+```sh
+node /private/tmp/wkc-manage-focused-rOZQFi/reproduce-removal.mjs failure
+```
+
+**SKIP:** installed invocation and actual loading on Codex, Claude Code, and Kiro CLI.
+The current session cannot retroactively demonstrate installed activation; additional sessions and other harness launches were prohibited.
+Public GitHub release integration and public exact-tag installation were outside this local focused scope, not claimed as tested.
+Optional rejected-authentication fallback was not exercised; all controlled release requests were anonymous.
+Unreadable-lock coverage uses an `EISDIR` read failure, not a permission-denied file.
+No full-case or cross-harness compatibility verdict follows from these focused results.
+Historical broad-removal damage evidence remains unchanged; no broad or agent-less reproduction ran.
+All initial tracked bytes were unchanged before the report edit. Only this report was edited during validation;
+the historical section remains byte-identical to its initial working-tree content.
+
+### Review and fix, 2026-10-04
+
+An independent review ran in one Claude Code session, without subagents, other harnesses, or additional AI sessions.
+The focused checks above ran in Codex CLI `0.160.0`, session `01a10714-726b-7093-8cdc-0b14ac6a0ef2`.
+“This session” in those sections means that Codex session. Its local transcript supports the session-only rows.
+
+**Defect, fixed.** The installer prints per-skill failures and exits zero after both `add` and `remove`.
+A failed copy can leave an existing path while the lock ref still advances, so path and lock checks alone report success.
+`SKILL.md` section 4 now states that fact and treats any reported failure as an incomplete operation. Case 6 covers it.
+
+**Report corrections.** The cited `reproduce-removal.mjs` helper was written but never run during the focused checks.
+This review ran it once in a path-rewritten copy of the evidence root; it reproduced both recorded outcomes.
+It appends to that root's installer journal and reuses fixed consumer names, so later runs are not new consumers.
+The focused fixture inherited Codex session variables, so the installer reported “codex Agent detected” and forced non-interactive mode.
+Every mutation already passed `-y` and explicit `-a`; discovery calls did not need those flags.
+The manager-entry assertion in `final-direct.mjs` compared the lock with itself. Direct inspection confirms the manager entries and links survived.
+
+Candidate: working tree over `b694f8387e57c17f39e553cbbaeb4eb9660f8ec1`, version `0.0.14`, with only section 4 of the manager changed.
+Manager SHA-256: `0e8bb5a2d0d69d86f95e84ae49a554b8643045d380917eb1a53f77900146975f`. Invocation metadata is unchanged.
+Disposable root: `/private/tmp/wkc-manage-review-34qVzs/`, with a new export, local Git tags `v0.0.14` and `v0.0.15`, and isolated configuration.
+R1 and R3 started with empty environments. R2 reused the focused fixture's environment, including Codex session variables.
+The R1 initial install made one anonymous installer request to the public repository metadata endpoint; telemetry was disabled.
+
+| Check | Result | Independent observation |
+|---|---|---|
+| R1, partial update failure | PASS, reproduction; update incomplete | Copy-mode update of `wkc-tracker` for Claude Code and Kiro CLI, with EIO injected at one Kiro file. Exit `0`; output names the Kiro failure; ref advances to `v0.0.15`. The Kiro copy keeps `SKILL.md` but lacks the new file. Sentinels and the unrelated entry survive. |
+| R2, removal reproduction helper | PASS, direct | Retention and failure modes both exit `0`, remove Claude and Kiro links, and leave canonical `wkc-setup` with its `v0.0.14` entry. |
+| R3, packaging | PASS, static and installer | Discovery lists four public names. Installed manager directories in all three harness paths match the candidate. Frontmatter, metadata, opening fields, 103 lines, links, `VERSION`, and `git diff --check` pass. |
+| R4, result handling | PASS, session only | This Claude Code session applied the revised section 4 to R1. It reported the update as incomplete, stopped further changes, and began no rollback. |
+
+Evidence: `logs/r1-check.json`, `logs/r3-check.json`, `logs/installer.jsonl`, and raw installer logs under that root.
+Reused without rerun: the direct installer rows above, because installer, fixtures, and configuration are unchanged.
+R3 replaces the earlier packaging row, which described the 101-line candidate.
+Session rows for status, selection, `add all`, unsafe writes, and selective removal apply to unchanged sections 1 to 3.
+The earlier result-handling session row applied the previous section 4 wording; R4 covers the revised wording.
+**SKIP:** installed invocation and loading on Codex, Claude Code, and Kiro CLI; public release integration.
+
+### Independent audit, 2026-10-04
+
+Scope announced before testing: inspect prior raw evidence, hashes, locks, snapshots, and add/remove source;
+repeat case 6 failure subchecks and packaging with an empty environment. Use the current Codex session only.
+No additional AI sessions, subagents, other harnesses, real installations, or remote writes ran.
+
+**Finding:** no further runtime defect was confirmed. Section 4's failure rule is necessary and within the rewrite plan.
+The pinned [add source](https://github.com/vercel-labs/skills/blob/v1.7.0/src/add.ts) writes the shared lock after any successful placement.
+Its ordinary text-output path prints placement failures without setting a failing exit status; JSON mode has different exit handling.
+The [remove source](https://github.com/vercel-labs/skills/blob/v1.7.0/src/remove.ts) also prints failures without setting a failing exit status.
+It catches individual placement deletion errors as warnings and can then print success and remove shared ownership.
+The cached `skills@1.7.0` executable and fresh probes confirm these paths. No installer change or workaround is needed.
+
+**Report fixes:** narrowed the empty-environment claim to R1 and R3; R2's raw logs still show Codex detection.
+Changed “every command” to “every mutation” because discovery commands omit `-y` and `-a`.
+Case 6 now explicitly checks warning-only removal with a broken link. Runtime instructions, metadata, README, CHANGELOG, and VERSION are unchanged.
+
+Evidence root: `/private/tmp/wkc-manage-audit-Q7MZ8j/`.
+The fresh export matches the current shipped tree; no runtime change invalidated the prior review export.
+Manager SHA-256 remains `0e8bb5a2d0d69d86f95e84ae49a554b8643045d380917eb1a53f77900146975f`;
+metadata remains `3cbc13c9fa308f1fc586d138de4b0170f74f2d6b05daf64d9bdae4ec3c850e3d`.
+The earlier `7e29af51448dd19b21d24af63ea3a742a1d5949f2a5d3d70debe601739fa9957` matches only the earlier export.
+New local fixture commits: candidate `819105be4dbdb5a4fa2b28b9faaa812d78c7f6b2`, update `4018151653da614d19364bcb790f4310b8d6ed3b`.
+All new installer processes used an explicit environment, isolated homes/configuration/cache, local Git redirection, and stubbed fetch responses.
+Only executable lookup inherited the parent PATH. No new installer log reports agent detection.
+Local tags and redirected URLs provide no public installation evidence. Node `v24.11.1` and the pinned cached installer were used.
+
+| Check | Result | Independent evidence |
+|---|---|---|
+| Prior evidence audit | PASS, focused direct checks | `audit.mjs` rechecks raw journals and existing consumers against snapshots: 24 scoped commands, five unchanged status consumers, fourteen untouched refusal consumers, preserved update modes/names, public exclusions, removal state, and R1–R3 artifacts. Unchanged full lock hashes establish manager-entry preservation after incomplete removals without the earlier self-comparison. |
+| Case 6, partial copy update | PASS, reproduction; incomplete update | New EIO probe exits `0`; Claude receives the new file, Kiro retains `SKILL.md` without that file, and the shared ref advances to `v0.0.15`. The output reports Kiro's failure. |
+| Case 6, canonical deletion failure and retention | PASS, two focused reproductions; incomplete removals | Both exit `0`, remove Claude/Kiro links, and retain canonical files and ownership. One prints failure; isolated Amp detection causes the other to print success. |
+| Case 6, placement warning | PASS, reproduction; incomplete removal | Injected Kiro unlink failure prints a warning plus success and exits `0`. Canonical files and ownership disappear, but `lstat` still finds the broken Kiro link. |
+| Packaging and active links | PASS, focused direct checks | Four public names; all three installed manager paths match exported bytes. Manual invocation metadata, five opening fields, local links, version `0.0.14`, and `git diff --check` pass. |
+| Revised section 4 | PASS, current session only | This session reports all four probe operations as incomplete. Their journals contain no later changes in those consumers, rollback, conversion, or reinstallation. |
+
+Raw evidence: `audit.json`, `probes.mjs`, `probes.json`, `environment.json`, `logs/installer.jsonl`, and numbered command logs.
+Prior scripts and evidence roots were read without rerunning or modifying them. Prior controlled release transport and unchanged sections 1–3 reuse their recorded evidence.
+The Codex transcript `01a10714-726b-7093-8cdc-0b14ac6a0ef2` supports the recorded status, release-selection, and result reports.
+The Claude Code transcript `7105576d-a312-4085-b6bd-d1b035a0077b` supports R4's incomplete-update report.
+These are bounded session observations; filesystem checks alone do not establish those decisions or installed activation.
+Two initial audit assertions were corrected: updates add the fixture file, and internal discovery lists all five visible names.
+Those were audit assumptions, not candidate failures. Prior failures and the historical section remain preserved.
+**SKIP:** installed invocation/loading on all three harnesses and public release integration remain untested.
+Rejected-authentication fallback and permission-denied lock reads remain outside the exercised evidence; earlier limits still apply.
+
+## Historical validation
+
+The following case catalog and reports are retained as historical evidence only.
+Their numbered cases refer to the previous design, not the six current cases above.
+Instructions and acceptance criteria within this section are superseded by the current contract.
+
+<details>
+<summary>Previous case catalog and preparation, superseded by the rewrite</summary>
+
+# wkc-manage validation
+
+Follow [Validation](../AGENTS.md#validation): select affected cases and harnesses, use direct checks first, and reuse unchanged evidence.
+This is a case catalog, not a full test sequence for each change.
+Read [Cases](#cases) and selected report sections; do not load the historical reports as routine context.
+Use `skills@1.7.0`. Record the actual model and reasoning configuration only when running a harness.
 Perform each harness check from that harness's own session. Do not launch another AI harness for automated testing.
 Additional AI test sessions require an agreed budget. Required checks that cannot run remain SKIP.
-Each numbered case has an independent check. Record PASS, FAIL, or SKIP per harness.
-A partial case is SKIP, with completed checks listed. Keep initial failures when a later candidate fixes them.
+Each selected case has an independent check. Separate direct results from results for each selected harness.
+Identify selected subchecks explicitly; do not claim a full-case PASS from partial coverage. Preserve failures after correction.
 Installer messages, lock entries, source inspection, and manual commands alone do not prove harness behavior.
 
 ## Preparation
 
-Record source commit, export method, all packaged file hashes, tools, commands, and exact test-only identity substitution.
+Prepare only fixtures required by selected cases. Reuse suitable existing fixtures and recorded setup evidence.
+Use local files or controlled HTTP responses for mechanical checks; real release fixtures are needed for GitHub integration and installation cases.
+Record source commit, relevant tools and commands, and fixture identifiers; record packaged hashes and identity substitutions when installing test copies.
 Keep scratch data outside the repository. Never install a populated working tree, because ignored files can be copied.
-Export the candidate with `git archive`, then install it into independent consumer repositories:
+When testing installed behavior, export the candidate with `git archive`, then install it into independent consumer repositories:
 
 ```sh
 npx skills@1.7.0 add "<clean-candidate>" --skill wkc-manage -a claude-code -a codex -a kiro-cli -y
 ```
 
 Compare every installed manager directory recursively against the candidate archive before invocation.
-Create a disposable public fixture repository for release-dependent cases. Record its name; never delete it.
+Use only the states needed by selected integration cases from the following baseline fixture recipe.
+For cases requiring real GitHub integration, use a suitable existing disposable public repository or create an authorized fixture.
+Record its name; never delete it without separate authorization.
 Change only the test manager's labeled Repository identity field to that repository.
 Include equivalent test copies in fixture tags so target archive comparisons include that same identity substitution.
 Keep an unmodified installed copy for ownership isolation checks against the real collection.
-Use legacy `setup` and `tracker` from collection `v0.0.8` for the fixture's legacy tag.
+For legacy cases, use `setup` and `tracker` from collection `v0.0.8` for the fixture's legacy tag.
 Publish stable fixture `v0.0.9` and `v0.0.10`, make Latest point below the numeric maximum, and include a draft,
 prerelease, and orphan tag above both. Read the complete release list independently.
 Keep extra source sentinels and unrelated lock entries in consumers to detect unintended writes.
 
-Before designing the skill, probe the installer directly in disposable consumers:
-unpinned, exact-tag, legacy, symlink, all-three copy, retained-harness copy, selective removal, unsupported locks, and wildcard internal exclusion.
+Probe changed installer behavior directly in disposable consumers before model testing.
+Select relevant layouts from unpinned, exact-tag, legacy, symlink, independent-copy, retained-harness, removal, lock, and internal-exclusion cases.
 Record exact commands, raw locks, link targets, resolved paths, and complete archive comparisons.
 Stop on an observation contradicting the approved design; settle it before writing the skill.
 
 ## Cases
 
 1. **Package and actual loading.** List public and explicit internal discovery. Count source skill definitions separately.
-   Invoke the installed manager on each harness, with no operation.
+   Invoke the installed manager on each selected harness, with no operation.
    PASS: four public skills, five shipped skills, no template; five opening fields, matching identifiers, manual settings,
    no scripts; every packaged file matches the clean archive; transcript shows actual skill loading and status behavior.
 
-2. **Lock schema gate.** Independently use schema `1`, malformed JSON, schema `0`, and schema `2`.
-   Invoke `status`, `reconcile`, and a mutation on each invalid lock; also test malformed entries under schema `1`.
-   PASS: valid schema operates; every invalid variant stops without installer execution, report, exclusion, or lock writes.
+2. **Lock format version gate.** Independently use locks whose top-level numeric `version` field is `1`, `0`, or `2`, plus malformed JSON.
+   Invoke `status`, `reconcile`, and a mutation on each invalid lock; also test malformed entries with `version` equal to `1`.
+   PASS: valid version `1` operates; every invalid variant stops without installer execution, report, exclusion, or lock writes.
    Compare raw lock bytes, complete consumer files, and Git exclusions before and after.
 
 3. **Read-only status and external changes.** Invoke without an operation, then change an owned installation with the external installer.
    Invoke again, including offline status and a failing remote API read.
    PASS: each recomputes current paths and provenance, creates no report or exclusion, preserves checkout bytes,
    and never interprets failed remote verification as absent releases or ownership.
+   Local-only status makes no release-list request; check the transport journal independently.
 
 4. **Target selection.** Request update without a release against the fixture's stable, draft, prerelease, and orphan tags.
-   Also request each ineligible target explicitly, and interrupt release-list access.
-   Exercise a second release page with more than 100 records or a controlled paginated API transport.
-   PASS: paginated complete listing selects the fixture's numeric stable maximum despite Latest `v0.0.9`;
-   ineligible or unreadable targets stop without mutation. Remote refs and releases remain unchanged.
+   Repeat without credentials and with rejected optional credentials; public access must proceed anonymously without a login request.
+   Request an older stable version and each ineligible target explicitly; check direct tag lookup without release enumeration.
+   Exercise multiple release pages with hundreds of records and large release bodies through a controlled paginated API transport.
+   Include unsupported stable tags; check bounded diagnostics without invented ordering.
+   Interrupt a later page and separately return malformed JSON; neither may produce a partial target or installer call.
+   PASS: complete listing selects the fixture's numeric stable maximum despite Latest `v0.0.9`; explicit selection verifies only its release.
+   Public access requires no authentication. API responses stay in external scratch files and shell processing.
+   Tool output contains only the selected tag, publication status, resolved commit, and bounded diagnostics, never history or release bodies.
+   Ineligible or unreadable targets stop without mutation. Remote refs and releases remain unchanged.
 
 5. **Add all and explicit maintainer.** Add all public skills into named harnesses, then explicitly add `wkc-skills-release`.
    Repeat add-all with a separate fixture export lacking only boolean internal metadata.
@@ -148,10 +422,15 @@ Stop on an observation contradicting the approved design; settle it before writi
 
 ## Report
 
-Record commands, source commit, packaged hashes, fixture names, release IDs, archive SHAs, and observed files and links here.
-Give each case a per-harness result. Partial coverage is SKIP; failed attempts remain FAIL after correction.
+Record source and fixture identifiers, selected cases, independent checks, observed outcomes, and unresolved limits here.
+Include relevant packaged hashes, release IDs, and archive SHAs when checking installation or release identity.
+Separate direct checks, new harness results, and explicitly reused evidence. Do not duplicate prior setup instructions or result tables.
+Unavailable required checks within selected scope are SKIP; failed attempts remain FAIL after correction.
 Do not cite absolute paths to ignored logs as evidence. This report must be readable without scratch files.
 Production merge and publication are outside this PR. No production release is authorized by validation.
+
+
+</details>
 
 ## Installer observations: 2026-10-02
 
@@ -775,3 +1054,210 @@ and one-version checks pass. `SKILL.md` is 131 lines. Version remains `0.0.14` f
 The repository now records cross-harness testing restrictions and token controls under `docs/dev-agents/rules/`.
 Existing configuration discovers those files. No duplicate rule registry or AGENTS reference was added.
 The restriction does not convert untested compatibility into PASS or remove required cases from this runbook.
+
+## Bounded Codex follow-up: 2026-10-03
+
+The user approved `gpt-6-luna`, high reasoning, and twelve sequential Codex sessions, including the pilot and failed attempts.
+All twelve slots were used. No Claude Code, Kiro CLI, or test subagent was launched.
+Installer commands targeted supported harness directories without invoking those harnesses' AI.
+
+These results cover commit `b694f8387e57c17f39e553cbbaeb4eb9660f8ec1` and the six packaged hashes listed above.
+Fixture `v0.0.16` supplied that manager, with only the labeled repository identity substituted.
+Initial manager placements matched the complete fixture archive.
+Management files changed in the working tree during this run. Those newer instructions were not installed into these consumers.
+This section therefore does not validate the newer working tree or replace the earlier matrices.
+
+Observed versions: Codex `0.160.0`, Node `v24.11.1`, GitHub CLI `2.102.0`, and Git `2.54.0 (Apple Git-157)`.
+Consumers, synthetic homes, commands, transcripts, snapshots, installer journals, and backups were retained outside the repository.
+Each consumer had unrelated source sentinels and independent lock, index, and Git exclusion baselines.
+Comparisons covered complete bytes, file modes, directory and link types, link text, accessibility, ownership, source type, skill path, and exact refs.
+
+### Configuration and setup corrections
+
+Every launch explicitly selected the model and reasoning level. The common command options were:
+
+```sh
+codex --no-daemon --ask-for-approval never exec --ignore-user-config --ephemeral \
+  --model gpt-6-luna -c 'model_reasoning_effort="high"' \
+  -c '<per-case environment and permission settings>' \
+  --add-dir '<validation-root>' --json --color never --cd '<consumer>' '<request>'
+```
+
+Shell overrides supplied synthetic `HOME`, absent `CODEX_HOME`, synthetic `CLAUDE_CONFIG_DIR`, isolated `XDG_CONFIG_HOME`, scratch paths, cache, transports, and case identifiers.
+Runtime authentication used a separate directory referencing existing Codex authentication.
+Only the `gh` transport subprocess used the real GitHub authentication context.
+Alternative harness-home overrides were cleared. Real detection directories were not renamed, hidden, or deleted.
+
+Sessions one and two used `workspace-write`. Its recursive `.agents` protection blocked the first pagination update.
+The installer returned zero while reporting three `EPERM` failures unlinking canonical `SKILL.md`. Complete content and the ref remained at `15`.
+This was a launcher setup failure, not a pagination-update PASS. The runner stopped before starting another AI session.
+Later launches used this permission profile through explicit configuration overrides:
+
+```toml
+default_permissions = "wkc-validation"
+[permissions.wkc-validation]
+extends = ":workspace"
+[permissions.wkc-validation.filesystem]
+":slash_tmp" = "deny"
+"/private/tmp" = "deny"
+[permissions.wkc-validation.filesystem.":workspace_roots"]
+".agents" = "write"
+[permissions.wkc-validation.network]
+enabled = true
+```
+
+Direct probes verified canonical write/unlink, fixed `/tmp` denial, and a complete pinned-installer update under that profile.
+See [Codex protected paths](https://learn.chatgpt.com/docs/agent-approvals-security#protected-paths-in-writable-roots).
+A shell here-document exposed another temporary-path problem. Direct probes verified synthetic `TMPPREFIX` before continuation.
+Later prompts retained the supplied `PATH`, prohibited zsh's special `path` variable, and used Node for helper logic.
+
+The pagination transport redirected only the exact release-list endpoint. Tagged-release and Git-object requests still used GitHub.
+The successful run fetched both pages twice: its journal records page one, page two, page one, page two.
+Each complete response contained 100-plus-one records and selected controlled maximum `v0.0.16`. The server was stopped afterward.
+An overly restrictive transport was corrected to allow project `list` and `ls` reads.
+Mutation controls still required `skills@1.7.0`, explicit names and harnesses, and the active consumer; broad and global mutations remained rejected.
+Initial sessions had eight-minute limits. After two timeouts, remaining unrun cases received twelve-minute limits.
+The maximum session count remained twelve. These limits were not token caps.
+
+### Results and independent evidence
+
+Rows describe named subcases rather than complete passes for every expanded numbered case or every Codex configuration.
+
+| Case | Subcase | Result | Evidence |
+|---|---|---|---|
+| 8 | Fresh named copies without a lock | Installation PASS; confinement FAIL | One exact `16` add produced independent Claude/Kiro copies; no canonical setup placement; unowned manager and unrelated state survived |
+| 4 | Second-page selection and update | PASS after setup correction | Complete controlled catalog selected `16`; one exact add advanced complete content and ref while preserving every placement and mode |
+| 19 | Approved unpinned canonical replacement | PASS | Current bytes matched archive `15` without a recorded ref; approved replacement matched `16`; only the new exact ref was established |
+| 9 | Approved unpinned migration | PASS across mutation and follow-up; initial invocation SKIP at timeout | Originals matched `8`; replacements matched `16` before legacy removal; follow-up verified replacements, legacy absence, modes, and ownership without another installer call |
+| 11 | Codex-only conversion, approval withheld | PASS | Canonical visibility and required retained-copy conversion were explained; numbered options ended the turn; consumer and lock were unchanged |
+| 11 | Undetected retained consumers, approval withheld | PASS | Plan predicted canonical/ownership deletion and a broken Kiro link; numbered preservation options ended the turn without writes |
+| 11 | Approved preservation after predicted deletion | PASS | Claude removal deleted canonical content and ownership; exact original `15` reinstall restored Codex canonical files, Kiro link, modes, accessibility, and ownership; Claude stayed absent |
+| 11 | Detected retained consumer retains canonical files | SKIP, partial | Synthetic Kiro detection preceded one Claude removal; archive `15`, canonical content, Kiro link, and ownership survived; timeout prevented final report and backup cleanup |
+| 15 | Downgrade approval withheld | PASS | Exact old `16` and proposed `15` versions/commits were shown; numbered options ended the turn; bytes, lock, index, and exclusions stayed unchanged |
+| 15 | Exact downgrade approved | PASS | One exact `15` add restored complete lower-release content and original modes; manager stayed at `16`; unrelated state survived; verified backup was removed |
+| 19 | Six provenance consumers | PASS for listed inspections | Edit, extra file, broken link, unpinned matching bytes, mixed refs, stale entry, foreign owner, and missing lock were identified; equal bytes established neither ownership nor a historical pin; all consumers stayed unchanged |
+| 8 | Foreign-source removal refusal | PASS | Source `example/foreign` was rejected as unowned; complete consumer, raw lock, index, and exclusions survived; no installer ran |
+
+The two independent removal questions shared one session, with separate numbered options at its end.
+Six provenance inspections and foreign-source refusal shared another session. Every consumer retained its own independent snapshot.
+
+Migration installed both replacements together, verified them, and then removed the two legacy names:
+
+```sh
+npx skills@1.7.0 add 'https://github.com/wilsonkichoi/skills-manage-validation-20261002.git#v0.0.16' --skill wkc-setup wkc-tracker -a claude-code -a codex -a kiro-cli -y
+npx skills@1.7.0 remove setup tracker -a claude-code -a codex -a kiro-cli -y
+```
+
+The first removal attempt failed before the underlying installer started because the model's shortened `PATH` omitted Node.
+After diagnosis and fresh checks, the same removal command succeeded with Node restored to `PATH`.
+The session timed out during final verification; its incomplete invocation remains SKIP.
+A separate follow-up verified remote commit `4bc0a13abe6de85684ae35060f6f6a75447ff7e0`, complete source trees, all placements, and legacy absence.
+It inspected missing legacy refs in the backup and explicitly denied establishing historical installation pins.
+Its before-and-after consumer snapshots and installer journal were identical. The interruption backup remains.
+
+Approved preservation used separate removal and original-source reinstallation calls:
+
+```sh
+npx skills@1.7.0 remove wkc-setup -a claude-code -y
+npx skills@1.7.0 add 'https://github.com/wilsonkichoi/skills-manage-validation-20261002.git#v0.0.15' --skill wkc-setup -a codex -a kiro-cli -y
+```
+
+Inspection between calls observed absent canonical content and ownership.
+Independent final checks required Claude absence, a real canonical directory, the original Kiro link, complete archive equality, and original source/path/ref.
+Permitting reads and dependent installer writes were separate calls in the successful recorded mutations.
+
+### Retained failures and limits
+
+The pilot wrote authentication diagnostics to `/tmp/wkc-auth.out`, outside its authorized scratch directory, and later removed that file.
+Its confinement subcheck remains FAIL. Successful installation does not erase that write.
+
+The pilot first checked a nonexistent root `schema` field, then expected a canonical placement for retained-harness copies.
+The downgrade's first audit incorrectly checked the format version inside a skill entry.
+Corrected audits and independent comparisons established the actual top-level numeric `version` and intended placements.
+Those failed diagnostic attempts remain recorded.
+
+The blocked pagination backup used a repository directory containing a timestamp directory.
+That differs from the required single `<repo>-<timestamp>` operation directory. Its naming subcheck is FAIL.
+Later operation directories used the required label-and-timestamp shape.
+
+The successful pagination report described `17` as a tag without a published release.
+The controlled catalog omitted `17`; the ordinary fixture has a published stable release `17`.
+This result establishes selection within the controlled catalog, not ordinary fixture release absence.
+
+Migration diagnostics used zsh's special `path` variable, then shortened `PATH`, causing command lookup failures.
+The model initially blamed inherited configuration before identifying the omitted Node directory.
+The failed removal attempt and interrupted invocation remain visible; the verification follow-up does not erase them.
+
+An independent checker initially required a 40-character computed hash and rejected a legitimate 64-character installer hash.
+Pinned tool code permits a Git tree hash and a SHA-256 folder-hash fallback.
+The corrected check accepts both formats and verifies complete content separately.
+The failed checker assertion remains recorded. Only direct checks were repeated; no AI session or consumer was repeated.
+
+The pagination and unpinned-update models reported automatic-review rejection of backup deletion.
+The update report called the rejected `rm -rf` an "rm -f style" command.
+Emitted command journals contain no corresponding executed deletion or rejection receipt, so those reported reasons are not independently established.
+Both backups remain; their model-driven cleanup subchecks are SKIP.
+The migration and retained-consumer interruption backups also remain.
+Fresh-copy, approved-preservation, and approved-downgrade backups were removed after recorded verification.
+
+The retained-consumer attempt still needs its final report and successful-operation backup lifecycle for a complete behavioral PASS.
+Prior historical FAIL and SKIP results remain. No revised Claude or Kiro behavioral run occurred.
+The newer working-tree instructions remain untested by this frozen-package run.
+
+### Session count and recorded usage
+
+Counts come from existing JSONL `turn.completed` events, calculated by Node without another model.
+The two timeout sessions emitted no completion usage event. Their usage is unknown, not zero.
+
+| Session | Request | Input including cache | Cached input | Output |
+|---|---|---:|---:|---:|
+| 1 | Fresh copy pilot | 640,844 | 588,288 | 13,905 |
+| 2 | Pagination, blocked setup | 716,904 | 661,760 | 23,325 |
+| 3 | Pagination retry | 370,636 | 339,456 | 10,810 |
+| 4 | Approved unpinned update | 315,902 | 285,696 | 10,175 |
+| 5 | Unpinned migration, timeout | Unknown | Unknown | Unknown |
+| 6 | Migration verification | 337,248 | 299,264 | 10,996 |
+| 7 | Two removal questions | 317,975 | 282,880 | 13,038 |
+| 8 | Approved preservation | 639,566 | 595,968 | 14,496 |
+| 9 | Retained-consumer removal, timeout | Unknown | Unknown | Unknown |
+| 10 | Downgrade question | 155,943 | 135,424 | 6,332 |
+| 11 | Approved downgrade | 632,279 | 563,200 | 15,897 |
+| 12 | Provenance and foreign refusal | 447,077 | 404,480 | 15,544 |
+| **Known total** | **Ten completed sessions** | **4,574,374** | **4,156,416** | **134,518** |
+
+Known uncached input is `417,958`. Known reasoning output is `77,628`, already included in output above.
+These totals exclude both timeout sessions, the parent session, and any unreported infrastructure usage.
+They are lower bounds, not an allowance percentage or invoice. Input accumulates across requests; cached input is not added twice.
+
+Controls included one pilot, sequential execution, direct comparisons, shared archives, and grouped independent inspections.
+The first canonical-write setup error still consumed an avoidable session because its sandbox preflight was incomplete.
+Future preflights must exercise the actual sandbox, intended canonical writes, pinned installer, and shell temporary files before model work.
+No further AI session is authorized by the exhausted twelve-session budget.
+
+## Anonymous access and bounded release selection, 2026-10-03
+
+Scope: working-tree changes after `b694f83`, case 4 transport and selection subchecks, plus installation and metadata checks.
+Commands: Node with `curl` and `jq` against a controlled HTTP fixture, anonymous public HTTPS reads,
+`npx skills@1.7.0 add` with explicit names and agents in a disposable consumer, recursive `diff -r`, and YAML parsing through `uv`.
+The fixture had 300 records across three pages, with 18,400-byte bodies and the numeric maximum on page three.
+Fixture commit resolution used a fixed 40-character value; the real public tag was resolved separately.
+
+| Check | Result | Independent evidence |
+|---|---|---|
+| Anonymous default selection | PASS | Request journal contains three unauthenticated page requests; selected tag is `v0.0.1000` |
+| Rejected optional credentials | PASS, controlled transport | HTTP 401 responses are followed by anonymous successful requests; target remains `v0.0.1000` |
+| Bounded selection output | PASS | Selected JSON is 202 bytes, with no release body or asset marker; eight unsupported tags produce a count and three examples |
+| Explicit older version | PASS | One direct `/releases/tags/v0.0.20` request, with no release-list request |
+| Ineligible explicit versions | PASS | Draft, prerelease, orphan tag, and unsupported version each fail selection |
+| Incomplete or malformed listing | PASS | Later-page HTTP 503, invalid JSON, and wrong response shape each reject without producing a target |
+| Anonymous public access | PASS | Real HTTPS release lookup verifies published stable `v0.0.13` without an authorization header or credentials |
+| Anonymous tag resolution | PASS | HTTPS `git ls-remote` with prompts and credential helpers disabled resolves `v0.0.13` to `57276ceb4a73b8b69a564ab9073a10ee48e70999` |
+| Pinned installer packaging | PASS | Six tracked manager files match all three independent installed copies through recursive `diff -r` |
+| Repository frontmatter | PASS | YAML parsing confirms identity, five opening fields, and unchanged manual invocation settings |
+| Bundled quick validator | FAIL, validator limitation | It rejects existing `argument-hint` and `disable-model-invocation` fields, which this repository explicitly supports |
+
+Case 3 local-status behavior and case 4 revised instruction following remain SKIP on all three harnesses.
+No additional AI session or production mutation ran; direct results do not prove revised model behavior.
+Earlier behavioral results apply only to their recorded packages.
+Optional raw evidence, fixture code, and package hashes remain under `/private/tmp/wkc-manage-targets-ZnIUr7/`.
+No supporting script was added to the shipped skill.

@@ -1,131 +1,103 @@
 ---
 name: wkc-manage
-description: Manage this collection's project installations. Use when you want installation status, updates, additions, removals, rename migration, or a local verification report.
-argument-hint: "[status | update | add | remove | reconcile] [skills, harnesses, release]"
+description: Manage this collection's project installations. Use when you want to see recorded versions, install, update, or remove wkc-* skills.
+argument-hint: "[status | add | update | remove] [skills, harnesses, release or main]"
 disable-model-invocation: true
 ---
 
 # wkc-manage
 
 - **What it does:** manages this collection's project installations through `npx skills@1.7.0`.
-- **When to use it:** explicit invocation for inspection or management in an adopting project. Callers are people.
-- **Dependencies:** Git and filesystem access; Node.js and npm for mutations; authenticated `gh` and network access for remote verification and installation.
-- **Input:** an operation, optional skill names, harnesses, and a published release, including natural-language requests. Omission means read-only `status`.
-- **Output:** current installation evidence, verified changes, or an optional local report from `reconcile`; failures identify completed steps and recovery evidence.
+- **When to use it:** explicit invocation in a project. Callers are people.
+- **Dependencies:** filesystem access; Node.js, npm, and Git for installation; network access for installer commands and release lookup.
+- **Input:** an operation, optional skill names, harnesses, and a release or `main`. Natural language is accepted; omission means `status`.
+- **Output:** recorded versions and installation locations, or a summary of changes and any incomplete operation.
 
 **Repository identity:** `wilsonkichoi/skills`
 
-Use that field as `repo` throughout. Require no setup skill or project configuration.
-Manage project installations for Claude Code, Codex, and Kiro CLI, not global installations or plugin caches.
-Leave unrelated skills, collection sources, and generated project configuration intact.
-When unsure about intent or affected placements, ask before changing them.
-Every question ends the turn: numbered options, recommended option first, and a digit accepted.
+Use that field as `repo`. Manage project installations for Claude Code, Codex, and Kiro CLI.
+Leave collection sources, unrelated skills, global installations, and generated project configuration untouched.
+Ask only for missing choices that affect the request. Honor existing authorization without redundant confirmation.
+End questions on numbered options, recommended option first, and accept a digit.
 
-## 1. Inspect the project
+## 1. Inspect and show status
 
-Resolve the project root and linked-worktree context. Inspect `git status --porcelain --untracked-files=all`.
-A dirty project is allowed; preserve unrelated work and detect concurrent changes to affected files.
-Before every lock read or write, inspect raw `skills-lock.json` at the project root.
-Accept only a well-formed schema `1` lock, with a skills mapping and usable source evidence for each entry.
-Stop on malformed content or any other schema, including for `status` and `reconcile`.
-Never pass an incompatible lock to the installer: it discards older schemas and accepts newer ones without validation.
-A missing lock permits fresh installation but establishes no ownership of existing files.
+Read the project’s `skills-lock.json` and relevant paths under `.agents/skills/`, `.claude/skills/`, and `.kiro/skills/`.
+An entry belongs to this collection when its `source` matches `repo`, including legacy unprefixed names.
+A `wkc-` prefix alone does not establish ownership. Report other existing destinations as unmanaged or unknown.
+Inspect directories and symlinks to identify locations and copy or symlink mode; the lock records neither.
+Canonical `.agents/skills/` files are visible to Codex, including when other harnesses link to them.
 
-Ownership comes from an entry's source repository matching the identity field, including legacy unprefixed names.
-Pinned full Git URL installations record the same owner as shorthand installations, plus `ref`.
-A skill name, prefix, hash, or matching content alone does not establish ownership.
-Report unowned destinations and stale lock entries. Do not overwrite or remove them as managed installations.
+Report each skill’s **recorded version**, using its `ref` exactly as stored.
+A missing `ref` means “Unpinned, default branch”; it does not identify a commit or prove current `main` content.
+Show different refs separately. Flag missing installations and broken links instead of presenting them as installed.
+One lock entry covers all copies of a skill; it does not prove that every copy has identical content.
+Report a missing, unreadable, or unsupported lock without inventing versions or ownership.
+For `status`, stop here after reporting. Make no network requests or file changes.
 
-Inspect `.agents/skills/`, `.claude/skills/`, and `.kiro/skills/`, including links, resolved targets, and independent copies.
-The lock records source, optional ref, skill path, and content hash; it records neither harnesses nor installation mode.
-Record actual accessibility. Canonical files make a skill visible to Codex even if Codex was never selected.
-Check other consumers of canonical files and links outside these roots before changing shared content.
-Installer removal also considers other detected harnesses, including detection through their global directories.
-It can delete canonical files and ownership for retained but undetected harnesses; predict both outcomes using `removal.md`.
-Do not alter those global directories to influence removal.
+## 2. Choose the operation
 
-## 2. Resolve evidence and a target
-
-For file comparisons and reports, read [verification.md](./verification.md).
-Read-only `status` recomputes evidence; it never installs, repairs, writes a report, or changes exclusions.
-Offline status reports local provenance, placement, and available comparisons as unverified remotely.
-Authentication, API, or network failure never means absence. Stop mutations; status may report local evidence with the failure.
-
-Network operations require `gh auth status` and access to the identified repository.
-Read every release page, not `/releases/latest` or `/releases/tags/X`:
-
-```sh
-gh api --paginate "repos/${repo}/releases?per_page=100"
-```
-
-Exclude drafts and prereleases. Compare stable `vX.Y.Z` versions as integer `(major, minor, patch)` tuples.
-Report unsupported stable tags rather than guessing their ordering.
-Omitted release selects the greatest published stable version; explicit input must identify a published stable release.
-A tag without a published release is ineligible. Failure to list releases stops target selection.
-Resolve one exact tag and remote commit for the operation, then fetch and archive it outside the project.
-Read the target's skill definitions and migration guidance from that archive.
-
-Compare installed refs and verified versions with the target before writing.
-Stop on an unintended downgrade; show the evidence and ask whether the exact downgrade is intended.
-Unpinned or unresolved provenance cannot establish an installed version or authorize overwriting unknown content.
-Compare affected installations with their recorded sources before changing them.
-Stop on local edits, divergent copies, broken links, destination conflicts, or unexplained content.
-Show affected files and ask for a concrete resolution. Do not discard edits under a generic update request.
-
-## 3. Plan the operation
-
-| Operation | Result |
+| Operation | Scope |
 |---|---|
-| `status` | Report ownership, recorded refs, placement, accessibility, versions, and content differences. |
-| `update` | Reinstall the installed owned set from the resolved release, preserving accessibility and mode. |
-| `add` | Install requested skills, or the target's public set, into selected harnesses. |
-| `remove` | Remove requested owned placements after dependency and shared-file checks. |
-| `reconcile` | Verify current installations and explicitly save the optional local report. |
+| `add` | Requested skills, or all public skills when explicitly requested. |
+| `update` | Requested installed collection skills, or all installed collection skills when names are omitted. |
+| `remove` | Requested collection skills and harnesses; ask if the removal scope is unclear. |
 
-Update does not add newly published skills. Report them without expanding the installed set.
-For `add all`, enumerate public target skills, excluding internal metadata and `wkc-skills-release` by name.
-Explicit installation of the maintainer skill is allowed. Visibility does not authorize publication.
-Resolve fresh-install harness choices and copy or symlink mode from user intent; ask when unspecified.
-For existing installations, preserve observed placements and mode unless a concrete change is confirmed.
-Group installer calls by skill set, harness set, and mode. Check effects across groups sharing canonical files.
-If the target replaces installed identifiers, read [migration.md](./migration.md) before preparing mutations.
-For removal, read [removal.md](./removal.md), including self-removal and canonical layout constraints.
+For fresh installations, ask which harnesses to use unless specified. Use the installer’s default mode unless copies are requested.
+For existing installations, preserve locations and mode unless the user requests a change.
+Updates replace installed files, including local edits, and do not add newly published skills.
+Do not create backups, compare source archives, or run automatic migration or recovery workflows.
+Before writes, require any existing lock to contain numeric `version: 1`, a `skills` mapping, and usable entries.
+Stop on malformed or unsupported locks. A missing lock permits installation only into unoccupied destinations.
+Never overwrite a destination whose ownership is unknown, including a canonical directory used by symlink installation.
 
-Show the exact release commit, names, affected harnesses, placement changes, and dependency effects before mutation.
-Honor existing authorization for that concrete operation. Migration, edit replacement, and copy conversion require informed confirmation.
-Approval of a concrete copy conversion also authorizes its necessary removal and reinstallation; do not request redundant approval.
-If authorization is missing, end on a numbered question. Do not create backups or begin mutation while awaiting an answer.
+For `add` and `update`, resolve one target:
 
-## 4. Apply and verify
+- Default to GitHub’s designated Latest release through `/repos/{repo}/releases/latest`.
+- Look up an explicit release through `/repos/{repo}/releases/tags/{tag}`; require a published, non-prerelease result.
+- For an explicit `main` request, use the unpinned repository source, which follows this repository’s default branch.
 
-Read [recovery.md](./recovery.md) before any mutation; back up existing affected installations and lock evidence.
-Finish and check each permitting read before its write. Never batch a permitting read with the dependent write.
-Recheck the raw lock, affected files, links, release, and remote tag immediately before each installer call.
-Stop if preparation changed. Preserve unrelated concurrent changes.
-Use explicit skill names and explicit `-a` arguments for every mutation, including fresh installation and recovery.
-Never use wildcard selection, broad removal, `--all`, global flags, or removal without `-a`.
-Use only `npx skills@1.7.0`; do not use its generic update command to manage this collection.
+Public access needs no login. Use anonymous HTTPS; existing authentication is optional, with anonymous fallback if rejected.
+Return only the selected tag and necessary diagnostics. Do not list release history or load release bodies.
+A failed release lookup stops installation; do not silently fall back to `main`.
+Use installer discovery at the chosen source to resolve requested names or enumerate public skills for `add all`.
+Exclude internal skills and `wkc-skills-release` by name from `add all`; allow explicit installation of the maintainer skill.
+If a selected name is absent from the target, report it and stop. Do not infer a rename or silently drop it.
 
-For installation, use the full Git URL with the resolved exact tag. For example, after substituting prepared values:
+## 3. Run the installer
+
+Show the selected source or tag, skill names, harnesses, and any requested mode change before running commands.
+Use `npx skills@1.7.0` with explicit skill names and explicit `-a` arguments for every write.
+Never use wildcard selection, `--all`, global flags, or removal without `-a`.
+Broad removal can delete real source directories under `skills/` through the installer’s OpenClaw project path.
+
+Use scoped `add` for both installation and update, not the installer’s generic update command.
+Group calls by skill names, harnesses, and mode. For a release, substitute the selected tag and requested names:
 
 ```sh
 npx skills@1.7.0 add "https://github.com/${repo}.git#${tag}" --skill wkc-setup -a claude-code -a codex -a kiro-cli -y
 ```
 
-Add `--copy` only for groups requiring independent copies. Codex's own copy still lives in `.agents/skills/`.
-Symlink installation writes canonical files even without Codex in the selected harness list.
-Re-read and validate the raw lock after each call, even if the command failed.
-Independently inspect actual files and links; success messages and lock entries do not prove the result.
-Compare each complete installed directory with the exact target archive, including supporting files and independent copies.
-Require intended refs, ownership, accessibility, mode, and unchanged unrelated files and lock entries.
-On partial failure, stop subsequent changes and use recovery evidence. Never hide a failed comparison or claim partial success as completion.
+For `main`, replace the URL with `"${repo}"`. Add `--copy` for independent copies.
+Symlink installation writes canonical files even without Codex selected; include those effects in the stated scope.
 
-## 5. Report
+Before removal, check whether any placement of a selected skill must remain, including known consumers of shared paths.
+If so, stop: the installer can delete canonical files or shared lock ownership, even with retained independent copies.
+Explain this selective-removal limit without converting copies, reinstalling retained skills, or inspecting global detection settings.
+Do not broaden the requested harness list or delete canonical files manually to bypass the limit.
+Otherwise, remove the requested names, for example:
 
-Report source identity, recorded refs, exact target and commit when used, affected paths, modes, and verified accessibility.
-Distinguish verified release identity, content match, local modification, unknown ownership, and offline or remote failure.
-Claim a common release only when every managed installation verifies against that release.
-Report actual changes, skipped new skills, unresolved constraints, partial steps, and any retained backup path.
-After any installer call writing the manager's own placement, including same-version reinstallation or recovery, state that this session still follows the previously loaded instructions.
-Only `reconcile` writes `docs/dev-agents/installed-skills.local.md`; other operations never create or refresh it.
-This report is optional diagnostic evidence for the user or an agent explicitly asked to inspect it, not shared configuration.
+```sh
+npx skills@1.7.0 remove wkc-setup -a claude-code -a codex -a kiro-cli -y
+```
+
+## 4. Check and report the result
+
+After each command, inspect requested paths, links, and relevant lock entries, including source and recorded ref.
+Report actual installation locations, modes, recorded versions, and completed changes. Do not claim content verification.
+The installer can retain canonical files after reporting success. Report remaining files or ownership as incomplete removal.
+It can also print failed skills and exit zero. An existing path and an advanced ref then do not prove that placement changed.
+On any reported failure, nonzero exit, or unexpected result, stop further changes.
+Report the operation as incomplete with the remaining state, without automatic rollback.
+After updating this manager, state that the current session still follows its previously loaded instructions.
+Keep the report in the conversation; do not create installation reports or change Git exclusions.

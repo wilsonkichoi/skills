@@ -52,40 +52,39 @@ Release checks include untracked files, and publication pushes only the authoriz
 ### Manage installations
 
 Invoke `$wkc-manage` in Codex, or `/wkc-manage` in Claude Code and Kiro CLI.
-No operation means read-only `status`. Natural-language requests can also select `update`, `add`, `remove`, or `reconcile`.
-Updates select the highest published stable version, preserve the installed set and placement, and reinstall from its exact tag.
-Additions name selected skills; `add all` selects public skills and explicitly excludes `wkc-skills-release`, including under the metadata fallback.
+No operation means read-only `status`. Natural-language requests can select `add`, `update`, or `remove`.
+Status shows installation locations and the recorded `ref` from `skills-lock.json`, without network access.
+A missing `ref` means “Unpinned, default branch”; it does not identify the installed commit or prove current `main` content.
+One lock entry covers every copy of a skill, so its recorded version does not verify each copy’s contents.
 
-Management supports only raw project lock schema `1`. Malformed locks and other versions stop every operation.
-The installer can discard older locks or modify newer ones, so the manager checks before invoking it.
-Ownership comes from the lock's source repository. Existing files without that evidence are not claimed by their names.
-Copy or symlink mode and accessible harnesses come from the filesystem, because the lock records neither.
-Local edits, divergent copies, unknown destinations, and unintended downgrades stop for a concrete decision.
-Content verification compares every installed file with an archive of the exact tag, including supporting files.
-Offline status reports local evidence with remote identity unverified.
+Additions and updates default to GitHub’s designated Latest release. An explicit release uses a direct lookup and its exact tag.
+Request `main` explicitly for an unpinned installation. Public access requires no GitHub login or release-history scan.
+Updates preserve installed names, locations, and copy or symlink mode. They replace local edits without backups or content comparisons.
+Fresh installations use the installer’s default mode unless copies are requested.
+`add all` selects public skills and excludes `wkc-skills-release`; that maintainer skill can be installed explicitly.
 
-`reconcile` explicitly creates the optional `docs/dev-agents/installed-skills.local.md` diagnostic report.
-It uses Git's resolved local exclusion file, including in linked worktrees. The report is not project configuration.
-Ordinary sessions do not load it, status recomputes evidence, and mutations do not refresh it.
-See [the manager](skills/wkc-manage/SKILL.md) and [its validation report](validation/wkc-manage.md).
+The manager checks source ownership and requires a compatible lock before writes.
+An existing lock must have numeric top-level `version: 1`, a `skills` mapping, and usable entries.
+Existing destinations without collection ownership are left untouched.
+Removal uses explicit names and harnesses. Retained placements block selective removal because shared files or lock ownership can be lost.
+The installer can exit zero after printing failures, so any reported failure makes the result incomplete.
+Results are reported in the conversation. There are no saved reports, automatic migrations, or recovery workflows.
+See [the manager](skills/wkc-manage/SKILL.md) and [its validation runbook](validation/wkc-manage.md).
 
 ### Bootstrap legacy installations
 
-Version `v0.0.8` ships `setup` and `tracker`. Bootstrap only the manager from a published release containing it.
+Version `v0.0.8` ships `setup` and `tracker`. Install the manager separately from a published release containing it.
 The first expected release is `v0.0.14`, pending merge and publication; `v0.0.13` does not contain the manager.
-Replace `vX.Y.Z` below with a verified published tag containing `wkc-manage`:
-
-Before bootstrap, inspect the raw project lock. Stop on malformed content or a schema other than `1`.
+Replace `vX.Y.Z` below with that release’s tag and select the harnesses you use.
+Before installation, check that any existing lock has numeric `version: 1` and that the manager destination is unoccupied.
 
 ```sh
 npx skills@1.7.0 add 'https://github.com/wilsonkichoi/skills.git#vX.Y.Z' --skill wkc-manage -a claude-code -a codex -a kiro-cli -y
 ```
 
-Compare the complete installed manager against that tag's Git archive before invocation.
-The manager reads migration guidance from the target release, backs up, and verifies replacements before removing legacy names.
-Migration requires confirmation for `setup` to `wkc-setup` and `tracker` to `wkc-tracker`.
-Other detected harnesses can keep canonical legacy directories accessible after installer removal.
-The manager reports incomplete migration when that constraint prevents legacy cleanup.
+The manager can report and remove legacy entries belonging to this collection. It does not rename them automatically.
+To replace `setup` and `tracker`, request installation of `wkc-setup` and `wkc-tracker`, then separately request removal of the legacy skills.
+Removal retains the same restrictions on shared placements and leaves generated project configuration intact.
 
 ## Quickstart
 
@@ -132,7 +131,7 @@ validated before the next starts. See [AGENTS.md](./AGENTS.md) for how a skill i
 | `wkc-verify` | Check the work against the ticket's acceptance criteria | planned |
 | `wkc-git-fu` | Branch, rebase, merge, and conflict work | planned |
 | [`wkc-skills-release`](./skills/wkc-skills-release/SKILL.md) | Publish this collection's tags and GitHub Releases | shipped, internal |
-| [`wkc-manage`](./skills/wkc-manage/SKILL.md) | Inspect, update, add, remove, migrate, and verify project installations | shipped |
+| [`wkc-manage`](./skills/wkc-manage/SKILL.md) | Show recorded versions and install, update, or remove project skills | shipped |
 | `wkc-yolo` | Run the loop unattended across several tickets | planned |
 
 ## Workflow diagrams
@@ -162,7 +161,7 @@ and `wkc-plan` rather than by `wkc-setup`.
 
 ## Uninstall
 
-Use `wkc-manage remove` for dependency checks, backups, shared-file checks, and independent verification.
+Use `wkc-manage remove` to remove collection skills with explicit names and harnesses and report the result.
 For direct installer removal, name the skills and the agents you installed to:
 
 ```
@@ -177,14 +176,10 @@ npx skills@1.7.0 remove wkc-skills-release -a claude-code -a codex -a kiro-cli
 
 Removing setup preserves the configuration and context reference it previously wrote.
 For a full uninstall, manually delete `docs/dev-agents/` and remove its reference line from `AGENTS.md` or `CLAUDE.md`.
-Removing a runtime dependency requires informed confirmation.
-Codex-only removal with retained Claude Code or Kiro links requires approved conversion to independent copies.
-The installer can retain canonical files because other detected harnesses share them, even after reporting success.
-It can also delete canonical files and the lock entry when retained harnesses are not detected on the machine.
-The manager checks both outcomes before removal and requires approved source reinstallation when retained placements would lose files or ownership.
-Detection uses harness configuration locations; an absent global skill copy does not establish that a harness is absent.
-The manager reports that layout constraint instead of claiming removal succeeded.
-Backups use `~/.cache/wkc-manage/backups/`, outside checkout and discovery roots, and survive failed operations.
+Selective removal stops when another placement of the same skill must remain, including independent copies sharing the lock entry.
+The manager does not convert copies or reinstall retained placements to work around that restriction.
+Other detected harnesses can cause the installer to retain canonical files even after reporting success.
+The manager reports remaining files or ownership as incomplete removal and does not delete canonical files manually.
 The other installer forms are documented under [`skills remove`](https://github.com/vercel-labs/skills#skills-remove).
 
 Do not run `npx skills@1.7.0 remove --all`, and do not leave `-a` off, inside a repository that keeps its

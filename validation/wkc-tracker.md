@@ -1,8 +1,10 @@
 # wkc-tracker validation runbook
 
-A repeatable run, driven by Codex, that ends in a PASS or FAIL line per case and a report at the
-bottom. Written for Codex because it is the harness this repository has verified least; run it on
-Claude Code or Kiro CLI by swapping the prefix in the table below.
+Follow [Validation](../AGENTS.md#validation): select affected cases, backends, and harnesses before testing.
+This is a case catalog, not a full test sequence for each change. Use direct checks first and reuse unchanged evidence.
+Read the relevant [GitHub](#a-github-backend), [local](#b-local-backend), [Linear](#c-linear-backend), or [harness](#d-harness-parity) cases.
+Open only relevant sections of the [run log](#run-log); it is historical evidence, not routine task context.
+Use the prefix for the selected harness below. Additional AI sessions require explicit authorization and an agreed budget.
 
 | Harness | Prefix | Example |
 |---|---|---|
@@ -17,7 +19,7 @@ the backend disagrees.
 
 ## How to score
 
-Each case states its check and its expected result. Record exactly one verdict:
+Each selected case states its check and expected result. Record exactly one verdict for that scope:
 
 - `PASS` the check ran and matched.
 - `FAIL` the check ran and did not match. Record actual versus expected.
@@ -27,11 +29,8 @@ Each case states its check and its expected result. Record exactly one verdict:
 reported as a pass is how a defect reaches a user. The report at the end counts the three separately
 and never folds SKIP into PASS.
 
-**A test input is never an example in the skill files.** When `SKILL.md` or a backend file uses
-the exact argument a case sends as an example, a pass shows the model matched the example, not that
-it applied the rule. Before a run, check with `grep -rnw -- '<input>' skills/wkc-tracker/`, and pick
-another input when a hit is an example. Ordinary prose, such as "a ticket in review", is not one.
-Repeated cases rotate their input for the same reason.
+For rule-interpretation checks, include an input not copied from the skill's examples.
+Fixed regression inputs do not need to rotate on every run.
 
 Cases marked **[MANUAL]** need a human: a second terminal, a second account, a web UI action, or a
 service this repository has no credentials for. They are expected to be SKIP on an unattended run,
@@ -39,12 +38,13 @@ and the report says so rather than treating the suite as green.
 
 ## Report format
 
-End every run with exactly this, filled in:
+Use this summary for selected cases. Cite reused results separately; do not count them as new runs.
 
 ```
 TRACKER VALIDATION
 backend: <github|local|linear>   harness: <codex|claude-code|kiro-cli>
 date: <ISO 8601>                 skill ref: <git sha or tag installed>
+scope: <selected case IDs and reason>
 
 PASS  n
 FAIL  n
@@ -55,15 +55,19 @@ failures:
 skipped:
   <case id>  <reason>
 
-VERDICT: <GREEN if FAIL is 0 and no non-[MANUAL] case was skipped, otherwise RED>
+VERDICT: <GREEN for selected scope if FAIL is 0 and no required non-[MANUAL] check was skipped, otherwise RED>
 ```
 
-`GREEN` requires zero failures **and** that every non-manual case actually ran. A run whose manual
-cases are all skipped is still GREEN, and the skipped list is what tells you what remains unproven.
+`GREEN` applies only to the stated scope; it does not certify the complete skill or every backend and harness.
+Cases outside scope are not new SKIPs. Explain required checks that remain unrun and preserve prior failures.
+Keep the report concise: source and fixture identifiers, selected cases, independent checks, observed outcomes, and unresolved limits.
+Keep raw logs outside tracked reports and cite existing evidence instead of repeating setup or prior result tables.
 
 ---
 
 ## Setup, once per backend
+
+Set up only selected backends. Reuse suitable existing fixtures; do not repeat setup for unrelated checks.
 
 Replace `<review-ref>` in every installer command with the branch or commit under review, never an
 old development branch. Record the installed commit in the report.

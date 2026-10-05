@@ -1,14 +1,19 @@
 # wkc-skills-release validation
 
-Run the candidate through installed copies on Codex, Claude Code, and Kiro CLI.
-Record PASS, FAIL, or SKIP for each numbered case on each harness, with independent evidence.
+Follow [Validation](../AGENTS.md#validation): select affected cases and harnesses, use direct checks first, and reuse unchanged evidence.
+This is a case catalog, not a full test sequence for each change.
+Read [Cases](#cases) and selected [dated results](#dated-report-2026-10-02), not the entire historical report.
+Record PASS, FAIL, or SKIP for selected cases, separating direct checks from actual harness results.
 An unavailable check is SKIP. Reading source or running a command manually is not harness behavior.
 Keep raw logs, fixtures, notes, and API snapshots outside tracked files, under `.local/runs/release/` or an external directory.
-Record source commit, installed file hashes, installer version, harness versions, and exact test commands.
+Record source commit, relevant tool versions, selected cases, independent checks, and observed outcomes.
+Include installed hashes and harness versions when testing installed invocation.
 
 ## Preparation
 
-Export a clean candidate tree. Local installation copies ignored files too; do not install a populated worktree.
+Prepare only fixtures needed by selected cases. Reuse suitable existing fixtures and setup evidence.
+Use local or controlled API fixtures for mechanical checks; use real GitHub fixtures for publication and ruleset integration.
+For installation cases, export a clean candidate tree. Local installation copies ignored files too; do not install a populated worktree.
 Use `skills@1.7.0` for every active installer command.
 
 ```sh
@@ -23,7 +28,9 @@ npx skills@1.7.0 add "<clean-candidate>" --skill wkc-skills-release --list
 npx skills@1.7.0 add "<clean-candidate>" --skill wkc-skills-release -a claude-code -a codex -a kiro-cli -y
 ```
 
-Use a disposable GitHub repository, public unless the account's plan enforces rulesets on private repositories.
+Use only the states needed by selected integration cases from the following baseline fixture recipe.
+For real integration cases, reuse a suitable disposable GitHub repository or create an authorized fixture.
+Use a public repository unless the account's plan enforces rulesets on private repositories.
 Apply the production `Immutable release tags` ruleset: active, tag target `refs/tags/v*`, no bypass actors,
 rules `deletion`, `non_fast_forward`, and `update`, with creation allowed.
 Before publication cases, attempt both movement and deletion of a test tag and verify GitHub refuses both.
@@ -49,7 +56,7 @@ For each invocation, record remote refs, release fields, Latest, local status, a
    Parse five opening fields, exact names, optional tag input, manual invocation settings, and boolean metadata.
    Check `metadata.internal` is boolean `true`, not string `"true"`.
 
-2. **Actual harness loading.** Invoke the installed identifier in each harness, with the boolean unchanged.
+2. **Actual harness loading.** Invoke the installed identifier in each selected harness, with the boolean unchanged.
    Use `$wkc-skills-release` for Codex and `/wkc-skills-release` for Claude Code and Kiro CLI.
    PASS requires a transcript showing the skill loaded and performed a contract check, without a frontmatter parser error.
    Installation success alone is not PASS. Credentials or session failures are SKIP with the exact error.
@@ -167,9 +174,11 @@ For each invocation, record remote refs, release fields, Latest, local status, a
 
 ## Report
 
-Record case results per harness, with commands, source SHA, exact identity diff, file hashes, fixture URLs, and independent state reads.
+Record selected case results, source and fixture identifiers, independent checks, observed outcomes, and unresolved limits.
+Include identity diffs and file hashes when testing installed copies; cite unchanged evidence instead of repeating it.
 Separate static/package checks, manual GitHub rule probes, actual harness runs, and production publication.
-Explain every FAIL and SKIP. A partial case is SKIP, with its completed checks listed as partial evidence.
+Explain every FAIL and unavailable required check within selected scope. Do not mark out-of-scope cases as new SKIPs.
+Keep failed attempts visible after correction; do not duplicate raw logs or setup instructions.
 Report lives below so no parallel status file or additional top-level directory is needed.
 
 ## Dated report: 2026-10-02
