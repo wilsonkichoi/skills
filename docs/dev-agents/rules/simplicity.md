@@ -16,6 +16,8 @@ automatic migration, and saved reports. Nobody asked for them.
 It grew to 335 lines across five runtime files and needed a long validation matrix.
 The user then asked for a thin wrapper around the installer, and the skill was rewritten at about 100 lines.
 The extra machinery cost review time, validation sessions, and tokens, and then had to be removed.
+Even the 100-line wrapper added little over the installer's own commands and made them harder to follow.
+It was replaced by `wkc-help`, which explains those commands and runs them on request.
 
 ## Before adding machinery
 

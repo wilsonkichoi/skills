@@ -63,7 +63,7 @@ For each invocation, record remote refs, release fields, Latest, local status, a
 
 3. **Metadata fallback.** In a separate test export, remove only the boolean metadata field.
    PASS: discovery and direct bulk installation include the maintainer skill, and the one shared source still loads on each harness.
-   Check the tracked fallback explicitly requires `wkc-manage add all` to exclude this identifier by name.
+   Check the tracked fallback requires documenting that bulk installation then includes this identifier.
    Apply fallback to the candidate only if a supported harness actually rejects the boolean.
    An unavailable harness cannot justify fallback. No per-harness variant is permitted.
 

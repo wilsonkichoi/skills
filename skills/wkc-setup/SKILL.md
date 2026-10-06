@@ -210,7 +210,4 @@ task branches need.
 Then summarize: mode, tracker backend, files created, one-time tracker setup performed, and
 anything the user still has to do themselves.
 
-Next step: confirm the backend responds, using this project's harness. Claude Code `/wkc-tracker list`,
-Codex `$wkc-tracker list`, Kiro CLI `/wkc-tracker list`.
-
-For installation status, updates, or removal, explicitly invoke `wkc-manage`; setup does not maintain installation reports.
+Next step: confirm the backend responds with `wkc-tracker list`.

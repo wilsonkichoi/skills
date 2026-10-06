@@ -60,18 +60,9 @@ is `wkc-skills-release`'s boolean `metadata.internal: true`, because `skills@1.7
 Codex, Claude Code, and Kiro CLI loaded the boolean in the recorded validation runs.
 Recheck compatibility when metadata or supported harness versions change. If a supported harness rejects the boolean,
 remove it from the one shared source and document that direct bulk installation includes the maintainer skill.
-Recheck `wkc-manage`'s explicit internal-skill exclusion in its validation runbook when applying that fallback.
 Unavailable checks are SKIP, not proof of incompatibility. Record results in its validation runbook.
 
 ## Skills
-
-`wkc-manage` is a manually invoked public skill for status, add, update, and remove.
-Keep its runtime rules in `SKILL.md`. Report versions from lock refs without proving installed content or release identity.
-Record installer compatibility observations and behavioral results in `validation/wkc-manage.md`, not in authoring policy.
-When removal behavior changes, run affected source-preservation, ownership, and shared-file checks from `validation/wkc-manage.md`.
-Retained placements block selective removal; do not add global detection, conversion, or recovery workflows to work around installer limits.
-When release selection changes, run only affected checks from `validation/wkc-manage.md`.
-Use direct checks first and reuse unchanged evidence.
 
 Every skill identifier must start with `wkc-`. Use the same identifier for the directory,
 frontmatter `name`, `interface.display_name`, main heading, invocations, and references between skills.
@@ -104,7 +95,7 @@ Manual invocation is the default. A manually invoked skill keeps these settings:
 - claude code: `SKILL.md` frontmatter `disable-model-invocation: true`
 - codex cli: `agents/openai.yaml` -> `policy: allow_implicit_invocation: false`
 
-A skill may explicitly opt into model invocation, one skill at a time. `wkc-tracker` does. Authors
+A skill may explicitly opt into model invocation, one skill at a time. `wkc-tracker` and `wkc-help` do. Authors
 must declare the intended callers in the skill body: people, models, or named skills. Enable
 supported invocation settings for each harness when models are intended callers:
 
@@ -123,7 +114,8 @@ Optional `argument-hint` frontmatter is a Claude Code extension, outside the Age
 Quote its string value; use `[]` for optional arguments and `<>` for required values.
 Replace the template placeholder with accepted arguments, or remove the field when arguments are unnecessary.
 Hints guide autocomplete; they do not validate arguments or change runtime behaviour.
-Do not promise that Codex or Kiro displays them. Keep harness prefix guidance in the root README's invocation table.
+Do not promise that Codex or Kiro displays them.
+Skill files name skills without a harness prefix, such as `wkc-tracker list`. Keep prefix guidance in the root README's invocation table.
 
 `description` goes on one unquoted physical line, however long.
 
