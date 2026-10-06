@@ -55,6 +55,10 @@ install gets the newest default branch. A tag-pinned install stays where it is, 
 move. To change releases, rerun `add` with the new tag, the same skills and harnesses, and `--copy`
 if it was used before. `update` refreshes only skills already in the lock; add new ones by name.
 
+`npx skills ls` lists each installed skill with the harnesses it is linked to. `add` skips a skill
+name the tag does not contain, with no message and exit 0, so check the tag first with
+`npx skills add '<url>#<tag>' -l`.
+
 ## 4. Removal
 
 ```

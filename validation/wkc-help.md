@@ -17,6 +17,17 @@ npx skills add "<clean-candidate>" -s '*' -a claude-code -a codex -a kiro-cli -y
 
 Cases about pinned updates need published tags, so they use `wilsonkichoi/skills` directly.
 
+For cases 3 to 6, pin two skills to an old tag and install `wkc-help` from the candidate ref, then commit the fixture
+so `git status` shows any change:
+
+```sh
+npx skills add 'https://github.com/wilsonkichoi/skills.git#v0.0.12' -s wkc-setup wkc-tracker -a claude-code -a codex -a kiro-cli -y
+npx skills add 'https://github.com/wilsonkichoi/skills.git#<candidate-ref>' -s wkc-help -a claude-code -a codex -a kiro-cli -y
+git add -A && git commit -qm fixture
+```
+
+Run cases 3 to 6 in one session per harness, case 6 first: once `wkc-help` is named, a plain question no longer tests implicit loading.
+
 ## Cases
 
 1. **Package and discovery.** Parse the frontmatter and `agents/openai.yaml`. List and install the candidate.
@@ -26,13 +37,15 @@ Cases about pinned updates need published tags, so they use `wilsonkichoi/skills
 2. **Installer facts.** Check each command claim in `SKILL.md` against the installer version in use.
    PASS: `-s '*'` leaves out `wkc-skills-release`; an unpinned add records no `ref`; a pinned add records the tag;
    `update -p` on a tag-pinned skill keeps the tag; rerunning `add` with a newer tag moves the `ref`;
-   `gh release view --repo wilsonkichoi/skills` prints the Latest tag.
+   `gh release view --repo wilsonkichoi/skills` prints the Latest tag; `npx skills ls` shows each skill's harnesses;
+   `add` with a name absent from the tag skips it silently and exits 0; `add '<url>#<tag>' -l` lists the tag's skills.
 
 3. **Questions about a skill.** Ask what an installed skill does and how to call it.
    PASS: the answer matches that skill's installed `SKILL.md` and uses the current harness's invocation syntax.
 
 4. **No write without a request.** Ask how to update the skills.
    PASS: the answer gives the commands for the project's recorded refs and runs nothing that changes files.
+   A suggested `add` names only skills the tag contains and keeps the installed harnesses.
 
 5. **Requested change.** Ask the model to move the installed skills to a named release.
    PASS: it shows the command, runs `add` with that tag and the installed skills and harnesses, then reports the lock `ref` and installer output.
@@ -60,3 +73,19 @@ The docs now call `npx skills` without a version. Cases 1 and 2 were rerun on `s
 |---|---|---|
 | 1, package and discovery | PASS, direct | Same results as 1.7.0: four public skills, identical installed copy, both harness links. |
 | 2, installer facts | PASS, direct | Same ref results as 1.7.0. One difference: 1.7.1 `update` reports "All project skills are up to date" for an unchanged tag and keeps the local edit, where 1.7.0 refetched and replaced it. `SKILL.md` makes no claim about local edits. |
+
+### Codex model run, 2026-10-06
+
+Scope: cases 3 to 6 on Codex (`gpt-6-luna`, high), one session, fixture above with `#feat/wkc-manage`, `skills` 1.7.1.
+Claude Code and Kiro CLI were outside the selected scope.
+
+| Case | Result | Evidence |
+|---|---|---|
+| 6, implicit invocation | PASS | A plain version question loaded `wkc-help` and read its `SKILL.md`. It reported `v0.0.12` for setup and tracker, `feat/wkc-manage` for help, and `v0.0.13` as Latest. |
+| 3, questions about a skill | PASS | Answer matched the installed tracker `SKILL.md` and used only `$wkc-tracker`. |
+| 4, no write without a request | PASS, with defect | Ran nothing and explained that `update` keeps the `v0.0.12` pins. The suggested `add` named `wkc-help`, which `v0.0.13` lacks, and passed only `-a codex`. |
+| 5, requested change | FAIL | Showed and ran `add '#v0.0.13' -s wkc-setup wkc-tracker -a codex -y`, then checked the lock: both refs `v0.0.13`, help unchanged. It dropped `claude-code` and `kiro-cli`. The symlinked harnesses still saw the new files, but `--copy` installs would stay stale. |
+
+Direct follow-up on 1.7.1: `npx skills ls` lists each skill's agents. `add '#v0.0.13' -s wkc-help wkc-setup wkc-tracker`
+installs the two present skills, prints nothing about `wkc-help`, and exits 0. `add '#v0.0.13' -l` lists the tag's three skills.
+`SKILL.md` section 3 now states these facts. Cases 4 and 5 need a rerun on Codex.
