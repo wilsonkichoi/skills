@@ -155,3 +155,7 @@ untracked files included, even for skills that were never installed for that age
 1.5.23 both `remove --all` and `remove setup` with no `-a` destroy `skills/setup/`, while the
 explicit `-a` list above leaves it alone. A project that only consumes skills is unaffected; this
 repository and any other skill-authoring repository are exactly the layout that gets hit.
+
+`add` has the same hazard. Against skills 1.7.1, `add -a '*'` (and so `add --all`) replaces
+`skills/<name>/` with a link into `.agents/skills/`, deleting the source and its untracked files,
+and exits 0. Always name the agents with `-a` on `add` too.

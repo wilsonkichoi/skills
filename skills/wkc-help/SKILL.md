@@ -28,7 +28,9 @@ the harness you are running in. When a skill is not installed, say so and show h
 
 Commands use the `skills` installer through `npx skills`. `-a` names the harnesses;
 `claude-code`, `codex`, and `kiro-cli` are the tested ones. Use the ones the person names, or the
-ones the project already has.
+ones the project already has. Never pass `-a '*'` or `--all`: they install into every agent the
+installer knows, turn copies into links, and replace a top-level `skills/` directory with links,
+deleting the source in it.
 
 Install every public skill, either from the default branch or from a release tag:
 
@@ -55,9 +57,11 @@ install gets the newest default branch. A tag-pinned install stays where it is, 
 move. To change releases, rerun `add` with the new tag, the same skills and harnesses, and `--copy`
 if it was used before. `update` refreshes only skills already in the lock; add new ones by name.
 
-`npx skills ls` lists each installed skill with the harnesses it is linked to. `add` skips a skill
-name the tag does not contain, with no message and exit 0, so check the tag first with
-`npx skills add '<url>#<tag>' -l`.
+The lock records neither harnesses nor mode, and `npx skills ls` lists every agent that can read
+`.agents/skills/`, not the ones installed. The installed harnesses are the project's harness skill
+folders that hold the skill. A real directory there, rather than a link into `.agents/skills/`, is
+a `--copy` install. `add` skips a skill name the tag does not contain, with no message and exit 0,
+so check the tag first with `npx skills add '<url>#<tag>' -l`.
 
 ## 4. Removal
 

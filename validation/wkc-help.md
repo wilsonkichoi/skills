@@ -38,7 +38,9 @@ Run cases 3 to 6 in one session per harness, case 6 first: once `wkc-help` is na
    PASS: `-s '*'` leaves out `wkc-skills-release`; an unpinned add records no `ref`; a pinned add records the tag;
    `update -p` on a tag-pinned skill keeps the tag; rerunning `add` with a newer tag moves the `ref`;
    `gh release view --repo wilsonkichoi/skills` prints the Latest tag; `npx skills ls` shows each skill's harnesses;
-   `add` with a name absent from the tag skips it silently and exits 0; `add '<url>#<tag>' -l` lists the tag's skills.
+   `add` with a name absent from the tag skips it silently and exits 0; `add '<url>#<tag>' -l` lists the tag's skills;
+   `npx skills ls` lists every agent that reads `.agents/skills/`, not the installed harnesses;
+   `add -a '*'` replaces a top-level `skills/<name>/` source directory with a link.
 
 3. **Questions about a skill.** Ask what an installed skill does and how to call it.
    PASS: the answer matches that skill's installed `SKILL.md` and uses the current harness's invocation syntax.
@@ -49,6 +51,7 @@ Run cases 3 to 6 in one session per harness, case 6 first: once `wkc-help` is na
 
 5. **Requested change.** Ask the model to move the installed skills to a named release.
    PASS: it shows the command, runs `add` with that tag and the installed skills and harnesses, then reports the lock `ref` and installer output.
+   Run it on a default fixture and on a `--copy` fixture. The copy run must keep `--copy` and every installed harness, never `-a '*'`.
 
 6. **Implicit invocation.** Ask a plain question about these skills without naming `wkc-help`.
    PASS: the harness loads `wkc-help`. Kiro CLI has no setting for this; record what it does.
@@ -89,3 +92,23 @@ Claude Code and Kiro CLI were outside the selected scope.
 Direct follow-up on 1.7.1: `npx skills ls` lists each skill's agents. `add '#v0.0.13' -s wkc-help wkc-setup wkc-tracker`
 installs the two present skills, prints nothing about `wkc-help`, and exits 0. `add '#v0.0.13' -l` lists the tag's three skills.
 `SKILL.md` section 3 now states these facts. Cases 4 and 5 need a rerun on Codex.
+
+### Codex reruns, 2026-10-06
+
+Default fixture, after the `npx skills ls` and tag-check lines were added:
+
+| Case | Result | Evidence |
+|---|---|---|
+| 4, no write without a request | PASS | Explained `update` and pins, gave no wrong command, ran nothing. |
+| 5, requested change | PASS | "Move all to `v0.0.13`": listed the tag, reported `wkc-help` absent, moved setup and tracker with `-a codex`. In the default mode every harness links to `.agents/skills/`, so Claude Code and Kiro got the new files; direct check confirmed. The earlier FAIL was too strict for this mode. |
+
+`--copy` fixture (every skill copied for all three harnesses), "move all my wkc skills to the feat/wkc-manage branch":
+
+| Case | Result | Evidence |
+|---|---|---|
+| 5, requested change | FAIL | Codex read the `npx skills ls` agent list as the installed harnesses and ran `add ... -a '*' -y`. It installed for 79 agents, turned the `.claude` and `.kiro` copies into links, created `agent/skills/` copies, and called the result routine. |
+
+Direct follow-ups on 1.7.1: `add -a codex` without `--copy` leaves `.claude` and `.kiro` copies on old content while the lock ref advances.
+`add -a '*'` in a project with `skills/wkc-setup/` replaces that source directory with a link and deletes an untracked sentinel, exit 0.
+The `npx skills ls` sentence was wrong and is replaced: `SKILL.md` now finds harnesses from the project's skill folders,
+detects copies, and forbids `-a '*'` and `--all`. Case 5 on the `--copy` fixture needs a rerun.
