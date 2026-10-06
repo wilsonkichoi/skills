@@ -26,15 +26,15 @@ the harness you are running in. When a skill is not installed, say so and show h
 
 ## 2. Installation
 
-The installer is `skills@1.7.0`, the version this collection is tested with. `-a` names the harnesses;
+Commands use the `skills` installer through `npx skills`. `-a` names the harnesses;
 `claude-code`, `codex`, and `kiro-cli` are the tested ones. Use the ones the person names, or the
 ones the project already has.
 
 Install every public skill, either from the default branch or from a release tag:
 
 ```
-npx skills@1.7.0 add wilsonkichoi/skills -s '*' -a claude-code -a codex -a kiro-cli -y
-npx skills@1.7.0 add 'https://github.com/wilsonkichoi/skills.git#vX.Y.Z' -s '*' -a claude-code -a codex -a kiro-cli -y
+npx skills add wilsonkichoi/skills -s '*' -a claude-code -a codex -a kiro-cli -y
+npx skills add 'https://github.com/wilsonkichoi/skills.git#vX.Y.Z' -s '*' -a claude-code -a codex -a kiro-cli -y
 ```
 
 A tag needs the full git URL, quoted, because `#` starts a shell comment. Replace `-s '*'` with
@@ -50,7 +50,7 @@ The latest release is at https://github.com/wilsonkichoi/skills/releases/latest,
 Each skill's `ref` in `skills-lock.json` at the project root is the tag or branch it was installed
 from. No `ref` means the default branch; the lock does not record which commit.
 
-`npx skills@1.7.0 update -p` refetches each installed skill from its recorded `ref`. An unpinned
+`npx skills update -p` refetches each installed skill from its recorded `ref`. An unpinned
 install gets the newest default branch. A tag-pinned install stays where it is, because tags never
 move. To change releases, rerun `add` with the new tag, the same skills and harnesses, and `--copy`
 if it was used before. `update` refreshes only skills already in the lock; add new ones by name.
@@ -58,7 +58,7 @@ if it was used before. `update` refreshes only skills already in the lock; add n
 ## 4. Removal
 
 ```
-npx skills@1.7.0 remove wkc-setup wkc-tracker -a claude-code -a codex -a kiro-cli
+npx skills remove wkc-setup wkc-tracker -a claude-code -a codex -a kiro-cli
 ```
 
 Always name the skills and the harnesses. Never run `remove --all`, or `remove` without `-a`, in a

@@ -23,16 +23,16 @@ A tag marks a release for people reading the history, and it is what a pinned in
 A pushed `v*` tag cannot be moved or deleted, so a bad release costs a new patch version, never a
 re-tag.
 Pinning takes the full git URL with a `#ref`, quoted:
-`npx skills@1.7.0 add 'https://github.com/wilsonkichoi/skills.git#v0.0.3'`. A missing ref fails
+`npx skills add 'https://github.com/wilsonkichoi/skills.git#v0.0.3'`. A missing ref fails
 loudly. The `owner/repo@v0.0.3` shorthand is not a pin, because `@` selects a skill name there.
-Adopters who want the tip use `npx skills@1.7.0 add wilsonkichoi/skills`.
+Adopters who want the tip use `npx skills add wilsonkichoi/skills`.
 
 ## Distribution
 
 This repository ships as plain skill directories, installed with one command:
 
 ```
-npx skills@1.7.0 add wilsonkichoi/skills -a claude-code -a codex -a kiro-cli
+npx skills add wilsonkichoi/skills -a claude-code -a codex -a kiro-cli
 ```
 
 There is no `.claude-plugin/`, no `marketplace.json`, no per-harness distribution tree, and no
@@ -54,7 +54,7 @@ No release hooks, helper scripts, build system, or per-harness copies are needed
 Runtime publication rules live in [`skills/wkc-skills-release/SKILL.md`](./skills/wkc-skills-release/SKILL.md).
 
 `metadata` normally maps strings to strings under the Agent Skills specification. The sole exception
-is `wkc-skills-release`'s boolean `metadata.internal: true`, because `skills@1.7.0` checks
+is `wkc-skills-release`'s boolean `metadata.internal: true`, because the `skills` installer checks
 `metadata.internal === true` to hide it from public discovery and bulk installation. A string
 `"true"` does not work. Explicit installation by name includes it; visibility does not authorize release writes.
 Codex, Claude Code, and Kiro CLI loaded the boolean in the recorded validation runs.
@@ -157,7 +157,7 @@ Follow the instructions from `skill-template/README.md`.
 `skill-template/` is authoring material, not a shipped skill. The installer finds skills by looking
 for `SKILL.md` anywhere in the repository, not by reading `skills/`, so the skeleton is named
 `SKILL.md.template` to stay out of the install. Verify with
-`npx skills@1.7.0 add <gh-handle>/<skills-repo> -l`: nothing named `wkc-skill-name` may appear in that list.
+`npx skills add <gh-handle>/<skills-repo> -l`: nothing named `wkc-skill-name` may appear in that list.
 The public discovery count equals shipped skills minus skills with boolean `metadata.internal: true`.
 List each internal skill explicitly with `--skill <name> -l` and verify it installs by exact name.
 Count all source `SKILL.md` files separately to verify total shipped skills; ordinary discovery is not that total.

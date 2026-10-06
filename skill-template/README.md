@@ -30,7 +30,7 @@ Then, in the copy:
    becomes the first sentence of the description.
 6. Delete this `README.md` from the copy.
 
-Check with `npx skills@1.7.0 add <gh-handle>/<skills-repo> -l`, which lists public skills. A new
+Check with `npx skills add <gh-handle>/<skills-repo> -l`, which lists public skills. A new
 public skill should appear once, and nothing named `wkc-skill-name` should ever appear.
 Internal skills are excluded from that count; list and install them explicitly by exact name.
 Compare total source `SKILL.md` files separately. See the internal-metadata exception in `AGENTS.md`.

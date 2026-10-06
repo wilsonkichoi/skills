@@ -17,11 +17,11 @@ Keep raw run evidence (logs, fixtures, screenshots) in an ignored directory such
 It is scratch, not a record: this runbook defines the cases, and the report named at the end holds the results.
 
 ```sh
-npx skills@1.7.0 add "<clean-candidate>" --list
+npx skills add "<clean-candidate>" --list
 ```
 
 ```sh
-npx skills@1.7.0 add "<clean-candidate>" --skill wkc-workflow-diagram -a claude-code -a codex -a kiro-cli -y
+npx skills add "<clean-candidate>" --skill wkc-workflow-diagram -a claude-code -a codex -a kiro-cli -y
 ```
 
 For renderer or installed-helper changes, run the maintainer checks from `tools/workflow-diagram/` before testing the installed copy.

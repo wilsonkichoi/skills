@@ -14,18 +14,18 @@ Include installed hashes and harness versions when testing installed invocation.
 Prepare only fixtures needed by selected cases. Reuse suitable existing fixtures and setup evidence.
 Use local or controlled API fixtures for mechanical checks; use real GitHub fixtures for publication and ruleset integration.
 For installation cases, export a clean candidate tree. Local installation copies ignored files too; do not install a populated worktree.
-Use `skills@1.7.0` for every active installer command.
+Record the installer version from `npx skills --version`.
 
 ```sh
-npx skills@1.7.0 add "<clean-candidate>" --list
+npx skills add "<clean-candidate>" --list
 ```
 
 ```sh
-npx skills@1.7.0 add "<clean-candidate>" --skill wkc-skills-release --list
+npx skills add "<clean-candidate>" --skill wkc-skills-release --list
 ```
 
 ```sh
-npx skills@1.7.0 add "<clean-candidate>" --skill wkc-skills-release -a claude-code -a codex -a kiro-cli -y
+npx skills add "<clean-candidate>" --skill wkc-skills-release -a claude-code -a codex -a kiro-cli -y
 ```
 
 Use only the states needed by selected integration cases from the following baseline fixture recipe.

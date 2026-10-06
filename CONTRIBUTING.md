@@ -114,7 +114,7 @@ It prepares the exact commit, all changelog entries since the preceding stable r
 Publication requires explicit authorization for that concrete target. A request to implement or merge does not authorize publication.
 
 Follow the skill's [bootstrap instructions](./skills/wkc-skills-release/README.md) for the first installation.
-Record main's SHA, install explicitly by name with `skills@1.7.0`, and compare all installed files against that commit.
+Record main's SHA, install explicitly by name with `npx skills`, and compare all installed files against that commit.
 After publication, reinstall from the immutable tag and verify the installed files against the tag's SHA.
 The full Git URL with a quoted `#vX.Y.Z` pins installation; `owner/repo@vX.Y.Z` selects a skill name instead.
 

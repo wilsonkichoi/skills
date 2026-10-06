@@ -18,7 +18,7 @@ must declare their intended callers and settings as described in [AGENTS.md](./A
 Name the agents you want with `-a`:
 
 ```
-npx skills@1.7.0 add wilsonkichoi/skills -s '*' -a claude-code -a codex -a kiro-cli -y
+npx skills add wilsonkichoi/skills -s '*' -a claude-code -a codex -a kiro-cli -y
 ```
 
 The installer creates each agent's directory itself. It did not always: a project-scope install
@@ -32,7 +32,7 @@ Tracking the tip is fine for now. To pin a version, pass the full git URL with a
 because `#` starts a comment in most shells:
 
 ```
-npx skills@1.7.0 add 'https://github.com/wilsonkichoi/skills.git#v0.0.13' -s '*' -a claude-code -a codex -a kiro-cli -y
+npx skills add 'https://github.com/wilsonkichoi/skills.git#v0.0.13' -s '*' -a claude-code -a codex -a kiro-cli -y
 ```
 
 A ref that does not exist fails loudly, which is how you know the pin took effect. The
@@ -52,7 +52,7 @@ Release checks include untracked files, and publication pushes only the authoriz
 
 ### Update
 
-`npx skills@1.7.0 update -p` refetches each installed skill from the `ref` recorded in
+`npx skills update -p` refetches each installed skill from the `ref` recorded in
 `skills-lock.json`. An unpinned install gets the newest default branch. A tag-pinned install stays
 on its tag, because tags never move; rerun the pinned `add` above with the new tag instead. `update`
 refreshes only skills already installed. Ask `wkc-help` for the details, or to run these commands.
@@ -134,20 +134,20 @@ and `wkc-plan` rather than by `wkc-setup`.
 Name the skills and the agents you installed to:
 
 ```
-npx skills@1.7.0 remove wkc-setup wkc-tracker wkc-workflow-diagram wkc-help -a claude-code -a codex -a kiro-cli
+npx skills remove wkc-setup wkc-tracker wkc-workflow-diagram wkc-help -a claude-code -a codex -a kiro-cli
 ```
 
 If you explicitly installed the internal release skill, remove it separately:
 
 ```sh
-npx skills@1.7.0 remove wkc-skills-release -a claude-code -a codex -a kiro-cli
+npx skills remove wkc-skills-release -a claude-code -a codex -a kiro-cli
 ```
 
 The other forms are documented under
 [`skills remove`](https://github.com/vercel-labs/skills#skills-remove). Then delete what `wkc-setup`
 wrote: `docs/dev-agents/` and the one reference line it added to your `AGENTS.md` or `CLAUDE.md`.
 
-Do not run `npx skills@1.7.0 remove --all`, and do not leave `-a` off, inside a repository that keeps its
+Do not run `npx skills remove --all`, and do not leave `-a` off, inside a repository that keeps its
 own skills in a top-level `skills/` directory. OpenClaw's project path is a bare `skills/`, so a
 removal that sweeps every agent resolves to `<repo>/skills/<name>` and deletes the real source,
 untracked files included, even for skills that were never installed for that agent
