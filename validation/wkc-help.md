@@ -52,8 +52,8 @@ Run cases 3 to 6 in one session per harness, case 6 first: once `wkc-help` is na
 5. **Requested change.** Ask the model to move the installed skills to a named release.
    PASS: it shows the command, runs `add` with that tag and the installed skills and harnesses, then reports the lock `ref` and installer output.
    Run it on a default fixture and on a `--copy` fixture. The copy run must keep `--copy` and every installed harness, never `-a '*'`.
-   The project's own Git branch must not change. A branch prompt names the ref plainly, for example
-   "move all my wkc skills to the feat/wkc-manage branch", because real users phrase it that way.
+   Use a prompt with one reading, such as "update all my skills from the feat/wkc-manage branch".
+   "Move my skills to the feat/wkc-manage branch" also reads as a Git branch request in the project.
 
 6. **Implicit invocation.** Ask a plain question about these skills without naming `wkc-help`.
    PASS: the harness loads `wkc-help`. Kiro CLI has no setting for this; record what it does.
@@ -121,7 +121,8 @@ Rebuilt `--copy` fixture, `wkc-help` at `ad764cf`, same prompt as the failed cop
 
 | Case | Result | Evidence |
 |---|---|---|
-| 5, requested change | PASS, with defect | Found copies from the harness folders and ran `add '#feat/wkc-manage' -s wkc-help wkc-setup wkc-tracker -a claude-code -a codex -a kiro-cli -y --copy`. All refs `feat/wkc-manage`; `.agents`, `.claude`, and `.kiro` copies hold new content; entries stay directories; no `agent/`. Defect: it then ran `git switch -c feat/wkc-manage` in the fixture project, reading the skills-repo branch as the project's branch. It did not run the `-l` check, which was harmless because every name existed. |
+| 5, requested change | PASS | Found copies from the harness folders and ran `add '#feat/wkc-manage' -s wkc-help wkc-setup wkc-tracker -a claude-code -a codex -a kiro-cli -y --copy`. All refs `feat/wkc-manage`; `.agents`, `.claude`, and `.kiro` copies hold new content; entries stay directories; no `agent/`. It then ran `git switch -c feat/wkc-manage` in the fixture project. The prompt reasonably asks for that, so this is a test-prompt fault, not a skill failure. It did not run the `-l` check, which was harmless because every name existed. |
 
-`SKILL.md` section 3 now says a tag or branch belongs to `wilsonkichoi/skills` and the project's Git branch never changes.
-Case 5 on the `--copy` fixture needs a rerun for that line.
+A follow-up added "never change the project's Git branch" to `SKILL.md`. With the same prompt, Codex ignored it,
+created the branch, and ran no installer command. The prompt was at fault, so the line was removed and the prompt replaced.
+Case 5 on the `--copy` fixture needs a rerun with the new prompt.
