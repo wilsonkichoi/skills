@@ -125,4 +125,9 @@ Rebuilt `--copy` fixture, `wkc-help` at `ad764cf`, same prompt as the failed cop
 
 A follow-up added "never change the project's Git branch" to `SKILL.md`. With the same prompt, Codex ignored it,
 created the branch, and ran no installer command. The prompt was at fault, so the line was removed and the prompt replaced.
-Case 5 on the `--copy` fixture needs a rerun with the new prompt.
+
+Rerun on a rebuilt `--copy` fixture with "update all my skills from the feat/wkc-manage branch":
+
+| Case | Result | Evidence |
+|---|---|---|
+| 5, requested change | PASS, with deviation | Confirmed the branch with `git ls-remote`, found copies for all three harnesses, and ran `add '#feat/wkc-manage' -s '*' -a claude-code -a codex -a kiro-cli --copy -y`. Project stayed on `main`; all refs `feat/wkc-manage`; all three copies hold new content and stay directories; no `agent/`. Deviation: `-s '*'` also installed `wkc-workflow-diagram`, which was not installed before. Codex reported it. Accepted without a skill change: `wkc-help` is a guide the person supervises, and the result adds a skill without losing or breaking any. |
