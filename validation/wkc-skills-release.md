@@ -461,3 +461,9 @@ The nonexistent-ref negative was not repeated in production; case 18 covers it.
 
 One production release exists, so publication ran through one harness only.
 Codex and Kiro CLI publication SKIP records that fact; it is not a failure.
+
+### Bulk install with the internal skill, 2026-10-06
+
+Direct check on `skills` 1.7.1 in a throwaway project: `INSTALL_INTERNAL_SKILLS=1 npx skills add '...#v0.0.14' -s '*' -a codex -y`
+recorded all five skills in the lock, including `wkc-skills-release`. The README documents this command.
+Plain `-s '*'` and `-s '*' wkc-skills-release` without the variable were not run.
