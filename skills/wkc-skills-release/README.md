@@ -13,6 +13,16 @@ It remains available by exact name. This is an installation convenience, not an 
 npx skills add wilsonkichoi/skills --skill wkc-skills-release -a claude-code -a codex -a kiro-cli -y
 ```
 
+To install every public skill and this one in a single command, set `INSTALL_INTERNAL_SKILLS=1`.
+Replace `vX.Y.Z` with a release tag, or use `wilsonkichoi/skills` for the default branch:
+
+```sh
+INSTALL_INTERNAL_SKILLS=1 npx skills add 'https://github.com/wilsonkichoi/skills.git#vX.Y.Z' -s '*' -a claude-code -a codex -a kiro-cli -y
+```
+
+The variable comes from the installer's source, not its `--help`, so a later version can drop it.
+Without it, `-s '*'` leaves this skill out. Verified on `skills` 1.7.1.
+
 Invoke `wkc-skills-release` explicitly. An optional exact tag resumes publication for that version. Omission selects the version on synchronized main.
 Use a clean main checkout of the collection, with Git and authenticated GitHub CLI available.
 Cleanliness checks explicitly include untracked files even when `status.showUntrackedFiles=no`.
