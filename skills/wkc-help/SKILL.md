@@ -50,7 +50,8 @@ The latest release is at https://github.com/wilsonkichoi/skills/releases/latest,
 ## 3. Versions and updates
 
 Each skill's `ref` in `skills-lock.json` at the project root is the tag or branch it was installed
-from. No `ref` means the default branch; the lock does not record which commit.
+from. No `ref` means the default branch; the lock does not record which commit. A tag or branch here
+belongs to `wilsonkichoi/skills`, not to the person's project; never change the project's Git branch.
 
 `npx skills update -p` refetches each installed skill from its recorded `ref`. An unpinned
 install gets the newest default branch. A tag-pinned install stays where it is, because tags never
