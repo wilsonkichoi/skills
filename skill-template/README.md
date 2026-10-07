@@ -30,7 +30,7 @@ Then, in the copy:
    becomes the first sentence of the description.
 6. Delete this `README.md` from the copy.
 
-Check with `npx skills@1.7.0 add <gh-handle>/<skills-repo> -l`, which lists public skills. A new
+Check with `npx skills add <gh-handle>/<skills-repo> -l`, which lists public skills. A new
 public skill should appear once, and nothing named `wkc-skill-name` should ever appear.
 Internal skills are excluded from that count; list and install them explicitly by exact name.
 Compare total source `SKILL.md` files separately. See the internal-metadata exception in `AGENTS.md`.
@@ -103,10 +103,12 @@ dependency instead of substituting an unprefixed skill. Invocation settings stil
 
 ## Check the result
 
-Installing and running it is the only check that counts, and it is the same on every harness:
-install the skill into a throwaway repository, invoke it on Claude Code, on Codex, and on Kiro CLI,
-and read what it produced. That is step 6 of the porting process in `AGENTS.md`.
+Follow [Validation](../AGENTS.md#validation) for scope, evidence reuse, fixtures, and AI session authorization.
+New skills need baseline coverage across supported harnesses; later changes need only affected checks.
+Direct checks establish packaging, metadata, installer behavior, and filesystem effects.
+Installed invocation establishes harness loading and instruction following; direct checks cannot establish those behaviors.
+Do not start model sessions for checks that direct commands can perform.
 
-Before that, reread the frontmatter against the table above. Watch the name in particular: the
+Reread the frontmatter against the table above. Watch the name in particular: the
 template ships with `name: wkc-skill-name`, which is valid, so nothing will complain about a copy you
 have not renamed yet.

@@ -1,0 +1,5 @@
+interface:
+  display_name: "wkc-help"
+  short_description: "Answer questions about the wkc- skills, including what each one does, how to call it, which version is installed, and how to install, pin, update, or remove them"
+policy:
+  allow_implicit_invocation: true

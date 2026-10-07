@@ -66,9 +66,8 @@ If sources and intent are unchanged, leave the JSON byte-identical.
 ## 3. Validate and build
 
 Run `check`, then `build`, with the commands in README.md's [helper section](README.md#check-build-and-preview).
-Locate `scripts/diagram.mjs` relative to this `SKILL.md`. If you were not told where this file is, look for
-`wkc-workflow-diagram/scripts/diagram.mjs` in the project's `.agents/skills/`, `.claude/skills/`, and `.kiro/skills/`,
-then in the same directories under the home directory.
+Locate `scripts/diagram.mjs` relative to this `SKILL.md`. If you were not told where this file is, find
+`wkc-workflow-diagram/scripts/diagram.mjs` in the project's or home directory's skill folders.
 Pass the helper's absolute path and the absolute project path.
 
 Relative links in node details need `--documentation-base`, an HTTPS URL for the target project.

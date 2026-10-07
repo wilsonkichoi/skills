@@ -1,26 +1,30 @@
 # wkc-workflow-diagram validation
 
-Run this against the candidate skill in a throwaway project. Preserve the original project and installed skill.
-Each numbered case needs PASS, FAIL, or SKIP with evidence. An unavailable check is SKIP, never PASS.
+Follow [Validation](../AGENTS.md#validation): select affected cases and harnesses, use direct checks first, and reuse unchanged evidence.
+This is a case catalog, not a full test sequence for each change.
+Read [Cases](#cases) and the linked [implementation report](../docs/dev-agents/diagram/README.md), not unrelated historical results.
+Run selected installed cases in a throwaway project. Preserve the original project and installed skill.
+Each selected case needs independent evidence. An unavailable required check within scope is SKIP, never PASS.
 Browser tests do not establish successful agent invocation. Harness installation and invocation are separate checks.
 
 ## Preparation
 
-Use a clean candidate checkout or source export without node_modules, caches, traces, or browser binaries.
+Prepare only fixtures needed by selected cases. Reuse suitable existing fixtures and setup evidence.
+For installation cases, use a clean candidate checkout or source export without node_modules, caches, traces, or browser binaries.
 The skills installer copies ignored files from local directories, so do not install a populated maintainer workspace.
 Replace placeholders with absolute paths. Use an isolated target containing spaces and Unicode.
 Keep raw run evidence (logs, fixtures, screenshots) in an ignored directory such as `.local/runs/workflow-diagram/<date>/`.
 It is scratch, not a record: this runbook defines the cases, and the report named at the end holds the results.
 
 ```sh
-npx skills@1.7.0 add "<clean-candidate>" --list
+npx skills add "<clean-candidate>" --list
 ```
 
 ```sh
-npx skills@1.7.0 add "<clean-candidate>" --skill wkc-workflow-diagram -a claude-code -a codex -a kiro-cli -y
+npx skills add "<clean-candidate>" --skill wkc-workflow-diagram -a claude-code -a codex -a kiro-cli -y
 ```
 
-Run the maintainer checks from `tools/workflow-diagram/` before testing the installed copy.
+For renderer or installed-helper changes, run the maintainer checks from `tools/workflow-diagram/` before testing the installed copy.
 Use the browser fallback described in `tools/workflow-diagram/README.md` if Chrome is unavailable.
 
 ```sh
@@ -144,8 +148,9 @@ Keep test outputs within the target's diagram directory; harness installation fi
 
 ## Report
 
-Record candidate commit, installer and harness versions, runtime/browser versions, exact commands, and artifact paths.
-For each case, state PASS/FAIL/SKIP and the independent evidence. Explain every SKIP and remaining failure.
+Record candidate commit, selected cases, relevant tool versions, independent checks, observed outcomes, and artifact paths.
+Explain unavailable required checks within scope and remaining failures; do not mark out-of-scope cases as new SKIPs.
+Cite unchanged evidence instead of repeating setup instructions or prior result tables.
 Separate automated renderer checks, installed-helper checks, agent behavior, and visual review.
 Do not count a source-level unit test as an agent invocation.
 

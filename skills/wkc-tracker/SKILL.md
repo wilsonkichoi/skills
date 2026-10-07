@@ -34,8 +34,7 @@ way through, before running anything:
 
 Stop when the config cannot name a backend: the file does not exist, it has no `issue_tracker`
 field, or the value is not one of the four above. Write nothing, create no file or directory, and
-read no backend file. Say so, and ask the user to run `wkc-setup` first:
-Claude Code `/wkc-setup`, Codex `$wkc-setup`, Kiro CLI `/wkc-setup`. Never use another tool's config or ticket
+read no backend file. Say so, and ask the user to run `wkc-setup` first. Never use another tool's config or ticket
 format instead, even when one is in the repository. No verb here can see a ticket written there.
 
 ## 2. Statuses

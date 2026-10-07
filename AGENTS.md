@@ -23,16 +23,16 @@ A tag marks a release for people reading the history, and it is what a pinned in
 A pushed `v*` tag cannot be moved or deleted, so a bad release costs a new patch version, never a
 re-tag.
 Pinning takes the full git URL with a `#ref`, quoted:
-`npx skills@1.7.0 add 'https://github.com/wilsonkichoi/skills.git#v0.0.3'`. A missing ref fails
+`npx skills add 'https://github.com/wilsonkichoi/skills.git#v0.0.3'`. A missing ref fails
 loudly. The `owner/repo@v0.0.3` shorthand is not a pin, because `@` selects a skill name there.
-Adopters who want the tip use `npx skills@1.7.0 add wilsonkichoi/skills`.
+Adopters who want the tip use `npx skills add wilsonkichoi/skills`.
 
 ## Distribution
 
 This repository ships as plain skill directories, installed with one command:
 
 ```
-npx skills@1.7.0 add wilsonkichoi/skills -a claude-code -a codex -a kiro-cli
+npx skills add wilsonkichoi/skills -a claude-code -a codex -a kiro-cli
 ```
 
 There is no `.claude-plugin/`, no `marketplace.json`, no per-harness distribution tree, and no
@@ -54,13 +54,12 @@ No release hooks, helper scripts, build system, or per-harness copies are needed
 Runtime publication rules live in [`skills/wkc-skills-release/SKILL.md`](./skills/wkc-skills-release/SKILL.md).
 
 `metadata` normally maps strings to strings under the Agent Skills specification. The sole exception
-is `wkc-skills-release`'s boolean `metadata.internal: true`, because `skills@1.7.0` checks
+is `wkc-skills-release`'s boolean `metadata.internal: true`, because the `skills` installer checks
 `metadata.internal === true` to hide it from public discovery and bulk installation. A string
 `"true"` does not work. Explicit installation by name includes it; visibility does not authorize release writes.
 Codex, Claude Code, and Kiro CLI loaded the boolean in the recorded validation runs.
 Recheck compatibility when metadata or supported harness versions change. If a supported harness rejects the boolean,
 remove it from the one shared source and document that direct bulk installation includes the maintainer skill.
-The planned `wkc-manage add all` must still exclude `wkc-skills-release` by name under that fallback.
 Unavailable checks are SKIP, not proof of incompatibility. Record results in its validation runbook.
 
 ## Skills
@@ -96,7 +95,7 @@ Manual invocation is the default. A manually invoked skill keeps these settings:
 - claude code: `SKILL.md` frontmatter `disable-model-invocation: true`
 - codex cli: `agents/openai.yaml` -> `policy: allow_implicit_invocation: false`
 
-A skill may explicitly opt into model invocation, one skill at a time. `wkc-tracker` does. Authors
+A skill may explicitly opt into model invocation, one skill at a time. `wkc-tracker` and `wkc-help` do. Authors
 must declare the intended callers in the skill body: people, models, or named skills. Enable
 supported invocation settings for each harness when models are intended callers:
 
@@ -115,7 +114,8 @@ Optional `argument-hint` frontmatter is a Claude Code extension, outside the Age
 Quote its string value; use `[]` for optional arguments and `<>` for required values.
 Replace the template placeholder with accepted arguments, or remove the field when arguments are unnecessary.
 Hints guide autocomplete; they do not validate arguments or change runtime behaviour.
-Do not promise that Codex or Kiro displays them. Keep harness prefix guidance in the root README's invocation table.
+Do not promise that Codex or Kiro displays them.
+Skill files name skills without a harness prefix, such as `wkc-tracker list`. Keep prefix guidance in the root README's invocation table.
 
 `description` goes on one unquoted physical line, however long.
 
@@ -157,7 +157,7 @@ Follow the instructions from `skill-template/README.md`.
 `skill-template/` is authoring material, not a shipped skill. The installer finds skills by looking
 for `SKILL.md` anywhere in the repository, not by reading `skills/`, so the skeleton is named
 `SKILL.md.template` to stay out of the install. Verify with
-`npx skills@1.7.0 add <gh-handle>/<skills-repo> -l`: nothing named `wkc-skill-name` may appear in that list.
+`npx skills add <gh-handle>/<skills-repo> -l`: nothing named `wkc-skill-name` may appear in that list.
 The public discovery count equals shipped skills minus skills with boolean `metadata.internal: true`.
 List each internal skill explicitly with `--skill <name> -l` and verify it installs by exact name.
 Count all source `SKILL.md` files separately to verify total shipped skills; ordinary discovery is not that total.
@@ -172,6 +172,28 @@ directory has to clear the same check before it is added.
 - Write the way you would explain it to the person sitting next to you.
 - Keep skills short. A `SKILL.md` past roughly 150 lines is usually carrying policy that belongs
   to the project, not to the skill.
+
+## Validation
+
+Runbooks are case catalogs, not mandatory full test sequences for every change.
+For a new skill or port, plan baseline coverage across supported harnesses and relevant backends.
+For later changes, select changed behavior and directly affected regressions.
+State selected cases or subchecks, backends, and harnesses before testing.
+Wording and formatting changes need static checks unless they change instruction interpretation.
+Use direct checks for installer behavior, file preservation, API handling, schemas, and renderer behavior.
+Use model invocation only for instruction following or harness loading that direct checks cannot establish.
+Reuse evidence only when the relevant instructions, fixture, and tool or harness configuration remain unchanged; cite its source.
+Unavailable required checks within the selected scope are SKIP, never PASS. Cases outside that scope are not new SKIPs.
+Identify focused subchecks explicitly; a passing subcheck is not a full-case PASS.
+Do not claim complete compatibility from focused checks or count direct checks as model behavior.
+New AI sessions require explicit authorization and an agreed budget under [Token usage](docs/dev-agents/rules/token-usage.md).
+Validation requirements do not authorize those sessions or cross-harness launches.
+
+Prepare only fixtures needed by selected cases. Use local or controlled HTTP fixtures for mechanical checks.
+Use real service fixtures when testing service integration; reuse suitable existing fixtures before creating new ones.
+Read case headings and relevant report sections, not entire historical logs.
+Keep tracked reports concise: source and fixture identifiers, selected cases, independent checks, observed outcomes, and unresolved limits.
+Keep raw logs and repeated setup details outside tracked reports; preserve concise evidence of prior failures and skips.
 
 ## Git workflow
 
@@ -209,8 +231,9 @@ and the order.
 5. **Feed the contract back into `wkc-setup`.** A new config field means editing
    `skills/wkc-setup/config-template.md` and the `wkc-setup` interview in the same pull request. No skill
    reads a field `wkc-setup` never writes.
-6. **Validate** in a throwaway repo: install with the installer, then work through the skill's
-   runbook at `validation/wkc-<name>.md` on Codex, on Claude Code, and on Kiro CLI. A runbook is a
+6. **Validate** under [Validation](#validation): establish baseline coverage with the skill's
+   runbook at `validation/wkc-<name>.md`, including installed invocation on each supported harness where authorized and available.
+   Run installer and filesystem checks directly in throwaway projects. A runbook is a
    numbered list of cases, each with an independent check that decides PASS or FAIL, ending in a
    report. A case that could not run is SKIP and never PASS: an untested claim recorded as a pass is
    how a defect reaches a user. Cases needing a second terminal, a second account, or a service with

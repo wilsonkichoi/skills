@@ -5,7 +5,8 @@ implementation, review, and release. They are small, hand-maintainable markdown 
 framework. Manual invocation is the default. `wkc-setup`, `wkc-workflow-diagram`, and `wkc-skills-release`
 require explicit invocation on Claude Code and Codex; Kiro has no documented setting to suppress automatic activation.
 `wkc-tracker` opts into model invocation, so a model or another skill can read and
-change ticket state without a typed command.
+change ticket state without a typed command. `wkc-help` does too, so a plain question about these
+skills or their installation reaches it.
 
 All skill identifiers use `wkc-` to distinguish this repository's skills from similarly named skills.
 Version 0.0.9 makes the breaking rename from `setup` and `tracker` to `wkc-setup` and `wkc-tracker`,
@@ -17,7 +18,7 @@ must declare their intended callers and settings as described in [AGENTS.md](./A
 Name the agents you want with `-a`:
 
 ```
-npx skills@1.7.0 add wilsonkichoi/skills -a claude-code -a codex -a kiro-cli
+npx skills add wilsonkichoi/skills -s '*' -a claude-code -a codex -a kiro-cli -y
 ```
 
 The installer creates each agent's directory itself. It did not always: a project-scope install
@@ -31,7 +32,7 @@ Tracking the tip is fine for now. To pin a version, pass the full git URL with a
 because `#` starts a comment in most shells:
 
 ```
-npx skills@1.7.0 add 'https://github.com/wilsonkichoi/skills.git#v0.0.12' -a claude-code -a codex -a kiro-cli
+npx skills add 'https://github.com/wilsonkichoi/skills.git#v0.0.13' -s '*' -a claude-code -a codex -a kiro-cli -y
 ```
 
 A ref that does not exist fails loudly, which is how you know the pin took effect. The
@@ -48,6 +49,13 @@ through boolean `metadata.internal: true`. Public discovery excludes internal sk
 Install it explicitly by name when releasing this collection. See its
 [bootstrap and pin instructions](skills/wkc-skills-release/README.md).
 Release checks include untracked files, and publication pushes only the authorized tag regardless of Git configuration.
+
+### Update
+
+`npx skills update -p` refetches each installed skill from the `ref` recorded in
+`skills-lock.json`. An unpinned install gets the newest default branch. A tag-pinned install stays
+on its tag, because tags never move; rerun the pinned `add` above with the new tag instead. `update`
+refreshes only skills already installed. Ask `wkc-help` for the details, or to run these commands.
 
 ## Quickstart
 
@@ -84,6 +92,7 @@ validated before the next starts. See [AGENTS.md](./AGENTS.md) for how a skill i
 | [`wkc-setup`](./skills/wkc-setup/SKILL.md) | Configure a repository to use these skills | shipped |
 | [`wkc-tracker`](./skills/wkc-tracker/SKILL.md) | Read and write issues against GitHub, Linear, or local markdown | shipped |
 | [`wkc-workflow-diagram`](./skills/wkc-workflow-diagram/SKILL.md) | Create and update offline maps of actual project skills | shipped |
+| [`wkc-help`](./skills/wkc-help/SKILL.md) | Answer questions about these skills, and install, pin, update, or remove them | shipped |
 | `wkc-research` | Gather raw material, transcripts, and prior art into notes | planned |
 | `wkc-architect` | Turn product intent into `SPEC.md` | planned |
 | `wkc-plan` | Break a spec into milestones and tasks with dependencies | planned |
@@ -94,13 +103,11 @@ validated before the next starts. See [AGENTS.md](./AGENTS.md) for how a skill i
 | `wkc-verify` | Check the work against the ticket's acceptance criteria | planned |
 | `wkc-git-fu` | Branch, rebase, merge, and conflict work | planned |
 | [`wkc-skills-release`](./skills/wkc-skills-release/SKILL.md) | Publish this collection's tags and GitHub Releases | shipped, internal |
-| `wkc-manage` | Install and manage this collection's skills in adopting projects | planned, issue [#13](https://github.com/wilsonkichoi/skills/issues/13) |
 | `wkc-yolo` | Run the loop unattended across several tickets | planned |
 
 ## Workflow diagrams
 
-Invoke `$wkc-workflow-diagram` in Codex or `/wkc-workflow-diagram` in Claude Code and Kiro CLI.
-The skill reads actual definitions and preserves authored content when updating an existing diagram.
+`wkc-workflow-diagram` reads actual definitions and preserves authored content when updating an existing diagram.
 When a changed definition contradicts existing text, it reports the conflict with suggested wording instead of rewriting it.
 It does not invoke diagrammed skills. Node.js 22 or newer is required; consumers need no npm installation.
 Closing diagram details restores the previous view before returning keyboard focus, including after Previous/Next navigation.
@@ -127,20 +134,20 @@ and `wkc-plan` rather than by `wkc-setup`.
 Name the skills and the agents you installed to:
 
 ```
-npx skills@1.7.0 remove wkc-setup wkc-tracker wkc-workflow-diagram -a claude-code -a codex -a kiro-cli
+npx skills remove wkc-setup wkc-tracker wkc-workflow-diagram wkc-help -a claude-code -a codex -a kiro-cli
 ```
 
 If you explicitly installed the internal release skill, remove it separately:
 
 ```sh
-npx skills@1.7.0 remove wkc-skills-release -a claude-code -a codex -a kiro-cli
+npx skills remove wkc-skills-release -a claude-code -a codex -a kiro-cli
 ```
 
 The other forms are documented under
 [`skills remove`](https://github.com/vercel-labs/skills#skills-remove). Then delete what `wkc-setup`
 wrote: `docs/dev-agents/` and the one reference line it added to your `AGENTS.md` or `CLAUDE.md`.
 
-Do not run `npx skills@1.7.0 remove --all`, and do not leave `-a` off, inside a repository that keeps its
+Do not run `npx skills remove --all`, and do not leave `-a` off, inside a repository that keeps its
 own skills in a top-level `skills/` directory. OpenClaw's project path is a bare `skills/`, so a
 removal that sweeps every agent resolves to `<repo>/skills/<name>` and deletes the real source,
 untracked files included, even for skills that were never installed for that agent
@@ -148,3 +155,7 @@ untracked files included, even for skills that were never installed for that age
 1.5.23 both `remove --all` and `remove setup` with no `-a` destroy `skills/setup/`, while the
 explicit `-a` list above leaves it alone. A project that only consumes skills is unaffected; this
 repository and any other skill-authoring repository are exactly the layout that gets hit.
+
+`add` has the same hazard. Against skills 1.7.1, `add -a '*'` (and so `add --all`) replaces
+`skills/<name>/` with a link into `.agents/skills/`, deleting the source and its untracked files,
+and exits 0. Always name the agents with `-a` on `add` too.
