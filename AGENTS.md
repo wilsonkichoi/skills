@@ -124,6 +124,7 @@ around it are the main reason the previous toolkit became unmaintainable.
 `wkc-workflow-diagram` is the one recorded exception. Its reason and maintainer build live in
 [`tools/workflow-diagram/README.md`](./tools/workflow-diagram/README.md), outside the installed skill.
 Renderer changes must preserve visible keyboard focus when closing details after node navigation.
+Preserve desktop panel resizing by pointer and keyboard, width limits, and the full-width mobile details sheet.
 `wkc-workflow-diagram` authors skill cards only, with source-backed action arrows between skills.
 Systems, outputs, results, and prerequisites stay in skill summaries or details. Explicit requests can select another arrow meaning, including artifact dataflow.
 Updates preserve authored content, edge meaning, and layout. A new default alone never authorizes changing existing edges.

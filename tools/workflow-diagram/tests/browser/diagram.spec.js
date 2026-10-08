@@ -18,6 +18,74 @@ const transform = page => world(page).evaluate(el => {
 });
 const open = async page => { await page.goto('/'); await expect(card(page, 'source')).toBeVisible(); };
 
+for (const url of ['/', pathToFileURL(resolve('../../docs/dev-agents/diagram/diagram.html')).href]) {
+  test(`details panel resizes, stays bounded, and remembers width: ${url}`, async ({ page }) => {
+    await page.goto(url);
+    const openingCard = page.locator('.wd-card').first();
+    await openingCard.click();
+    const panel = page.getByRole('dialog'), handle = page.getByRole('separator', { name: 'Resize details panel' });
+    const width = () => panel.evaluate(el => el.getBoundingClientRect().width);
+    async function drag(delta) {
+      const box = await handle.boundingBox();
+      await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+      await page.mouse.down();
+      await page.mouse.move(box.x + box.width / 2 - delta, box.y + box.height / 2, { steps: 8 });
+      await page.mouse.up();
+    }
+    await drag(180); await expect.poll(width).toBe(540);
+    await expect(panel).toBeVisible();
+    await expect.poll(async () => {
+      const node = await openingCard.boundingBox(), box = await panel.boundingBox();
+      return node.x + node.width <= box.x;
+    }).toBe(true);
+    await page.getByRole('button', { name: 'Next node' }).click();
+    await expect.poll(width).toBe(540);
+    await page.keyboard.press('Escape'); await expect(openingCard).toBeFocused();
+    await page.keyboard.press('Enter'); await expect.poll(width).toBe(540);
+    await drag(-900); await expect.poll(width).toBe(280);
+    await drag(1600); await expect.poll(width).toBe(1240);
+    await page.setViewportSize({ width: 1000, height: 900 });
+    await expect.poll(width).toBe(800);
+    await expect(handle).toHaveAttribute('aria-valuenow', '800');
+    await expect(page.getByRole('button', { name: 'Close details' })).toBeInViewport();
+  });
+}
+
+test('details resizing supports keyboard and stops on pointer cancellation', async ({ page }) => {
+  await open(page); await card(page, 'source').click();
+  const handle = page.getByRole('separator', { name: 'Resize details panel' });
+  await page.keyboard.press('Tab'); await expect(handle).toBeFocused();
+  for (const [key, width] of [['ArrowLeft', '380'], ['ArrowRight', '360'], ['End', '1240'], ['Home', '280']]) {
+    await page.keyboard.press(key); await expect(handle).toHaveAttribute('aria-valuenow', width);
+  }
+  const box = await handle.boundingBox();
+  await page.mouse.move(box.x + 5, box.y + 100); await page.mouse.down();
+  await page.mouse.move(box.x - 95, box.y + 100);
+  await expect(handle).toHaveAttribute('aria-valuenow', '380');
+  await handle.dispatchEvent('pointercancel', { pointerId: 1 });
+  await page.mouse.move(box.x - 195, box.y + 100); await page.mouse.up();
+  await expect(handle).toHaveAttribute('aria-valuenow', '380');
+  await page.keyboard.press('Escape'); await expect(card(page, 'source')).toBeFocused();
+});
+
+test('resized desktop details retain the full-width mobile sheet and focus cycle', async ({ page }) => {
+  await open(page); await card(page, 'source').click();
+  const handle = page.getByRole('separator', { name: 'Resize details panel' });
+  await handle.focus(); await page.keyboard.press('End');
+  await page.setViewportSize({ width: 390, height: 844 });
+  await expect(handle).toBeHidden();
+  const panel = page.getByRole('dialog');
+  await expect.poll(() => panel.evaluate(el => el.getBoundingClientRect().width)).toBe(390);
+  const close = page.getByRole('button', { name: 'Close details' });
+  await close.focus(); await page.keyboard.press('Shift+Tab');
+  await expect(page.getByRole('button', { name: 'Next node' })).toBeFocused();
+  await page.keyboard.press('Tab'); await expect(close).toBeFocused();
+  await page.keyboard.press('Tab'); await expect(page.locator('.wd-panel-resize')).not.toBeFocused();
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await expect(handle).toBeVisible();
+  await expect.poll(() => panel.evaluate(el => el.getBoundingClientRect().width)).toBe(1240);
+});
+
 test('summary-only panel has no empty headings and Unicode URL IDs remain exact', async ({ page }) => {
   await page.goto('/minimal');
   await page.locator('.wd-card').click();

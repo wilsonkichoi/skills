@@ -1,6 +1,9 @@
 # Shipped skills workflow
 
 Open [diagram.html](diagram.html) in a browser, including directly from disk without networking.
+Drag the details panel's left edge to resize it on desktop. Focus the edge to use Left/Right, Home, or End.
+Width stays between 280 pixels and the canvas width minus 200 pixels. It persists through node navigation and reopening until reload.
+Narrow layouts keep the full-width bottom sheet.
 The map contains all five shipped definitions in this repository: `wkc-setup`, `wkc-tracker`,
 `wkc-workflow-diagram`, `wkc-help`, and internal `wkc-skills-release`. Planned skills are excluded.
 Every card is a skill. External systems, outputs, and results appear in the owning skill's details.
@@ -27,7 +30,7 @@ Links from the removed system cards remain available through their owning skill 
 
 Inputs are [workflow.json](workflow.json) and [layout.json](layout.json).
 All positions and content are authored data; HTML is generated.
-The generator version is **0.0.11**, recorded in the installed skill's `assets/manifest.json`.
+The generator version is **0.0.12**, recorded in the installed skill's `assets/manifest.json`.
 The renderer source and maintainer build are in `tools/workflow-diagram/`; the skill ships generated assets.
 
 Documentation base:

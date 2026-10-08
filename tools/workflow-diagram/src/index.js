@@ -22,7 +22,40 @@ export function mountDiagram(container, { workflow: inputWorkflow, layout: input
   const bounds = canvasBounds(workflow, layout);
   let view = { x: 0, y: 0, scale: 1 }, selected = null, lane = null, hovered = null, focused = null;
   let destroyed = false, fitted = true, returnFocus = null, returnView = null;
+  let panelDrag = null;
   function listen(el, type, listener) { el.addEventListener(type, listener, { signal }); }
+  const maximumPanelWidth = () => Math.max(280, ui.stage.clientWidth - 200);
+  function updatePanelResize() {
+    ui.resizeHandle.setAttribute('aria-valuemin', '280');
+    ui.resizeHandle.setAttribute('aria-valuemax', String(Math.floor(maximumPanelWidth())));
+    ui.resizeHandle.setAttribute('aria-valuenow', String(Math.round(ui.panel.getBoundingClientRect().width)));
+  }
+  function setPanelWidth(width) {
+    ui.panel.style.setProperty('--panel-width', `${Math.max(280, Math.min(maximumPanelWidth(), width))}px`);
+    updatePanelResize();
+  }
+  function stopPanelResize() {
+    if (!panelDrag) return;
+    const { pointerId } = panelDrag; panelDrag = null;
+    if (ui.resizeHandle.hasPointerCapture(pointerId)) ui.resizeHandle.releasePointerCapture(pointerId);
+  }
+  listen(ui.resizeHandle, 'pointerdown', event => {
+    if (event.button !== 0 || !event.isPrimary) return;
+    event.preventDefault();
+    ui.resizeHandle.focus({ preventScroll: true });
+    panelDrag = { pointerId: event.pointerId, x: event.clientX, width: ui.panel.getBoundingClientRect().width };
+    ui.resizeHandle.setPointerCapture(event.pointerId);
+  });
+  listen(ui.resizeHandle, 'pointermove', event => {
+    if (panelDrag?.pointerId === event.pointerId) setPanelWidth(panelDrag.width + panelDrag.x - event.clientX);
+  });
+  for (const type of ['pointerup', 'pointercancel', 'lostpointercapture']) listen(ui.resizeHandle, type, stopPanelResize);
+  listen(ui.resizeHandle, 'keydown', event => {
+    const width = ui.panel.getBoundingClientRect().width;
+    const widths = { ArrowLeft: width + 20, ArrowRight: width - 20, Home: 280, End: maximumPanelWidth() };
+    if (!(event.key in widths)) return;
+    event.preventDefault(); setPanelWidth(widths[event.key]);
+  });
   function setView(next) {
     if (destroyed) return;
     view = next;
@@ -89,6 +122,7 @@ export function mountDiagram(container, { workflow: inputWorkflow, layout: input
     const node = workflow.nodes.find(n => n.id === nodeId);
     if (!node) throw new Error(`Unknown node ID: ${JSON.stringify(nodeId)}`);
     if (selected === nodeId) return;
+    stopPanelResize();
     if (selected === null) {
       returnFocus = shadow.activeElement ?? ui.cards.get(nodeId);
       returnView = { view, fitted };
@@ -102,10 +136,11 @@ export function mountDiagram(container, { workflow: inputWorkflow, layout: input
     controls.close.addEventListener('click', close);
     controls.previous.addEventListener('click', () => select(workflow.nodes[index - 1].id));
     controls.next.addEventListener('click', () => select(workflow.nodes[index + 1].id));
-    emphasize(); centerSelected(); controls.close.focus({ preventScroll: true }); notifySelection();
+    updatePanelResize(); emphasize(); centerSelected(); controls.close.focus({ preventScroll: true }); notifySelection();
   }
   function close() {
     if (selected === null || destroyed) return;
+    stopPanelResize();
     const last = selected; selected = null;
     ui.panel.hidden = true; ui.backdrop.hidden = true;
     ui.header.inert = false; ui.viewport.inert = false; ui.footer.inert = false;
@@ -140,7 +175,7 @@ export function mountDiagram(container, { workflow: inputWorkflow, layout: input
   listen(ui.panel, 'keydown', event => {
     if (event.key === 'Escape') { event.preventDefault(); event.stopPropagation(); close(); }
     if (event.key === 'Tab') {
-      const targets = [...ui.panel.querySelectorAll('button:not(:disabled), a[href], [tabindex="0"]')];
+      const targets = [...ui.panel.querySelectorAll('button:not(:disabled), a[href], [tabindex="0"]')].filter(el => el.getClientRects().length);
       const first = targets[0], last = targets.at(-1), active = shadow.activeElement;
       if (event.shiftKey && (active === first || !targets.includes(active))) { event.preventDefault(); last.focus(); }
       if (!event.shiftKey && (active === last || !targets.includes(active))) { event.preventDefault(); first.focus(); }
@@ -150,6 +185,7 @@ export function mountDiagram(container, { workflow: inputWorkflow, layout: input
   bindViewport(ui.viewport, { getView: () => view, setView, getMinimumScale: minimumScale, onIntent: () => { fitted = false; } }, signal);
   const resize = new ResizeObserver(() => {
     if (destroyed) return;
+    updatePanelResize();
     if (selected !== null) centerSelected(); else if (fitted) resetView();
   });
   resize.observe(ui.stage); resize.observe(ui.panel);

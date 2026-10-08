@@ -133,6 +133,11 @@ Keep test outputs within the target's diagram directory; harness installation fi
 17. **Visual and input contract.** Inspect fitted and selected states at desktop, tablet, and phone sizes in both themes.
     PASS: square cards, flat palettes, lane colors, visible focus, readable selected cards, and unobscured controls remain intact.
     Verify fit, pan, zoom, filtering, textual relationships, panel scrolling, focus trapping/restoration, and navigation.
+    Drag the desktop panel's left edge in both directions; use Left/Right, Home, and End with the edge focused.
+    PASS: width stays between 280 pixels and canvas width minus 200 pixels; selection stays visible beside the panel.
+    Navigate and reopen details; the chosen width persists until reload. Cancel a pointer drag; later movement must not resize.
+    Shrink the container; the panel stays bounded. At narrow widths, the full-width bottom sheet hides the resize control.
+    Verify Tab skips the hidden handle and still cycles through the visible controls.
     Open a node, navigate to a distant node, then close with Escape, the close button, and the backdrop.
     PASS: focus returns to the visible opening card and its previous view is restored, including manual pan and zoom.
     Resize while details are open from a fitted view; closing must fit the new canvas and keep the opening card visible.
@@ -225,3 +230,21 @@ Backend: local JSON/files. Browser: Chrome **154.0.8037.98**; Node **v24.11.1**;
 See [Skill cards only](../docs/dev-agents/diagram/README.md#skill-cards-only-2026-10-07) for the implementation record.
 Raw snapshots, fixtures, browser checks, and results remain in ignored `docs/dev-agents/diagram/.cache/skill-only/`.
 No renderer, helper, schema, generated asset, invocation setting, or repository version change was needed for this correction.
+
+### Resizable details panel, 2026-10-07
+
+Candidate: `docs/five-shipped-skills-diagram`, collection **0.0.16**, generator **0.0.12**.
+Selected coverage: cases 14 and 16 offline/export and asset subchecks; case 17 desktop resizing,
+keyboard controls, pointer cancellation, width retention, viewport bounds, mobile layout, and focus regressions.
+Backend: local JSON/files. Browser: Chrome **154.0.8037.98** through Playwright; no additional AI sessions.
+
+- PASS, required maintainer check: asset freshness, 76 unit/package checks, build, and 35 browser tests.
+- PASS, requested offline HTML and renderer preview: drag 360 to 540 pixels, retain width through navigation and reopening, clamp to 280 pixels and canvas width minus 200 pixels.
+- PASS, input regressions: Left/Right, Home/End, pointer cancellation, selected-card visibility, viewport shrinking, full-width mobile sheet, and focus cycling.
+- PASS, repository helper check and unchanged authored workflow/layout inputs.
+- PASS, visual inspection: requested offline HTML with help details resized to 540 pixels; text, handle, close button, and navigation remain visible.
+- Initial test-only failure: the mobile negative-focus assertion used a role locator that excluded the hidden handle. A DOM locator fixes the assertion; the focused rerun passed.
+
+Logs: `/tmp/diagram-resize-check-final.log` and `/tmp/diagram-resize-recheck.log`.
+Visual evidence: ignored `docs/dev-agents/diagram/.cache/desktop-resized.png`.
+These direct checks do not establish screen-reader, physical touch, or other-browser compatibility.
