@@ -139,8 +139,12 @@ Keep test outputs within the target's diagram directory; harness installation fi
     Shrink the container; the panel stays bounded. At narrow widths, the full-width bottom sheet hides the resize control.
     Verify Tab skips the hidden handle and still cycles through the visible controls.
     Open a node, navigate to a distant node, then close with Escape, the close button, and the backdrop.
-    PASS: the current card is centered and focused in the full canvas; closing preserves the current zoom.
+    PASS: the current card receives focus; closing leaves the canvas transform and zoom unchanged.
     Resize while details are open; closing keeps the resized zoom instead of fitting the whole map.
+    Verify the desktop drawer slides right and the mobile sheet slides down while the backdrop fades.
+    PASS: closed controls become inert immediately; the panel hides after the slide; reduced motion skips movement.
+    Reopen during the slide; the pending close must not hide the new panel.
+    Verify default zoom is 70% when the map fits, or smaller for narrow canvases.
     Verify the desktop panel defaults to half the canvas width, uses lane accents, and darkens the main canvas in both themes.
     PASS: opening never increases zoom; connected cards and their routes remain visible beside the panel.
     Verify tinted lane boxes contain their cards and region colors are visually distinct in both themes.
@@ -274,3 +278,20 @@ drawer sizing, lane styles, scrim opacity, camera behavior, and generated-file o
 Raw evidence: `/tmp/diagram-context-check.log`, `/tmp/diagram-context-region-check.log`, `/tmp/diagram-context-visual.log`,
 and ignored `docs/dev-agents/diagram/.cache/context-visual-results.json`.
 Direct browser checks do not establish screen-reader, physical-device, or other-browser compatibility.
+
+### Sliding close and concise header, 2026-10-07
+
+Candidate: `docs/five-shipped-skills-diagram`, collection **0.0.16**, generator **0.0.14**.
+Selected coverage: case 14 offline/export subchecks, case 16 asset freshness, case 17 close animation, retained canvas transform,
+reopening, reduced motion, default zoom, and header; case 18 screenshot record.
+Backend: local JSON/files. Browser: Chrome **154.0.8037.98** through Playwright. No additional AI sessions.
+
+- PASS, maintainer check: asset freshness, 77 unit/package checks, build, and 42 browser tests.
+- PASS, default/header: `wkc skills`, no subtitle or generated node-count line, 70% default when the map fits, and 70% retained when desktop help opens.
+- PASS, close behavior: all close methods preserve the exact canvas transform after navigation and viewport resizing; focus returns to the current visible card.
+- PASS, animation: desktop slides right, mobile slides down, closed controls become inert, the panel hides after animation, reduced motion skips movement, and reopening cancels pending closure.
+- Initial test-only failures: two slide assertions sampled after the animation had ended. Pause the animation at its midpoint to check actual movement deterministically; all three focused animation tests then pass.
+- PASS, visual/export: 18 screenshots refreshed at three sizes in both themes, with no HTTP requests, page exceptions, or page overflow. Desktop light overview and dark help details visually inspected.
+
+Logs: `/tmp/diagram-slide-check-final.log`, `/tmp/diagram-slide-focused.log`, and `/tmp/diagram-slide-visual.log`.
+Direct checks do not establish screen-reader, physical-device, or other-browser compatibility.

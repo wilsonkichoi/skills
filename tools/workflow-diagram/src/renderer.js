@@ -39,7 +39,7 @@ export function renderShell(shadow, css, workflow, layout, id) {
   const header = element('header');
   const top = element('div', 'wd-top');
   const heading = element('div', 'wd-heading');
-  heading.append(element('p', 'wd-eyebrow', `Workflow map / ${String(workflow.nodes.length).padStart(2, '0')} nodes`), element('h1', '', workflow.title));
+  heading.append(element('h1', '', workflow.title));
   if (workflow.subtitle) heading.append(element('p', 'wd-subtitle', workflow.subtitle));
   const tools = element('div', 'wd-tools'); tools.setAttribute('role', 'group'); tools.setAttribute('aria-label', 'View controls');
   const zoom = element('div', 'wd-zoom');

@@ -1,11 +1,12 @@
-# Shipped skills workflow
+# wkc skills workflow
 
 Open [diagram.html](diagram.html) in a browser, including directly from disk without networking.
 Drag the details panel's left edge to resize it on desktop. Focus the edge to use Left/Right, Home, or End.
 The panel starts at half the canvas width and uses the selected region's colors. Its backdrop darkens the main canvas.
 Width stays between 280 pixels and the canvas width minus 200 pixels. It persists through node navigation and reopening until reload.
 Narrow layouts keep the full-width bottom sheet.
-Selection keeps neighboring cards visible without zooming in. Closing centers the current card and preserves zoom.
+The default zoom is 70%, or smaller when needed to fit. Selection keeps neighboring cards visible without zooming in.
+Closing slides the panel away without changing card positions or zoom.
 Tinted boxes group Configuration, Coordination, Documentation, and Independent cards. Purple, green, amber, and gray distinguish those regions in both themes.
 The map contains all five shipped definitions in this repository: `wkc-setup`, `wkc-tracker`,
 `wkc-workflow-diagram`, `wkc-help`, and internal `wkc-skills-release`. Planned skills are excluded.
@@ -33,7 +34,7 @@ Links from the removed system cards remain available through their owning skill 
 
 Inputs are [workflow.json](workflow.json) and [layout.json](layout.json).
 All positions and content are authored data; HTML is generated.
-The generator version is **0.0.13**, recorded in the installed skill's `assets/manifest.json`.
+The generator version is **0.0.14**, recorded in the installed skill's `assets/manifest.json`.
 The renderer source and maintainer build are in `tools/workflow-diagram/`; the skill ships generated assets.
 
 Documentation base:
@@ -346,3 +347,16 @@ The repository helper check and byte-identical rebuild passed. All 18 screenshot
 Sampled visual review covered desktop light/dark help details, tablet light overview and dark help details, and phone light help details and dark release details.
 Offline visual checks reported no HTTP requests, page exceptions, or page overflow.
 Raw evidence remains in ignored `.cache/context-visual-results.json`; the focused report is in `validation/wkc-workflow-diagram.md`.
+
+## Sliding close and concise header, 2026-10-07
+
+Generator **0.0.14** uses the title `wkc skills` without the former subtitle or generated node-count line.
+The initial fitted view defaults to 70% zoom, or smaller when needed to fit the map. Help details open at the same 70% on desktop.
+Closing leaves the canvas transform unchanged and returns focus to the current card. This supersedes the earlier centering contract.
+The desktop panel slides right and the mobile sheet slides down over 240ms while the backdrop fades.
+Closed controls become inert immediately. Reduced motion skips the slide, and reopening cancels a pending close.
+
+The maintainer check passes 77 unit/package checks and 42 browser tests. Focused animation checks also passed.
+Offline visual checks cover all three documented sizes in both themes; all 18 screenshots were refreshed.
+Desktop light overview and dark help details were visually inspected. No HTTP requests, page exceptions, or page overflow occurred.
+Raw evidence remains in ignored `.cache/context-visual-results.json` and `/tmp/diagram-slide-visual.log`.

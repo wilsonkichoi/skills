@@ -1,7 +1,6 @@
 {
   "schemaVersion": 1,
-  "title": "Shipped skills",
-  "subtitle": "Five shipped skills. Systems, outputs, and results are described within each skill; planned skills are not shown.",
+  "title": "wkc skills",
   "lanes": [
     {
       "id": "configuration",

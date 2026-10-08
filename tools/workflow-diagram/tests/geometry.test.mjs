@@ -39,3 +39,8 @@ test('pointer zoom retains its world anchor', () => {
   assert.ok(Math.abs((anchor.x - view.x) / view.scale - (anchor.x - next.x) / next.scale) < 1e-9);
   assert.ok(Math.abs((anchor.y - view.y) / view.scale - (anchor.y - next.y) / next.scale) < 1e-9);
 });
+test('default view uses 70% when the map fits and fits smaller canvases', () => {
+  const bounds = { x: 0, y: 0, width: 1000, height: 600 };
+  assert.equal(fitView(bounds, 1440, 900).scale, .7);
+  assert.equal(fitView(bounds, 390, 844).scale, .39);
+});

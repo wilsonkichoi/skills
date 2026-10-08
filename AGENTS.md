@@ -125,7 +125,7 @@ around it are the main reason the previous toolkit became unmaintainable.
 [`tools/workflow-diagram/README.md`](./tools/workflow-diagram/README.md), outside the installed skill.
 Renderer changes must preserve visible keyboard focus when closing details after node navigation.
 Details open at half the desktop canvas width with region accents and a darkened backdrop. Selection retains connected neighbors without zooming in.
-Closing centers the current card and keeps its zoom. Region boxes group cards from the same lane.
+Closing slides details away and keeps the current card position and zoom. Region boxes group cards from the same lane.
 Preserve desktop panel resizing by pointer and keyboard, width limits, and the full-width mobile details sheet.
 `wkc-workflow-diagram` authors skill cards only, with source-backed action arrows between skills.
 Systems, outputs, results, and prerequisites stay in skill summaries or details. Explicit requests can select another arrow meaning, including artifact dataflow.

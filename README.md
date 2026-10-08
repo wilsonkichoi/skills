@@ -116,7 +116,8 @@ An explicit request can select another arrow meaning, including artifact dataflo
 When a changed definition contradicts existing text, it reports the conflict with suggested wording instead of rewriting it.
 It does not invoke diagrammed skills. Node.js 22 or newer is required; consumers need no npm installation.
 Details open at half the desktop canvas width and use the selected region's colors over a darkened map.
-Selection keeps connected neighbors visible without zooming in. Closing centers the current card and preserves zoom and keyboard focus.
+The default zoom is 70%, or smaller when needed to fit the map. Selection keeps connected neighbors visible without zooming in.
+Closing slides details away and preserves card position, zoom, and keyboard focus.
 Drag the details panel's left edge to resize it on desktop, or focus the edge and use Left/Right, Home, or End.
 
 Inputs, offline HTML, notes, screenshots, and temporary files stay under `docs/dev-agents/diagram/` in the target project.

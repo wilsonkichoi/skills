@@ -23,6 +23,11 @@ export function mountDiagram(container, { workflow: inputWorkflow, layout: input
   let view = { x: 0, y: 0, scale: 1 }, selected = null, lane = null, hovered = null, focused = null;
   let destroyed = false, fitted = true;
   let panelDrag = null;
+  let closeAnimations = [];
+  function cancelCloseAnimations() {
+    for (const animation of closeAnimations) animation.cancel();
+    closeAnimations = [];
+  }
   function listen(el, type, listener) { el.addEventListener(type, listener, { signal }); }
   const maximumPanelWidth = () => Math.max(280, ui.stage.clientWidth - 200);
   function updatePanelResize() {
@@ -144,8 +149,10 @@ export function mountDiagram(container, { workflow: inputWorkflow, layout: input
     if (!node) throw new Error(`Unknown node ID: ${JSON.stringify(nodeId)}`);
     if (selected === nodeId) return;
     stopPanelResize();
+    cancelCloseAnimations();
     selected = nodeId; fitted = false; hovered = null;
     ui.panel.hidden = false; ui.backdrop.hidden = false;
+    ui.panel.inert = false; ui.panel.removeAttribute('aria-hidden'); delete ui.backdrop.dataset.closing;
     ui.header.inert = true; ui.viewport.inert = true; ui.footer.inert = true;
     const controls = renderDetails(ui.panel, node, workflow, id, copy);
     const index = workflow.nodes.indexOf(node);
@@ -158,10 +165,19 @@ export function mountDiagram(container, { workflow: inputWorkflow, layout: input
   function close() {
     if (selected === null || destroyed) return;
     stopPanelResize();
-    const last = selected; selected = null;
-    ui.panel.hidden = true; ui.backdrop.hidden = true;
+    const last = selected; selected = null; fitted = false;
+    ui.panel.inert = true; ui.panel.setAttribute('aria-hidden', 'true'); ui.backdrop.dataset.closing = 'true';
+    const bottomSheet = ui.panel.getBoundingClientRect().width >= ui.viewport.clientWidth - 1;
+    const options = { duration: matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : 240,
+      easing: 'cubic-bezier(.22,.72,.16,1)', fill: 'forwards' };
+    const slide = ui.panel.animate([{ transform: 'translate(0, 0)' },
+      { transform: bottomSheet ? 'translateY(103%)' : 'translateX(103%)' }], options);
+    closeAnimations = [slide, ui.backdrop.animate([{ opacity: 1 }, { opacity: 0 }], options)];
+    slide.onfinish = () => {
+      if (destroyed || selected !== null || closeAnimations[0] !== slide) return;
+      ui.panel.hidden = true; ui.backdrop.hidden = true; cancelCloseAnimations();
+    };
     ui.header.inert = false; ui.viewport.inert = false; ui.footer.inert = false;
-    centerSelected(last);
     ui.cards.get(last).focus({ preventScroll: true });
     emphasize(); notifySelection();
   }
@@ -210,7 +226,7 @@ export function mountDiagram(container, { workflow: inputWorkflow, layout: input
     destroy() {
       if (destroyed) return;
       const hadFocus = shadow.activeElement !== null;
-      destroyed = true; abort.abort(); resize.disconnect(); host.remove(); mounts.delete(container);
+      destroyed = true; cancelCloseAnimations(); abort.abort(); resize.disconnect(); host.remove(); mounts.delete(container);
       if (hadFocus && container.isConnected) container.focus({ preventScroll: true });
     },
   };

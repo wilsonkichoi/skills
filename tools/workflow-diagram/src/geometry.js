@@ -76,7 +76,7 @@ export function canvasBounds(workflow, layout, padding = 36) {
 }
 
 export function fitView(bounds, width, height) {
-  const scale = Math.min(width / bounds.width, height / bounds.height, 1);
+  const scale = Math.min(width / bounds.width, height / bounds.height, .7);
   return { scale, x: (width - bounds.width * scale) / 2 - bounds.x * scale,
     y: (height - bounds.height * scale) / 2 - bounds.y * scale };
 }

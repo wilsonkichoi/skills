@@ -77,6 +77,7 @@ h1 { font: 700 23px/1.15 var(--mono); letter-spacing: -.04em; overflow-wrap: any
 .wd-card-title { font: 700 17px/1.2 var(--mono); letter-spacing: -.03em; overflow-wrap: anywhere; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 .wd-card-summary { font-size: 12px; line-height: 1.5; color: var(--muted); overflow-wrap: anywhere; display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; }
 .wd-backdrop { position: absolute; inset: 0; background: var(--scrim); cursor: default; }
+.wd-backdrop[data-closing="true"], .wd-panel[aria-hidden="true"] { pointer-events: none; }
 .wd-panel { position: absolute; top: 0; right: 0; bottom: 0; width: clamp(280px, var(--panel-width, 50%), calc(100% - 200px)); max-width: 100%; border-left: 2px solid var(--lane); background: var(--surface); display: flex; flex-direction: column; cursor: auto; }
 .wd-panel-resize { position: absolute; left: 0; top: 0; bottom: 0; width: 10px; cursor: col-resize; touch-action: none; user-select: none; }
 .wd-panel-resize::after { content: ''; position: absolute; left: 2px; top: calc(50% - 16px); width: 3px; height: 32px; background: var(--hair); }

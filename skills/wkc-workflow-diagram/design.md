@@ -26,7 +26,7 @@ Preserve authored edge meaning and layout during updates. Report conflicts befor
 
 You cannot change these; know them so you can check the result.
 
-- Square corners, flat surfaces, 2px divider rules, a two-level background grid, and no motion.
+- Square corners, flat surfaces, 2px divider rules, and a two-level background grid.
 - System sans-serif for text; system monospace for names, commands, and small numbers.
 - Light theme: background `#f3f2f2`, surface `#ffffff`, ink `#201e1d`, accent `#ec3013`.
   Dark theme: background `#141313`, surface `#1e1c1b`, ink `#f0eeec`, accent `#ff4a2c`.
@@ -39,7 +39,7 @@ You cannot change these; know them so you can check the result.
   focused, or selected.
 - A lane filter dims other content but keeps every node selectable. An edge is emphasized only when
   both of its nodes match the filter.
-- The fitted view shows the whole graph. Selecting a node centers it beside the panel without zooming in.
+- The fitted view shows the whole graph at 70% zoom, or smaller when needed to fit. Selecting a node centers it beside the panel without zooming in.
   Zoom out only as needed to include directly connected cards and their routes. A disconnected card keeps its nearest neighbor in view.
 
 ## Details panel
@@ -53,5 +53,6 @@ You cannot change these; know them so you can check the result.
 - The panel body scrolls; its close button and Previous/Next stay fixed. Previous/Next follow node
   array order, including dimmed and disconnected nodes.
 - While the panel is open, Tab stays inside it and the map behind it is inert. Escape, the close
-  button, and the backdrop close it, center the current card in the full canvas, and focus that card.
-  Closing preserves the current zoom, including after Previous/Next navigation and viewport resizing.
+  button, and the backdrop close it and focus the current card without changing the canvas position or zoom.
+  The drawer slides right and the mobile sheet slides down over 240ms while the backdrop fades.
+  Closing respects reduced motion. Reopening cancels a pending slide; closing controls become inert immediately.

@@ -18,6 +18,49 @@ const transform = page => world(page).evaluate(el => {
 });
 const open = async page => { await page.goto('/'); await expect(card(page, 'source')).toBeVisible(); };
 
+test('repository header is concise and defaults to 70% zoom', async ({ page }) => {
+  await page.goto(pathToFileURL(resolve('../../docs/dev-agents/diagram/diagram.html')).href);
+  await expect(page.getByRole('heading', { level: 1 })).toHaveText('wkc skills');
+  await expect(page.locator('.wd-heading .wd-eyebrow, .wd-subtitle')).toHaveCount(0);
+  await expect(page.locator('.wd-zoom output')).toHaveText('70%');
+  await card(page, 'help').click();
+  await expect(page.locator('.wd-zoom output')).toHaveText('70%');
+});
+
+for (const width of [1440, 390]) test(`closing slides details away without moving the canvas at ${width}px`, async ({ page }) => {
+  await page.setViewportSize({ width, height: 900 });
+  await page.emulateMedia({ reducedMotion: 'no-preference' });
+  await open(page); await card(page, 'source').click();
+  const before = await transform(page), panel = page.locator('.wd-panel');
+  const slide = await panel.evaluate(el => {
+    el.querySelector('.wd-close').click();
+    const animation = el.getAnimations()[0];
+    animation.pause(); animation.currentTime = 120;
+    const matrix = new DOMMatrix(getComputedStyle(el).transform);
+    return { x: matrix.e, y: matrix.f, inert: el.inert };
+  });
+  await expect(panel).toHaveAttribute('aria-hidden', 'true');
+  expect(await transform(page)).toEqual(before);
+  expect(slide.inert).toBe(true);
+  expect(width < 780 ? slide.y : slide.x).toBeGreaterThan(0);
+  await panel.evaluate(el => el.getAnimations()[0].play());
+  await expect(panel).toBeHidden(); await expect(page.locator('.wd-backdrop')).toBeHidden();
+  expect(await transform(page)).toEqual(before);
+  await expect(card(page, 'source')).toBeFocused();
+});
+
+test('closing respects reduced motion and reopening cancels a pending slide', async ({ page }) => {
+  await open(page); await card(page, 'source').click();
+  await page.keyboard.press('Escape'); await page.keyboard.press('Enter');
+  await expect(page.getByRole('dialog')).toBeVisible();
+  expect(await page.locator('.wd-panel').evaluate(el => el.getAnimations().length)).toBe(0);
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  const before = await transform(page);
+  await page.keyboard.press('Escape');
+  await expect(page.locator('.wd-panel')).toBeHidden();
+  expect(await transform(page)).toEqual(before);
+});
+
 for (const url of ['/', pathToFileURL(resolve('../../docs/dev-agents/diagram/diagram.html')).href]) {
   test(`details panel resizes, stays bounded, and remembers width: ${url}`, async ({ page }) => {
     await page.goto(url);
@@ -174,7 +217,7 @@ test('backdrop closes and returns focus without selecting another node', async (
   await expect(page.getByRole('dialog')).toBeHidden(); await expect(card(page, 'source')).toBeFocused();
 });
 
-for (const fitted of [true, false]) test(`closing after navigation keeps zoom and centers the current card from a ${fitted ? 'fitted' : 'manual'} view`, async ({ page }) => {
+for (const fitted of [true, false]) test(`closing after navigation keeps the current card position and zoom from a ${fitted ? 'fitted' : 'manual'} view`, async ({ page }) => {
   await page.goto('/branching');
   if (!fitted) await page.getByRole('button', { name: 'Zoom out', exact: true }).click();
   for (const method of ['escape', 'button', 'backdrop']) {
@@ -187,10 +230,7 @@ for (const fitted of [true, false]) test(`closing after navigation keeps zoom an
     await expect(page.getByRole('dialog')).toBeHidden();
     await expect(card(page, 'note')).toBeFocused();
     await expect(card(page, 'note')).toBeInViewport({ ratio: .9999 });
-    expect((await transform(page)).scale).toBe(before.scale);
-    const node = await card(page, 'note').boundingBox(), vp = await page.locator('.wd-viewport').boundingBox();
-    expect(node.x + node.width / 2).toBeCloseTo(vp.x + vp.width / 2, 1);
-    expect(node.y + node.height / 2).toBeCloseTo(vp.y + vp.height / 2, 1);
+    expect(await transform(page)).toEqual(before);
   }
   await card(page, 'source').focus(); await page.keyboard.press('Enter');
   await page.setViewportSize({ width: 390, height: 844 });
