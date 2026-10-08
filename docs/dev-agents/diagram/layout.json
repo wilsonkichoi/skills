@@ -12,13 +12,15 @@
     "workflow-diagram": {
       "x": 400,
       "y": 0
+    },
+    "help": {
+      "x": 400,
+      "y": 360
+    },
+    "skills-release": {
+      "x": 800,
+      "y": 360
     }
   },
-  "edges": {
-    "configured-backend": {
-      "start": [120, 160],
-      "segments": [[120, 230, 120, 290, 120, 360]],
-      "labelOffset": [65, 0]
-    }
-  }
+  "edges": {}
 }

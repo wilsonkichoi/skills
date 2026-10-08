@@ -4,6 +4,15 @@ The same visual rules apply to every project. Project facts belong only in its J
 The HTML template and details panel ship in the prebuilt renderer files listed in [README.md](README.md#package).
 The helper generates them from the JSON; users do not author HTML or popup code.
 
+## Arrow meaning
+
+Default arrows show workflow actions and runtime interactions, directed from actor to target with concise verb labels.
+Every authored card represents a scoped, shipped skill. Put systems, outputs, results, and notes in that skill's summary or details.
+Connect skills only when definitions establish an action between them. A skill writing files does not establish another skill's invocation.
+Keep prerequisites and configuration dependencies in node details. Installation, shared configuration, and directory order do not imply skill invocation.
+Use a different meaning, including artifact dataflow, only when explicitly requested; record the meaning in the project README.
+Preserve authored edge meaning and layout during updates. Report conflicts before changing existing edges to match a different meaning.
+
 ## What you control
 
 - Lay out the primary path left to right. Give `loop` (return) routes their own corridor below it.
@@ -24,7 +33,7 @@ You cannot change these; know them so you can check the result.
 - Red marks selection, keyboard focus, card hover, the selected node's relationships, and links.
   Avoid red for lane colors so it keeps that meaning.
 - Cards show a 6px lane bar. Lane chips and regions use the lane's colors.
-- Skills have solid borders. Auxiliary nodes have dashed borders and a kind badge.
+- Skills have solid borders. Legacy auxiliary nodes render with dashed borders and a kind badge; do not author new ones.
 - `primary` and `loop` edges are solid, `optional` edges are dashed, and all have arrows.
 - Primary and optional edge labels always show. Loop labels show when a connected node is hovered,
   focused, or selected.

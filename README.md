@@ -108,6 +108,11 @@ validated before the next starts. See [AGENTS.md](./AGENTS.md) for how a skill i
 ## Workflow diagrams
 
 `wkc-workflow-diagram` reads actual definitions and preserves authored content when updating an existing diagram.
+Every authored card represents a shipped skill. Systems, outputs, results, and notes appear in that skill's summary or details.
+Arrows default to workflow actions and runtime interactions between skills, directed from actor to target when definitions establish the action.
+Prerequisites and configuration dependencies stay in node details. Installation and shared configuration do not imply automatic skill invocation.
+Only shipped skills are included; internal shipped skills are eligible when requested.
+An explicit request can select another arrow meaning, including artifact dataflow. Updates preserve existing edge meaning and layout.
 When a changed definition contradicts existing text, it reports the conflict with suggested wording instead of rewriting it.
 It does not invoke diagrammed skills. Node.js 22 or newer is required; consumers need no npm installation.
 Closing diagram details restores the previous view before returning keyboard focus, including after Previous/Next navigation.

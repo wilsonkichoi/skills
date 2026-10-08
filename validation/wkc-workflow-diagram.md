@@ -32,8 +32,9 @@ npm ci
 npm run check
 ```
 
-For behavioral cases, give the project two definitions: `collect` writes `notes.md`, and `publish` reads it and writes `report.md`.
-Add an independent auxiliary note when testing preservation. Record file hashes before each update.
+For behavioral cases, give the project two shipped definitions: `collect` writes `notes.md`, and `publish` reads it and writes `report.md`.
+File outputs belong in their skill details. The shared artifact establishes a prerequisite, not invocation of `publish` by `collect`.
+Add an independent note in skill details when testing preservation. Record file hashes before each update.
 Keep test outputs within the target's diagram directory; harness installation files are setup, not diagram output.
 
 ## Cases
@@ -68,20 +69,29 @@ Keep test outputs within the target's diagram directory; harness installation fi
 
 6. **Create without config.** Invoke the installed skill against the two definitions with no dev config.
    PASS: it produces valid workflow/layout JSON, standalone HTML, and a README without invoking wkc-setup or either diagrammed skill.
-   Confirm the dependency comes from the definitions, not from directory order.
+   Only the two skill cards appear. Project files and each skill's outputs are described within those cards; no action edge is invented.
+   The `notes.md` prerequisite remains in `publish` details; it does not create a `collect` → `publish` arrow.
+   Add a shared-config requirement and reorder the definition directories; neither establishes an invocation arrow.
+   Add an explicit instruction for `collect` to request a report from `publish`; only then does an actor-to-target action arrow appear.
 
 7. **No relevant input.** Invoke against an explicitly empty scope, first without a diagram and then with an existing one.
    PASS: the skill reports missing input, invents no graph, and preserves existing files.
 
 8. **Unrelated workflows.** Build the minimal and branching examples through the installed helper.
-   Extract the complete `workflow.json` and matching `layout.json` examples from the skill README and check/build them together.
-   PASS: both validate without wkc-setup/wkc-tracker nodes, a repository-specific base, or fixed canvas dimensions.
-   The README examples also pass check/build; node and route snippets are explicitly labeled as individual objects.
+   Extract both complete pairs from the skill README: default actions and explicitly requested artifact dataflow. Check/build each pair together.
+   PASS: the unrelated fixtures validate without wkc-setup/wkc-tracker nodes, a repository-specific base, or fixed canvas dimensions.
+   Every card in the README examples represents a skill; systems and outputs stay in skill text.
+   Both README pairs pass check/build; prerequisites stay in details in the action example, and its edge points from actor to target.
+   The artifact pair labels `notes.md` and states the explicit request requirement. Node and route snippets are labeled as individual objects.
    Open both and inspect all nodes and relationships; verify no missing routes are hidden.
 
 9. **Add while preserving edits.** Customize a description and position; add `audit`, which reads `report.md` and writes `findings.md`.
    Invoke an update and inspect JSON diffs independently.
-   PASS: existing IDs, text, positions, routes, and auxiliary nodes survive byte-for-byte; new relationships have valid routes.
+   PASS: existing IDs, text, positions, and routes survive byte-for-byte; new relationships have valid routes.
+   In the default action map, `audit` describes input prerequisites and file outputs in its details; neither creates an invocation arrow.
+   A legacy system card remains unchanged until conversion is directed. After direction, move its information into the owning skill details.
+   Remove that card, its position, and its incident edges and routes together. Preserve all other authored data.
+   Existing edges retain their meaning, direction, labels, and routes even if authored under another arrow meaning.
    If the addition makes existing text wrong, it is reported with suggested wording, not rewritten.
 
 10. **Source conflict.** Change a source contract and separately edit its diagram description to conflict with that change.
@@ -89,6 +99,9 @@ Keep test outputs within the target's diagram directory; harness installation fi
     and ends on a numbered question.
     Answering with a digit applies or keeps the text as chosen, and the README records the outcome.
     FAIL if it rewrites existing text without that answer, or treats generated HTML as authoritative.
+    Separately request action meaning without directing specific changes to an existing prerequisite edge.
+    The skill preserves it and proposes an edge change for approval. An already directed change needs no repeated approval.
+    FAIL if the new default silently reinterprets, reverses, relabels, or removes that edge.
 
 11. **Removal versus access failure.** Confirm one source removal, then separately make another definition unreadable.
     PASS: only confirmed removal deletes a node; its position, incident edges, and routes are removed together.
@@ -128,6 +141,7 @@ Keep test outputs within the target's diagram directory; harness installation fi
 
 18. **Portable project record.** Inspect the generated README and screenshots.
     PASS: they identify this project, its source paths, generator version, regeneration commands, documentation base, and actual verification.
+    The README records arrow meaning and source evidence for every edge, including conditional interactions between skills.
     The commands run from the project root with `--project .` and a project-relative or `<installed-skill>` helper path.
     FAIL if they record absolute paths, temporary directories, or preview ports, reference an implementation worktree or the
     ignored MVP, or overwrite unrelated notes.
@@ -141,10 +155,20 @@ Keep test outputs within the target's diagram directory; harness installation fi
     Supplied scope does not trigger redundant questions.
 
 20. **Repository integration.** Inspect this repository's generated map and candidate diff.
-    PASS: only actual scoped skills appear, no dependency is invented, and files stay under the fixed project directory.
+    PASS: only shipped scoped skills appear, including internal shipped skills when requested; planned skills remain excluded.
+    The map has exactly five skill cards. System actions and outputs appear in their owning skill details.
+    No skill-to-skill runtime actions are established by these sources, so the map has no edges; no former system routes remain.
+    No setup-to-tracker prerequisite arrow appears; that dependency remains in tracker details.
+    Installation, shared configuration, and directory order do not imply automatic invocation. Every arrow has source evidence.
     Confirm version, timestamped changelog, roster, authoring rules, public runbook, fresh main ancestry, and an unmerged PR.
     Labels, commands, and definition links must use the current `wkc-` identifiers; keep existing node IDs and routes stable.
     Re-read the implementation definition of done and map every requirement to evidence before reporting completion.
+
+21. **Explicit arrow meaning and legacy updates.** Request artifact dataflow for the two definitions, then update that map without changing its meaning.
+    PASS: `collect` → `publish` is labeled `notes.md` and the README records the requested artifact meaning.
+    The update preserves existing edge meaning, text, direction, positions, and routes. It does not convert them to default action arrows.
+    Repeat with an explicitly requested prerequisite map; the requested meaning is honored without claiming automatic invocation.
+    In a default action map, only an explicit source instruction to invoke another skill establishes a skill-to-skill invocation arrow.
 
 ## Report
 
@@ -156,3 +180,48 @@ Do not count a source-level unit test as an agent invocation.
 
 The implementation report and this repository's screenshots live in
 [docs/dev-agents/diagram/README.md](../docs/dev-agents/diagram/README.md).
+
+### Initial authoring default update, 2026-10-07
+
+This historical check preceded the user's skill-only correction. Its auxiliary-node counts and artifact hashes describe that earlier state.
+
+Candidate: `docs/five-shipped-skills-diagram`, base `5802c662ed9ab3d918e315e86b8eb939651c53db`, with uncommitted authoring changes for **0.0.16**.
+The branch had no version bump before this update. Fetched `origin/main` matches the base.
+Selected coverage: case 1 metadata subchecks; static instruction review for cases 6, 9, 10, 18, and 21;
+case 8 complete README pairs through the helper; case 20 shipped scope/version subchecks; preservation of pre-existing diagram artifacts.
+Tools: Node **v24.11.1**, the repository helper and unchanged generator **0.0.11**, and the current Codex session for static review.
+Backend: local JSON/files only. No service writes, installed invocation, other harnesses, or additional AI sessions.
+
+- PASS, static review: action defaults, prerequisite details, auxiliary targets, actor-to-target verb labels, and explicit alternate meanings agree across instructions, design, references, and root docs.
+- PASS, static review: updates retain existing meaning and authored content; conflicts require direction; shipped scope permits requested internal skills.
+- PASS, case 1 metadata subchecks: exact identifier, manual invocation settings, five opening fields, unquoted description, and length checks conform to the repository template.
+- PASS, case 8 example subchecks: both complete README pairs pass check/build without warnings, preserve their JSON inputs, and produce identical HTML on repeated builds.
+- PASS, case 20 scope/version subchecks: source definitions match all five skill cards, including internal `wkc-skills-release`; four systems and six actions remain; prerequisites stay in details.
+- PASS, direct preservation: all 22 pre-existing modified/untracked diagram artifacts retain their SHA-256 hashes. Building a copied map produces HTML identical to the preserved repository HTML.
+- PASS, whitespace: `git diff --check` reports no errors. Schema, renderer, helper, invocation settings, and generated assets remain unchanged.
+- FAIL, generic skill-creator validator: it rejects the pre-existing `disable-model-invocation` extension. That extension is required by repository rules; repository-aware metadata subchecks pass.
+- SKIP, behavioral invocation for cases 6, 9, 10, and 21: no additional AI sessions are authorized. Static review and helper checks do not establish future instruction following.
+
+Raw fixtures and direct checks are in ignored `.local/runs/workflow-diagram/2026-10-07-authoring/`.
+This focused report does not claim full-case passes, new browser evidence, or cross-harness compatibility.
+
+### Skill-only correction, 2026-10-07
+
+Candidate: the same branch/base and version **0.0.16**, after the user directed conversion of system cards into skill notes.
+Selected coverage: static review of cases 6, 9, 18, 20, and 21; case 8 README example subchecks;
+direct scope/preservation checks; case 14 offline subchecks; case 17 fitted layout, selected panels, keyboard focus, and link subchecks.
+Backend: local JSON/files. Browser: Chrome **154.0.8037.98**; Node **v24.11.1**; generator **0.0.11**.
+
+- PASS, scope/preservation: exactly five shipped skill cards, zero edges, and zero stale routes. Original skill IDs, labels, summaries, commands, When text, lanes, and positions are unchanged.
+- PASS, moved information: setup files/labels, tracker tickets, diagram outputs, installer operations, and collection releases appear in their owning skill details.
+- PASS, direct helper: repository check/build and both complete examples pass without warnings. Both examples contain skill cards only, preserve input bytes, and build deterministically.
+- PASS, static review: instructions, design, examples, and root docs agree on skill cards, source-backed actions, prerequisites, explicit alternate meanings, and directed legacy conversion.
+- PASS, browser subchecks: fitted views and help/release details work at all three documented sizes in both themes; five cards, zero edges, no overlaps, and no horizontal page overflow.
+- PASS, browser subchecks: all five panels show their notes; Enter/Tab/Escape preserve selection and focus in the sampled panels. Documentation links use the main base.
+- PASS, offline/cleanup: no HTTP requests or page exceptions; Chrome and preview terminate and both endpoints stop answering. All 18 screenshots were regenerated.
+- PASS, sampled visual review: six screenshots inspected as listed in the linked implementation report. This is not a claim that every screenshot was visually reviewed.
+- SKIP, behavioral invocation: no additional AI sessions are authorized. Static and direct browser checks do not establish future model behavior.
+
+See [Skill cards only](../docs/dev-agents/diagram/README.md#skill-cards-only-2026-10-07) for the implementation record.
+Raw snapshots, fixtures, browser checks, and results remain in ignored `docs/dev-agents/diagram/.cache/skill-only/`.
+No renderer, helper, schema, generated asset, invocation setting, or repository version change was needed for this correction.

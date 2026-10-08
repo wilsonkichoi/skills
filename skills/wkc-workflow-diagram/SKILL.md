@@ -6,7 +6,7 @@ disable-model-invocation: true
 
 # wkc-workflow-diagram
 
-- **What it does:** Explain actual project skills with an interactive, offline workflow map.
+- **What it does:** Explain actual project skills with an interactive, offline map of workflow actions and runtime interactions.
 - **When to use it:** Create a map, or update it after skill definitions or authored diagram content change.
 - **Dependencies:** Node.js 22 or newer; browser tools for visual checks. No setup, config, npm install, or network.
 - **Input:** Target project, the skills to include, and existing diagram data when present.
@@ -29,7 +29,8 @@ In a repository that authors skills, inspect its shipped `skills/` definitions.
 In a project that consumes skills, inspect its installed skills or the ones the user names.
 Resolve symlinks and deduplicate definitions by their real paths.
 Do not include every global skill, and do not add planned or unshipped skills as nodes.
-Do not infer dependencies from directory order.
+Internal shipped skills are eligible when the user requests them.
+Installation, shared configuration, and directory order do not establish automatic skill invocation.
 
 Read `workflow.json`, `layout.json`, and `README.md` in the diagram directory when they exist.
 The JSON files are the only source for existing content. Never recover data from `diagram.html`.
@@ -48,14 +49,25 @@ Do not copy the renderer into the project or change the project's build.
 Create the diagram directory and JSON files only after finding relevant skill definitions.
 Give the directory a `.gitignore` that lists `.cache/` and `.diagram-*.tmp`.
 Use stable IDs, concise text, and a hand-authored route for every edge.
-Add an edge only when a source definition establishes the relationship. Otherwise leave skills disconnected.
-Add auxiliary nodes only when a source definition shows they explain the workflow.
+Default arrows show workflow actions and runtime interactions. Direct each arrow from the actor to the target.
+Use concise verb labels for actions between skills, such as `Requests review` or `Invokes`.
+Keep prerequisites and configuration dependencies in node details; they do not establish action arrows.
+Every new card must represent a scoped, shipped skill. Do not create system, artifact, result, output, or mode cards.
+Describe external systems, outputs, results, and notes in the owning skill's summary or details, using the existing fields.
+Add an edge only when a source definition establishes an action between the represented skills. Otherwise leave skills disconnected.
+Use another arrow meaning, including artifact dataflow, when the user explicitly requests it.
+Then use labels and direction appropriate to that meaning, with source evidence for every relationship.
 Take details such as commands and links only from what a source states. Never invent an invocation.
 
 When updating, compare the source definitions with the sources recorded in the project README.
+Retain the diagram's existing arrow meaning unless the user explicitly requests a change.
 Existing JSON content is authored: IDs, text, auxiliary nodes, coordinates, and routes.
 Change it only to add what a source newly establishes, to remove what is confirmed gone, or as the user directs.
-Write text only for the nodes and edges you add. Never rewrite existing text yourself, even when its source changed.
+For existing non-skill cards, propose moving their information into skill details unless the user already directed that change.
+Preserve existing edge meaning, direction, labels, and routes. The new default does not authorize changing or removing existing edges.
+If an existing edge conflicts with the requested meaning, propose a change unless the user already directed that change.
+Write text only for new nodes and edges, unless the user directs changes to existing text.
+Never rewrite existing text merely because its source changed.
 When a changed source makes existing text wrong, keep the text and report a conflict:
 the node and field, the source line, and suggested wording.
 Place new skills within the existing layout unless that makes the map unreadable. Never rebuild the map from scratch.
@@ -101,7 +113,7 @@ In that case, report anything wrong you notice instead of fixing it.
 A new conflict or unreadable source is a change: record it in the README even though the JSON stays the same.
 Record, with paths relative to the project root:
 - each node's source definition, with its revision or the contract facts you relied on
-- the scope, and the generator version from this skill's `assets/manifest.json`
+- the scope, arrow meaning, each edge's source evidence, and generator version from this skill's `assets/manifest.json`
 - the documentation base, and regeneration commands that work from the project root on any machine:
   `--project .` with the helper's path relative to the project root, or `<installed-skill>` if it is installed elsewhere
 - verification results, with SKIP reasons
@@ -110,5 +122,5 @@ Record, with paths relative to the project root:
 Never record absolute paths, temporary directories, or preview ports.
 Keep this bookkeeping in the README, never in JSON fields.
 Report added, changed, and removed nodes and edges, output paths, and verification limits.
-If you reported conflicts, end with one numbered question offering to apply the suggested wording, recommendation first.
-End the turn on the question. Apply or keep the text as the answer says.
+If you reported conflicts, end with one numbered question offering to apply the suggested text or edge changes, recommendation first.
+End the turn on the question. Apply or keep the authored content as the answer says.
