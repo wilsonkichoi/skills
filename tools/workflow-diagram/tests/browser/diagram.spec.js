@@ -241,22 +241,38 @@ for (const fitted of [true, false]) test(`closing after navigation keeps the cur
   expect((await transform(page)).scale).toBe(before.scale);
 });
 
-test('opening details retains connected cards and paths without zooming in', async ({ page }) => {
-  await open(page);
-  const before = await transform(page);
-  await card(page, 'source').click();
-  expect((await transform(page)).scale).toBeLessThanOrEqual(before.scale);
-  const vp = await page.locator('.wd-viewport').boundingBox(), panel = await page.getByRole('dialog').boundingBox();
-  for (const id of ['source', 'transform', 'result']) {
-    const box = await card(page, id).boundingBox();
-    expect(box.x).toBeGreaterThanOrEqual(vp.x);
-    expect(box.x + box.width).toBeLessThanOrEqual(panel.x);
-    expect(box.y).toBeGreaterThanOrEqual(vp.y);
-    expect(box.y + box.height).toBeLessThanOrEqual(vp.y + vp.height);
-  }
-  const loop = await page.locator('.wd-edge[data-edge-id="return"]').boundingBox();
-  expect(loop.y + loop.height).toBeLessThanOrEqual(vp.y + vp.height);
-});
+for (const url of ['/', pathToFileURL(resolve('../../docs/dev-agents/diagram/diagram.html')).href]) {
+  test(`opening and navigating details only pans at the existing zoom: ${url}`, async ({ page }) => {
+    for (const manualZoom of [false, true]) {
+      await page.goto(url);
+      if (manualZoom) for (let i = 0; i < 3; i++) await page.getByRole('button', { name: 'Zoom in', exact: true }).click();
+      const node = page.locator('.wd-card').first(), before = await transform(page), initialBox = await node.boundingBox();
+      await node.evaluate(el => el.focus({ preventScroll: true })); await page.keyboard.press('Enter');
+      const check = async target => {
+        expect((await transform(page)).scale).toBe(before.scale);
+        const box = await target.boundingBox();
+        expect(box.width).toBeCloseTo(initialBox.width, 3); expect(box.height).toBeCloseTo(initialBox.height, 3);
+        await expect.poll(() => target.evaluate(el => {
+          const root = el.getRootNode(), box = el.getBoundingClientRect();
+          const vp = root.querySelector('.wd-viewport').getBoundingClientRect(), panel = root.querySelector('.wd-panel').getBoundingClientRect();
+          const sheet = panel.width >= vp.width - 1;
+          return Math.max(Math.abs(box.x + box.width / 2 - (vp.x + (sheet ? vp.right : panel.x)) / 2),
+            Math.abs(box.y + box.height / 2 - (vp.y + (sheet ? panel.y : vp.bottom)) / 2));
+        })).toBeLessThan(.05);
+      };
+      await check(node);
+      await page.getByRole('button', { name: 'Next node' }).click();
+      const next = page.locator('.wd-card').nth(1); await check(next);
+      await page.getByRole('separator', { name: 'Resize details panel' }).focus(); await page.keyboard.press('End');
+      await expect.poll(() => page.getByRole('dialog').evaluate(el => el.getBoundingClientRect().width)).toBe(1240);
+      await check(next);
+      await page.setViewportSize({ width: 390, height: 844 });
+      await expect.poll(() => page.getByRole('dialog').evaluate(el => el.getBoundingClientRect().width)).toBe(390);
+      await check(next);
+      await page.setViewportSize({ width: 1440, height: 900 });
+    }
+  });
+}
 
 test('mouse pans, small movement remains a click, wheel retains its zoom anchor, reset fits', async ({ page }) => {
   await open(page);

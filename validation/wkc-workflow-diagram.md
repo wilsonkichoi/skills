@@ -146,7 +146,8 @@ Keep test outputs within the target's diagram directory; harness installation fi
     Reopen during the slide; the pending close must not hide the new panel.
     Verify default zoom is 70% when the map fits, or smaller for narrow canvases.
     Verify the desktop panel defaults to half the canvas width, uses lane accents, and darkens the main canvas in both themes.
-    PASS: opening never increases zoom; connected cards and their routes remain visible beside the panel.
+    PASS: opening, navigation, panel resizing, and viewport resizing preserve zoom and card dimensions.
+    The selected card centers beside the desktop panel or above the mobile sheet. Test both fitted and manual zoom.
     Verify tinted lane boxes contain their cards and region colors are visually distinct in both themes.
     Test touch drag from a card, pinch, cancellation, and same-node selection with hash synchronization.
     Check copy success, pending state, and failure. Record physical-device or screen-reader checks separately if performed.
@@ -294,4 +295,22 @@ Backend: local JSON/files. Browser: Chrome **154.0.8037.98** through Playwright.
 - PASS, visual/export: 18 screenshots refreshed at three sizes in both themes, with no HTTP requests, page exceptions, or page overflow. Desktop light overview and dark help details visually inspected.
 
 Logs: `/tmp/diagram-slide-check-final.log`, `/tmp/diagram-slide-focused.log`, and `/tmp/diagram-slide-visual.log`.
+Direct checks do not establish screen-reader, physical-device, or other-browser compatibility.
+
+### Pan-only selection, 2026-10-07
+
+Candidate: `docs/five-shipped-skills-diagram`, collection **0.0.16**, generator **0.0.15**.
+Selected coverage: case 14 offline/export, case 16 asset freshness, case 17 selection/navigation, unchanged scale and card dimensions,
+panel and viewport resizing, and retained close behavior; case 18 screenshots.
+Backend: local JSON/files. Browser: Chrome **154.0.8037.98** through Playwright. No additional AI sessions.
+
+- PASS, maintainer check: asset freshness, 77 unit/package checks, build, and 43 browser tests.
+- PASS, connected preview and disconnected offline repository map: opening and navigation preserve exact scale and card dimensions at fitted and manual zoom.
+- PASS, available-space centering: selected cards center beside the desktop drawer or above the mobile sheet through panel resizing and viewport changes.
+- PASS, closing regressions: slide, reduced motion, reopening cancellation, focus return, and unchanged canvas transform.
+- PASS, visual checks: 18 screenshots refreshed at three sizes in both themes. Opening preserves the initial zoom in every sampled panel. No HTTP requests, page exceptions, or page overflow.
+- Initial test-only failures: card and panel measurements raced the ResizeObserver callback. Poll simultaneous geometry until the card reaches the available-space center; preserve exact scale and size assertions.
+
+Neighbor fitting was removed at the user's direction. This supersedes the previous connected-neighbor visibility guarantee.
+Logs: `/tmp/diagram-pan-only-check-final.log`, `/tmp/diagram-pan-only-visual.log`, and ignored `.cache/pan-only-visual-results.json` under the diagram directory.
 Direct checks do not establish screen-reader, physical-device, or other-browser compatibility.

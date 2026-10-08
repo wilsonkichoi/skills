@@ -26,7 +26,7 @@ HTTP. Give the container an explicit height. Your page loads the JSON.
 | API | Contract |
 | --- | --- |
 | `mountDiagram(container, { workflow, layout, theme })` | Validates, then mounts. `theme` is `auto` by default |
-| `diagram.select(id)` | Opens a node by exact ID. An unknown ID throws |
+| `diagram.select(id)` | Opens and centers a node by exact ID at the current zoom. An unknown ID throws |
 | `diagram.select(null)` | Slides the panel away, preserves canvas position and zoom, and focuses the current card |
 | `diagram.resetView()` | Fits the whole map, or recenters the selected node while the panel is open |
 | `diagram.warnings` | Text-length warnings. Content is never truncated |

@@ -5,7 +5,7 @@ Drag the details panel's left edge to resize it on desktop. Focus the edge to us
 The panel starts at half the canvas width and uses the selected region's colors. Its backdrop darkens the main canvas.
 Width stays between 280 pixels and the canvas width minus 200 pixels. It persists through node navigation and reopening until reload.
 Narrow layouts keep the full-width bottom sheet.
-The default zoom is 70%, or smaller when needed to fit. Selection keeps neighboring cards visible without zooming in.
+The default zoom is 70%, or smaller when needed to fit. Selection centers the card in available space at the current zoom.
 Closing slides the panel away without changing card positions or zoom.
 Tinted boxes group Configuration, Coordination, Documentation, and Independent cards. Purple, green, amber, and gray distinguish those regions in both themes.
 The map contains all five shipped definitions in this repository: `wkc-setup`, `wkc-tracker`,
@@ -34,7 +34,7 @@ Links from the removed system cards remain available through their owning skill 
 
 Inputs are [workflow.json](workflow.json) and [layout.json](layout.json).
 All positions and content are authored data; HTML is generated.
-The generator version is **0.0.14**, recorded in the installed skill's `assets/manifest.json`.
+The generator version is **0.0.15**, recorded in the installed skill's `assets/manifest.json`.
 The renderer source and maintainer build are in `tools/workflow-diagram/`; the skill ships generated assets.
 
 Documentation base:
@@ -360,3 +360,13 @@ The maintainer check passes 77 unit/package checks and 42 browser tests. Focused
 Offline visual checks cover all three documented sizes in both themes; all 18 screenshots were refreshed.
 Desktop light overview and dark help details were visually inspected. No HTTP requests, page exceptions, or page overflow occurred.
 Raw evidence remains in ignored `.cache/context-visual-results.json` and `/tmp/diagram-slide-visual.log`.
+
+## Pan-only selection, 2026-10-07
+
+Generator **0.0.15** removes neighbor fitting at the user's direction. Opening only centers the selected card in the available canvas space.
+The current zoom and card dimensions stay unchanged through selection, navigation, panel resizing, and viewport changes.
+Closing still slides details away without changing the canvas transform. This supersedes the neighbor-visibility guarantee recorded above.
+
+The maintainer check passes 77 unit/package checks and 43 browser tests. Connected preview and disconnected offline fixtures cover fitted and manual zoom.
+All 18 screenshots were refreshed at three sizes in both themes. Visual checks report no HTTP requests, page exceptions, or page overflow.
+Evidence remains in ignored `.cache/pan-only-visual-results.json` and `/tmp/diagram-pan-only-check-final.log`.

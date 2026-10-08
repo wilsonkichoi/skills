@@ -39,8 +39,9 @@ You cannot change these; know them so you can check the result.
   focused, or selected.
 - A lane filter dims other content but keeps every node selectable. An edge is emphasized only when
   both of its nodes match the filter.
-- The fitted view shows the whole graph at 70% zoom, or smaller when needed to fit. Selecting a node centers it beside the panel without zooming in.
-  Zoom out only as needed to include directly connected cards and their routes. A disconnected card keeps its nearest neighbor in view.
+- The fitted view shows the whole graph at 70% zoom, or smaller when needed to fit.
+  Selecting a node centers it beside the desktop panel or above the mobile sheet at the current zoom.
+  Opening, navigation, and panel resizing never change card size or zoom. Neighbor visibility does not affect the view.
 
 ## Details panel
 

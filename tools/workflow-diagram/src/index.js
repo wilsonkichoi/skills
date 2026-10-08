@@ -74,36 +74,14 @@ export function mountDiagram(container, { workflow: inputWorkflow, layout: input
     setView(fitView(bounds, Math.max(1, ui.viewport.clientWidth), Math.max(1, ui.viewport.clientHeight)));
     if (selected !== null) centerSelected();
   }
-  function centerSelected(nodeId = selected) {
-    if (nodeId === null || destroyed) return;
+  function centerSelected() {
+    if (selected === null || destroyed) return;
     const vp = ui.viewport.getBoundingClientRect(), panel = ui.panel.getBoundingClientRect();
     // Measure the actual drawer or sheet, including its border and container breakpoint.
-    const bottomSheet = !ui.panel.hidden && panel.width >= vp.width - 1;
-    const width = Math.max(1, ui.panel.hidden || bottomSheet ? vp.width : panel.left - vp.left);
+    const bottomSheet = panel.width >= vp.width - 1;
+    const width = Math.max(1, bottomSheet ? vp.width : panel.left - vp.left);
     const height = Math.max(1, bottomSheet ? panel.top - vp.top : vp.height);
-    const p = layout.nodes[nodeId];
-    let scale = view.scale;
-    if (!ui.panel.hidden) {
-      const neighbors = new Set([nodeId]);
-      const connections = workflow.edges.filter(edge => edge.from === nodeId || edge.to === nodeId);
-      for (const edge of connections) {
-        if (edge.from === nodeId) neighbors.add(edge.to);
-        if (edge.to === nodeId) neighbors.add(edge.from);
-      }
-      if (neighbors.size === 1 && workflow.nodes.length > 1) {
-        const nearest = workflow.nodes.filter(node => node.id !== nodeId).sort((a, b) =>
-          Math.hypot(layout.nodes[a.id].x - p.x, layout.nodes[a.id].y - p.y)
-          - Math.hypot(layout.nodes[b.id].x - p.x, layout.nodes[b.id].y - p.y))[0];
-        neighbors.add(nearest.id);
-      }
-      const context = canvasBounds({ edges: connections }, {
-        nodes: Object.fromEntries([...neighbors].map(id => [id, layout.nodes[id]])), edges: layout.edges,
-      }, 24);
-      const cx = p.x + CARD.width / 2, cy = p.y + CARD.height / 2;
-      const extentX = Math.max(cx - context.x, context.x + context.width - cx);
-      const extentY = Math.max(cy - context.y, context.y + context.height - cy);
-      scale = Math.min(scale, width / (2 * extentX), height / (2 * extentY));
-    }
+    const p = layout.nodes[selected], scale = view.scale;
     setView({ scale, x: width / 2 - (p.x + CARD.width / 2) * scale, y: height / 2 - (p.y + CARD.height / 2) * scale });
   }
   function emphasize() {
