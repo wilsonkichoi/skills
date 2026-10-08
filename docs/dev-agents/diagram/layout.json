@@ -22,5 +22,35 @@
       "y": 360
     }
   },
-  "edges": {}
+  "edges": {},
+  "regions": [
+    {
+      "lane": "configuration",
+      "x": -24,
+      "y": -52,
+      "width": 288,
+      "height": 236
+    },
+    {
+      "lane": "coordination",
+      "x": -24,
+      "y": 308,
+      "width": 288,
+      "height": 236
+    },
+    {
+      "lane": "documentation",
+      "x": 376,
+      "y": -52,
+      "width": 288,
+      "height": 596
+    },
+    {
+      "lane": "independent",
+      "x": 776,
+      "y": 308,
+      "width": 288,
+      "height": 236
+    }
+  ]
 }

@@ -2,8 +2,11 @@
 
 Open [diagram.html](diagram.html) in a browser, including directly from disk without networking.
 Drag the details panel's left edge to resize it on desktop. Focus the edge to use Left/Right, Home, or End.
+The panel starts at half the canvas width and uses the selected region's colors. Its backdrop darkens the main canvas.
 Width stays between 280 pixels and the canvas width minus 200 pixels. It persists through node navigation and reopening until reload.
 Narrow layouts keep the full-width bottom sheet.
+Selection keeps neighboring cards visible without zooming in. Closing centers the current card and preserves zoom.
+Tinted boxes group Configuration, Coordination, Documentation, and Independent cards. Purple, green, amber, and gray distinguish those regions in both themes.
 The map contains all five shipped definitions in this repository: `wkc-setup`, `wkc-tracker`,
 `wkc-workflow-diagram`, `wkc-help`, and internal `wkc-skills-release`. Planned skills are excluded.
 Every card is a skill. External systems, outputs, and results appear in the owning skill's details.
@@ -30,7 +33,7 @@ Links from the removed system cards remain available through their owning skill 
 
 Inputs are [workflow.json](workflow.json) and [layout.json](layout.json).
 All positions and content are authored data; HTML is generated.
-The generator version is **0.0.12**, recorded in the installed skill's `assets/manifest.json`.
+The generator version is **0.0.13**, recorded in the installed skill's `assets/manifest.json`.
 The renderer source and maintainer build are in `tools/workflow-diagram/`; the skill ships generated assets.
 
 Documentation base:
@@ -325,3 +328,21 @@ never exited on the test machine, so a watchdog stopped it after 15 seconds duri
 
 Earlier results from 2026-09-21 and 2026-09-24 are in this file's history. The original ignored MVP
 was left unchanged during migration.
+
+## Region styling and selection context, 2026-10-07
+
+Generator **0.0.13** implements the half-width desktop panel, lane accents, dark backdrop, and retained selection context.
+The local `agent-toolkit/plugins/dev/diagram/README.md` and generated reference informed sizing, region boxes, colors, and source ownership.
+This map uses its own canonical renderer under `tools/workflow-diagram/src/`; generated HTML is rebuilt from its authored JSON and shipped assets.
+
+Four tinted boxes enclose all five cards without moving them. The release card belongs to the neutral Independent region.
+Documentation changes from teal to amber to distinguish it from green Coordination.
+Selecting a disconnected card includes its nearest neighbor. Connected diagrams include direct neighbors and their routes.
+Opening never increases zoom. Closing centers and focuses the current card while keeping its zoom.
+This supersedes the older restoration checks recorded above.
+
+`npm run check` passed 76 unit/package checks and 38 browser tests. Final region changes passed two focused browser tests.
+The repository helper check and byte-identical rebuild passed. All 18 screenshots were regenerated at the three documented sizes in both themes.
+Sampled visual review covered desktop light/dark help details, tablet light overview and dark help details, and phone light help details and dark release details.
+Offline visual checks reported no HTTP requests, page exceptions, or page overflow.
+Raw evidence remains in ignored `.cache/context-visual-results.json`; the focused report is in `validation/wkc-workflow-diagram.md`.

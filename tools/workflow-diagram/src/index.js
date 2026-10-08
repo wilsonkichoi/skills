@@ -21,7 +21,7 @@ export function mountDiagram(container, { workflow: inputWorkflow, layout: input
   const media = matchMedia('(prefers-color-scheme: dark)');
   const bounds = canvasBounds(workflow, layout);
   let view = { x: 0, y: 0, scale: 1 }, selected = null, lane = null, hovered = null, focused = null;
-  let destroyed = false, fitted = true, returnFocus = null, returnView = null;
+  let destroyed = false, fitted = true;
   let panelDrag = null;
   function listen(el, type, listener) { el.addEventListener(type, listener, { signal }); }
   const maximumPanelWidth = () => Math.max(280, ui.stage.clientWidth - 200);
@@ -69,15 +69,36 @@ export function mountDiagram(container, { workflow: inputWorkflow, layout: input
     setView(fitView(bounds, Math.max(1, ui.viewport.clientWidth), Math.max(1, ui.viewport.clientHeight)));
     if (selected !== null) centerSelected();
   }
-  function centerSelected() {
-    if (selected === null || destroyed) return;
+  function centerSelected(nodeId = selected) {
+    if (nodeId === null || destroyed) return;
     const vp = ui.viewport.getBoundingClientRect(), panel = ui.panel.getBoundingClientRect();
     // Measure the actual drawer or sheet, including its border and container breakpoint.
-    const bottomSheet = panel.width >= vp.width - 1;
-    const width = Math.max(1, bottomSheet ? vp.width : panel.left - vp.left);
+    const bottomSheet = !ui.panel.hidden && panel.width >= vp.width - 1;
+    const width = Math.max(1, ui.panel.hidden || bottomSheet ? vp.width : panel.left - vp.left);
     const height = Math.max(1, bottomSheet ? panel.top - vp.top : vp.height);
-    const scale = Math.max(.05, Math.min(1, (width - 32) / CARD.width, (height - 32) / CARD.height));
-    const p = layout.nodes[selected];
+    const p = layout.nodes[nodeId];
+    let scale = view.scale;
+    if (!ui.panel.hidden) {
+      const neighbors = new Set([nodeId]);
+      const connections = workflow.edges.filter(edge => edge.from === nodeId || edge.to === nodeId);
+      for (const edge of connections) {
+        if (edge.from === nodeId) neighbors.add(edge.to);
+        if (edge.to === nodeId) neighbors.add(edge.from);
+      }
+      if (neighbors.size === 1 && workflow.nodes.length > 1) {
+        const nearest = workflow.nodes.filter(node => node.id !== nodeId).sort((a, b) =>
+          Math.hypot(layout.nodes[a.id].x - p.x, layout.nodes[a.id].y - p.y)
+          - Math.hypot(layout.nodes[b.id].x - p.x, layout.nodes[b.id].y - p.y))[0];
+        neighbors.add(nearest.id);
+      }
+      const context = canvasBounds({ edges: connections }, {
+        nodes: Object.fromEntries([...neighbors].map(id => [id, layout.nodes[id]])), edges: layout.edges,
+      }, 24);
+      const cx = p.x + CARD.width / 2, cy = p.y + CARD.height / 2;
+      const extentX = Math.max(cx - context.x, context.x + context.width - cx);
+      const extentY = Math.max(cy - context.y, context.y + context.height - cy);
+      scale = Math.min(scale, width / (2 * extentX), height / (2 * extentY));
+    }
     setView({ scale, x: width / 2 - (p.x + CARD.width / 2) * scale, y: height / 2 - (p.y + CARD.height / 2) * scale });
   }
   function emphasize() {
@@ -123,10 +144,6 @@ export function mountDiagram(container, { workflow: inputWorkflow, layout: input
     if (!node) throw new Error(`Unknown node ID: ${JSON.stringify(nodeId)}`);
     if (selected === nodeId) return;
     stopPanelResize();
-    if (selected === null) {
-      returnFocus = shadow.activeElement ?? ui.cards.get(nodeId);
-      returnView = { view, fitted };
-    }
     selected = nodeId; fitted = false; hovered = null;
     ui.panel.hidden = false; ui.backdrop.hidden = false;
     ui.header.inert = true; ui.viewport.inert = true; ui.footer.inert = true;
@@ -144,11 +161,9 @@ export function mountDiagram(container, { workflow: inputWorkflow, layout: input
     const last = selected; selected = null;
     ui.panel.hidden = true; ui.backdrop.hidden = true;
     ui.header.inert = false; ui.viewport.inert = false; ui.footer.inert = false;
-    fitted = returnView.fitted;
-    if (fitted) resetView(); else setView(returnView.view);
-    returnView = null;
-    (returnFocus?.isConnected ? returnFocus : ui.cards.get(last)).focus({ preventScroll: true });
-    returnFocus = null; emphasize(); notifySelection();
+    centerSelected(last);
+    ui.cards.get(last).focus({ preventScroll: true });
+    emphasize(); notifySelection();
   }
   function applyTheme() {
     ui.root.dataset.theme = theme === 'auto' ? (media.matches ? 'dark' : 'light') : theme;

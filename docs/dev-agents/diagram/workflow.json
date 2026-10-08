@@ -23,8 +23,16 @@
       "id": "documentation",
       "label": "Documentation",
       "color": {
-        "light": "#007c83",
-        "dark": "#53c7cb"
+        "light": "#a36600",
+        "dark": "#e4ad38"
+      }
+    },
+    {
+      "id": "independent",
+      "label": "Independent",
+      "color": {
+        "light": "#6f6a65",
+        "dark": "#a09a95"
       }
     }
   ],
@@ -184,7 +192,8 @@
             "href": "skills/wkc-skills-release/SKILL.md#5-publish-and-verify"
           }
         ]
-      }
+      },
+      "lane": "independent"
     }
   ],
   "edges": []

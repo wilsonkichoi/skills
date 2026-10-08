@@ -139,8 +139,11 @@ Keep test outputs within the target's diagram directory; harness installation fi
     Shrink the container; the panel stays bounded. At narrow widths, the full-width bottom sheet hides the resize control.
     Verify Tab skips the hidden handle and still cycles through the visible controls.
     Open a node, navigate to a distant node, then close with Escape, the close button, and the backdrop.
-    PASS: focus returns to the visible opening card and its previous view is restored, including manual pan and zoom.
-    Resize while details are open from a fitted view; closing must fit the new canvas and keep the opening card visible.
+    PASS: the current card is centered and focused in the full canvas; closing preserves the current zoom.
+    Resize while details are open; closing keeps the resized zoom instead of fitting the whole map.
+    Verify the desktop panel defaults to half the canvas width, uses lane accents, and darkens the main canvas in both themes.
+    PASS: opening never increases zoom; connected cards and their routes remain visible beside the panel.
+    Verify tinted lane boxes contain their cards and region colors are visually distinct in both themes.
     Test touch drag from a card, pinch, cancellation, and same-node selection with hash synchronization.
     Check copy success, pending state, and failure. Record physical-device or screen-reader checks separately if performed.
 
@@ -248,3 +251,26 @@ Backend: local JSON/files. Browser: Chrome **154.0.8037.98** through Playwright;
 Logs: `/tmp/diagram-resize-check-final.log` and `/tmp/diagram-resize-recheck.log`.
 Visual evidence: ignored `docs/dev-agents/diagram/.cache/desktop-resized.png`.
 These direct checks do not establish screen-reader, physical touch, or other-browser compatibility.
+
+### Region styling and selection context, 2026-10-07
+
+Candidate: `docs/five-shipped-skills-diagram`, collection **0.0.16**, generator **0.0.13**.
+Selected coverage: case 14 offline/export subchecks; case 16 asset freshness; case 17 panel defaults, region styling,
+connected-card context, close behavior, grouping, region colors, resizing, keyboard, and responsive layout; case 18 visual record.
+Backend: local JSON/files. Browser: Chrome **154.0.8037.98** through Playwright. No additional AI sessions.
+Reference: local `agent-toolkit/plugins/dev/diagram/README.md` and `dev-plugin-diagram.html`, including region markup,
+drawer sizing, lane styles, scrim opacity, camera behavior, and generated-file ownership.
+
+- PASS, maintainer check: current assets, 76 unit/package checks, build, and 38 browser tests.
+- PASS, final focused rerun: both light/dark grouping and panel-style tests after adding the neutral Independent region.
+- PASS, panel: half-width desktop default, persistent resizing, lane border/header/section/link accents, and 40%/55% backdrop opacity.
+- PASS, connected fixture: opening never increases zoom; directly connected cards and the return route stay visible beside the panel. The repository map has no edges, so its disconnected cards include their nearest neighbor instead.
+- PASS, closing: Escape, close button, and backdrop center and focus the current card at the same zoom, including after navigation and viewport resizing. This replaces the former restore-opening-view contract.
+- PASS, region data: all five cards are enclosed in four tinted lane boxes; positions and edges stay unchanged. Documentation is amber, Coordination is green, Configuration is purple, and Independent is gray.
+- PASS, export: repository helper check and byte-identical rebuild.
+- PASS, final visual checks: desktop, tablet, and phone in both themes; all 18 screenshots regenerated; no HTTP requests, page exceptions, or page overflow. Browser closes after checks.
+- PASS, sampled visual review: desktop light/dark help details, tablet light overview and dark help details, phone light help details and dark release details, plus the settled reference panel.
+
+Raw evidence: `/tmp/diagram-context-check.log`, `/tmp/diagram-context-region-check.log`, `/tmp/diagram-context-visual.log`,
+and ignored `docs/dev-agents/diagram/.cache/context-visual-results.json`.
+Direct browser checks do not establish screen-reader, physical-device, or other-browser compatibility.

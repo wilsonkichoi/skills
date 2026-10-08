@@ -23,6 +23,8 @@ function laneStyle(el, lane) {
   if (lane) {
     el.style.setProperty('--lane-light', lane.color.light);
     el.style.setProperty('--lane-dark', lane.color.dark);
+  } else {
+    el.style.removeProperty('--lane-light'); el.style.removeProperty('--lane-dark');
   }
 }
 function svg(tag, attrs = {}) {
@@ -122,6 +124,7 @@ export function renderDetails(panel, node, workflow, id, onCopy) {
   const index = workflow.nodes.findIndex(n => n.id === node.id);
   const head = element('div', 'wd-panel-head'), heading = element('div');
   const lane = workflow.lanes.find(l => l.id === node.lane);
+  laneStyle(panel, lane);
   const title = element('h2', '', node.label); title.id = `${id}-title`;
   heading.append(element('p', 'wd-eyebrow', `${lane?.label ?? 'Independent'} / ${node.kind}`), title);
   const close = button('×', 'Close details', 'wd-close'); head.append(heading, close);

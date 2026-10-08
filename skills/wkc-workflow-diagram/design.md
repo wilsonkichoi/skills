@@ -30,26 +30,28 @@ You cannot change these; know them so you can check the result.
 - System sans-serif for text; system monospace for names, commands, and small numbers.
 - Light theme: background `#f3f2f2`, surface `#ffffff`, ink `#201e1d`, accent `#ec3013`.
   Dark theme: background `#141313`, surface `#1e1c1b`, ink `#f0eeec`, accent `#ff4a2c`.
-- Red marks selection, keyboard focus, card hover, the selected node's relationships, and links.
+- Red marks selection, keyboard focus, card hover, and the selected node's relationships.
   Avoid red for lane colors so it keeps that meaning.
-- Cards show a 6px lane bar. Lane chips and regions use the lane's colors.
+- Cards show a 6px lane bar. Lane chips and tinted region boxes use the lane's colors.
 - Skills have solid borders. Legacy auxiliary nodes render with dashed borders and a kind badge; do not author new ones.
 - `primary` and `loop` edges are solid, `optional` edges are dashed, and all have arrows.
 - Primary and optional edge labels always show. Loop labels show when a connected node is hovered,
   focused, or selected.
 - A lane filter dims other content but keeps every node selectable. An edge is emphasized only when
   both of its nodes match the filter.
-- The fitted view shows the whole graph. Selecting a node zooms its card to a readable size beside
-  the panel.
+- The fitted view shows the whole graph. Selecting a node centers it beside the panel without zooming in.
+  Zoom out only as needed to include directly connected cards and their routes. A disconnected card keeps its nearest neighbor in view.
 
 ## Details panel
 
-- Desktop shows a 360px drawer on the right. A container narrower than 780px shows a bottom sheet
+- Desktop starts with a half-width drawer on the right. Drag its left edge or use Left/Right, Home, and End to resize it.
+  Width stays between 280px and canvas width minus 200px and persists until reload. A container narrower than 780px shows a bottom sheet
   at 65% of the canvas height.
+- The selected lane colors the panel border, tinted header, section rules, and links. The backdrop darkens the map by 40% in light theme and 55% in dark theme.
 - The title and summary always show. Body, When, commands, and links show only when set.
   Relationships come from the edges and are listed as text.
 - The panel body scrolls; its close button and Previous/Next stay fixed. Previous/Next follow node
   array order, including dimmed and disconnected nodes.
 - While the panel is open, Tab stays inside it and the map behind it is inert. Escape, the close
-  button, and the backdrop close it and restore the previous view before returning focus.
-  A previously fitted view fits the current canvas size; a manual view keeps its pan and zoom.
+  button, and the backdrop close it, center the current card in the full canvas, and focus that card.
+  Closing preserves the current zoom, including after Previous/Next navigation and viewport resizing.

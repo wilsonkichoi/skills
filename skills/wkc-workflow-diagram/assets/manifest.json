@@ -1,30 +1,30 @@
 {
   "schemaVersion": 1,
-  "generatorVersion": "0.0.12",
+  "generatorVersion": "0.0.13",
   "sources": {
     "LICENSE": "62b39a3b4506b2223153ff0ccc9406dae0fa75c058781ae547937b6e57071804",
     "skills/wkc-workflow-diagram/scripts/diagram.mjs": "8574cea1c2ec922dfa1645eb96b33b79a4b4d9bbf0509b6d6de783e10be54382",
     "tools/workflow-diagram/build/assets.mjs": "1184969f874055674656b5ad8e9323b3b3ac5016cdf6a3e9c0a29e3739b32b06",
     "tools/workflow-diagram/build/preview.mjs": "73c3a63a70fa1e630a9222e34e5d61f86d532cb5e43e8673a928940595ce7255",
     "tools/workflow-diagram/build/standalone.mjs": "74775b8630bb1869ef4a288c430323af92f8aa8f6fdfd4c594b675484d7c7ece",
-    "tools/workflow-diagram/package-lock.json": "14f6e6a4fb6edb77bbae3b8adb706730a3216b7f16f3ccda5c4a1a3f33695eda",
-    "tools/workflow-diagram/package.json": "644f7e9928deef4dff8d4db637eaf3deb4dc5f21653609387754f06bdb0439fe",
+    "tools/workflow-diagram/package-lock.json": "e48b0ac94f9097e10225550712831cc576a6d325bea720124fb5768b583f7b1c",
+    "tools/workflow-diagram/package.json": "900061440bc41fc00728fadc224039982e0d310f85866992098c2a58741edc8b",
     "tools/workflow-diagram/schema/layout.schema.json": "cbfd15225d5cebf8ad1698d19055f1ca5a9f0d9455ea6446036a56ce1d2449a6",
     "tools/workflow-diagram/schema/workflow.schema.json": "d47116b485de6a91ca4080110623238bce323ab508d8adbe26e2e1908a3026c7",
     "tools/workflow-diagram/src/export.js": "be44f2db0243dfb7f4af374d310d4d68cc9e39f7f41b4dee95db2d1fb7c78e70",
     "tools/workflow-diagram/src/geometry.js": "25aa6349d91e3d312e4f55fa3e8e791cdbcaee2917375fc6aa8a8a73fba8731f",
-    "tools/workflow-diagram/src/index.js": "e0c1fd3ae079eb28a42c2a3e1183562eccc76eca7d4e84427b8ebf44ac0f5e36",
+    "tools/workflow-diagram/src/index.js": "1421514e9daccee939dc6dcecce4899e8c525840f0715b0883c9d7fb76775115",
     "tools/workflow-diagram/src/interaction.js": "8294dcbaf341cb6f142681755152f4b1be8801201fb9a9026e50154626e5916b",
     "tools/workflow-diagram/src/model.js": "85931486210cf9b431986f1562fedf72d491f052388d291545f4c4625f9a19d5",
-    "tools/workflow-diagram/src/renderer.js": "27db9c2e419f51ccc64c291f1b1e9d4a61c1b72b636f01374ffeac5414f45a4e",
+    "tools/workflow-diagram/src/renderer.js": "c85e265cebeb9afe2dd4c626f821b6458f60064f6f00fc6e9430ac1908d9288a",
     "tools/workflow-diagram/src/standalone-entry.js": "09f73d5a64433dd9454d42c31548cd9c2cd1e7ad2eb0340bddc09ee4bc82d4cd",
     "tools/workflow-diagram/src/standalone.js": "208a9cc403c018aff19be2415a99b0945de493ae6a3a401db03f745caa6b3f89",
-    "tools/workflow-diagram/src/theme.css": "f45804149bc1125bbf8a9b46a985392b5238819cae85567fa67d8b12d84a7191"
+    "tools/workflow-diagram/src/theme.css": "e5dcf3b8f8f63f372df278d4508e6ec1021b9ace1986312d0201b689bcc0ad52"
   },
   "outputs": {
     "model.mjs": "4ed1934ba91df976ba5203f8b1c77d63bb5f490265866316fe000c04bdae3bb3",
-    "workflow-diagram.js": "e4838e0c1efb2486ebe3e0ff0212ccda8477e646888a8a038d86f467bc306f8b",
-    "standalone.js": "4a04e6f671e3918c42b386eb154f1b0346879f35021ad641f0e036e4eeee3613",
+    "workflow-diagram.js": "db7421ea4f4580f5b997db0310b4a227d53f8d855b647b95928f7e73a9393e40",
+    "standalone.js": "749cd6c7f2dcec79b90061d750fe3982c53d854bd7dbab1c02edb9b3e81e521c",
     "workflow.schema.json": "d47116b485de6a91ca4080110623238bce323ab508d8adbe26e2e1908a3026c7",
     "layout.schema.json": "cbfd15225d5cebf8ad1698d19055f1ca5a9f0d9455ea6446036a56ce1d2449a6",
     "THIRD-PARTY-NOTICES.txt": "e17c6bd50530084380b40b84f79733f773159d820c22e9c1e3795fbbf1ee7aa0"

@@ -32,16 +32,16 @@ for (const url of ['/', pathToFileURL(resolve('../../docs/dev-agents/diagram/dia
       await page.mouse.move(box.x + box.width / 2 - delta, box.y + box.height / 2, { steps: 8 });
       await page.mouse.up();
     }
-    await drag(180); await expect.poll(width).toBe(540);
+    await drag(180); await expect.poll(width).toBe(900);
     await expect(panel).toBeVisible();
     await expect.poll(async () => {
       const node = await openingCard.boundingBox(), box = await panel.boundingBox();
       return node.x + node.width <= box.x;
     }).toBe(true);
     await page.getByRole('button', { name: 'Next node' }).click();
-    await expect.poll(width).toBe(540);
-    await page.keyboard.press('Escape'); await expect(openingCard).toBeFocused();
-    await page.keyboard.press('Enter'); await expect.poll(width).toBe(540);
+    await expect.poll(width).toBe(900);
+    await page.keyboard.press('Escape'); await expect(page.locator('.wd-card').nth(1)).toBeFocused();
+    await page.keyboard.press('Enter'); await expect.poll(width).toBe(900);
     await drag(-900); await expect.poll(width).toBe(280);
     await drag(1600); await expect.poll(width).toBe(1240);
     await page.setViewportSize({ width: 1000, height: 900 });
@@ -55,7 +55,7 @@ test('details resizing supports keyboard and stops on pointer cancellation', asy
   await open(page); await card(page, 'source').click();
   const handle = page.getByRole('separator', { name: 'Resize details panel' });
   await page.keyboard.press('Tab'); await expect(handle).toBeFocused();
-  for (const [key, width] of [['ArrowLeft', '380'], ['ArrowRight', '360'], ['End', '1240'], ['Home', '280']]) {
+  for (const [key, width] of [['ArrowLeft', '740'], ['ArrowRight', '720'], ['End', '1240'], ['Home', '280']]) {
     await page.keyboard.press(key); await expect(handle).toHaveAttribute('aria-valuenow', width);
   }
   const box = await handle.boundingBox();
@@ -84,6 +84,40 @@ test('resized desktop details retain the full-width mobile sheet and focus cycle
   await page.setViewportSize({ width: 1440, height: 900 });
   await expect(handle).toBeVisible();
   await expect.poll(() => panel.evaluate(el => el.getBoundingClientRect().width)).toBe(1240);
+});
+
+for (const theme of ['light', 'dark']) test(`repository region grouping and panel colors match in ${theme}`, async ({ page }) => {
+  await page.emulateMedia({ colorScheme: theme });
+  await page.goto(pathToFileURL(resolve('../../docs/dev-agents/diagram/diagram.html')).href);
+  const workflow = JSON.parse(await readFile(resolve('../../docs/dev-agents/diagram/workflow.json'), 'utf8'));
+  const regions = page.locator('.wd-region');
+  await expect(regions).toHaveCount(4);
+  const colors = [];
+  for (const lane of workflow.lanes) {
+    const region = page.locator(`.wd-region[data-lane="${lane.id}"]`), box = await region.boundingBox();
+    const style = await region.evaluate(el => ({ border: getComputedStyle(el).borderTopColor, fill: getComputedStyle(el).backgroundColor }));
+    colors.push(style.border.match(/\d+/g).map(Number));
+    expect(style.fill).not.toBe('rgba(0, 0, 0, 0)');
+    for (const node of workflow.nodes.filter(node => node.lane === lane.id)) {
+      const bounds = await card(page, node.id).boundingBox();
+      expect(bounds.x).toBeGreaterThan(box.x); expect(bounds.y).toBeGreaterThan(box.y);
+      expect(bounds.x + bounds.width).toBeLessThan(box.x + box.width);
+      expect(bounds.y + bounds.height).toBeLessThan(box.y + box.height);
+    }
+  }
+  expect(new Set(colors.map(color => color.join(','))).size).toBe(workflow.lanes.length);
+  const coordination = colors[workflow.lanes.findIndex(lane => lane.id === 'coordination')];
+  const documentation = colors[workflow.lanes.findIndex(lane => lane.id === 'documentation')];
+  expect(Math.hypot(...coordination.map((value, k) => value - documentation[k]))).toBeGreaterThan(100);
+  for (const id of ['setup', 'tracker', 'help', 'skills-release']) {
+    await card(page, id).focus(); await page.keyboard.press('Enter');
+    const laneColor = await card(page, id).evaluate(el => getComputedStyle(el).borderLeftColor);
+    expect(await page.locator('.wd-panel-head').evaluate(el => getComputedStyle(el).borderBottomColor)).toBe(laneColor);
+    expect(await page.locator('.wd-panel .wd-eyebrow').evaluate(el => getComputedStyle(el).color)).toBe(laneColor);
+    const scrim = await page.locator('.wd-backdrop').evaluate(el => getComputedStyle(el).backgroundColor);
+    expect(Number(scrim.match(/[\d.]+/g).at(-1))).toBeCloseTo(theme === 'light' ? .4 : .55, 2);
+    await page.keyboard.press('Escape');
+  }
 });
 
 test('summary-only panel has no empty headings and Unicode URL IDs remain exact', async ({ page }) => {
@@ -140,38 +174,48 @@ test('backdrop closes and returns focus without selecting another node', async (
   await expect(page.getByRole('dialog')).toBeHidden(); await expect(card(page, 'source')).toBeFocused();
 });
 
-for (const fitted of [true, false]) test(`closing after node navigation restores the ${fitted ? 'fitted' : 'manual'} view and visible focus`, async ({ page }) => {
+for (const fitted of [true, false]) test(`closing after navigation keeps zoom and centers the current card from a ${fitted ? 'fitted' : 'manual'} view`, async ({ page }) => {
   await page.goto('/branching');
-  if (!fitted) {
-    await page.getByRole('button', { name: 'Zoom out', exact: true }).click();
-    const box = await page.locator('.wd-viewport').boundingBox();
-    await page.mouse.move(box.x + 20, box.y + 20); await page.mouse.down();
-    await page.mouse.move(box.x + 60, box.y + 40, { steps: 8 }); await page.mouse.up();
-  }
-  const before = await transform(page);
+  if (!fitted) await page.getByRole('button', { name: 'Zoom out', exact: true }).click();
   for (const method of ['escape', 'button', 'backdrop']) {
     await card(page, 'source').focus(); await page.keyboard.press('Enter');
     for (let i = 0; i < 4; i++) await page.getByRole('button', { name: 'Next node' }).click();
+    const before = await transform(page);
     if (method === 'escape') await page.keyboard.press('Escape');
     else if (method === 'button') await page.getByRole('button', { name: 'Close details' }).click();
     else await page.locator('.wd-backdrop').click({ position: { x: 10, y: 10 } });
     await expect(page.getByRole('dialog')).toBeHidden();
-    await expect(card(page, 'source')).toBeFocused();
-    // IntersectionObserver can round a fully visible, scaled card just below 1.
-    await expect(card(page, 'source')).toBeInViewport({ ratio: .9999 });
-    expect(await transform(page)).toEqual(before);
+    await expect(card(page, 'note')).toBeFocused();
+    await expect(card(page, 'note')).toBeInViewport({ ratio: .9999 });
+    expect((await transform(page)).scale).toBe(before.scale);
+    const node = await card(page, 'note').boundingBox(), vp = await page.locator('.wd-viewport').boundingBox();
+    expect(node.x + node.width / 2).toBeCloseTo(vp.x + vp.width / 2, 1);
+    expect(node.y + node.height / 2).toBeCloseTo(vp.y + vp.height / 2, 1);
   }
-  if (fitted) {
-    await card(page, 'source').click();
-    await page.getByRole('button', { name: 'Next node' }).click();
-    await page.setViewportSize({ width: 390, height: 844 });
-    await page.keyboard.press('Escape');
-    await expect(card(page, 'source')).toBeFocused();
-    for (const node of await page.locator('.wd-card').all()) await expect(node).toBeInViewport({ ratio: .9999 });
-    const resized = await transform(page);
-    await page.getByRole('button', { name: 'Reset view' }).click();
-    expect(await transform(page)).toEqual(resized);
+  await card(page, 'source').focus(); await page.keyboard.press('Enter');
+  await page.setViewportSize({ width: 390, height: 844 });
+  await expect.poll(() => page.getByRole('dialog').evaluate(el => el.getBoundingClientRect().width)).toBe(390);
+  const before = await transform(page);
+  await page.keyboard.press('Escape');
+  await expect(card(page, 'source')).toBeFocused();
+  expect((await transform(page)).scale).toBe(before.scale);
+});
+
+test('opening details retains connected cards and paths without zooming in', async ({ page }) => {
+  await open(page);
+  const before = await transform(page);
+  await card(page, 'source').click();
+  expect((await transform(page)).scale).toBeLessThanOrEqual(before.scale);
+  const vp = await page.locator('.wd-viewport').boundingBox(), panel = await page.getByRole('dialog').boundingBox();
+  for (const id of ['source', 'transform', 'result']) {
+    const box = await card(page, id).boundingBox();
+    expect(box.x).toBeGreaterThanOrEqual(vp.x);
+    expect(box.x + box.width).toBeLessThanOrEqual(panel.x);
+    expect(box.y).toBeGreaterThanOrEqual(vp.y);
+    expect(box.y + box.height).toBeLessThanOrEqual(vp.y + vp.height);
   }
+  const loop = await page.locator('.wd-edge[data-edge-id="return"]').boundingBox();
+  expect(loop.y + loop.height).toBeLessThanOrEqual(vp.y + vp.height);
 });
 
 test('mouse pans, small movement remains a click, wheel retains its zoom anchor, reset fits', async ({ page }) => {
@@ -263,14 +307,14 @@ for (const [name, width, height] of [['desktop', 1440, 900], ['tablet', 768, 102
       await page.screenshot({ path: `docs/screenshots/${name}-${theme}.png` });
       await card(page, 'source').click();
       const panel = await page.getByRole('dialog').boundingBox(), box = await card(page, 'source').boundingBox();
-      expect(box.width).toBeGreaterThan(160); expect(box.x).toBeGreaterThanOrEqual(vp.x);
+      expect(box.width).toBeGreaterThan(0); expect(box.x).toBeGreaterThanOrEqual(vp.x);
       expect(box.y).toBeGreaterThanOrEqual(vp.y);
       if (width < 780) {
         expect(panel.height).toBeLessThanOrEqual(vp.height * .65 + 1);
         expect(box.y + box.height).toBeLessThanOrEqual(panel.y + 1);
         expect(box.x + box.width).toBeLessThanOrEqual(vp.x + vp.width);
       } else {
-        expect(panel.width).toBe(360); expect(box.x + box.width).toBeLessThanOrEqual(panel.x);
+        expect(panel.width).toBe(width / 2); expect(box.x + box.width).toBeLessThanOrEqual(panel.x);
       }
       await expect(page.getByRole('button', { name: 'Close details' })).toBeInViewport();
       await expect(page.getByRole('button', { name: 'Next node' })).toBeInViewport();
