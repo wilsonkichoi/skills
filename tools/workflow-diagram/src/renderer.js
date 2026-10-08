@@ -23,6 +23,8 @@ function laneStyle(el, lane) {
   if (lane) {
     el.style.setProperty('--lane-light', lane.color.light);
     el.style.setProperty('--lane-dark', lane.color.dark);
+  } else {
+    el.style.removeProperty('--lane-light'); el.style.removeProperty('--lane-dark');
   }
 }
 function svg(tag, attrs = {}) {
@@ -37,7 +39,7 @@ export function renderShell(shadow, css, workflow, layout, id) {
   const header = element('header');
   const top = element('div', 'wd-top');
   const heading = element('div', 'wd-heading');
-  heading.append(element('p', 'wd-eyebrow', `Workflow map / ${String(workflow.nodes.length).padStart(2, '0')} nodes`), element('h1', '', workflow.title));
+  heading.append(element('h1', '', workflow.title));
   if (workflow.subtitle) heading.append(element('p', 'wd-subtitle', workflow.subtitle));
   const tools = element('div', 'wd-tools'); tools.setAttribute('role', 'group'); tools.setAttribute('aria-label', 'View controls');
   const zoom = element('div', 'wd-zoom');
@@ -102,6 +104,10 @@ export function renderShell(shadow, css, workflow, layout, id) {
   const backdrop = element('div', 'wd-backdrop'); backdrop.hidden = true;
   const panel = element('div', 'wd-panel'); panel.hidden = true; panel.tabIndex = -1;
   panel.setAttribute('role', 'dialog'); panel.setAttribute('aria-modal', 'true'); panel.setAttribute('aria-labelledby', `${id}-title`);
+  const resizeHandle = element('div', 'wd-panel-resize'); resizeHandle.tabIndex = 0;
+  resizeHandle.setAttribute('role', 'separator'); resizeHandle.setAttribute('aria-orientation', 'vertical');
+  resizeHandle.setAttribute('aria-label', 'Resize details panel');
+  panel.id = `${id}-panel`; resizeHandle.setAttribute('aria-controls', panel.id); panel.append(resizeHandle);
   stage.append(viewport, backdrop, panel);
   const footer = element('footer', 'wd-footer');
   const legend = element('div', 'wd-legend');
@@ -111,13 +117,14 @@ export function renderShell(shadow, css, workflow, layout, id) {
   footer.append(legend, element('span', '', 'Drag to pan · Scroll to zoom · Select to explore'));
   const live = element('div', 'wd-live'); live.setAttribute('role', 'status'); live.setAttribute('aria-live', 'polite');
   root.append(header, stage, footer, live); shadow.append(style, root);
-  return { root, header, stage, viewport, world, backdrop, panel, footer, live, cards, edges, labels, chips, zoomOut, zoomIn, zoomValue, reset, theme };
+  return { root, header, stage, viewport, world, backdrop, panel, resizeHandle, footer, live, cards, edges, labels, chips, zoomOut, zoomIn, zoomValue, reset, theme };
 }
 
 export function renderDetails(panel, node, workflow, id, onCopy) {
   const index = workflow.nodes.findIndex(n => n.id === node.id);
   const head = element('div', 'wd-panel-head'), heading = element('div');
   const lane = workflow.lanes.find(l => l.id === node.lane);
+  laneStyle(panel, lane);
   const title = element('h2', '', node.label); title.id = `${id}-title`;
   heading.append(element('p', 'wd-eyebrow', `${lane?.label ?? 'Independent'} / ${node.kind}`), title);
   const close = button('×', 'Close details', 'wd-close'); head.append(heading, close);
@@ -159,6 +166,6 @@ export function renderDetails(panel, node, workflow, id, onCopy) {
   const previous = button('← Previous', 'Previous node'), next = button('Next →', 'Next node');
   previous.disabled = index === 0; next.disabled = index === workflow.nodes.length - 1;
   nav.append(previous, element('span', '', `${index + 1} / ${workflow.nodes.length}`), next);
-  panel.replaceChildren(head, body, nav);
+  panel.replaceChildren(head, panel.querySelector('.wd-panel-resize'), body, nav);
   return { close, previous, next };
 }

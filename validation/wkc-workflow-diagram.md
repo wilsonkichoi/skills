@@ -32,8 +32,9 @@ npm ci
 npm run check
 ```
 
-For behavioral cases, give the project two definitions: `collect` writes `notes.md`, and `publish` reads it and writes `report.md`.
-Add an independent auxiliary note when testing preservation. Record file hashes before each update.
+For behavioral cases, give the project two shipped definitions: `collect` writes `notes.md`, and `publish` reads it and writes `report.md`.
+File outputs belong in their skill details. The shared artifact establishes a prerequisite, not invocation of `publish` by `collect`.
+Add an independent note in skill details when testing preservation. Record file hashes before each update.
 Keep test outputs within the target's diagram directory; harness installation files are setup, not diagram output.
 
 ## Cases
@@ -68,20 +69,29 @@ Keep test outputs within the target's diagram directory; harness installation fi
 
 6. **Create without config.** Invoke the installed skill against the two definitions with no dev config.
    PASS: it produces valid workflow/layout JSON, standalone HTML, and a README without invoking wkc-setup or either diagrammed skill.
-   Confirm the dependency comes from the definitions, not from directory order.
+   Only the two skill cards appear. Project files and each skill's outputs are described within those cards; no action edge is invented.
+   The `notes.md` prerequisite remains in `publish` details; it does not create a `collect` → `publish` arrow.
+   Add a shared-config requirement and reorder the definition directories; neither establishes an invocation arrow.
+   Add an explicit instruction for `collect` to request a report from `publish`; only then does an actor-to-target action arrow appear.
 
 7. **No relevant input.** Invoke against an explicitly empty scope, first without a diagram and then with an existing one.
    PASS: the skill reports missing input, invents no graph, and preserves existing files.
 
 8. **Unrelated workflows.** Build the minimal and branching examples through the installed helper.
-   Extract the complete `workflow.json` and matching `layout.json` examples from the skill README and check/build them together.
-   PASS: both validate without wkc-setup/wkc-tracker nodes, a repository-specific base, or fixed canvas dimensions.
-   The README examples also pass check/build; node and route snippets are explicitly labeled as individual objects.
+   Extract both complete pairs from the skill README: default actions and explicitly requested artifact dataflow. Check/build each pair together.
+   PASS: the unrelated fixtures validate without wkc-setup/wkc-tracker nodes, a repository-specific base, or fixed canvas dimensions.
+   Every card in the README examples represents a skill; systems and outputs stay in skill text.
+   Both README pairs pass check/build; prerequisites stay in details in the action example, and its edge points from actor to target.
+   The artifact pair labels `notes.md` and states the explicit request requirement. Node and route snippets are labeled as individual objects.
    Open both and inspect all nodes and relationships; verify no missing routes are hidden.
 
 9. **Add while preserving edits.** Customize a description and position; add `audit`, which reads `report.md` and writes `findings.md`.
    Invoke an update and inspect JSON diffs independently.
-   PASS: existing IDs, text, positions, routes, and auxiliary nodes survive byte-for-byte; new relationships have valid routes.
+   PASS: existing IDs, text, positions, and routes survive byte-for-byte; new relationships have valid routes.
+   In the default action map, `audit` describes input prerequisites and file outputs in its details; neither creates an invocation arrow.
+   A legacy system card remains unchanged until conversion is directed. After direction, move its information into the owning skill details.
+   Remove that card, its position, and its incident edges and routes together. Preserve all other authored data.
+   Existing edges retain their meaning, direction, labels, and routes even if authored under another arrow meaning.
    If the addition makes existing text wrong, it is reported with suggested wording, not rewritten.
 
 10. **Source conflict.** Change a source contract and separately edit its diagram description to conflict with that change.
@@ -89,6 +99,9 @@ Keep test outputs within the target's diagram directory; harness installation fi
     and ends on a numbered question.
     Answering with a digit applies or keeps the text as chosen, and the README records the outcome.
     FAIL if it rewrites existing text without that answer, or treats generated HTML as authoritative.
+    Separately request action meaning without directing specific changes to an existing prerequisite edge.
+    The skill preserves it and proposes an edge change for approval. An already directed change needs no repeated approval.
+    FAIL if the new default silently reinterprets, reverses, relabels, or removes that edge.
 
 11. **Removal versus access failure.** Confirm one source removal, then separately make another definition unreadable.
     PASS: only confirmed removal deletes a node; its position, incident edges, and routes are removed together.
@@ -120,14 +133,28 @@ Keep test outputs within the target's diagram directory; harness installation fi
 17. **Visual and input contract.** Inspect fitted and selected states at desktop, tablet, and phone sizes in both themes.
     PASS: square cards, flat palettes, lane colors, visible focus, readable selected cards, and unobscured controls remain intact.
     Verify fit, pan, zoom, filtering, textual relationships, panel scrolling, focus trapping/restoration, and navigation.
+    Drag the desktop panel's left edge in both directions; use Left/Right, Home, and End with the edge focused.
+    PASS: width stays between 280 pixels and canvas width minus 200 pixels; selection stays visible beside the panel.
+    Navigate and reopen details; the chosen width persists until reload. Cancel a pointer drag; later movement must not resize.
+    Shrink the container; the panel stays bounded. At narrow widths, the full-width bottom sheet hides the resize control.
+    Verify Tab skips the hidden handle and still cycles through the visible controls.
     Open a node, navigate to a distant node, then close with Escape, the close button, and the backdrop.
-    PASS: focus returns to the visible opening card and its previous view is restored, including manual pan and zoom.
-    Resize while details are open from a fitted view; closing must fit the new canvas and keep the opening card visible.
+    PASS: the current card receives focus; closing leaves the canvas transform and zoom unchanged.
+    Resize while details are open; closing keeps the resized zoom instead of fitting the whole map.
+    Verify the desktop drawer slides right and the mobile sheet slides down while the backdrop fades.
+    PASS: closed controls become inert immediately; the panel hides after the slide; reduced motion skips movement.
+    Reopen during the slide; the pending close must not hide the new panel.
+    Verify default zoom is 70% when the map fits, or smaller for narrow canvases.
+    Verify the desktop panel defaults to half the canvas width, uses lane accents, and darkens the main canvas in both themes.
+    PASS: opening, navigation, panel resizing, and viewport resizing preserve zoom and card dimensions.
+    The selected card centers beside the desktop panel or above the mobile sheet. Test both fitted and manual zoom.
+    Verify tinted lane boxes contain their cards and region colors are visually distinct in both themes.
     Test touch drag from a card, pinch, cancellation, and same-node selection with hash synchronization.
     Check copy success, pending state, and failure. Record physical-device or screen-reader checks separately if performed.
 
 18. **Portable project record.** Inspect the generated README and screenshots.
     PASS: they identify this project, its source paths, generator version, regeneration commands, documentation base, and actual verification.
+    The README records arrow meaning and source evidence for every edge, including conditional interactions between skills.
     The commands run from the project root with `--project .` and a project-relative or `<installed-skill>` helper path.
     FAIL if they record absolute paths, temporary directories, or preview ports, reference an implementation worktree or the
     ignored MVP, or overwrite unrelated notes.
@@ -141,10 +168,20 @@ Keep test outputs within the target's diagram directory; harness installation fi
     Supplied scope does not trigger redundant questions.
 
 20. **Repository integration.** Inspect this repository's generated map and candidate diff.
-    PASS: only actual scoped skills appear, no dependency is invented, and files stay under the fixed project directory.
+    PASS: only shipped scoped skills appear, including internal shipped skills when requested; planned skills remain excluded.
+    The map has exactly five skill cards. System actions and outputs appear in their owning skill details.
+    No skill-to-skill runtime actions are established by these sources, so the map has no edges; no former system routes remain.
+    No setup-to-tracker prerequisite arrow appears; that dependency remains in tracker details.
+    Installation, shared configuration, and directory order do not imply automatic invocation. Every arrow has source evidence.
     Confirm version, timestamped changelog, roster, authoring rules, public runbook, fresh main ancestry, and an unmerged PR.
     Labels, commands, and definition links must use the current `wkc-` identifiers; keep existing node IDs and routes stable.
     Re-read the implementation definition of done and map every requirement to evidence before reporting completion.
+
+21. **Explicit arrow meaning and legacy updates.** Request artifact dataflow for the two definitions, then update that map without changing its meaning.
+    PASS: `collect` → `publish` is labeled `notes.md` and the README records the requested artifact meaning.
+    The update preserves existing edge meaning, text, direction, positions, and routes. It does not convert them to default action arrows.
+    Repeat with an explicitly requested prerequisite map; the requested meaning is honored without claiming automatic invocation.
+    In a default action map, only an explicit source instruction to invoke another skill establishes a skill-to-skill invocation arrow.
 
 ## Report
 
@@ -156,3 +193,124 @@ Do not count a source-level unit test as an agent invocation.
 
 The implementation report and this repository's screenshots live in
 [docs/dev-agents/diagram/README.md](../docs/dev-agents/diagram/README.md).
+
+### Initial authoring default update, 2026-10-07
+
+This historical check preceded the user's skill-only correction. Its auxiliary-node counts and artifact hashes describe that earlier state.
+
+Candidate: `docs/five-shipped-skills-diagram`, base `5802c662ed9ab3d918e315e86b8eb939651c53db`, with uncommitted authoring changes for **0.0.16**.
+The branch had no version bump before this update. Fetched `origin/main` matches the base.
+Selected coverage: case 1 metadata subchecks; static instruction review for cases 6, 9, 10, 18, and 21;
+case 8 complete README pairs through the helper; case 20 shipped scope/version subchecks; preservation of pre-existing diagram artifacts.
+Tools: Node **v24.11.1**, the repository helper and unchanged generator **0.0.11**, and the current Codex session for static review.
+Backend: local JSON/files only. No service writes, installed invocation, other harnesses, or additional AI sessions.
+
+- PASS, static review: action defaults, prerequisite details, auxiliary targets, actor-to-target verb labels, and explicit alternate meanings agree across instructions, design, references, and root docs.
+- PASS, static review: updates retain existing meaning and authored content; conflicts require direction; shipped scope permits requested internal skills.
+- PASS, case 1 metadata subchecks: exact identifier, manual invocation settings, five opening fields, unquoted description, and length checks conform to the repository template.
+- PASS, case 8 example subchecks: both complete README pairs pass check/build without warnings, preserve their JSON inputs, and produce identical HTML on repeated builds.
+- PASS, case 20 scope/version subchecks: source definitions match all five skill cards, including internal `wkc-skills-release`; four systems and six actions remain; prerequisites stay in details.
+- PASS, direct preservation: all 22 pre-existing modified/untracked diagram artifacts retain their SHA-256 hashes. Building a copied map produces HTML identical to the preserved repository HTML.
+- PASS, whitespace: `git diff --check` reports no errors. Schema, renderer, helper, invocation settings, and generated assets remain unchanged.
+- FAIL, generic skill-creator validator: it rejects the pre-existing `disable-model-invocation` extension. That extension is required by repository rules; repository-aware metadata subchecks pass.
+- SKIP, behavioral invocation for cases 6, 9, 10, and 21: no additional AI sessions are authorized. Static review and helper checks do not establish future instruction following.
+
+Raw fixtures and direct checks are in ignored `.local/runs/workflow-diagram/2026-10-07-authoring/`.
+This focused report does not claim full-case passes, new browser evidence, or cross-harness compatibility.
+
+### Skill-only correction, 2026-10-07
+
+Candidate: the same branch/base and version **0.0.16**, after the user directed conversion of system cards into skill notes.
+Selected coverage: static review of cases 6, 9, 18, 20, and 21; case 8 README example subchecks;
+direct scope/preservation checks; case 14 offline subchecks; case 17 fitted layout, selected panels, keyboard focus, and link subchecks.
+Backend: local JSON/files. Browser: Chrome **154.0.8037.98**; Node **v24.11.1**; generator **0.0.11**.
+
+- PASS, scope/preservation: exactly five shipped skill cards, zero edges, and zero stale routes. Original skill IDs, labels, summaries, commands, When text, lanes, and positions are unchanged.
+- PASS, moved information: setup files/labels, tracker tickets, diagram outputs, installer operations, and collection releases appear in their owning skill details.
+- PASS, direct helper: repository check/build and both complete examples pass without warnings. Both examples contain skill cards only, preserve input bytes, and build deterministically.
+- PASS, static review: instructions, design, examples, and root docs agree on skill cards, source-backed actions, prerequisites, explicit alternate meanings, and directed legacy conversion.
+- PASS, browser subchecks: fitted views and help/release details work at all three documented sizes in both themes; five cards, zero edges, no overlaps, and no horizontal page overflow.
+- PASS, browser subchecks: all five panels show their notes; Enter/Tab/Escape preserve selection and focus in the sampled panels. Documentation links use the main base.
+- PASS, offline/cleanup: no HTTP requests or page exceptions; Chrome and preview terminate and both endpoints stop answering. All 18 screenshots were regenerated.
+- PASS, sampled visual review: six screenshots inspected as listed in the linked implementation report. This is not a claim that every screenshot was visually reviewed.
+- SKIP, behavioral invocation: no additional AI sessions are authorized. Static and direct browser checks do not establish future model behavior.
+
+See [Skill cards only](../docs/dev-agents/diagram/README.md#skill-cards-only-2026-10-07) for the implementation record.
+Raw snapshots, fixtures, browser checks, and results remain in ignored `docs/dev-agents/diagram/.cache/skill-only/`.
+No renderer, helper, schema, generated asset, invocation setting, or repository version change was needed for this correction.
+
+### Resizable details panel, 2026-10-07
+
+Candidate: `docs/five-shipped-skills-diagram`, collection **0.0.16**, generator **0.0.12**.
+Selected coverage: cases 14 and 16 offline/export and asset subchecks; case 17 desktop resizing,
+keyboard controls, pointer cancellation, width retention, viewport bounds, mobile layout, and focus regressions.
+Backend: local JSON/files. Browser: Chrome **154.0.8037.98** through Playwright; no additional AI sessions.
+
+- PASS, required maintainer check: asset freshness, 76 unit/package checks, build, and 35 browser tests.
+- PASS, requested offline HTML and renderer preview: drag 360 to 540 pixels, retain width through navigation and reopening, clamp to 280 pixels and canvas width minus 200 pixels.
+- PASS, input regressions: Left/Right, Home/End, pointer cancellation, selected-card visibility, viewport shrinking, full-width mobile sheet, and focus cycling.
+- PASS, repository helper check and unchanged authored workflow/layout inputs.
+- PASS, visual inspection: requested offline HTML with help details resized to 540 pixels; text, handle, close button, and navigation remain visible.
+- Initial test-only failure: the mobile negative-focus assertion used a role locator that excluded the hidden handle. A DOM locator fixes the assertion; the focused rerun passed.
+
+Logs: `/tmp/diagram-resize-check-final.log` and `/tmp/diagram-resize-recheck.log`.
+Visual evidence: ignored `docs/dev-agents/diagram/.cache/desktop-resized.png`.
+These direct checks do not establish screen-reader, physical touch, or other-browser compatibility.
+
+### Region styling and selection context, 2026-10-07
+
+Candidate: `docs/five-shipped-skills-diagram`, collection **0.0.16**, generator **0.0.13**.
+Selected coverage: case 14 offline/export subchecks; case 16 asset freshness; case 17 panel defaults, region styling,
+connected-card context, close behavior, grouping, region colors, resizing, keyboard, and responsive layout; case 18 visual record.
+Backend: local JSON/files. Browser: Chrome **154.0.8037.98** through Playwright. No additional AI sessions.
+Reference: local `agent-toolkit/plugins/dev/diagram/README.md` and `dev-plugin-diagram.html`, including region markup,
+drawer sizing, lane styles, scrim opacity, camera behavior, and generated-file ownership.
+
+- PASS, maintainer check: current assets, 76 unit/package checks, build, and 38 browser tests.
+- PASS, final focused rerun: both light/dark grouping and panel-style tests after adding the neutral Independent region.
+- PASS, panel: half-width desktop default, persistent resizing, lane border/header/section/link accents, and 40%/55% backdrop opacity.
+- PASS, connected fixture: opening never increases zoom; directly connected cards and the return route stay visible beside the panel. The repository map has no edges, so its disconnected cards include their nearest neighbor instead.
+- PASS, closing: Escape, close button, and backdrop center and focus the current card at the same zoom, including after navigation and viewport resizing. This replaces the former restore-opening-view contract.
+- PASS, region data: all five cards are enclosed in four tinted lane boxes; positions and edges stay unchanged. Documentation is amber, Coordination is green, Configuration is purple, and Independent is gray.
+- PASS, export: repository helper check and byte-identical rebuild.
+- PASS, final visual checks: desktop, tablet, and phone in both themes; all 18 screenshots regenerated; no HTTP requests, page exceptions, or page overflow. Browser closes after checks.
+- PASS, sampled visual review: desktop light/dark help details, tablet light overview and dark help details, phone light help details and dark release details, plus the settled reference panel.
+
+Raw evidence: `/tmp/diagram-context-check.log`, `/tmp/diagram-context-region-check.log`, `/tmp/diagram-context-visual.log`,
+and ignored `docs/dev-agents/diagram/.cache/context-visual-results.json`.
+Direct browser checks do not establish screen-reader, physical-device, or other-browser compatibility.
+
+### Sliding close and concise header, 2026-10-07
+
+Candidate: `docs/five-shipped-skills-diagram`, collection **0.0.16**, generator **0.0.14**.
+Selected coverage: case 14 offline/export subchecks, case 16 asset freshness, case 17 close animation, retained canvas transform,
+reopening, reduced motion, default zoom, and header; case 18 screenshot record.
+Backend: local JSON/files. Browser: Chrome **154.0.8037.98** through Playwright. No additional AI sessions.
+
+- PASS, maintainer check: asset freshness, 77 unit/package checks, build, and 42 browser tests.
+- PASS, default/header: `wkc skills`, no subtitle or generated node-count line, 70% default when the map fits, and 70% retained when desktop help opens.
+- PASS, close behavior: all close methods preserve the exact canvas transform after navigation and viewport resizing; focus returns to the current visible card.
+- PASS, animation: desktop slides right, mobile slides down, closed controls become inert, the panel hides after animation, reduced motion skips movement, and reopening cancels pending closure.
+- Initial test-only failures: two slide assertions sampled after the animation had ended. Pause the animation at its midpoint to check actual movement deterministically; all three focused animation tests then pass.
+- PASS, visual/export: 18 screenshots refreshed at three sizes in both themes, with no HTTP requests, page exceptions, or page overflow. Desktop light overview and dark help details visually inspected.
+
+Logs: `/tmp/diagram-slide-check-final.log`, `/tmp/diagram-slide-focused.log`, and `/tmp/diagram-slide-visual.log`.
+Direct checks do not establish screen-reader, physical-device, or other-browser compatibility.
+
+### Pan-only selection, 2026-10-07
+
+Candidate: `docs/five-shipped-skills-diagram`, collection **0.0.16**, generator **0.0.15**.
+Selected coverage: case 14 offline/export, case 16 asset freshness, case 17 selection/navigation, unchanged scale and card dimensions,
+panel and viewport resizing, and retained close behavior; case 18 screenshots.
+Backend: local JSON/files. Browser: Chrome **154.0.8037.98** through Playwright. No additional AI sessions.
+
+- PASS, maintainer check: asset freshness, 77 unit/package checks, build, and 43 browser tests.
+- PASS, connected preview and disconnected offline repository map: opening and navigation preserve exact scale and card dimensions at fitted and manual zoom.
+- PASS, available-space centering: selected cards center beside the desktop drawer or above the mobile sheet through panel resizing and viewport changes.
+- PASS, closing regressions: slide, reduced motion, reopening cancellation, focus return, and unchanged canvas transform.
+- PASS, visual checks: 18 screenshots refreshed at three sizes in both themes. Opening preserves the initial zoom in every sampled panel. No HTTP requests, page exceptions, or page overflow.
+- Initial test-only failures: card and panel measurements raced the ResizeObserver callback. Poll simultaneous geometry until the card reaches the available-space center; preserve exact scale and size assertions.
+
+Neighbor fitting was removed at the user's direction. This supersedes the previous connected-neighbor visibility guarantee.
+Logs: `/tmp/diagram-pan-only-check-final.log`, `/tmp/diagram-pan-only-visual.log`, and ignored `.cache/pan-only-visual-results.json` under the diagram directory.
+Direct checks do not establish screen-reader, physical-device, or other-browser compatibility.

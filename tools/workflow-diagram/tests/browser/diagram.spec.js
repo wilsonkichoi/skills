@@ -18,6 +18,151 @@ const transform = page => world(page).evaluate(el => {
 });
 const open = async page => { await page.goto('/'); await expect(card(page, 'source')).toBeVisible(); };
 
+test('repository header is concise and defaults to 70% zoom', async ({ page }) => {
+  await page.goto(pathToFileURL(resolve('../../docs/dev-agents/diagram/diagram.html')).href);
+  await expect(page.getByRole('heading', { level: 1 })).toHaveText('wkc skills');
+  await expect(page.locator('.wd-heading .wd-eyebrow, .wd-subtitle')).toHaveCount(0);
+  await expect(page.locator('.wd-zoom output')).toHaveText('70%');
+  await card(page, 'help').click();
+  await expect(page.locator('.wd-zoom output')).toHaveText('70%');
+});
+
+for (const width of [1440, 390]) test(`closing slides details away without moving the canvas at ${width}px`, async ({ page }) => {
+  await page.setViewportSize({ width, height: 900 });
+  await page.emulateMedia({ reducedMotion: 'no-preference' });
+  await open(page); await card(page, 'source').click();
+  const before = await transform(page), panel = page.locator('.wd-panel');
+  const slide = await panel.evaluate(el => {
+    el.querySelector('.wd-close').click();
+    const animation = el.getAnimations()[0];
+    animation.pause(); animation.currentTime = 120;
+    const matrix = new DOMMatrix(getComputedStyle(el).transform);
+    return { x: matrix.e, y: matrix.f, inert: el.inert };
+  });
+  await expect(panel).toHaveAttribute('aria-hidden', 'true');
+  expect(await transform(page)).toEqual(before);
+  expect(slide.inert).toBe(true);
+  expect(width < 780 ? slide.y : slide.x).toBeGreaterThan(0);
+  await panel.evaluate(el => el.getAnimations()[0].play());
+  await expect(panel).toBeHidden(); await expect(page.locator('.wd-backdrop')).toBeHidden();
+  expect(await transform(page)).toEqual(before);
+  await expect(card(page, 'source')).toBeFocused();
+});
+
+test('closing respects reduced motion and reopening cancels a pending slide', async ({ page }) => {
+  await open(page); await card(page, 'source').click();
+  await page.keyboard.press('Escape'); await page.keyboard.press('Enter');
+  await expect(page.getByRole('dialog')).toBeVisible();
+  expect(await page.locator('.wd-panel').evaluate(el => el.getAnimations().length)).toBe(0);
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  const before = await transform(page);
+  await page.keyboard.press('Escape');
+  await expect(page.locator('.wd-panel')).toBeHidden();
+  expect(await transform(page)).toEqual(before);
+});
+
+for (const url of ['/', pathToFileURL(resolve('../../docs/dev-agents/diagram/diagram.html')).href]) {
+  test(`details panel resizes, stays bounded, and remembers width: ${url}`, async ({ page }) => {
+    await page.goto(url);
+    const openingCard = page.locator('.wd-card').first();
+    await openingCard.click();
+    const panel = page.getByRole('dialog'), handle = page.getByRole('separator', { name: 'Resize details panel' });
+    const width = () => panel.evaluate(el => el.getBoundingClientRect().width);
+    async function drag(delta) {
+      const box = await handle.boundingBox();
+      await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+      await page.mouse.down();
+      await page.mouse.move(box.x + box.width / 2 - delta, box.y + box.height / 2, { steps: 8 });
+      await page.mouse.up();
+    }
+    await drag(180); await expect.poll(width).toBe(900);
+    await expect(panel).toBeVisible();
+    await expect.poll(async () => {
+      const node = await openingCard.boundingBox(), box = await panel.boundingBox();
+      return node.x + node.width <= box.x;
+    }).toBe(true);
+    await page.getByRole('button', { name: 'Next node' }).click();
+    await expect.poll(width).toBe(900);
+    await page.keyboard.press('Escape'); await expect(page.locator('.wd-card').nth(1)).toBeFocused();
+    await page.keyboard.press('Enter'); await expect.poll(width).toBe(900);
+    await drag(-900); await expect.poll(width).toBe(280);
+    await drag(1600); await expect.poll(width).toBe(1240);
+    await page.setViewportSize({ width: 1000, height: 900 });
+    await expect.poll(width).toBe(800);
+    await expect(handle).toHaveAttribute('aria-valuenow', '800');
+    await expect(page.getByRole('button', { name: 'Close details' })).toBeInViewport();
+  });
+}
+
+test('details resizing supports keyboard and stops on pointer cancellation', async ({ page }) => {
+  await open(page); await card(page, 'source').click();
+  const handle = page.getByRole('separator', { name: 'Resize details panel' });
+  await page.keyboard.press('Tab'); await expect(handle).toBeFocused();
+  for (const [key, width] of [['ArrowLeft', '740'], ['ArrowRight', '720'], ['End', '1240'], ['Home', '280']]) {
+    await page.keyboard.press(key); await expect(handle).toHaveAttribute('aria-valuenow', width);
+  }
+  const box = await handle.boundingBox();
+  await page.mouse.move(box.x + 5, box.y + 100); await page.mouse.down();
+  await page.mouse.move(box.x - 95, box.y + 100);
+  await expect(handle).toHaveAttribute('aria-valuenow', '380');
+  await handle.dispatchEvent('pointercancel', { pointerId: 1 });
+  await page.mouse.move(box.x - 195, box.y + 100); await page.mouse.up();
+  await expect(handle).toHaveAttribute('aria-valuenow', '380');
+  await page.keyboard.press('Escape'); await expect(card(page, 'source')).toBeFocused();
+});
+
+test('resized desktop details retain the full-width mobile sheet and focus cycle', async ({ page }) => {
+  await open(page); await card(page, 'source').click();
+  const handle = page.getByRole('separator', { name: 'Resize details panel' });
+  await handle.focus(); await page.keyboard.press('End');
+  await page.setViewportSize({ width: 390, height: 844 });
+  await expect(handle).toBeHidden();
+  const panel = page.getByRole('dialog');
+  await expect.poll(() => panel.evaluate(el => el.getBoundingClientRect().width)).toBe(390);
+  const close = page.getByRole('button', { name: 'Close details' });
+  await close.focus(); await page.keyboard.press('Shift+Tab');
+  await expect(page.getByRole('button', { name: 'Next node' })).toBeFocused();
+  await page.keyboard.press('Tab'); await expect(close).toBeFocused();
+  await page.keyboard.press('Tab'); await expect(page.locator('.wd-panel-resize')).not.toBeFocused();
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await expect(handle).toBeVisible();
+  await expect.poll(() => panel.evaluate(el => el.getBoundingClientRect().width)).toBe(1240);
+});
+
+for (const theme of ['light', 'dark']) test(`repository region grouping and panel colors match in ${theme}`, async ({ page }) => {
+  await page.emulateMedia({ colorScheme: theme });
+  await page.goto(pathToFileURL(resolve('../../docs/dev-agents/diagram/diagram.html')).href);
+  const workflow = JSON.parse(await readFile(resolve('../../docs/dev-agents/diagram/workflow.json'), 'utf8'));
+  const regions = page.locator('.wd-region');
+  await expect(regions).toHaveCount(4);
+  const colors = [];
+  for (const lane of workflow.lanes) {
+    const region = page.locator(`.wd-region[data-lane="${lane.id}"]`), box = await region.boundingBox();
+    const style = await region.evaluate(el => ({ border: getComputedStyle(el).borderTopColor, fill: getComputedStyle(el).backgroundColor }));
+    colors.push(style.border.match(/\d+/g).map(Number));
+    expect(style.fill).not.toBe('rgba(0, 0, 0, 0)');
+    for (const node of workflow.nodes.filter(node => node.lane === lane.id)) {
+      const bounds = await card(page, node.id).boundingBox();
+      expect(bounds.x).toBeGreaterThan(box.x); expect(bounds.y).toBeGreaterThan(box.y);
+      expect(bounds.x + bounds.width).toBeLessThan(box.x + box.width);
+      expect(bounds.y + bounds.height).toBeLessThan(box.y + box.height);
+    }
+  }
+  expect(new Set(colors.map(color => color.join(','))).size).toBe(workflow.lanes.length);
+  const coordination = colors[workflow.lanes.findIndex(lane => lane.id === 'coordination')];
+  const documentation = colors[workflow.lanes.findIndex(lane => lane.id === 'documentation')];
+  expect(Math.hypot(...coordination.map((value, k) => value - documentation[k]))).toBeGreaterThan(100);
+  for (const id of ['setup', 'tracker', 'help', 'skills-release']) {
+    await card(page, id).focus(); await page.keyboard.press('Enter');
+    const laneColor = await card(page, id).evaluate(el => getComputedStyle(el).borderLeftColor);
+    expect(await page.locator('.wd-panel-head').evaluate(el => getComputedStyle(el).borderBottomColor)).toBe(laneColor);
+    expect(await page.locator('.wd-panel .wd-eyebrow').evaluate(el => getComputedStyle(el).color)).toBe(laneColor);
+    const scrim = await page.locator('.wd-backdrop').evaluate(el => getComputedStyle(el).backgroundColor);
+    expect(Number(scrim.match(/[\d.]+/g).at(-1))).toBeCloseTo(theme === 'light' ? .4 : .55, 2);
+    await page.keyboard.press('Escape');
+  }
+});
+
 test('summary-only panel has no empty headings and Unicode URL IDs remain exact', async ({ page }) => {
   await page.goto('/minimal');
   await page.locator('.wd-card').click();
@@ -72,39 +217,62 @@ test('backdrop closes and returns focus without selecting another node', async (
   await expect(page.getByRole('dialog')).toBeHidden(); await expect(card(page, 'source')).toBeFocused();
 });
 
-for (const fitted of [true, false]) test(`closing after node navigation restores the ${fitted ? 'fitted' : 'manual'} view and visible focus`, async ({ page }) => {
+for (const fitted of [true, false]) test(`closing after navigation keeps the current card position and zoom from a ${fitted ? 'fitted' : 'manual'} view`, async ({ page }) => {
   await page.goto('/branching');
-  if (!fitted) {
-    await page.getByRole('button', { name: 'Zoom out', exact: true }).click();
-    const box = await page.locator('.wd-viewport').boundingBox();
-    await page.mouse.move(box.x + 20, box.y + 20); await page.mouse.down();
-    await page.mouse.move(box.x + 60, box.y + 40, { steps: 8 }); await page.mouse.up();
-  }
-  const before = await transform(page);
+  if (!fitted) await page.getByRole('button', { name: 'Zoom out', exact: true }).click();
   for (const method of ['escape', 'button', 'backdrop']) {
     await card(page, 'source').focus(); await page.keyboard.press('Enter');
     for (let i = 0; i < 4; i++) await page.getByRole('button', { name: 'Next node' }).click();
+    const before = await transform(page);
     if (method === 'escape') await page.keyboard.press('Escape');
     else if (method === 'button') await page.getByRole('button', { name: 'Close details' }).click();
     else await page.locator('.wd-backdrop').click({ position: { x: 10, y: 10 } });
     await expect(page.getByRole('dialog')).toBeHidden();
-    await expect(card(page, 'source')).toBeFocused();
-    // IntersectionObserver can round a fully visible, scaled card just below 1.
-    await expect(card(page, 'source')).toBeInViewport({ ratio: .9999 });
+    await expect(card(page, 'note')).toBeFocused();
+    await expect(card(page, 'note')).toBeInViewport({ ratio: .9999 });
     expect(await transform(page)).toEqual(before);
   }
-  if (fitted) {
-    await card(page, 'source').click();
-    await page.getByRole('button', { name: 'Next node' }).click();
-    await page.setViewportSize({ width: 390, height: 844 });
-    await page.keyboard.press('Escape');
-    await expect(card(page, 'source')).toBeFocused();
-    for (const node of await page.locator('.wd-card').all()) await expect(node).toBeInViewport({ ratio: .9999 });
-    const resized = await transform(page);
-    await page.getByRole('button', { name: 'Reset view' }).click();
-    expect(await transform(page)).toEqual(resized);
-  }
+  await card(page, 'source').focus(); await page.keyboard.press('Enter');
+  await page.setViewportSize({ width: 390, height: 844 });
+  await expect.poll(() => page.getByRole('dialog').evaluate(el => el.getBoundingClientRect().width)).toBe(390);
+  const before = await transform(page);
+  await page.keyboard.press('Escape');
+  await expect(card(page, 'source')).toBeFocused();
+  expect((await transform(page)).scale).toBe(before.scale);
 });
+
+for (const url of ['/', pathToFileURL(resolve('../../docs/dev-agents/diagram/diagram.html')).href]) {
+  test(`opening and navigating details only pans at the existing zoom: ${url}`, async ({ page }) => {
+    for (const manualZoom of [false, true]) {
+      await page.goto(url);
+      if (manualZoom) for (let i = 0; i < 3; i++) await page.getByRole('button', { name: 'Zoom in', exact: true }).click();
+      const node = page.locator('.wd-card').first(), before = await transform(page), initialBox = await node.boundingBox();
+      await node.evaluate(el => el.focus({ preventScroll: true })); await page.keyboard.press('Enter');
+      const check = async target => {
+        expect((await transform(page)).scale).toBe(before.scale);
+        const box = await target.boundingBox();
+        expect(box.width).toBeCloseTo(initialBox.width, 3); expect(box.height).toBeCloseTo(initialBox.height, 3);
+        await expect.poll(() => target.evaluate(el => {
+          const root = el.getRootNode(), box = el.getBoundingClientRect();
+          const vp = root.querySelector('.wd-viewport').getBoundingClientRect(), panel = root.querySelector('.wd-panel').getBoundingClientRect();
+          const sheet = panel.width >= vp.width - 1;
+          return Math.max(Math.abs(box.x + box.width / 2 - (vp.x + (sheet ? vp.right : panel.x)) / 2),
+            Math.abs(box.y + box.height / 2 - (vp.y + (sheet ? panel.y : vp.bottom)) / 2));
+        })).toBeLessThan(.05);
+      };
+      await check(node);
+      await page.getByRole('button', { name: 'Next node' }).click();
+      const next = page.locator('.wd-card').nth(1); await check(next);
+      await page.getByRole('separator', { name: 'Resize details panel' }).focus(); await page.keyboard.press('End');
+      await expect.poll(() => page.getByRole('dialog').evaluate(el => el.getBoundingClientRect().width)).toBe(1240);
+      await check(next);
+      await page.setViewportSize({ width: 390, height: 844 });
+      await expect.poll(() => page.getByRole('dialog').evaluate(el => el.getBoundingClientRect().width)).toBe(390);
+      await check(next);
+      await page.setViewportSize({ width: 1440, height: 900 });
+    }
+  });
+}
 
 test('mouse pans, small movement remains a click, wheel retains its zoom anchor, reset fits', async ({ page }) => {
   await open(page);
@@ -195,14 +363,14 @@ for (const [name, width, height] of [['desktop', 1440, 900], ['tablet', 768, 102
       await page.screenshot({ path: `docs/screenshots/${name}-${theme}.png` });
       await card(page, 'source').click();
       const panel = await page.getByRole('dialog').boundingBox(), box = await card(page, 'source').boundingBox();
-      expect(box.width).toBeGreaterThan(160); expect(box.x).toBeGreaterThanOrEqual(vp.x);
+      expect(box.width).toBeGreaterThan(0); expect(box.x).toBeGreaterThanOrEqual(vp.x);
       expect(box.y).toBeGreaterThanOrEqual(vp.y);
       if (width < 780) {
         expect(panel.height).toBeLessThanOrEqual(vp.height * .65 + 1);
         expect(box.y + box.height).toBeLessThanOrEqual(panel.y + 1);
         expect(box.x + box.width).toBeLessThanOrEqual(vp.x + vp.width);
       } else {
-        expect(panel.width).toBe(360); expect(box.x + box.width).toBeLessThanOrEqual(panel.x);
+        expect(panel.width).toBe(width / 2); expect(box.x + box.width).toBeLessThanOrEqual(panel.x);
       }
       await expect(page.getByRole('button', { name: 'Close details' })).toBeInViewport();
       await expect(page.getByRole('button', { name: 'Next node' })).toBeInViewport();

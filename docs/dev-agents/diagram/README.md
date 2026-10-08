@@ -1,9 +1,22 @@
-# Shipped skills workflow
+# wkc skills workflow
 
 Open [diagram.html](diagram.html) in a browser, including directly from disk without networking.
-The map contains the three shipped definitions in this repository: `wkc-setup`, `wkc-tracker`, and
-`wkc-workflow-diagram`. Planned skills are excluded. `wkc-setup` writes the config that `wkc-tracker` requires.
-`wkc-workflow-diagram` supports projects without setup or config, so it remains independent.
+Drag the details panel's left edge to resize it on desktop. Focus the edge to use Left/Right, Home, or End.
+The panel starts at half the canvas width and uses the selected region's colors. Its backdrop darkens the main canvas.
+Width stays between 280 pixels and the canvas width minus 200 pixels. It persists through node navigation and reopening until reload.
+Narrow layouts keep the full-width bottom sheet.
+The default zoom is 70%, or smaller when needed to fit. Selection centers the card in available space at the current zoom.
+Closing slides the panel away without changing card positions or zoom.
+Tinted boxes group Configuration, Coordination, Documentation, and Independent cards. Purple, green, amber, and gray distinguish those regions in both themes.
+The map contains all five shipped definitions in this repository: `wkc-setup`, `wkc-tracker`,
+`wkc-workflow-diagram`, `wkc-help`, and internal `wkc-skills-release`. Planned skills are excluded.
+Every card is a skill. External systems, outputs, and results appear in the owning skill's details.
+The four system cards and their six action arrows are removed at the user's direction.
+No skill-to-skill runtime action is established by these definitions, so the current map has no arrows.
+The configured backend and prerequisite remain in tracker details. Help's installer operations remain conditional on a person's request.
+Future arrows default to workflow actions and runtime interactions between skills, following the meaning requested from `.local/architecture.excalidraw`.
+They do not show prerequisites or automatic skill invocation. The sketch supplies no planned skills or obsolete distribution details.
+`wkc-skills-release` publishes this collection without setup or project configuration.
 
 ## Sources and ownership
 
@@ -12,10 +25,16 @@ The map contains the three shipped definitions in this repository: `wkc-setup`, 
 | wkc-setup | [skills/wkc-setup/SKILL.md](../../../skills/wkc-setup/SKILL.md) | Interview, configuration, scaffolding, and tracker initialization |
 | wkc-tracker | [skills/wkc-tracker/SKILL.md](../../../skills/wkc-tracker/SKILL.md) | Reads the backend from setup's config; manages tickets in seven statuses |
 | wkc-workflow-diagram | [skills/wkc-workflow-diagram/SKILL.md](../../../skills/wkc-workflow-diagram/SKILL.md) | Read definitions and update offline diagrams without executing the skills |
+| wkc-help | [skills/wkc-help/SKILL.md](../../../skills/wkc-help/SKILL.md) | Answers from installed definitions; gives installer commands and runs changes only on a person's request |
+| wkc-skills-release | [skills/wkc-skills-release/SKILL.md](../../../skills/wkc-skills-release/SKILL.md) | Internal maintainer skill; clean synchronized main and authenticated GitHub access; merged collection publication without setup |
+
+Setup and diagram file outputs are described in their own cards. Setup's label creation and tracker's GitHub Issues operations use
+[docs/dev-agents/config.md](../config.md) as backend evidence. Help's card describes the installer; the release card describes tags and GitHub Releases.
+Links from the removed system cards remain available through their owning skill cards or the definitions linked above.
 
 Inputs are [workflow.json](workflow.json) and [layout.json](layout.json).
 All positions and content are authored data; HTML is generated.
-The generator version is **0.0.11**, recorded in the installed skill's `assets/manifest.json`.
+The generator version is **0.0.15**, recorded in the installed skill's `assets/manifest.json`.
 The renderer source and maintainer build are in `tools/workflow-diagram/`; the skill ships generated assets.
 
 Documentation base:
@@ -47,10 +66,16 @@ Do not edit diagram.html directly. Keep temporary artifacts in the ignored `.cac
 | --- | --- | --- |
 | Desktop overview | [Image](screenshots/desktop-light.png) | [Image](screenshots/desktop-dark.png) |
 | Desktop details | [Image](screenshots/desktop-light-details.png) | [Image](screenshots/desktop-dark-details.png) |
+| Desktop help details | [Image](screenshots/desktop-light-help-details.png) | [Image](screenshots/desktop-dark-help-details.png) |
 | Tablet overview | [Image](screenshots/tablet-light.png) | [Image](screenshots/tablet-dark.png) |
 | Tablet details | [Image](screenshots/tablet-light-details.png) | [Image](screenshots/tablet-dark-details.png) |
+| Tablet help details | [Image](screenshots/tablet-light-help-details.png) | [Image](screenshots/tablet-dark-help-details.png) |
 | Phone overview | [Image](screenshots/phone-light.png) | [Image](screenshots/phone-dark.png) |
 | Phone details | [Image](screenshots/phone-light-details.png) | [Image](screenshots/phone-dark-details.png) |
+| Phone help details | [Image](screenshots/phone-light-help-details.png) | [Image](screenshots/phone-dark-help-details.png) |
+
+The current details screenshots select `wkc-skills-release`; the help screenshots select `wkc-help`.
+The dated results below describe earlier versions of the map.
 
 On 2026-09-24, Chromium loaded the three-node HTML offline at 1440 × 900, 768 × 1024, and
 390 × 844 in both themes. All 12 screenshots were regenerated. Assertions checked fitted card
@@ -59,6 +84,94 @@ Desktop light overview and phone dark details screenshots were visually inspecte
 The phone sheet scrolls independently; commands below the fold remain reachable.
 
 ## Implementation verification
+
+### Skill cards only, 2026-10-07
+
+The user superseded the auxiliary-system design: every card must represent a skill, with systems and results inside its notes.
+The map now has exactly five shipped skill cards and no edges. Four system cards, six edges, and their positions/routes were removed.
+Actions moved into the owning skill details: setup files and labels, tracker tickets, diagram files, help installer operations, and release tags/releases.
+The five skill IDs, labels, summaries, commands, When text, lanes, and coordinates remain unchanged. Existing links remain; relevant system links were added.
+Source contracts are listed above; source definitions establish no runtime skill-to-skill actions here. No invocation edges were invented.
+The authoring source, examples, root docs, and public runbook now require skill cards only while preserving legacy authored cards until conversion is directed.
+Repository version stays **0.0.16** under the one-version-per-PR rule; renderer/helper/schema remain unchanged at generator **0.0.11**.
+
+Selected focused checks used Node **v24.11.1** and Chrome **154.0.8037.98** in the current session, without additional AI sessions or backend writes.
+Scope, authorized removals, skill-field preservation, and unchanged positions passed direct comparisons against the pre-conversion JSON.
+Repository check/build and both complete README examples passed without warnings; example inputs remained unchanged and repeated builds were identical.
+Offline `file://` browser checks passed at 1440 × 900, 768 × 1024, and 390 × 844 in both themes, with five cards and zero edges.
+All 18 screenshots were refreshed. Assertions checked card bounds, overlap, selected help/release panels, keyboard selection, focus return, and links.
+All five panels expose their skill notes. No page exceptions or HTTP requests occurred. Preview and Chrome stopped; neither endpoint answered afterward.
+Visual inspection sampled desktop light, tablet dark, phone light, desktop light release details, phone dark release details, and phone light help details.
+Physical touch, screen readers, other browsers, command copying, and model instruction following were not rerun for this change.
+Raw evidence is in the ignored diagram `.cache/skill-only/` directory. Earlier records below describe preceding versions of the map.
+
+### Release card correction, 2026-10-07
+
+Review found that the release card incorrectly limited installation to an exact name.
+The [release README](../../../skills/wkc-skills-release/README.md) also documents bulk installation with `INSTALL_INTERNAL_SKILLS=1`.
+The card now says "excluded from ordinary bulk installation". Only that body text and generated HTML changed in the map.
+Check/build passed without warnings. All other authored content, layout, and screenshots remain unchanged.
+No browser checks were rerun. Existing release details screenshots retain the earlier wording.
+
+### Workflow actions, 2026-10-07
+
+The user selected workflow actions instead of prerequisite arrows after inspection of `.local/architecture.excalidraw`.
+That sketch supplies arrow meaning only. No planned skills or obsolete distribution details were copied.
+Sources remain at `5802c662ed9ab3d918e315e86b8eb939651c53db`; all definitions and config were readable.
+All five skill cards and their coordinates remain unchanged. The subtitle now states the arrow meaning.
+Removed `configured-backend` and its route. Added four system nodes and six routed action edges:
+
+| Action | Source evidence |
+| --- | --- |
+| setup → Project files: Configures | Setup sections 3 and 4 scaffold files and add the context reference |
+| setup → GitHub Issues: Creates labels | Setup section 5 creates missing open-status labels for the GitHub backend |
+| workflow-diagram → Project files: Builds map | Diagram output and sections 2–5 write diagram files |
+| tracker → GitHub Issues: Reads / writes | Tracker contract and verbs manage tickets in the configured backend |
+| help → Skills installer: Runs on request | Help section 5 runs installer commands only at a person's request |
+| skills-release → Collection on GitHub: Publishes | Release section 5 publishes and verifies collection tags and releases |
+
+Selected direct checks covered arrow semantics, scope, preservation, route geometry, offline rendering,
+details relationships, keyboard navigation, command copying, simulated touch, and preview cleanup.
+Generator **0.0.11**, Node **v24.11.1**, and Chrome **154.0.8037.98** were used without other AI sessions or backend writes.
+Check/build passed without warnings. Sampled routes avoid cards and each other.
+All 18 screenshots were regenerated and visually reviewed at 1440 × 900, 768 × 1024, and 390 × 844 in both themes.
+Fitted cards and labels do not overlap. Selected cards, panels, and controls fit.
+Offline `file://` checks made no HTTP requests and produced no page exceptions.
+Keyboard checks passed for both new skills in all six combinations and all nine panels at desktop and phone sizes.
+Every panel lists exactly its incident actions. Escape restores focus and the previous fitted view.
+All four help/release commands copied exactly; Previous/Next and reachable phone links passed.
+Simulated touch pan, pinch, cancellation, and both new skill taps passed.
+SIGTERM stopped preview and Chrome by their recorded process IDs; neither endpoint answered afterward.
+Physical touch, screen readers, Safari, and Firefox are SKIP because they were not used.
+No source conflicts or unreadable sources remain. Earlier results below describe the preceding maps.
+
+### Five shipped skills, 2026-10-07
+
+Sources were read at repository commit `5802c662ed9ab3d918e315e86b8eb939651c53db`.
+All five source definitions were readable and matched the contracts recorded above.
+Added `help` at (400, 360) and `skills-release` at (800, 360), without adding relationships.
+No existing node, text, lane, position, edge, or route changed. No nodes or edges were removed.
+No source conflicts or unreadable definitions remain. Planned skills are excluded.
+Generator **0.0.11** rebuilt the HTML; Node **v24.11.1** and Chrome **154.0.8037.98** performed direct checks.
+
+Selected coverage: authored-data preservation, shipped-skill scope, helper check/build,
+offline rendering, preview lifecycle, visual layout, and interactions for the added nodes.
+These are focused diagram checks in the current Codex session, without backend access or other AI sessions.
+
+| Check | Result | Independent evidence |
+| --- | --- | --- |
+| Scope and preservation | PASS | Compared node labels with all source `skills/*/SKILL.md` paths; deep comparisons preserved every original node and all existing workflow fields, positions, and routes |
+| Helper check/build | PASS | Documented commands passed with the main documentation base and no warnings |
+| Offline rendering | PASS | `file://` loaded with networking disabled in all six viewport/theme combinations; only the HTML file was requested; no page exceptions occurred |
+| Layout and visual review | PASS | Reviewed all 18 screenshots at 1440 × 900, 768 × 1024, and 390 × 844 in light and dark themes; fitted cards and the edge label do not overlap; selected cards, panels, and controls fit |
+| Keyboard and navigation | PASS | Enter opens both added nodes; Tab remains in details; Escape restores visible focus and fitted coordinates; Previous/Next reaches both disconnected nodes |
+| Commands and links | PASS | All four added command buttons copied their exact text to the clipboard through preview; documentation links resolve against the main base; phone panel links remain reachable by scrolling |
+| Simulated touch | PASS | Chrome touch events exercised pan, pinch, cancellation, and taps on both added cards |
+| Preview and browser cleanup | PASS | Preview answered before inspection; SIGTERM stopped both recorded process IDs; neither loopback endpoint answered afterward |
+| Physical touch, screen readers, Safari, Firefox | SKIP | No physical device, screen reader, or additional browser was used |
+
+Twelve existing screenshots were regenerated and six help screenshots were added.
+Historical verification notes below are retained. They are not new evidence for this update.
 
 The [public runbook](../../../validation/wkc-workflow-diagram.md) defines the cases. Results below separate
 renderer checks, installed-helper checks, and agent behavior. Raw evidence stays in the ignored
@@ -216,3 +329,44 @@ never exited on the test machine, so a watchdog stopped it after 15 seconds duri
 
 Earlier results from 2026-09-21 and 2026-09-24 are in this file's history. The original ignored MVP
 was left unchanged during migration.
+
+## Region styling and selection context, 2026-10-07
+
+Generator **0.0.13** implements the half-width desktop panel, lane accents, dark backdrop, and retained selection context.
+The local `agent-toolkit/plugins/dev/diagram/README.md` and generated reference informed sizing, region boxes, colors, and source ownership.
+This map uses its own canonical renderer under `tools/workflow-diagram/src/`; generated HTML is rebuilt from its authored JSON and shipped assets.
+
+Four tinted boxes enclose all five cards without moving them. The release card belongs to the neutral Independent region.
+Documentation changes from teal to amber to distinguish it from green Coordination.
+Selecting a disconnected card includes its nearest neighbor. Connected diagrams include direct neighbors and their routes.
+Opening never increases zoom. Closing centers and focuses the current card while keeping its zoom.
+This supersedes the older restoration checks recorded above.
+
+`npm run check` passed 76 unit/package checks and 38 browser tests. Final region changes passed two focused browser tests.
+The repository helper check and byte-identical rebuild passed. All 18 screenshots were regenerated at the three documented sizes in both themes.
+Sampled visual review covered desktop light/dark help details, tablet light overview and dark help details, and phone light help details and dark release details.
+Offline visual checks reported no HTTP requests, page exceptions, or page overflow.
+Raw evidence remains in ignored `.cache/context-visual-results.json`; the focused report is in `validation/wkc-workflow-diagram.md`.
+
+## Sliding close and concise header, 2026-10-07
+
+Generator **0.0.14** uses the title `wkc skills` without the former subtitle or generated node-count line.
+The initial fitted view defaults to 70% zoom, or smaller when needed to fit the map. Help details open at the same 70% on desktop.
+Closing leaves the canvas transform unchanged and returns focus to the current card. This supersedes the earlier centering contract.
+The desktop panel slides right and the mobile sheet slides down over 240ms while the backdrop fades.
+Closed controls become inert immediately. Reduced motion skips the slide, and reopening cancels a pending close.
+
+The maintainer check passes 77 unit/package checks and 42 browser tests. Focused animation checks also passed.
+Offline visual checks cover all three documented sizes in both themes; all 18 screenshots were refreshed.
+Desktop light overview and dark help details were visually inspected. No HTTP requests, page exceptions, or page overflow occurred.
+Raw evidence remains in ignored `.cache/context-visual-results.json` and `/tmp/diagram-slide-visual.log`.
+
+## Pan-only selection, 2026-10-07
+
+Generator **0.0.15** removes neighbor fitting at the user's direction. Opening only centers the selected card in the available canvas space.
+The current zoom and card dimensions stay unchanged through selection, navigation, panel resizing, and viewport changes.
+Closing still slides details away without changing the canvas transform. This supersedes the neighbor-visibility guarantee recorded above.
+
+The maintainer check passes 77 unit/package checks and 43 browser tests. Connected preview and disconnected offline fixtures cover fitted and manual zoom.
+All 18 screenshots were refreshed at three sizes in both themes. Visual checks report no HTTP requests, page exceptions, or page overflow.
+Evidence remains in ignored `.cache/pan-only-visual-results.json` and `/tmp/diagram-pan-only-check-final.log`.

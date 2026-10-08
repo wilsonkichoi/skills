@@ -21,8 +21,46 @@ export function mountDiagram(container, { workflow: inputWorkflow, layout: input
   const media = matchMedia('(prefers-color-scheme: dark)');
   const bounds = canvasBounds(workflow, layout);
   let view = { x: 0, y: 0, scale: 1 }, selected = null, lane = null, hovered = null, focused = null;
-  let destroyed = false, fitted = true, returnFocus = null, returnView = null;
+  let destroyed = false, fitted = true;
+  let panelDrag = null;
+  let closeAnimations = [];
+  function cancelCloseAnimations() {
+    for (const animation of closeAnimations) animation.cancel();
+    closeAnimations = [];
+  }
   function listen(el, type, listener) { el.addEventListener(type, listener, { signal }); }
+  const maximumPanelWidth = () => Math.max(280, ui.stage.clientWidth - 200);
+  function updatePanelResize() {
+    ui.resizeHandle.setAttribute('aria-valuemin', '280');
+    ui.resizeHandle.setAttribute('aria-valuemax', String(Math.floor(maximumPanelWidth())));
+    ui.resizeHandle.setAttribute('aria-valuenow', String(Math.round(ui.panel.getBoundingClientRect().width)));
+  }
+  function setPanelWidth(width) {
+    ui.panel.style.setProperty('--panel-width', `${Math.max(280, Math.min(maximumPanelWidth(), width))}px`);
+    updatePanelResize();
+  }
+  function stopPanelResize() {
+    if (!panelDrag) return;
+    const { pointerId } = panelDrag; panelDrag = null;
+    if (ui.resizeHandle.hasPointerCapture(pointerId)) ui.resizeHandle.releasePointerCapture(pointerId);
+  }
+  listen(ui.resizeHandle, 'pointerdown', event => {
+    if (event.button !== 0 || !event.isPrimary) return;
+    event.preventDefault();
+    ui.resizeHandle.focus({ preventScroll: true });
+    panelDrag = { pointerId: event.pointerId, x: event.clientX, width: ui.panel.getBoundingClientRect().width };
+    ui.resizeHandle.setPointerCapture(event.pointerId);
+  });
+  listen(ui.resizeHandle, 'pointermove', event => {
+    if (panelDrag?.pointerId === event.pointerId) setPanelWidth(panelDrag.width + panelDrag.x - event.clientX);
+  });
+  for (const type of ['pointerup', 'pointercancel', 'lostpointercapture']) listen(ui.resizeHandle, type, stopPanelResize);
+  listen(ui.resizeHandle, 'keydown', event => {
+    const width = ui.panel.getBoundingClientRect().width;
+    const widths = { ArrowLeft: width + 20, ArrowRight: width - 20, Home: 280, End: maximumPanelWidth() };
+    if (!(event.key in widths)) return;
+    event.preventDefault(); setPanelWidth(widths[event.key]);
+  });
   function setView(next) {
     if (destroyed) return;
     view = next;
@@ -43,8 +81,7 @@ export function mountDiagram(container, { workflow: inputWorkflow, layout: input
     const bottomSheet = panel.width >= vp.width - 1;
     const width = Math.max(1, bottomSheet ? vp.width : panel.left - vp.left);
     const height = Math.max(1, bottomSheet ? panel.top - vp.top : vp.height);
-    const scale = Math.max(.05, Math.min(1, (width - 32) / CARD.width, (height - 32) / CARD.height));
-    const p = layout.nodes[selected];
+    const p = layout.nodes[selected], scale = view.scale;
     setView({ scale, x: width / 2 - (p.x + CARD.width / 2) * scale, y: height / 2 - (p.y + CARD.height / 2) * scale });
   }
   function emphasize() {
@@ -89,12 +126,11 @@ export function mountDiagram(container, { workflow: inputWorkflow, layout: input
     const node = workflow.nodes.find(n => n.id === nodeId);
     if (!node) throw new Error(`Unknown node ID: ${JSON.stringify(nodeId)}`);
     if (selected === nodeId) return;
-    if (selected === null) {
-      returnFocus = shadow.activeElement ?? ui.cards.get(nodeId);
-      returnView = { view, fitted };
-    }
+    stopPanelResize();
+    cancelCloseAnimations();
     selected = nodeId; fitted = false; hovered = null;
     ui.panel.hidden = false; ui.backdrop.hidden = false;
+    ui.panel.inert = false; ui.panel.removeAttribute('aria-hidden'); delete ui.backdrop.dataset.closing;
     ui.header.inert = true; ui.viewport.inert = true; ui.footer.inert = true;
     const controls = renderDetails(ui.panel, node, workflow, id, copy);
     const index = workflow.nodes.indexOf(node);
@@ -102,18 +138,26 @@ export function mountDiagram(container, { workflow: inputWorkflow, layout: input
     controls.close.addEventListener('click', close);
     controls.previous.addEventListener('click', () => select(workflow.nodes[index - 1].id));
     controls.next.addEventListener('click', () => select(workflow.nodes[index + 1].id));
-    emphasize(); centerSelected(); controls.close.focus({ preventScroll: true }); notifySelection();
+    updatePanelResize(); emphasize(); centerSelected(); controls.close.focus({ preventScroll: true }); notifySelection();
   }
   function close() {
     if (selected === null || destroyed) return;
-    const last = selected; selected = null;
-    ui.panel.hidden = true; ui.backdrop.hidden = true;
+    stopPanelResize();
+    const last = selected; selected = null; fitted = false;
+    ui.panel.inert = true; ui.panel.setAttribute('aria-hidden', 'true'); ui.backdrop.dataset.closing = 'true';
+    const bottomSheet = ui.panel.getBoundingClientRect().width >= ui.viewport.clientWidth - 1;
+    const options = { duration: matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : 240,
+      easing: 'cubic-bezier(.22,.72,.16,1)', fill: 'forwards' };
+    const slide = ui.panel.animate([{ transform: 'translate(0, 0)' },
+      { transform: bottomSheet ? 'translateY(103%)' : 'translateX(103%)' }], options);
+    closeAnimations = [slide, ui.backdrop.animate([{ opacity: 1 }, { opacity: 0 }], options)];
+    slide.onfinish = () => {
+      if (destroyed || selected !== null || closeAnimations[0] !== slide) return;
+      ui.panel.hidden = true; ui.backdrop.hidden = true; cancelCloseAnimations();
+    };
     ui.header.inert = false; ui.viewport.inert = false; ui.footer.inert = false;
-    fitted = returnView.fitted;
-    if (fitted) resetView(); else setView(returnView.view);
-    returnView = null;
-    (returnFocus?.isConnected ? returnFocus : ui.cards.get(last)).focus({ preventScroll: true });
-    returnFocus = null; emphasize(); notifySelection();
+    ui.cards.get(last).focus({ preventScroll: true });
+    emphasize(); notifySelection();
   }
   function applyTheme() {
     ui.root.dataset.theme = theme === 'auto' ? (media.matches ? 'dark' : 'light') : theme;
@@ -140,7 +184,7 @@ export function mountDiagram(container, { workflow: inputWorkflow, layout: input
   listen(ui.panel, 'keydown', event => {
     if (event.key === 'Escape') { event.preventDefault(); event.stopPropagation(); close(); }
     if (event.key === 'Tab') {
-      const targets = [...ui.panel.querySelectorAll('button:not(:disabled), a[href], [tabindex="0"]')];
+      const targets = [...ui.panel.querySelectorAll('button:not(:disabled), a[href], [tabindex="0"]')].filter(el => el.getClientRects().length);
       const first = targets[0], last = targets.at(-1), active = shadow.activeElement;
       if (event.shiftKey && (active === first || !targets.includes(active))) { event.preventDefault(); last.focus(); }
       if (!event.shiftKey && (active === last || !targets.includes(active))) { event.preventDefault(); first.focus(); }
@@ -150,6 +194,7 @@ export function mountDiagram(container, { workflow: inputWorkflow, layout: input
   bindViewport(ui.viewport, { getView: () => view, setView, getMinimumScale: minimumScale, onIntent: () => { fitted = false; } }, signal);
   const resize = new ResizeObserver(() => {
     if (destroyed) return;
+    updatePanelResize();
     if (selected !== null) centerSelected(); else if (fitted) resetView();
   });
   resize.observe(ui.stage); resize.observe(ui.panel);
@@ -159,7 +204,7 @@ export function mountDiagram(container, { workflow: inputWorkflow, layout: input
     destroy() {
       if (destroyed) return;
       const hadFocus = shadow.activeElement !== null;
-      destroyed = true; abort.abort(); resize.disconnect(); host.remove(); mounts.delete(container);
+      destroyed = true; cancelCloseAnimations(); abort.abort(); resize.disconnect(); host.remove(); mounts.delete(container);
       if (hadFocus && container.isConnected) container.focus({ preventScroll: true });
     },
   };

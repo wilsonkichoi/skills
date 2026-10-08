@@ -71,7 +71,16 @@ The formal contracts are [workflow.schema.json](assets/workflow.schema.json) and
 A workflow needs a nonblank `title`, a nonempty `nodes` array, and an `edges` array. `subtitle` and
 `lanes` are optional. Array order sets the Previous/Next order and the lane chip order.
 
-This is a complete `workflow.json` with two nodes and one edge. Its matching `layout.json` is in the next section.
+Arrows default to workflow actions and runtime interactions. Point them from actor to target and use concise verb labels.
+Every new card represents a shipped skill. Put external systems, outputs, results, and notes in its summary or details.
+Draw action arrows only between skills when source definitions establish the action. Otherwise leave the skills disconnected.
+Keep prerequisites and configuration dependencies in node details. Shared config, installation, and directory order do not imply skill invocation.
+Include only shipped skills in the selected scope; internal shipped skills are eligible when requested.
+Preserve existing authored text, edge meaning, and geometry during updates. Report conflicts instead of silently changing or removing edges.
+Record arrow meaning and source evidence in the project README. An explicit request can select another meaning, including artifact dataflow.
+
+This complete example assumes a project ships `collect` and `publish`, and `collect` explicitly requests a report from `publish`.
+Outputs and prerequisites stay in skill details. Its matching `layout.json` is in the next section.
 
 ```json
 {
@@ -81,23 +90,31 @@ This is a complete `workflow.json` with two nodes and one edge. Its matching `la
     {
       "id": "collect",
       "label": "Collect",
-      "summary": "Collect information and write notes.md."
+      "summary": "Collect information and request a report.",
+      "details": {
+        "body": "Outputs notes.md and requests publish to write a report."
+      }
     },
     {
       "id": "publish",
       "label": "Publish",
-      "summary": "Read notes.md and write report.md."
+      "summary": "Read notes and write a report.",
+      "details": {
+        "body": "Requires notes.md; outputs report.md."
+      }
     }
   ],
   "edges": [
-    { "id": "collect-publish", "from": "collect", "to": "publish", "label": "notes.md" }
+    { "id": "collect-publish", "from": "collect", "to": "publish", "label": "Requests report" }
   ]
 }
 ```
 
 A node needs `id`, `label`, and `summary`. IDs must be unique and may contain any characters.
-`kind` is `skill` by default. `mode`, `artifact`, and `system` nodes are auxiliary: they draw with a
-dashed border and a kind badge. A node without `lane` uses neutral styling.
+`kind` is `skill` by default. Author skill cards only; omit `kind` or set it to `skill`.
+The existing schema also accepts legacy `mode`, `artifact`, and `system` nodes with dashed borders and kind badges.
+Do not create those cards. Preserve existing authored ones until the user directs a conversion to skill notes.
+A node without `lane` uses neutral styling.
 
 The following example is one node object inside `workflow.json.nodes`, not a complete file.
 
@@ -194,6 +211,47 @@ Vertical edge, from a card at `(0, 320)` up to a card at `(0, 0)`:
 
 The fitted view includes curve control points, so it can leave more margin than the visible curve
 needs.
+
+## Explicit artifact dataflow
+
+When the user requests artifact dataflow, arrows can show a produced artifact moving to its consumer.
+For definitions where `collect` writes `notes.md` and `publish` reads it, this arrow labels the artifact.
+It does not claim that `collect` invokes `publish`. The following two files form a complete, matching example.
+Keep an existing diagram with this meaning during updates unless the user requests a change.
+
+`workflow.json`:
+
+```json
+{
+  "schemaVersion": 1,
+  "title": "Artifact dataflow",
+  "nodes": [
+    { "id": "collect", "label": "Collect", "summary": "Collect information and write notes.md." },
+    { "id": "publish", "label": "Publish", "summary": "Read notes.md and write report.md." }
+  ],
+  "edges": [
+    { "id": "collect-publish", "from": "collect", "to": "publish", "label": "notes.md" }
+  ]
+}
+```
+
+`layout.json`:
+
+```json
+{
+  "schemaVersion": 1,
+  "nodes": {
+    "collect": { "x": 0, "y": 0 },
+    "publish": { "x": 480, "y": 0 }
+  },
+  "edges": {
+    "collect-publish": {
+      "start": [240, 80],
+      "segments": [[320, 80, 400, 80, 480, 80]]
+    }
+  }
+}
+```
 
 ## Package
 

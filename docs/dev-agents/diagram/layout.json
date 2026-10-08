@@ -12,13 +12,45 @@
     "workflow-diagram": {
       "x": 400,
       "y": 0
+    },
+    "help": {
+      "x": 400,
+      "y": 360
+    },
+    "skills-release": {
+      "x": 800,
+      "y": 360
     }
   },
-  "edges": {
-    "configured-backend": {
-      "start": [120, 160],
-      "segments": [[120, 230, 120, 290, 120, 360]],
-      "labelOffset": [65, 0]
+  "edges": {},
+  "regions": [
+    {
+      "lane": "configuration",
+      "x": -24,
+      "y": -52,
+      "width": 288,
+      "height": 236
+    },
+    {
+      "lane": "coordination",
+      "x": -24,
+      "y": 308,
+      "width": 288,
+      "height": 236
+    },
+    {
+      "lane": "documentation",
+      "x": 376,
+      "y": -52,
+      "width": 288,
+      "height": 596
+    },
+    {
+      "lane": "independent",
+      "x": 776,
+      "y": 308,
+      "width": 288,
+      "height": 236
     }
-  }
+  ]
 }
