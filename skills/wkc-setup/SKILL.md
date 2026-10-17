@@ -94,8 +94,8 @@ Write the resolved `OWNER/REPO`, or the resolved team and project, into the conf
 intention to set one up later.
 
 **Section B: Product-intent documents.** Where the requirements, the spec, and the roadmap live,
-so later skills read the right files. Defaults are `docs/dev-agents/PRD.md`, `SPEC.md`, and
-`ROADMAP.md`. Where `AGENTS.md` or `CLAUDE.md` is already the doc, point the field at it.
+so later skills read the right files. Defaults are `docs/dev-agents/PRD.md`, `docs/dev-agents/SPEC.md`, and
+`docs/dev-agents/ROADMAP.md`. Where `AGENTS.md` or `CLAUDE.md` is already the doc, point the field at it.
 
 **Section C: Context file.** The project's entry point for coding agents. Default `AGENTS.md`,
 or `CLAUDE.md` for a deliberately Claude-Code-only project. A project with a convention keeps it:
