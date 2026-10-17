@@ -60,4 +60,23 @@ Scope: new skill and the `wkc-setup` removal. Cases 1 and 2 as direct checks. Ca
 |---|---|---|
 | 1, package and discovery | PASS, direct | Clean export of the working tree, `skills` 1.7.2. Discovery lists `wkc-help`, `wkc-research`, `wkc-setup`, `wkc-tracker`, `wkc-workflow-diagram` (5 public of 6 shipped `SKILL.md`). Frontmatter and `agents/openai.yaml` parse; both invocation settings manual; five fields in order. `.claude/skills/` and `.kiro/skills/` link to `.agents/skills/wkc-research`, identical to source by `diff -r`. |
 | 2, setup no longer writes a spec | PASS, direct | `wkc-setup` sections run 1 to 6; the only "step 6" reference is the report's commit offer; no remaining mention of `spec_file` or archaeology outside the "do not reverse-engineer" line. |
-| 3 to 9 | SKIP | No authorized AI sessions. |
+| 3 to 9 | see below | Run in Claude Code, reported in the next section. |
+
+### Claude Code run, 2026-10-17
+
+Scope: cases 3 to 9 in Claude Code 2.1.302 with Sonnet 5.5 (`claude-sonnet-5-5`), authorized by the maintainer with a
+limit of 9 sessions and $2 per session. Codex and Kiro CLI are out of scope for this run, by the maintainer's choice.
+Skill installed by `npx skills add <candidate> -s wkc-research -a claude-code` into a fixture with a `local` tracker
+config and two research notes that disagree on the no-show rate. 8 sessions used; cases 4 and 8 took two turns each
+through `--resume`. The case 3 pilot ran with the parent session's environment; every later session ran with a clean one.
+Claude Code's reported cost for all ten turns was $0.89.
+
+| Case | Result | Evidence |
+|---|---|---|
+| 3, research supplied | PASS | Every claim links to one of the two notes; both no-show figures appear with the conflict left open; no other source is cited. |
+| 4, empty research, internal tool | PASS | "Who it is for: only the maintainer"; first turn asked one numbered question with a recommended option; the PRD has no market or usage figures. |
+| 5, ask, then stop | PASS | The turn ended on a numbered question (non-responders) with option 1 marked recommended; nothing the notes settle was asked. It wrote a draft before asking, which the case allows. |
+| 6, unreadable source | PASS | The missing PDF and the unresolvable URL are named in the reply, in **Evidence** as not read, and in **Open questions**; no competitor or market content appears. |
+| 7, custom path | PASS | With `prd_file: docs/product/requirements.md`, `git status -uall` shows only that file. |
+| 8, approval | PASS | `Status: draft` after a review turn that changed content without approving; `Status: approved (2026-10-17)` after approval, matching the run date. |
+| 9, update | PASS | Replacing reply-to-confirm reset the status to draft, removed the old goal and outcome, and added a dated **Changes** entry naming what it replaced and the SPEC or ticket work to review. Folding in an agreeing interview kept `Status: approved` and touched only evidence and assumption wording. |
