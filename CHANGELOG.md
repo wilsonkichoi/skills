@@ -2,6 +2,13 @@
 
 Newest first. Each version is a `## {version} ({ISO 8601 timestamp with local offset})` heading followed by a bullet list of changes.
 
+## 0.0.21 (2026-10-16T22:53:43-07:00)
+
+- Add `wkc-architect`, which writes or updates the SPEC at `spec_file` from an approved PRD and the code the work touches. It shows real alternatives to the user before committing to one, writes an ADR only for a decision that is costly to reverse, and records every other decision as one line in the SPEC. Unknowns that reading cannot settle become spikes for `wkc-plan`, with no experimental code.
+- The SPEC follows the PRD's conventions: a `Status: draft` or `Status: approved (YYYY-MM-DD)` line under the title, current design rewritten in place, and a dated **Changes** entry per update. An update that changes a contract names the open tickets built against it from a `wkc-tracker list`, without editing them.
+- `wkc-architect` writes no ROADMAP, tickets, config, or code. `wkc-plan` owns the ROADMAP. On existing code it records only what the code cannot show for the area being changed: reasons, known debt, and outside contracts.
+- Add the `wkc-architect` runbook, mark it shipped in the `README.md` roster, and add it and `wkc-research` to the uninstall command.
+
 ## 0.0.20 (2026-10-16T22:21:57-07:00)
 
 - `wkc-setup` Section B spells out the full default paths for the spec and roadmap, `docs/dev-agents/SPEC.md` and `docs/dev-agents/ROADMAP.md`, so they are not read as repository-root files. The defaults themselves are unchanged and match `config-template.md`.
