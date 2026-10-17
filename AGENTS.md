@@ -134,6 +134,10 @@ Updates preserve authored content, edge meaning, and layout. A new default alone
 Inputs and outputs between skills stay loose. A skill states what it expects and what it produces,
 but does not reject work over formatting. Following rigid steps for ceremony is not the point.
 
+The lifecycle documents (PRD, SPEC, ROADMAP) are optional, not a pipeline. Each skill uses whatever
+exists, and work that fits the current intent skips the earlier stages: do the work, then update the
+documents it changed. Document outlines are guidance, scaled to the work, not required headings.
+
 A skill that asks the user something ends its turn on the question. Asking and then carrying on
 leaves the harness working, and a working harness cannot take a plain reply. Make the answer cheap
 too: numbered options with the recommended one first, and a digit accepted. Use a harness's own

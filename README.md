@@ -93,7 +93,7 @@ validated before the next starts. See [AGENTS.md](./AGENTS.md) for how a skill i
 | [`wkc-tracker`](./skills/wkc-tracker/SKILL.md) | Read and write issues against GitHub, Linear, or local markdown | shipped |
 | [`wkc-workflow-diagram`](./skills/wkc-workflow-diagram/SKILL.md) | Create and update offline maps of actual project skills | shipped |
 | [`wkc-help`](./skills/wkc-help/SKILL.md) | Answer questions about these skills, and install, pin, update, or remove them | shipped |
-| `wkc-research` | Gather raw material, transcripts, and prior art into notes | planned |
+| [`wkc-research`](./skills/wkc-research/SKILL.md) | Turn research and an interview into the product requirements document (`PRD.md`) | shipped |
 | `wkc-architect` | Turn product intent into `SPEC.md` | planned |
 | `wkc-plan` | Break a spec into milestones and tasks with dependencies | planned |
 | `wkc-create-ticket` | Write one well-formed ticket into the tracker | planned |
