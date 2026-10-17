@@ -76,12 +76,15 @@ Later publication of an older tagged version must not change a correct existing 
 Resolve that release's remote tag to its commit and require it to be a strict ancestor of the target.
 Stop on a missing or conflicting boundary; never silently choose another release.
 
-Parse the target changelog's version lines, preserving their complete text and newest-first order.
+Parse the target changelog's entries, preserving their complete text and newest-first order.
+An entry is a `## {version} ({timestamp})` heading plus its body up to the next entry heading, without trailing blank lines.
+A changelog with no such headings uses the format of `v0.0.17` and earlier: each entry is one `{version} {timestamp} {summary}` line.
 Require unique canonical versions, valid ISO 8601 timestamps with offsets, decreasing versions, and the target entry.
 Require the preceding release's entry when a preceding release exists.
 Select every entry above the boundary and at or below the target, including versions without tags.
 With no preceding release, select all entries at or below the target.
-Write deterministic notes: `## Changes since <preceding-tag>`, one blank line, then the selected lines separated by newlines.
+Write deterministic notes: `## Changes since <preceding-tag>`, one blank line, then the selected entries.
+Demote each entry heading to `###` and separate entries with one blank line. Separate one-line entries with single newlines.
 With no preceding release, use `## Changes (first release)`; an existing release's first-release claim must satisfy the same time check.
 Use a temporary notes file outside the checkout; preserve it for recovery until the result is verified.
 
