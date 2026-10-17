@@ -1,21 +1,148 @@
 # Changelog
 
-Newest first. One line per version: `{version} {ISO 8601 timestamp with local offset} {summary}`
+Newest first. Each version is a `## {version} ({ISO 8601 timestamp with local offset})` heading followed by a bullet list of changes.
 
-0.0.17 2026-10-16T16:17:23-07:00 Apply Anthropic skill authoring best practices: add a Contents list to the four supporting files over 100 lines (wkc-tracker github.md, linear.md, README.md; wkc-workflow-diagram README.md), link wkc-workflow-diagram embed.md directly from SKILL.md, add a when-to-use clause to the wkc-setup description and replace "utilize", remove second person from the wkc-workflow-diagram description, and add an authoring guidance section to skill-template/README.md covering direct links, Contents lists, date-dependent wording, consistent terms, and MCP naming by role.
-0.0.16 2026-10-07T14:53:09-07:00 Update the repository diagram to all five shipped skills, including internal wkc-skills-release, with skill cards only. Move external systems, outputs, and results into the owning skill summaries or details; remove the four system cards and their six action edges and routes while preserving skill IDs, labels, summaries, commands, and positions. Default arrows to source-backed workflow actions and runtime interactions between skills; keep prerequisites in details and allow explicitly requested meanings including artifact dataflow. Preserve existing authored content and edge meaning unless source evidence or user direction authorizes changes; propose converting legacy non-skill cards rather than silently removing them. Update instructions, design guidance, complete reference examples, root documentation, affected validation cases, generated HTML, and screenshots without changing the schema, helper, or invocation settings. Correct the release card installation note to say it is excluded from ordinary bulk installation. Add desktop details panel resizing by pointer and keyboard with bounded widths and retained width across navigation. Start the panel at half the desktop canvas width, apply region accents and a darkened backdrop, and center only the selected card in available space at the current zoom. Preserve card size through opening, navigation, panel resizing, and viewport changes; remove neighbor fitting. Closing slides the panel away while preserving canvas position and zoom, then retains focus on the current card. Respect reduced motion and cancel pending closing animations on reopen. Group all five cards in tinted Configuration, Coordination, Documentation, and Independent boxes; change Documentation from teal to amber for clearer region contrast. Rename the map to wkc skills, remove its subtitle and generated header count, and default fitted zoom to 70% or smaller when needed. Bump the renderer to 0.0.15, regenerate shipped assets, HTML, and screenshots, update design and embedding contracts, and add browser regression coverage.
-0.0.15 2026-10-06T18:49:10-07:00 Document in the `wkc-skills-release` README that `INSTALL_INTERNAL_SKILLS=1` lets `-s '*'` install every public skill plus this internal skill in one command. The variable comes from the installer's source, not its `--help`; verified on `skills` 1.7.1 and recorded in the release runbook.
-0.0.14 2026-10-06T18:22:01-07:00 Add model-invocable `wkc-help`, which answers questions about the installed `wkc-` skills from their own `SKILL.md` files and gives or, on request, runs the `npx skills` commands to install, pin, update, and remove them. It states that `update` refetches each skill's recorded ref, so a tag-pinned install moves only by rerunning `add` with the new tag. It finds installed harnesses and `--copy` installs from the project's skill folders, since the lock records neither and `npx skills ls` lists every agent that reads `.agents/skills/`. It checks a tag's skills first, because `add` silently skips a name the tag lacks, and never passes `-a '*'` or `--all`, which replace a top-level `skills/` source directory with links. It replaces the planned `wkc-manage` from issue #13, whose wrapper around the installer added more confusion than control. Skill files now name skills without harness prefixes, leaving prefixes to the README invocation table, and `wkc-workflow-diagram` finds its helper in the project's or home directory's skill folders. The README installs every public skill with `-s '*'`, gains a short update section, and warns that `add -a '*'` deletes skill source as `remove --all` does. Installer commands across the docs, skills, and runbooks no longer pin a `skills` version; dated reports keep the versions they ran. AGENTS.md adds a Validation section that scopes checks to changed behavior, prefers direct checks, and reuses unchanged evidence, with new rules for simplicity, token usage, and not launching other AI harnesses, applied to the existing runbooks. Add `validation/wkc-help.md` with direct package and installer checks and Codex model runs: implicit loading, skill questions, and default-mode updates pass; a `--copy` update that ran `-a '*'` failed and led to the harness and copy facts; the `--copy` reruns pass, after replacing a test prompt that also read as a Git branch request.
-0.0.13 2026-10-02T15:12:44-07:00 Add manually invoked internal `wkc-skills-release` for collection-only publication, exact merged targets, complete changelog notes, numeric Latest decisions, immutable-tag recovery, verified no-ops, sequential publication checks, configuration-independent untracked-file checks and single-tag pushes, portable Bash/zsh refspecs, draft-aware paginated target lookup, and explicit warnings for older local-only targets. Record bootstrap and pin checks, the boolean metadata exception and fallback, and design rationale. Replace the release roster row, route CONTRIBUTING through the skill, distinguish public discovery from total shipped skills, and pin active installer commands to skills@1.7.0. Record actual loading and fallback checks on Codex, Claude Code, and Kiro CLI, disposable publication and recovery checks on all three, enforced immutable tags, paginated Latest preservation, and bootstrap pin verification. Clarify legacy release conflicts, keep bootstrap separate from invocation, consolidate dated validation evidence, and move compatibility authoring guidance into AGENTS.md, keep runtime publication rules in the skill, and record a full Codex fixture publication with followed-tag suppression and independent Latest checks. Collection bootstrap requires merge and explicit release authorization; additional unrun cases remain SKIP in the runbook.
-0.0.12 2026-10-02T14:27:41-07:00 Let models and other skills invoke `wkc-tracker`: `disable-model-invocation: false`, `policy.allow_implicit_invocation: true`, and a declaration of its callers in the skill body, where a model reads on its own but changes ticket state only when a person or a calling skill asked for it. `wkc-setup` and `wkc-workflow-diagram` stay manual. Remove `metadata.allow_implicit_invocation` from every skill and the template, since no harness reads it. Drop the Kiro CLI invocation notes from `AGENTS.md` and the template README. Update the root README and the tracker runbook, which gains S7 for the invocation settings, D7 for a model reading unprompted, D8 for a plain-language write that accepts either take form, and D9 for a discussion that must change nothing. Fix S3 to expect all three shipped skills, and stop the `AGENTS.md` directory example from hard-coding manual invocation values. Run D7 to D9 in one new session per harness, and record their first run, which passed on Claude Code and Codex.
-0.0.11 2026-10-01T19:10:01-07:00 Add the manually invoked `wkc-workflow-diagram` skill for project-scoped JSON maps and offline HTML, with a Node.js 22+ helper, loopback preview, path containment, atomic writes, and a validation runbook. Updates add and remove only what sources establish and never rewrite existing text on their own: a changed source that contradicts existing text is reported as a conflict with suggested wording and a numbered question, and an unchanged run leaves the JSON, README, and screenshots byte-identical. Every temporary file stays in the diagram directory's `.cache/`; preview runs from a documented background command and is stopped by process ID and confirmed gone before the turn ends. Details such as commands come only from sources, ambiguous scope ends on one numbered question using a callable selector where available and numbered text otherwise, and the project README records portable regeneration commands. Keep renderer source and maintainer tests in `tools/workflow-diagram/`, outside the installed skill; deterministic generated assets include schemas and license notices, with a renderer version independent of `VERSION`. Include this repository's map of the shipped `wkc-setup`, `wkc-tracker`, and `wkc-workflow-diagram` skills, and document the narrow maintainer build exception. This entry replaces the branch-only 0.0.8 through 0.0.12 workflow-diagram development entries; `v0.0.8` belongs to the released tracker pull request. Merge the wkc- naming update from main, update installed paths and diagram links, and preserve manual invocation settings. Clarify individual node and route snippets and provide complete, matching workflow.json and layout.json examples in the skill README. Adopt main's five opening fields and document installed renderer packaging and the explicit maintainer checks. Fix browser test cleanup ordering so a data reload cannot be mistaken for a completed source restart. Restore the prior diagram view before returning focus after details navigation, with fitted/manual view and resize regression coverage; rebuild renderer assets while keeping version 0.0.11.
-0.0.10 2026-10-01T18:24:26-07:00 Replace opening invocation boilerplate with five input/output fields and optional quoted Claude Code argument hints. Update the template and authoring guidance without new external links or repeated tracker invocation guidance; give `wkc-tracker` its existing verb hint, keep `wkc-setup` argument-free, and add focused tracker validation without changing invocation settings or runtime behaviour.
-0.0.9 2026-10-01T11:57:29-07:00 All skill identifiers now use `wkc-`: breaking rename to `wkc-setup` and `wkc-tracker`, with no compatibility aliases. Qualify planned skills, references, template identifiers, and active validation instructions; preserve current invocation settings and document per-skill opt-in for future model-callable skills.
-0.0.8 2026-09-24T14:00:53-07:00 Add the `tracker` skill: seven statuses (`backlog`, `ready`, `in-progress`, `in-review`, `done`, `cancel`, `duplicate`) and the verbs `list`, `show`, `next`, `create`, `assign`, `comment`, `move`, and `link`, against GitHub Issues, Linear, or local markdown files, with one backend file each and a validation runbook at `validation/tracker.md`. A status is read the way a person would: its name misspelled, in another form, or in other words means that status, and a real word that only shares letters with one means none, so nothing changes and the skill asks. `create` writes the ticket at `backlog` and reads everything it is given as ticket text. `setup` settles a missing git repository first and each backend's prerequisites before the next section, ends its turn on every question, numbers its options, and writes a `Tracker notes` section when a Linear team carries a status outside the seven. `AGENTS.md` adds per-skill READMEs, the `validation/` directory, the ask-then-stop rule for every skill, runbook-based validation, and one version per pull request. This entry folds in 0.0.9 to 0.0.41, the development steps on the `feat/tracker` branch; the runbook's run log still names them, each with the commit it tested.
-0.0.7 2026-08-28T22:15:00-07:00 Turn `delete_branch_on_merge` back off and write down why: a merge is sometimes what triggers the check being waited on, so the branch has to outlive the merge and gets deleted once the work is verified. AGENTS.md says a merged branch is not a dead branch, and CONTRIBUTING.md's Rulesets section becomes "Rulesets and settings", recording the two plain repository settings (auto-delete off, wiki off) alongside the ruleset payloads.
-0.0.6 2026-08-28T17:05:00-07:00 Apply the two repository rulesets borrowed from agent-toolkit, both active with an empty bypass_actors so they bind the owner: `main pull request gate` on the default branch (deletion, non_fast_forward, pull_request at zero required approvals) and `Immutable release tags` on refs/tags/v* (deletion, non_fast_forward, update, no creation rule). Verified by attempting each violation: a direct push to main is rejected with GH013, moving v0.0.5 gets "Cannot update this protected ref", deleting it gets "Cannot delete this tag". Skips agent-toolkit's required_status_checks rule, which points at a repository-validation workflow this repo deliberately does not have. AGENTS.md and CONTRIBUTING.md now describe the gate as enforced and record both payloads.
-0.0.5 2026-08-28T13:20:00-07:00 Put `description` on one unquoted physical line, in skills/setup/SKILL.md and in the template. Kiro CLI's slash-command menu takes whatever follows `description:` on that one line rather than parsing the YAML, so a folded block rendered as `/setup    >` and a quoted string would keep its quotes; the model-facing copy of the same frontmatter is parsed correctly, which is why this only shows up in the menu. Reproduced and fixed against a real kiro-cli session. States the rule in AGENTS.md and in skill-template/README.md.
-0.0.4 2026-08-28T00:45:00-07:00 Rename the skeleton to skill-template/SKILL.md.template. The installer discovers skills by finding any SKILL.md in the repository, not by reading skills/, so v0.0.3 shipped the template to consumers as an installable skill named skill-name. Confirmed fixed with `npx skills add 'https://github.com/wilsonkichoi/skills.git#fix/template-not-a-skill' -l`, which reports one skill. Corrects the pinned install syntax everywhere: pinning needs the full git URL with a #ref, where a missing ref fails loudly, while the owner/repo@vX.Y.Z shorthand treats @ as a skill selector and silently installs from the default branch when paired with -s.
-0.0.3 2026-08-26T13:19:38-07:00 Add Kiro CLI as a supported harness: install path, /name invocation, and the fact that Kiro has no disable-model-invocation equivalent, so a Kiro user can trigger a skill by conversation alone, which is accepted; SKILL.md frontmatter now also carries metadata: allow_implicit_invocation: "false" as a quoted string, on the chance a harness starts reading it. Updates AGENTS.md, README, and the setup skill doc block. Install instructions now name the agents with `-a` and pre-create `.kiro/`, which vercel-labs/skills#2071 requires. Adds an Uninstall section, including the vercel-labs/skills#1771 warning that a sweeping `remove` deletes this repository's own `skills/` source through the OpenClaw path. Adds a skill-template/ folder holding the copyable SKILL.md and agents/openai.yaml skeletons plus a README that writes out the Agent Skills specification rules in full, so no session has to fetch the spec; AGENTS.md points at the folder instead of carrying the template inline, and the prose rule now asks for sentences you would say out loud instead of banning specific words.
-0.0.2 2026-08-25T22:48:06-07:00 Fill in the root docs (README, CONTRIBUTING, CHANGELOG), correct AGENTS.md to match the repository as it is, and finish the setup skill: consistent docs/dev-agents/ paths, context_file and Linear questions in the interview, per-backend tracker setup, and a config template whose fields match what the interview collects.
-0.0.1 2026-08-17T10:59:57-07:00 Initial scaffolding: LICENSE, AGENTS.md, CLAUDE.md, VERSION, and the first draft of the setup skill.
+## 0.0.18 (2026-10-16T17:27:39-07:00)
+
+- Reformat `CHANGELOG.md` from one line per version to a heading per version with one bullet per change, so the file renders as readable Markdown. Earlier entries keep their wording, split into one bullet per sentence.
+- `wkc-skills-release` reads the heading format and demotes each entry heading to `###` in release notes. It still reads the one-line format at older tags, so existing releases stay verifiable.
+- `AGENTS.md` and the `wkc-skills-release` runbook describe the new entry format.
+
+## 0.0.17 (2026-10-16T16:17:23-07:00)
+
+- Apply Anthropic skill authoring best practices.
+- Add a Contents list to the four supporting files over 100 lines: `wkc-tracker` `github.md`, `linear.md`, and `README.md`, and `wkc-workflow-diagram` `README.md`.
+- Link `wkc-workflow-diagram` `embed.md` directly from `SKILL.md`.
+- Add a when-to-use clause to the `wkc-setup` description and replace "utilize".
+- Remove second person from the `wkc-workflow-diagram` description.
+- Add an authoring guidance section to `skill-template/README.md` covering direct links, Contents lists, date-dependent wording, consistent terms, and MCP naming by role.
+
+## 0.0.16 (2026-10-07T14:53:09-07:00)
+
+- Update the repository diagram to all five shipped skills, including internal wkc-skills-release, with skill cards only.
+- Move external systems, outputs, and results into the owning skill summaries or details; remove the four system cards and their six action edges and routes while preserving skill IDs, labels, summaries, commands, and positions.
+- Default arrows to source-backed workflow actions and runtime interactions between skills; keep prerequisites in details and allow explicitly requested meanings including artifact dataflow.
+- Preserve existing authored content and edge meaning unless source evidence or user direction authorizes changes; propose converting legacy non-skill cards rather than silently removing them.
+- Update instructions, design guidance, complete reference examples, root documentation, affected validation cases, generated HTML, and screenshots without changing the schema, helper, or invocation settings.
+- Correct the release card installation note to say it is excluded from ordinary bulk installation.
+- Add desktop details panel resizing by pointer and keyboard with bounded widths and retained width across navigation.
+- Start the panel at half the desktop canvas width, apply region accents and a darkened backdrop, and center only the selected card in available space at the current zoom.
+- Preserve card size through opening, navigation, panel resizing, and viewport changes; remove neighbor fitting.
+- Closing slides the panel away while preserving canvas position and zoom, then retains focus on the current card.
+- Respect reduced motion and cancel pending closing animations on reopen.
+- Group all five cards in tinted Configuration, Coordination, Documentation, and Independent boxes; change Documentation from teal to amber for clearer region contrast.
+- Rename the map to wkc skills, remove its subtitle and generated header count, and default fitted zoom to 70% or smaller when needed.
+- Bump the renderer to 0.0.15, regenerate shipped assets, HTML, and screenshots, update design and embedding contracts, and add browser regression coverage.
+
+## 0.0.15 (2026-10-06T18:49:10-07:00)
+
+- Document in the `wkc-skills-release` README that `INSTALL_INTERNAL_SKILLS=1` lets `-s '*'` install every public skill plus this internal skill in one command.
+- The variable comes from the installer's source, not its `--help`; verified on `skills` 1.7.1 and recorded in the release runbook.
+
+## 0.0.14 (2026-10-06T18:22:01-07:00)
+
+- Add model-invocable `wkc-help`, which answers questions about the installed `wkc-` skills from their own `SKILL.md` files and gives or, on request, runs the `npx skills` commands to install, pin, update, and remove them.
+- It states that `update` refetches each skill's recorded ref, so a tag-pinned install moves only by rerunning `add` with the new tag.
+- It finds installed harnesses and `--copy` installs from the project's skill folders, since the lock records neither and `npx skills ls` lists every agent that reads `.agents/skills/`.
+- It checks a tag's skills first, because `add` silently skips a name the tag lacks, and never passes `-a '*'` or `--all`, which replace a top-level `skills/` source directory with links.
+- It replaces the planned `wkc-manage` from issue #13, whose wrapper around the installer added more confusion than control.
+- Skill files now name skills without harness prefixes, leaving prefixes to the README invocation table, and `wkc-workflow-diagram` finds its helper in the project's or home directory's skill folders.
+- The README installs every public skill with `-s '*'`, gains a short update section, and warns that `add -a '*'` deletes skill source as `remove --all` does.
+- Installer commands across the docs, skills, and runbooks no longer pin a `skills` version; dated reports keep the versions they ran.
+- AGENTS.md adds a Validation section that scopes checks to changed behavior, prefers direct checks, and reuses unchanged evidence, with new rules for simplicity, token usage, and not launching other AI harnesses, applied to the existing runbooks.
+- Add `validation/wkc-help.md` with direct package and installer checks and Codex model runs: implicit loading, skill questions, and default-mode updates pass; a `--copy` update that ran `-a '*'` failed and led to the harness and copy facts; the `--copy` reruns pass, after replacing a test prompt that also read as a Git branch request.
+
+## 0.0.13 (2026-10-02T15:12:44-07:00)
+
+- Add manually invoked internal `wkc-skills-release` for collection-only publication, exact merged targets, complete changelog notes, numeric Latest decisions, immutable-tag recovery, verified no-ops, sequential publication checks, configuration-independent untracked-file checks and single-tag pushes, portable Bash/zsh refspecs, draft-aware paginated target lookup, and explicit warnings for older local-only targets.
+- Record bootstrap and pin checks, the boolean metadata exception and fallback, and design rationale.
+- Replace the release roster row, route CONTRIBUTING through the skill, distinguish public discovery from total shipped skills, and pin active installer commands to skills@1.7.0.
+- Record actual loading and fallback checks on Codex, Claude Code, and Kiro CLI, disposable publication and recovery checks on all three, enforced immutable tags, paginated Latest preservation, and bootstrap pin verification.
+- Clarify legacy release conflicts, keep bootstrap separate from invocation, consolidate dated validation evidence, and move compatibility authoring guidance into AGENTS.md, keep runtime publication rules in the skill, and record a full Codex fixture publication with followed-tag suppression and independent Latest checks.
+- Collection bootstrap requires merge and explicit release authorization; additional unrun cases remain SKIP in the runbook.
+
+## 0.0.12 (2026-10-02T14:27:41-07:00)
+
+- Let models and other skills invoke `wkc-tracker`: `disable-model-invocation: false`, `policy.allow_implicit_invocation: true`, and a declaration of its callers in the skill body, where a model reads on its own but changes ticket state only when a person or a calling skill asked for it.
+- `wkc-setup` and `wkc-workflow-diagram` stay manual.
+- Remove `metadata.allow_implicit_invocation` from every skill and the template, since no harness reads it.
+- Drop the Kiro CLI invocation notes from `AGENTS.md` and the template README.
+- Update the root README and the tracker runbook, which gains S7 for the invocation settings, D7 for a model reading unprompted, D8 for a plain-language write that accepts either take form, and D9 for a discussion that must change nothing.
+- Fix S3 to expect all three shipped skills, and stop the `AGENTS.md` directory example from hard-coding manual invocation values.
+- Run D7 to D9 in one new session per harness, and record their first run, which passed on Claude Code and Codex.
+
+## 0.0.11 (2026-10-01T19:10:01-07:00)
+
+- Add the manually invoked `wkc-workflow-diagram` skill for project-scoped JSON maps and offline HTML, with a Node.js 22+ helper, loopback preview, path containment, atomic writes, and a validation runbook.
+- Updates add and remove only what sources establish and never rewrite existing text on their own: a changed source that contradicts existing text is reported as a conflict with suggested wording and a numbered question, and an unchanged run leaves the JSON, README, and screenshots byte-identical.
+- Every temporary file stays in the diagram directory's `.cache/`; preview runs from a documented background command and is stopped by process ID and confirmed gone before the turn ends.
+- Details such as commands come only from sources, ambiguous scope ends on one numbered question using a callable selector where available and numbered text otherwise, and the project README records portable regeneration commands.
+- Keep renderer source and maintainer tests in `tools/workflow-diagram/`, outside the installed skill; deterministic generated assets include schemas and license notices, with a renderer version independent of `VERSION`.
+- Include this repository's map of the shipped `wkc-setup`, `wkc-tracker`, and `wkc-workflow-diagram` skills, and document the narrow maintainer build exception.
+- This entry replaces the branch-only 0.0.8 through 0.0.12 workflow-diagram development entries; `v0.0.8` belongs to the released tracker pull request.
+- Merge the wkc- naming update from main, update installed paths and diagram links, and preserve manual invocation settings.
+- Clarify individual node and route snippets and provide complete, matching workflow.json and layout.json examples in the skill README.
+- Adopt main's five opening fields and document installed renderer packaging and the explicit maintainer checks.
+- Fix browser test cleanup ordering so a data reload cannot be mistaken for a completed source restart.
+- Restore the prior diagram view before returning focus after details navigation, with fitted/manual view and resize regression coverage; rebuild renderer assets while keeping version 0.0.11.
+
+## 0.0.10 (2026-10-01T18:24:26-07:00)
+
+- Replace opening invocation boilerplate with five input/output fields and optional quoted Claude Code argument hints.
+- Update the template and authoring guidance without new external links or repeated tracker invocation guidance; give `wkc-tracker` its existing verb hint, keep `wkc-setup` argument-free, and add focused tracker validation without changing invocation settings or runtime behaviour.
+
+## 0.0.9 (2026-10-01T11:57:29-07:00)
+
+- All skill identifiers now use `wkc-`: breaking rename to `wkc-setup` and `wkc-tracker`, with no compatibility aliases.
+- Qualify planned skills, references, template identifiers, and active validation instructions; preserve current invocation settings and document per-skill opt-in for future model-callable skills.
+
+## 0.0.8 (2026-09-24T14:00:53-07:00)
+
+- Add the `tracker` skill: seven statuses (`backlog`, `ready`, `in-progress`, `in-review`, `done`, `cancel`, `duplicate`) and the verbs `list`, `show`, `next`, `create`, `assign`, `comment`, `move`, and `link`, against GitHub Issues, Linear, or local markdown files, with one backend file each and a validation runbook at `validation/tracker.md`.
+- A status is read the way a person would: its name misspelled, in another form, or in other words means that status, and a real word that only shares letters with one means none, so nothing changes and the skill asks.
+- `create` writes the ticket at `backlog` and reads everything it is given as ticket text.
+- `setup` settles a missing git repository first and each backend's prerequisites before the next section, ends its turn on every question, numbers its options, and writes a `Tracker notes` section when a Linear team carries a status outside the seven.
+- `AGENTS.md` adds per-skill READMEs, the `validation/` directory, the ask-then-stop rule for every skill, runbook-based validation, and one version per pull request.
+- This entry folds in 0.0.9 to 0.0.41, the development steps on the `feat/tracker` branch; the runbook's run log still names them, each with the commit it tested.
+
+## 0.0.7 (2026-08-28T22:15:00-07:00)
+
+- Turn `delete_branch_on_merge` back off and write down why: a merge is sometimes what triggers the check being waited on, so the branch has to outlive the merge and gets deleted once the work is verified.
+- AGENTS.md says a merged branch is not a dead branch, and CONTRIBUTING.md's Rulesets section becomes "Rulesets and settings", recording the two plain repository settings (auto-delete off, wiki off) alongside the ruleset payloads.
+
+## 0.0.6 (2026-08-28T17:05:00-07:00)
+
+- Apply the two repository rulesets borrowed from agent-toolkit, both active with an empty bypass_actors so they bind the owner: `main pull request gate` on the default branch (deletion, non_fast_forward, pull_request at zero required approvals) and `Immutable release tags` on refs/tags/v* (deletion, non_fast_forward, update, no creation rule).
+- Verified by attempting each violation: a direct push to main is rejected with GH013, moving v0.0.5 gets "Cannot update this protected ref", deleting it gets "Cannot delete this tag".
+- Skips agent-toolkit's required_status_checks rule, which points at a repository-validation workflow this repo deliberately does not have.
+- AGENTS.md and CONTRIBUTING.md now describe the gate as enforced and record both payloads.
+
+## 0.0.5 (2026-08-28T13:20:00-07:00)
+
+- Put `description` on one unquoted physical line, in skills/setup/SKILL.md and in the template.
+- Kiro CLI's slash-command menu takes whatever follows `description:` on that one line rather than parsing the YAML, so a folded block rendered as `/setup    >` and a quoted string would keep its quotes; the model-facing copy of the same frontmatter is parsed correctly, which is why this only shows up in the menu.
+- Reproduced and fixed against a real kiro-cli session.
+- States the rule in AGENTS.md and in skill-template/README.md.
+
+## 0.0.4 (2026-08-28T00:45:00-07:00)
+
+- Rename the skeleton to skill-template/SKILL.md.template.
+- The installer discovers skills by finding any SKILL.md in the repository, not by reading skills/, so v0.0.3 shipped the template to consumers as an installable skill named skill-name.
+- Confirmed fixed with `npx skills add 'https://github.com/wilsonkichoi/skills.git#fix/template-not-a-skill' -l`, which reports one skill.
+- Corrects the pinned install syntax everywhere: pinning needs the full git URL with a #ref, where a missing ref fails loudly, while the owner/repo@vX.Y.Z shorthand treats @ as a skill selector and silently installs from the default branch when paired with -s.
+
+## 0.0.3 (2026-08-26T13:19:38-07:00)
+
+- Add Kiro CLI as a supported harness: install path, /name invocation, and the fact that Kiro has no disable-model-invocation equivalent, so a Kiro user can trigger a skill by conversation alone, which is accepted; SKILL.md frontmatter now also carries metadata: allow_implicit_invocation: "false" as a quoted string, on the chance a harness starts reading it.
+- Updates AGENTS.md, README, and the setup skill doc block.
+- Install instructions now name the agents with `-a` and pre-create `.kiro/`, which vercel-labs/skills#2071 requires.
+- Adds an Uninstall section, including the vercel-labs/skills#1771 warning that a sweeping `remove` deletes this repository's own `skills/` source through the OpenClaw path.
+- Adds a skill-template/ folder holding the copyable SKILL.md and agents/openai.yaml skeletons plus a README that writes out the Agent Skills specification rules in full, so no session has to fetch the spec; AGENTS.md points at the folder instead of carrying the template inline, and the prose rule now asks for sentences you would say out loud instead of banning specific words.
+
+## 0.0.2 (2026-08-25T22:48:06-07:00)
+
+- Fill in the root docs (README, CONTRIBUTING, CHANGELOG), correct AGENTS.md to match the repository as it is, and finish the setup skill: consistent docs/dev-agents/ paths, context_file and Linear questions in the interview, per-backend tracker setup, and a config template whose fields match what the interview collects.
+
+## 0.0.1 (2026-08-17T10:59:57-07:00)
+
+- Initial scaffolding: LICENSE, AGENTS.md, CLAUDE.md, VERSION, and the first draft of the setup skill.

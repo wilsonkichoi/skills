@@ -41,7 +41,8 @@ Record the source commit and exact test-only diff; check every other installed f
 Test the unmodified skill separately for wrong-repository refusal.
 Never modify the production repository identity to make the unmodified-skill check pass.
 
-Use sequential fixture commits with canonical `VERSION`, newest-first changelog rows, and known timestamps.
+Use sequential fixture commits with canonical `VERSION`, newest-first changelog entries, and known timestamps.
+Entries use the `## {version} ({timestamp})` heading with bullets; case 14 also covers the one-line format of `v0.0.17` and earlier.
 Keep installed harness files ignored so the publication checkout remains clean.
 Fixture changelog summaries should include command-looking text, to check literal notes handling.
 Start with a stable release at `v0.0.1`, untagged versions `0.0.2` and `0.0.3`, and main at `0.0.4`.
@@ -128,11 +129,14 @@ For each invocation, record remote refs, release fields, Latest, local status, a
     PASS: refusal and no local or remote tag, even though that historical VERSION exists in main's history.
     Compare against case 9: an existing matching historical tag can resume.
 
-14. **Skipped versions and notes boundaries.** Prepare a release above several untagged changelog rows.
-    PASS: every row since the greatest lower published stable version is included, using numeric semver order.
+14. **Skipped versions and notes boundaries.** Prepare a release above several untagged changelog entries.
+    PASS: every entry since the greatest lower published stable version is included, using numeric semver order.
     Drafts, prereleases, and untagged versions do not move the boundary.
-    With no stable release, include all target changelog rows and use the first-release heading.
-    Refuse a missing boundary row, missing boundary tag, unrelated boundary ancestry, or malformed stable release tag.
+    With no stable release, include all target changelog entries and use the first-release heading.
+    Refuse a missing boundary entry, missing boundary tag, unrelated boundary ancestry, or malformed stable release tag.
+    Heading entries appear with `###` headings, bodies verbatim, and one blank line between entries.
+    A target whose changelog uses the one-line format yields its lines joined by single newlines,
+    so an existing release published from that format remains a verified no-op.
 
 15. **Pagination and Latest preservation.** Create more than one API page of release fixtures.
     Include `v0.0.9` and `v0.0.10` so lexical ordering produces the wrong answer.
