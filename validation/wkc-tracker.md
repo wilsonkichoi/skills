@@ -1234,6 +1234,22 @@ Versions 0.0.9 to 0.0.41 below were development steps on the `feat/tracker` bran
 together as 0.0.8, so an entry's version names a branch state, and its skill ref names the exact
 commit it tested.
 
+### 2026-10-17T11:56:11-07:00 Focused 0.0.22 milestone verb run, Claude Code
+
+Skill ref `076d84b` on `claude/wkc-plan-huujrr`, a clean `git archive` installed with `skills` 1.7.2 and `-a claude-code`
+into a scratch fixture with the local backend and tickets 001 to 005 in one milestone. Claude Code 2.1.302 ran
+`claude-sonnet-5-5` in print mode with `--max-budget-usd 2`, within the `wkc-plan` run's budget. One session, three
+turns through `--resume`, $0.30 in total. Only B21 ran; A33 and C26 need `gh` signed in and the Linear MCP server, and
+neither was available in the cloud container.
+
+| Case | Verdict | Independent evidence |
+|---|---|---|
+| B21 | PASS | `milestone M9` replied that there is nothing to write and that `create` starts it; `cksum` of every file under `issues_dir` matched before and after. `create` with milestone `M9` wrote `006` with `milestone: 'M9'` and `status: 'backlog'`, by PyYAML; `list backlog M9` returned only `006`. |
+| A33 | SKIP | No signed-in `gh` in the cloud container. |
+| C26 | SKIP | Linear MCP server not connected. |
+
+PASS 1, FAIL 0, SKIP 2 for the cases selected.
+
 ### 2026-10-02T14:27:21-07:00 Focused 0.0.12 model invocation run, Claude Code and Codex interactive
 
 Skill ref `2500d57` on `feat/tracker-model-invocation`, installed with `skills` 1.7.0 into

@@ -8,7 +8,7 @@ Newest first. Each version is a `## {version} ({ISO 8601 timestamp with local of
 - The ROADMAP follows the PRD and SPEC conventions: a `Status: draft` or `Status: approved (YYYY-MM-DD)` line, current plan rewritten in place, and a dated **Changes** entry. It holds no status, progress, or ticket lists; the tracker owns those.
 - `wkc-plan` publishes only after the user approves, and only through `wkc-tracker`: it ensures the milestone, creates the tickets at `backlog` in build order, checks them against the draft, and moves them to `ready` last, so half-published work never reaches the frontier. A rerun creates only what is missing. It never edits the PRD or SPEC.
 - `wkc-tracker` gains a `milestone <name>` verb that creates an open milestone when none has that name, and never renames, closes, or reopens one. GitHub creates it through the milestones API, Linear through the server's milestone tool when it has one, and local markdown needs no write. Local `create` writes the ticket's milestone. Ticket ordering is unchanged: `next` still returns the lowest id first, and `wkc-plan` creates tickets in build order.
-- Add the `wkc-plan` runbook and `wkc-tracker` cases A33, B21, and C26, mark `wkc-plan` shipped in the `README.md` roster, and add it to the uninstall command.
+- Add the `wkc-plan` runbook and `wkc-tracker` cases A33, B21, and C26, mark `wkc-plan` shipped in the `README.md` roster, and add it to the uninstall command. `wkc-plan` cases 3 to 10 and tracker case B21 pass in Claude Code on Sonnet 5.5, in 9 of the 12 agreed sessions; A33 and C26 are not yet run.
 
 ## 0.0.21 (2026-10-16T22:53:43-07:00)
 
