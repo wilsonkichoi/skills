@@ -2,6 +2,10 @@
 
 Newest first. Each version is a `## {version} ({ISO 8601 timestamp with local offset})` heading followed by a bullet list of changes.
 
+## 0.0.20 (2026-10-16T22:21:57-07:00)
+
+- `wkc-setup` Section B spells out the full default paths for the spec and roadmap, `docs/dev-agents/SPEC.md` and `docs/dev-agents/ROADMAP.md`, so they are not read as repository-root files. The defaults themselves are unchanged and match `config-template.md`.
+
 ## 0.0.19 (2026-10-16T21:09:55-07:00)
 
 - Add `wkc-research`, which writes or updates the PRD at `prd_file` from research material and an interview. It keeps sourced evidence, user decisions, and assumptions apart, and records approval as a `Status: approved (YYYY-MM-DD)` line under the title. The PRD always states current intent: updates rewrite or remove replaced requirements and add a one-line dated **Changes** entry.
