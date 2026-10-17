@@ -1,6 +1,6 @@
 ---
 name: wkc-setup
-description: Configure this project to utilize skills for AI-SDLC. Scaffolds the project layout, selects the tracker backend, and writes docs/dev-agents/config.md
+description: Configure this project to use skills for AI-SDLC. Scaffolds the project layout, selects the tracker backend, and writes docs/dev-agents/config.md. Use when adopting these skills in a repository, switching its issue tracker, or updating an older config.
 disable-model-invocation: true
 ---
 

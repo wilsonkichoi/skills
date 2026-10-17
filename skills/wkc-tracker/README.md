@@ -6,6 +6,18 @@ through one set of verbs that does not change when the backend does.
 This is the explainer. [`SKILL.md`](./SKILL.md) is what the agent actually follows, and the three
 backend files beside it hold the commands for one backend each.
 
+## Contents
+- Why it exists
+- Setup
+- The seven statuses
+- The eight verbs
+- `next`, and the frontier
+- There is no `blocked` status
+- Ticket shape
+- What each backend does underneath
+- Why writes take an extra step
+- Things it will not do
+
 ## Why it exists
 
 Every other skill in this set needs to ask what to work on and record what happened. Without one
