@@ -2,6 +2,13 @@
 
 Newest first. Each version is a `## {version} ({ISO 8601 timestamp with local offset})` heading followed by a bullet list of changes.
 
+## 0.0.19 (2026-10-16T21:09:55-07:00)
+
+- Add `wkc-research`, which writes or updates the PRD at `prd_file` from research material and an interview. It keeps sourced evidence, user decisions, and assumptions apart, and records approval as a `Status: approved (YYYY-MM-DD)` line under the title. The PRD always states current intent: updates rewrite or remove replaced requirements and add a one-line dated **Changes** entry.
+- Remove brownfield architecture archaeology from `wkc-setup`. Setup no longer writes a spec from existing code; `wkc-architect` will read the code when it needs to. Setup's report step is now step 6.
+- `AGENTS.md` states that the PRD, SPEC, and ROADMAP are optional, and that work fitting the current intent skips earlier stages and updates the documents afterwards.
+- Add the `wkc-research` runbook and mark it shipped in the `README.md` roster.
+
 ## 0.0.18 (2026-10-16T17:27:39-07:00)
 
 - Reformat `CHANGELOG.md` from one line per version to a heading per version with one bullet per change, so the file renders as readable Markdown. Earlier entries keep their wording, split into one bullet per sentence.

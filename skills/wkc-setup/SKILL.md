@@ -38,7 +38,7 @@ Also read, before asking anything:
   `Makefile`).
 
 **No git repository is the first thing to settle.** Offer `git init` before the interview starts.
-Every backend ends at step 7 offering a commit, and the `github` backend cannot have a remote
+Every backend ends at step 6 offering a commit, and the `github` backend cannot have a remote
 without a repository to attach it to, so discovering this three sections later means unwinding the
 interview. Ask it on its own, before Section A is on screen and never as one slot in a picker that
 also carries the interview: Section A's GitHub check needs the repository to exist already.
@@ -118,9 +118,9 @@ docs/dev-agents/issues/               # only when issue_tracker: local
 
 Add `docs/dev-agents/rules/.gitkeep` so git tracks the directory before the first rule lands.
 
-Do not create empty `PRD.md`, `SPEC.md`, or `ROADMAP.md`. Their paths are recorded in the config;
-`wkc-research`, `wkc-architect`, and `wkc-plan` write them. The one exception is step 6, which writes a spec
-from an existing codebase.
+Do not create empty `PRD.md`, `SPEC.md`, or `ROADMAP.md`, and do not reverse-engineer a spec from
+existing code. Their paths are recorded in the config; `wkc-research`, `wkc-architect`, and
+`wkc-plan` write them when the work needs them.
 
 **Template:** write `docs/dev-agents/config.md` from
 [config-template.md](./config-template.md), dropping the fields that do not apply. Every value comes
@@ -192,17 +192,7 @@ to abandon the rest of setup.
 - **local:** create `docs/dev-agents/issues/.gitkeep`.
 - **other:** nothing to set up. The workflow the user described is the contract.
 
-## 6. Brownfield: architecture archaeology
-
-Offer (do not force) to reverse-engineer the current state into the configured `spec_file`:
-
-1. Survey the codebase: entry points, components, external services, data stores, contracts between
-   components, test layout, build and deploy path.
-2. Write the spec describing the **current** architecture: components, interfaces, data flow, known
-   debt and gaps, marked clearly as debt rather than requirements.
-3. Do not invent forward-looking requirements. That is `wkc-architect`'s job.
-
-## 7. Report
+## 6. Report
 
 Offer to commit the scaffold and config. In a fresh repo this creates the root commit that later
 task branches need.
