@@ -1,5 +1,11 @@
 # Backend: Linear
 
+## Contents
+- Statuses
+- Tools
+- Reading rules
+- Per verb: next, create, link, assign, milestones, duplicate
+
 Use the official Linear MCP server. Scope every call with `linear_team` from
 `docs/dev-agents/config.md`, and with `linear_project` wherever the tool takes a project. Never
 create, rename, or edit a team status; `wkc-setup` asks a person to.

@@ -20,7 +20,8 @@ Then, in the copy:
 
 1. Set the directory, frontmatter `name`, main heading, and invocation examples to the same `wkc-<name>` identifier.
 2. Rewrite `description`. Two sentences: what it does, and when to use it in the words someone would
-   actually type. Keep it on one physical line, unquoted.
+   actually type. Keep it on one physical line, unquoted. Write it as an instruction or in the third
+   person, never with "I" or "you": it is injected into the system prompt.
 3. Fill in the five doc-block fields: **What it does**, **When to use it**, **Dependencies**, **Input**, and **Output**.
    Keep that order. "none" is a fine answer for **Dependencies** or **Input**.
    **Input** explains accepted arguments, their meanings, required context, and existing behaviour when arguments are omitted.
@@ -59,6 +60,21 @@ harness activates the skill, so the ceiling is 500 lines and the guidance is und
 
 Supporting files may sit in `scripts/`, `references/`, or `assets/`. Reference them with relative
 paths from the skill root, one level deep, and avoid nested reference chains.
+
+## Authoring guidance
+
+These come from Anthropic's
+[skill authoring best practices](https://platform.claude.com/docs/en/agents-and-tools/agent-skills/best-practices).
+
+- Link every supporting file the agent may read directly from `SKILL.md`, with a line saying when
+  to read it. A file reached only through another supporting file may be read partially.
+- Give any supporting file over 100 lines a `## Contents` list right after its title or intro, so a
+  partial read still shows everything the file covers.
+- Leave out guidance that depends on a date, such as "before August, use the old API". State the
+  current behaviour.
+- Use the same term for the same thing throughout a skill and its supporting files.
+- Name an MCP server by its role, such as "the Linear MCP server", and its tools by bare name.
+  Connection names differ per install and per harness, so this repository does not record them.
 
 ## What this repository adds
 

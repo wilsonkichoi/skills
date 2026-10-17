@@ -4,6 +4,14 @@ The data contract and helper commands for the `wkc-workflow-diagram` skill. The 
 [SKILL.md](SKILL.md), the visual rules are in [design.md](design.md), and embedding the map in
 another page is in [embed.md](embed.md).
 
+## Contents
+- Project files
+- Check, build, and preview
+- Content: `workflow.json`
+- Geometry: `layout.json`
+- Explicit artifact dataflow
+- Package
+
 ## Project files
 
 ```text

@@ -1,5 +1,13 @@
 # Backend: GitHub Issues
 
+## Contents
+- Statuses
+- Reading rules
+- list, show, next, create
+- assign, bare and explicit forms
+- move, to an open or a terminal status, then verifying a move
+- comment, link
+
 Use the `gh` CLI. Resolve `OWNER/REPO` once from the `origin` remote and pass `--repo` on every
 command.
 

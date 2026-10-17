@@ -1,6 +1,6 @@
 ---
 name: wkc-workflow-diagram
-description: Create and update offline workflow diagrams. Use when you want to explain project skills and their relationships visually.
+description: Create and update offline workflow diagrams. Use to explain project skills and their relationships visually, or to update a map after skill definitions change.
 disable-model-invocation: true
 ---
 
@@ -44,6 +44,7 @@ End the turn on the question. Skip it when the user already gave the scope.
 ## 2. Author or update the data
 
 Read [README.md](README.md) for the data contract and helper commands, and [design.md](design.md) for layout and visual rules.
+This skill never embeds the map. Read [embed.md](embed.md) only to answer how to show it inside another page.
 Do not copy the renderer into the project or change the project's build.
 
 Create the diagram directory and JSON files only after finding relevant skill definitions.
