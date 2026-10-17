@@ -22,7 +22,7 @@ disable-model-invocation: true
 - **Output:** the SPEC file, any ADRs, and a short report of what changed, which decisions are still
   open, and whether the SPEC is approved. `wkc-plan` reads an approved SPEC next and owns the ROADMAP.
 
-Writes only the SPEC and ADRs: no product code, scaffolding, ROADMAP, tickets, or config. Keep what
+Writes only the SPEC and ADRs: no PRD, product code, scaffolding, ROADMAP, tickets, or config. Keep what
 the user wrote in the SPEC unless they ask to change it.
 
 ## 1. Read before asking
@@ -36,10 +36,10 @@ Read, in this order, whatever exists:
   repository.
 
 The PRD is approved only when the line under its title reads `Status: approved (YYYY-MM-DD)`.
-With no PRD, or a draft one, stop and ask. Recommend finishing it with `wkc-research` first, and
-offer to go ahead with intent the user states here, which the SPEC then records under **Overview**.
-If the user already said to go ahead, do not ask again. When the PRD's **Changes** entries name SPEC
-work to review, start there.
+With no PRD, or a draft one, stop and ask. Recommend finishing and approving it with `wkc-research`
+first, and offer to go ahead with intent the user states here, which the SPEC then records under
+**Overview**. If the user already said to go ahead, do not ask again. When the PRD's **Changes**
+entries name SPEC work to review, start there.
 
 ## 2. Ask only what the material leaves open
 
@@ -118,9 +118,10 @@ sections: a contract or decision that a new one replaces is rewritten or removed
 it. Then add a one-line **Changes** entry: the date, what changed and why, what it replaced, and any
 ROADMAP milestones that should be reviewed. Git history keeps the replaced text.
 
-When the update changes a contract and a tracker is configured, run `wkc-tracker list` and name the
-open tickets that build against the old contract. Report them; never edit them. If the tracker
-cannot be read, say so instead of guessing.
+When the update changes a contract and a tracker is configured, list open tickets through the
+`wkc-tracker` skill's `list` verb, not by reading the backend directly, and name the ones that build
+against the old contract. Report them; never edit them. If the tracker cannot be read, say so
+instead of guessing.
 
 ## 5. Approval
 
