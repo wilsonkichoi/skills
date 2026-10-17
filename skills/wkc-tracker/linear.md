@@ -35,7 +35,7 @@ substitute a similar status. Report an issue in any other status by its Linear n
 | List issues | `list_issues` |
 | Comment | `save_comment` with `issueId`; read back with `list_comments` |
 | Team statuses | `list_issue_statuses` |
-| Milestones | `list_milestones`; `milestone` on `save_issue` |
+| Milestones | `list_milestones`; `milestone` on `save_issue`; the server's milestone tool to create one |
 
 Relations are `save_issue` parameters: `blockedBy`, `blocks`, `relatedTo`, `duplicateOf`, and a
 `remove*` form of each.
@@ -121,6 +121,11 @@ A milestone is a project milestone in `linear_project`, never a cycle. To scope 
 3. Keep the issues whose `projectMilestone` matches.
 
 Never pass `milestone` to `list_issues`, and never use `list_projects` with `includeMilestones`.
+
+For the `milestone` verb, read `list_milestones` with `linear_project` first. A match needs no
+write. Otherwise create a project milestone in `linear_project` with the server's milestone tool,
+then confirm it with `list_milestones`. If the server offers no tool that creates one, write
+nothing and ask the person to add the milestone to the project in Linear.
 
 ### duplicate
 

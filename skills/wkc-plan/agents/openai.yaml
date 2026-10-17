@@ -1,0 +1,5 @@
+interface:
+  display_name: "wkc-plan"
+  short_description: "Write or update the ROADMAP, the ordered milestones that deliver an approved SPEC, then draft tickets for one milestone and publish them through wkc-tracker once the user approves"
+policy:
+  allow_implicit_invocation: false

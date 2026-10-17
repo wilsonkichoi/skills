@@ -2,6 +2,14 @@
 
 Newest first. Each version is a `## {version} ({ISO 8601 timestamp with local offset})` heading followed by a bullet list of changes.
 
+## 0.0.22 (2026-10-17T11:45:36-07:00)
+
+- Add `wkc-plan`, which writes or updates the ROADMAP at `roadmap_file` from an approved SPEC: milestones in delivery order, each with an outcome and an exit check. It then drafts tickets for one milestone in the `wkc-tracker` ticket shape, with checkable criteria, copied contract excerpts, real dependency edges, and spikes for open unknowns.
+- The ROADMAP follows the PRD and SPEC conventions: a `Status: draft` or `Status: approved (YYYY-MM-DD)` line, current plan rewritten in place, and a dated **Changes** entry. It holds no status, progress, or ticket lists; the tracker owns those.
+- `wkc-plan` publishes only after the user approves, and only through `wkc-tracker`: it ensures the milestone, creates the tickets at `backlog` in build order, checks them against the draft, and moves them to `ready` last, so half-published work never reaches the frontier. A rerun creates only what is missing. It never edits the PRD or SPEC.
+- `wkc-tracker` gains a `milestone <name>` verb that creates an open milestone when none has that name, and never renames, closes, or reopens one. GitHub creates it through the milestones API, Linear through the server's milestone tool when it has one, and local markdown needs no write. Local `create` writes the ticket's milestone. Ticket ordering is unchanged: `next` still returns the lowest id first, and `wkc-plan` creates tickets in build order.
+- Add the `wkc-plan` runbook and `wkc-tracker` cases A33, B21, and C26, mark `wkc-plan` shipped in the `README.md` roster, and add it to the uninstall command.
+
 ## 0.0.21 (2026-10-16T22:53:43-07:00)
 
 - Add `wkc-architect`, which writes or updates the SPEC at `spec_file` from an approved PRD and the code the work touches. It shows real alternatives to the user before committing to one, writes an ADR only for a decision that is costly to reverse, and records every other decision as one line in the SPEC. Unknowns that reading cannot settle become spikes for `wkc-plan`, with no experimental code.

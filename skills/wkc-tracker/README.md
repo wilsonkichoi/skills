@@ -10,7 +10,7 @@ backend files beside it hold the commands for one backend each.
 - Why it exists
 - Setup
 - The seven statuses
-- The eight verbs
+- The nine verbs
 - `next`, and the frontier
 - There is no `blocked` status
 - Ticket shape
@@ -58,7 +58,7 @@ you make yourself, in the tracker.
 A ticket nobody has labelled reads as `backlog`. That is deliberate: it means an issue a colleague
 filed by hand in the web UI is a real ticket immediately, with no import step.
 
-## The eight verbs
+## The nine verbs
 
 ```
 /wkc-tracker list [status] [milestone]
@@ -69,6 +69,7 @@ filed by hand in the web UI is a real ticket immediately, with no import step.
 /wkc-tracker comment <id> <body>
 /wkc-tracker move <id> <status> [original]
 /wkc-tracker link <id> blocked-by <id>
+/wkc-tracker milestone <name>
 ```
 
 **`list`** shows tickets with their id, title, status, assignee, and blockers. Both arguments are
@@ -114,6 +115,13 @@ and refuses when a moved edge would close a cycle.
 refuses an edge that would close a cycle and names the loop it found, because tickets in a cycle
 wait on each other forever. It runs this check itself, because neither GitHub nor Linear refuses
 every cycle.
+
+**`milestone`** makes sure a milestone exists before tickets go into it:
+`/wkc-tracker milestone "M2: Reply handling"`. It creates an open one when nothing has that name, and
+leaves an existing open one alone. It never renames, closes, or reopens a milestone: a closed one is
+reported, and reopening it is your call. In local markdown there is nothing to create, since a
+milestone exists as soon as a ticket carries it. `wkc-plan` uses it before creating a milestone's
+tickets.
 
 ## `next`, and the frontier
 

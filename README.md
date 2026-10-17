@@ -95,7 +95,7 @@ validated before the next starts. See [AGENTS.md](./AGENTS.md) for how a skill i
 | [`wkc-help`](./skills/wkc-help/SKILL.md) | Answer questions about these skills, and install, pin, update, or remove them | shipped |
 | [`wkc-research`](./skills/wkc-research/SKILL.md) | Turn research and an interview into the product requirements document (`PRD.md`) | shipped |
 | [`wkc-architect`](./skills/wkc-architect/SKILL.md) | Turn approved product intent and the existing code into the technical specification (`SPEC.md`) and ADRs | shipped |
-| `wkc-plan` | Break a spec into milestones and tasks with dependencies | planned |
+| [`wkc-plan`](./skills/wkc-plan/SKILL.md) | Turn an approved spec into ordered milestones (`ROADMAP.md`), then tickets with dependencies for one milestone | shipped |
 | `wkc-create-ticket` | Write one well-formed ticket into the tracker | planned |
 | `wkc-backlog` | Groom, refine, and re-order the queue | planned |
 | `wkc-implement` | Take a ticket to a pull request | planned |
@@ -142,7 +142,7 @@ and `wkc-plan` rather than by `wkc-setup`.
 Name the skills and the agents you installed to:
 
 ```
-npx skills remove wkc-setup wkc-tracker wkc-workflow-diagram wkc-help wkc-research wkc-architect -a claude-code -a codex -a kiro-cli
+npx skills remove wkc-setup wkc-tracker wkc-workflow-diagram wkc-help wkc-research wkc-architect wkc-plan -a claude-code -a codex -a kiro-cli
 ```
 
 If you explicitly installed the internal release skill, remove it separately:

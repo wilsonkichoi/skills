@@ -154,7 +154,7 @@ Expect `wkc-tracker`'s `argument-hint` to be the string `<verb> [args]` and `wkc
 Check each opening block for exactly five fields, in order: **What it does**, **When to use it**,
 **Dependencies**, **Input**, and **Output**, with no **How to call it** field.
 Compare the verb table against the pre-conversion source. Expect all eight existing forms and their semantics unchanged:
-`list`, `show`, `next`, `create`, `assign`, `comment`, `move`, and `link`.
+`list`, `show`, `next`, `create`, `assign`, `comment`, `move`, and `link`. From 0.0.22 the table also has `milestone`.
 Expect **Input** to explain the existing omission behaviour and required context; setup requires no invocation arguments.
 Use a separate throwaway repository with `issue_tracker: local`, `issues_dir`, and known fixture files.
 Run `list ready`. Independently parse those files, compare returned ids, titles,
@@ -462,6 +462,15 @@ Check: `gh issue view <X> --repo <R> --json blockedBy --jq '[.blockedBy.nodes[].
 the backend. The refusal must come from the skill: `gh` would print a 422 for the self-link, and a
 reply that relays that error has not run the check.
 
+**A33 milestone creates one and touches nothing else.** Pick a title no milestone has, such as
+`A33 <run id>`, and confirm with `gh api 'repos/<R>/milestones?state=all' --jq '[.[].title]'`.
+`$wkc-tracker milestone "<title>"`. Check with the same read: exactly one milestone has the title,
+and it is `open`. Run it again: the reply says it already exists, and the milestone count is unchanged.
+Then `gh api --method PATCH repos/<R>/milestones/<its number> -f state=closed` and run it a third
+time: expect a stop that says it is closed and leaves reopening to a person, and the read still shows
+it `closed`. Finally `$wkc-tracker create` a one-line ticket naming a fresh open milestone made by this
+verb, and check `gh issue view <n> --repo <R> --json milestone` names it.
+
 **A32 an empty frontier says why.** This case needs a frontier with nothing on it, so run it after
 every other A case. For each ticket `$wkc-tracker next` returns, `gh issue edit <n> --repo <R>
 --remove-label ready` until it returns nothing. Then build three held tickets with `gh`, not the
@@ -714,6 +723,12 @@ refuse as a self-link.
 Check with the B2 parser, not by eye: X's `blocked_by` is still empty, Y's is exactly X's id, and
 Z's is exactly Y's id.
 
+**B21 milestone writes nothing here.** Record `cksum` of every file under `issues_dir`, then
+`$wkc-tracker milestone M9`, where no ticket carries `M9`. Expect a reply that there is nothing to
+create and that `create` starts it, and no file added or changed. Then `$wkc-tracker create` a
+one-line ticket naming milestone `M9`: its frontmatter must carry `milestone: 'M9'`, and
+`$wkc-tracker list backlog M9` must return it.
+
 **B20 an empty frontier says why.** Run it after every other B case. Move every ticket
 `$wkc-tracker next` returns to `backlog` by editing its `status`, until it returns nothing. Then write
 six files by hand, since the skill will not write the cycle:
@@ -954,6 +969,13 @@ the exact `warnings` or error text, in the run log.
 Expect the issue listed under its Linear name, not dropped and not folded into one of the seven.
 Check the calls: one `list_issues` per open team status, the extra one included, and none for Done,
 Canceled, or Duplicate.
+
+**C26 milestone creates one, or says it cannot.** Pick a name no milestone in `linear_project` has,
+checked with `list_milestones`, then `$wkc-tracker milestone "<name>"`. If the server has a tool that
+creates project milestones, expect `list_milestones` to show exactly one with that name afterwards,
+and a second run to report it exists without a write. If it has none, expect a stop that asks a
+person to add it in Linear, and `list_milestones` unchanged. Record which tool was used, or that none
+was offered, in the run log.
 
 ---
 

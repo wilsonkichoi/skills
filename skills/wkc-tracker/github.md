@@ -138,6 +138,17 @@ gh issue view <n> --repo <owner/repo> --json body | jq --rawfile sent <file> -e 
 The first must show every blocker and no status label. The second must print `true`. Compare
 exactly this way, never through a shell variable or `--jq .body`.
 
+## milestone
+
+```
+gh api 'repos/<owner>/<repo>/milestones?state=all' --jq '.[] | select(.title == "<title>") | {number, state}'
+gh api repos/<owner>/<repo>/milestones -f title='<title>'
+```
+
+Run the read first. An open match needs no write; a closed one is a stop. Otherwise create it, and
+verify by running the read again: it must print one milestone, `open`. Never pass `-f state` or
+PATCH an existing milestone.
+
 ## assign, bare form
 
 `assign <id>` or `assign <id> me`, no `from`:

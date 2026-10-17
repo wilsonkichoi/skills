@@ -69,7 +69,7 @@ started right now, and `next` returns it.
 
 ## 3. Read, write, verify
 
-`create`, `assign`, `comment`, `move`, and `link` change state. Each runs read, write, and verify:
+`create`, `assign`, `comment`, `move`, `link`, and `milestone` change state. Each runs read, write, and verify:
 
 1. **Read.** Fetch the current state and check this verb's precondition. If it fails, write nothing
    and say why.
@@ -87,6 +87,7 @@ what you did about it. A verb that cannot confirm its own write has failed.
 | `assign` | not terminal. The bare form also needs `ready` with no assignee. Any other holder must be named | the assignee is exactly the one asked for, or nobody for `none`. The bare form also shows `in-progress` |
 | `comment` | the ticket exists | the comment body is on the ticket |
 | `move` | the user's words mean one of the seven statuses: its name, misspelled or in another form, or a word with the same meaning. A real word with its own unrelated meaning that shares letters with a status name means none: change nothing and ask, listing the seven. The current status is not terminal. Other people act on a status, and no verb reverses a terminal move | the backend reports the new status |
+| `milestone` | a name is given, and no milestone has exactly that name. An open one needs no write: report it. A closed one is a stop, because reopening it is a person's decision | the backend lists an open milestone with exactly that name |
 
 ## 4. Verbs
 
@@ -100,8 +101,9 @@ what you did about it. A verb that cannot confirm its own write has failed.
 | `comment <id> <body>` | Append a comment. Never edit or delete an existing one |
 | `move <id> <status> [original]` | Change status, including a terminal close |
 | `link <id> blocked-by <id>` | Record that the first ticket is blocked by the second |
+| `milestone <name>` | Create an open milestone with that name when none exists. Never rename, close, or reopen one |
 
-A milestone that matches none is a stop that names the milestones that exist, never an empty or
+In `list`, a milestone that matches none is a stop that names the milestones that exist, never an empty or
 unscoped list.
 
 **`next`** returns every ticket that is `ready`, has no assignee, and has no open blocker, lowest id

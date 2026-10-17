@@ -66,10 +66,11 @@ Terminal statuses are `done`, `cancel`, and `duplicate`.
 | `list` | Read every frontmatter in `issues_dir` and filter |
 | `show` | Read the one file whole |
 | `next` | Keep `status: ready` with an empty `assignee` and every `blocked_by` id terminal. Sort by id |
-| `create` | Write one file with `status: 'backlog'` and its `blocked_by`, in one write. No cycle walk |
+| `create` | Write one file with `status: 'backlog'`, its `blocked_by`, and its `milestone` when given, in one write. No cycle walk |
 | `assign` | Bare: require `ready` with no `assignee`, then set `in-progress` and `assignee` in one write. Explicit: set `assignee` only, `''` for `none`. Refuse a terminal status and an unnamed holder |
 | `comment` | Append under `## Comments`, adding the heading if missing |
 | `move` | Refuse a move out of a terminal status. `backlog` or `ready` also sets `assignee: ''`; `duplicate` also sets `duplicate_of` |
+| `milestone` | Write nothing: a milestone exists once a ticket carries it. Report the tickets that already carry it, or that `create` starts it |
 | `link` | Refuse a self-link. Walk the blocker's `blocked_by` through non-terminal files; reaching the blocked id is a cycle, so refuse and name the path. Otherwise add the id |
 
 A `blocked_by` id with no file is an open blocker; name the missing id. For an empty frontier, the
