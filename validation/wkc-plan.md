@@ -135,3 +135,22 @@ No instruction changed during the run.
 | 8, interrupted publication | PASS | With 005 deleted and 001 to 004 back at `backlog`, the rerun reused 001 to 004 by content and drafted only the deployment ticket. After `1`, one new file 005 and four status-only diffs; no title or outcome appears twice. |
 | 9, custom paths | PASS | ROADMAP at `docs/planning/delivery-plan.md`, no `docs/dev-agents/ROADMAP.md`, and `git diff` empty for the config and `AGENTS.md`. |
 | 10, update | PASS | Splitting M3 rewrote only M3 and added M4, reset the status to `Status: draft`, and added a dated **Changes** entry naming the old M3. M1, which has tickets, kept its name; no ticket file changed. |
+
+### Dependency graph run, 2026-10-18
+
+Same harness, model, flags, and fixture as the run above; sessions 10 to 12 of the 12 authorized. Session 10 ran
+`1b4f5b3`; sessions 11 and 12 ran `8464288`, which adds one sentence telling the skill not to draft later milestones'
+tickets. 3 sessions, $1.80 in total, at most $1.15 in one session across its resumed turns.
+
+| Case | Result | Evidence |
+|---|---|---|
+| 3, no ROADMAP | PASS | Session 11: ROADMAP with three milestones, draft only for M1, four numbered options; `issues_dir` unchanged and `git status` shows only the ROADMAP. |
+| 11, graph and waves | FAIL then PASS | Session 10 on `1b4f5b3` also drafted tickets for M2 and M3 "for the dependency graph only", which led to the `8464288` sentence. Session 11: edge table T1, T2, T4 with no blocker and T3 blocked by T2; Mermaid diagram; waves {T1, T2, T4} then {T3}; creation order T1, T2, T4, T3 is topological; no redundant edge, no promise of simultaneous work or agent counts. |
+| 5, publication | PASS | Session 11: 001 to 004 in creation order, all `ready` in M1, 004 `blocked_by: ['002']` matching the table; ROADMAP `Status: approved (2026-10-18)`; PRD and SPEC unchanged. |
+| 12, invalid graph | PASS | Session 10: asking for T1 blocked by T3 was refused with the path T1 → T2 → T3 → T1, and T9 was named as an id that does not exist, with options to resolve both. The turn ended on a question; `issues_dir` unchanged. |
+| 16, no answer, no writes | PASS | Session 10: after the change request and then option 4, `issues_dir` held only `.gitkeep`, and the only diff was the ROADMAP status line moving to approved. |
+| 13, cross-milestone blocker that exists | PASS | Session 11, resumed with `/wkc-plan M2: Patients reply`: the webhook ticket listed M1's 002 under **Blocked by** with no draft blocker; after `1`, 005 has `blocked_by: ['002']` in M2, 002's file is unchanged, and the ROADMAP is unchanged. |
+| 15, coordination risk | PASS | Session 11, same turn: the webhook and M1's 004 both write `reminder_state`, named as a coordination risk with no edge between them. |
+| 14, cross-milestone blocker with no ticket | PASS | Session 12, approved ROADMAP and no tickets: M1's importer and staff page work named as unresolved prerequisites, shown as dashed nodes with no id, option 1 publishing T1 and T2 at `backlog` with the reason, and `issues_dir` unchanged before an answer. |
+| 6, 7, 8 | Not rerun | Passed on `076d84b`. Their paths changed with the graph step (reuse by tracker id, creation order, edge check), so that evidence covers the old text only. |
+| 9, 10 | Reused | Passed on `076d84b`; the ROADMAP paths they test did not change. |
