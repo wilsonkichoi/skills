@@ -4,7 +4,7 @@
 - Statuses
 - Tools
 - Reading rules
-- Per verb: next, create, link, assign, milestones, duplicate
+- Per verb: next, create, link, assign, milestones (ensure, list, show), duplicate
 
 Use the official Linear MCP server. Scope every call with `linear_team` from
 `docs/dev-agents/config.md`, and with `linear_project` wherever the tool takes a project. Never
@@ -126,6 +126,17 @@ For the `milestone` verb, read `list_milestones` with `linear_project` first. A 
 write. Otherwise create a project milestone in `linear_project` with the server's milestone tool,
 then confirm it with `list_milestones`. If the server offers no tool that creates one, write
 nothing and ask the person to add the milestone to the project in Linear.
+
+`milestone list` is `list_milestones` with `linear_project`: report each milestone's name and id.
+Linear project milestones have no open or closed state, so report none; `progress` is Linear's own
+figure, not a ticket status. No milestones is an explicit empty result.
+
+`milestone show <name>` matches the name exactly in `list_milestones`, then counts the project's
+issues in that milestone: `list_issues` with `project` and `projectMilestone` in `fields`, once per
+team status from `list_issue_statuses`, terminal ones included with `includeArchived: true`,
+following `hasNextPage`. Count each issue under its status from the table above, and any issue in an
+unmapped status under its Linear name. If `list_milestones` is missing or fails, stop and say so;
+never report a milestone, or zero tickets, from a read that did not run.
 
 ### duplicate
 

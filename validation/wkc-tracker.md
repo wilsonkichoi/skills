@@ -471,6 +471,31 @@ time: expect a stop that says it is closed and leaves reopening to a person, and
 it `closed`. Finally `$wkc-tracker create` a one-line ticket naming a fresh open milestone made by this
 verb, and check `gh issue view <n> --repo <R> --json milestone` names it.
 
+**A34 milestone list shows every milestone, and only reads.** In a scratch repository with no
+milestones, `$wkc-tracker milestone list`: expect an explicit "no milestones", not an error or a ticket
+list. Then create, with `gh api`, `M1`, `M1 extra`, `M2: Reply handling` (no issues, so empty), and
+`M3`, and close `M3` with a PATCH. For the paging check, add milestones `P001` to `P101` in a loop so
+there are more than 100. Record `gh api --paginate 'repos/<R>/milestones?state=all&per_page=100'
+--jq '[.[] | {number, title, state, updated_at}]'` before and after. Expect the reply to list all
+105 by exact title, with `M3` shown `closed` and `M2: Reply handling` present though empty, and the
+before and after records identical.
+
+**A35 milestone show counts by status, exactly.** Put six issues in `M1`: one with no label, one
+`ready`, one `in-review`, and one each closed as completed, not planned, and duplicate. Put one
+`ready` issue in `M1 extra`. Then:
+
+1. `$wkc-tracker milestone show M1`: expect total 6, with `backlog` 1, `ready` 1, `in-review` 1,
+   `done` 1, `cancel` 1, `duplicate` 1, the three terminal outcomes on separate lines and never
+   summed as "completed", and the `M1 extra` issue not counted.
+2. `$wkc-tracker milestone show M2: Reply handling` and the same name quoted: expect that milestone
+   with zero tickets, not "not found".
+3. `$wkc-tracker milestone show M3`: expect `closed` and its tickets, with M3 still closed afterwards.
+4. `$wkc-tracker milestone show M`: expect a stop naming the milestones that exist, not `M1`.
+
+Check: the milestones record from A34 and `gh issue list --repo <R> --state all --json
+number,state,labels,milestone,updatedAt` are identical before and after all four. Teardown deletes
+the scratch repository.
+
 **A32 an empty frontier says why.** This case needs a frontier with nothing on it, so run it after
 every other A case. For each ticket `$wkc-tracker next` returns, `gh issue edit <n> --repo <R>
 --remove-label ready` until it returns nothing. Then build three held tickets with `gh`, not the
@@ -729,6 +754,15 @@ create and that `create` starts it, and no file added or changed. Then `$wkc-tra
 one-line ticket naming milestone `M9`: its frontmatter must carry `milestone: 'M9'`, and
 `$wkc-tracker list backlog M9` must return it.
 
+**B22 milestone list and show come from the tickets.** Give tickets `milestone: 'M1'` at
+`backlog`, `ready`, `done`, and `cancel`, and one ticket `milestone: 'M1 extra'` at `duplicate`.
+Record `cksum` of every file. Then `$wkc-tracker milestone list`: expect `M1` with 4 tickets and
+`M1 extra` with 1, the terminal tickets counted, and no id or state claimed. `$wkc-tracker milestone
+show M1`: expect total 4 with `backlog`, `ready`, `done`, and `cancel` at 1 each. `$wkc-tracker
+milestone show M2`, which no ticket carries: expect a stop naming `M1` and `M1 extra`, since an empty
+local milestone does not exist. `$wkc-tracker milestone "list"`: expect the ensure reply for a
+milestone named `list`, not the listing. Check: every `cksum` unchanged.
+
 **B20 an empty frontier says why.** Run it after every other B case. Move every ticket
 `$wkc-tracker next` returns to `backlog` by editing its `status`, until it returns nothing. Then write
 six files by hand, since the skill will not write the cycle:
@@ -976,6 +1010,15 @@ creates project milestones, expect `list_milestones` to show exactly one with th
 and a second run to report it exists without a write. If it has none, expect a stop that asks a
 person to add it in Linear, and `list_milestones` unchanged. Record which tool was used, or that none
 was offered, in the run log.
+
+**C27 milestone list and show on Linear.** In `linear_project`, add one milestone with no issues and
+one with issues in Backlog, Todo, Done, Canceled, and Duplicate. `$wkc-tracker milestone list`: expect
+both by exact name with their ids, no open or closed state, and `progress` not presented as a status.
+`$wkc-tracker milestone show <the second>`: expect total 5 with one each of `backlog`, `ready`,
+`done`, `cancel`, and `duplicate`, terminal outcomes apart, checked against `list_issues` by hand.
+`show` on the empty one: zero tickets. Check: `get_issue` on each issue shows no change in status or
+milestone, and `list_milestones` is unchanged. With `list_milestones` unavailable, `show` must stop
+and say so rather than report zero.
 
 ---
 
@@ -1233,6 +1276,22 @@ here.
 Versions 0.0.9 to 0.0.41 below were development steps on the `feat/tracker` branch. They shipped
 together as 0.0.8, so an entry's version names a branch state, and its skill ref names the exact
 commit it tested.
+
+### 2026-10-17T20:21:56-07:00 Direct check of the milestone show query
+
+No harness session. The `milestone show` query was copied out of `github.md` with its prelude and run
+with `jq` 1.7 against ten fixture issues shaped like `gh issue list --json` output: `M1` holding no
+label, `ready` plus a topic label, `in-review`, closed completed, not planned, duplicate, and with no
+reason, and two status labels at once; one `ready` issue in `M1 extra`; one with no milestone.
+
+| Check | Verdict | Evidence |
+|---|---|---|
+| Counts for `M1` | PASS | `backlog` 1, `ready` 1, `in-review` 1, `done` 1, `cancel` 1, `duplicate` 1, `inconsistent` 1, `closed, no reason` 1; the `M1 extra` and unmilestoned issues not counted. |
+| Exact match | PASS | `M1 extra` counted only its own issue; `M` matched nothing. |
+| Empty milestone | PASS | `M2: Reply handling` gave `counts: {}`, so zero tickets. |
+| A34, A35 | SKIP | No signed-in `gh` in the cloud container; `--paginate` and the live milestones API are untested. |
+| B22 | SKIP | No harness session authorized for it yet. |
+| C27 | SKIP | Linear MCP server not connected. |
 
 ### 2026-10-17T11:56:11-07:00 Focused 0.0.22 milestone verb run, Claude Code
 

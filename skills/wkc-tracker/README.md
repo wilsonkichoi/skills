@@ -10,7 +10,7 @@ backend files beside it hold the commands for one backend each.
 - Why it exists
 - Setup
 - The seven statuses
-- The nine verbs
+- The verbs
 - `next`, and the frontier
 - There is no `blocked` status
 - Ticket shape
@@ -58,7 +58,7 @@ you make yourself, in the tracker.
 A ticket nobody has labelled reads as `backlog`. That is deliberate: it means an issue a colleague
 filed by hand in the web UI is a real ticket immediately, with no import step.
 
-## The nine verbs
+## The verbs
 
 ```
 /wkc-tracker list [status] [milestone]
@@ -70,6 +70,8 @@ filed by hand in the web UI is a real ticket immediately, with no import step.
 /wkc-tracker move <id> <status> [original]
 /wkc-tracker link <id> blocked-by <id>
 /wkc-tracker milestone <name>
+/wkc-tracker milestone list
+/wkc-tracker milestone show <name>
 ```
 
 **`list`** shows tickets with their id, title, status, assignee, and blockers. Both arguments are
@@ -122,6 +124,12 @@ leaves an existing open one alone. It never renames, closes, or reopens a milest
 reported, and reopening it is your call. In local markdown there is nothing to create, since a
 milestone exists as soon as a ticket carries it. `wkc-plan` uses it before creating a milestone's
 tickets.
+
+`/wkc-tracker milestone list` and `/wkc-tracker milestone show "M2: Reply handling"` only read.
+`list` shows every milestone, closed and empty ones included on GitHub and Linear. `show` gives one
+milestone's tickets counted by status, with `done`, `cancel`, and `duplicate` kept apart. In local
+markdown both are worked out from the tickets, so a milestone with no tickets does not exist there.
+To ensure a milestone literally named `list`, quote it: `/wkc-tracker milestone "list"`.
 
 ## `next`, and the frontier
 

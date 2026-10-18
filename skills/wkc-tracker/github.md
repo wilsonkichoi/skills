@@ -7,6 +7,7 @@
 - assign, bare and explicit forms
 - move, to an open or a terminal status, then verifying a move
 - comment, link
+- milestone: ensure, list, show
 
 Use the `gh` CLI. Resolve `OWNER/REPO` once from the `origin` remote and pass `--repo` on every
 command.
@@ -62,7 +63,7 @@ only under `inconsistent`. For a terminal status, use `--state closed` and drop 
 For a milestone, resolve the title first:
 
 ```
-gh api 'repos/<owner>/<repo>/milestones?state=all' --jq '.[] | select(.title == "<title>") | .number'
+gh api --paginate 'repos/<owner>/<repo>/milestones?state=all&per_page=100' --jq '.[] | select(.title == "<title>") | .number'
 ```
 
 Empty output means no such milestone; the same call with `--jq '.[].title'` lists the ones that
@@ -140,14 +141,45 @@ exactly this way, never through a shell variable or `--jq .body`.
 
 ## milestone
 
+Every milestones read passes `state=all`, `per_page=100`, and `--paginate`. Without `state=all` a
+closed milestone is invisible, and without paging the read stops at the first page.
+
+`milestone <name>`, the ensure form:
+
 ```
-gh api 'repos/<owner>/<repo>/milestones?state=all' --jq '.[] | select(.title == "<title>") | {number, state}'
+gh api --paginate 'repos/<owner>/<repo>/milestones?state=all&per_page=100' --jq '.[] | select(.title == "<title>") | {number, state}'
 gh api repos/<owner>/<repo>/milestones -f title='<title>'
 ```
 
 Run the read first. An open match needs no write; a closed one is a stop. Otherwise create it, and
 verify by running the read again: it must print one milestone, `open`. Never pass `-f state` or
 PATCH an existing milestone.
+
+`milestone list`:
+
+```
+gh api --paginate 'repos/<owner>/<repo>/milestones?state=all&per_page=100' \
+  --jq '.[] | {number, title, state, url: .html_url}'
+```
+
+Report every line, sorted by number. No output means the repository has no milestones.
+
+`milestone show <name>`: resolve the title with the ensure form's read, then count its issues from
+the unfiltered list, by the reading rules:
+
+```
+gh issue list --repo <owner/repo> --state all --limit 1000 \
+  --json number,state,stateReason,labels,milestone \
+  --jq '<prelude> {rows: length,
+         counts: ([.[] | select(.milestone.title == "<title>")
+                   | if .state == "CLOSED" and .stateReason == null then "closed, no reason"
+                     else status end]
+                  | group_by(.) | map({key: .[0], value: length}) | from_entries)}'
+```
+
+The total is the sum of `counts`. Report `inconsistent` and `closed, no reason` on their own lines.
+Never use the milestone's `open_issues` or `closed_issues`: they count pull requests, and a closed
+issue is not necessarily `done`.
 
 ## assign, bare form
 

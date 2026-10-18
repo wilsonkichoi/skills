@@ -70,7 +70,9 @@ Terminal statuses are `done`, `cancel`, and `duplicate`.
 | `assign` | Bare: require `ready` with no `assignee`, then set `in-progress` and `assignee` in one write. Explicit: set `assignee` only, `''` for `none`. Refuse a terminal status and an unnamed holder |
 | `comment` | Append under `## Comments`, adding the heading if missing |
 | `move` | Refuse a move out of a terminal status. `backlog` or `ready` also sets `assignee: ''`; `duplicate` also sets `duplicate_of` |
-| `milestone` | Write nothing: a milestone exists once a ticket carries it. Report the tickets that already carry it, or that `create` starts it |
+| `milestone <name>` | Write nothing: a milestone exists once a ticket carries it. Report the tickets that already carry it, or that `create` starts it |
+| `milestone list` | The distinct non-empty `milestone` values across every file, terminal tickets included, each with its ticket count. There is no milestone object, so no id, no state, and no empty milestone: one exists only while a ticket carries it |
+| `milestone show` | The files whose `milestone` matches exactly, counted by `status`, terminal ones included |
 | `link` | Refuse a self-link. Walk the blocker's `blocked_by` through non-terminal files; reaching the blocked id is a cycle, so refuse and name the path. Otherwise add the id |
 
 A `blocked_by` id with no file is an open blocker; name the missing id. For an empty frontier, the

@@ -69,7 +69,7 @@ started right now, and `next` returns it.
 
 ## 3. Read, write, verify
 
-`create`, `assign`, `comment`, `move`, `link`, and `milestone` change state. Each runs read, write, and verify:
+`create`, `assign`, `comment`, `move`, `link`, and `milestone <name>` change state. Each runs read, write, and verify:
 
 1. **Read.** Fetch the current state and check this verb's precondition. If it fails, write nothing
    and say why.
@@ -87,7 +87,7 @@ what you did about it. A verb that cannot confirm its own write has failed.
 | `assign` | not terminal. The bare form also needs `ready` with no assignee. Any other holder must be named | the assignee is exactly the one asked for, or nobody for `none`. The bare form also shows `in-progress` |
 | `comment` | the ticket exists | the comment body is on the ticket |
 | `move` | the user's words mean one of the seven statuses: its name, misspelled or in another form, or a word with the same meaning. A real word with its own unrelated meaning that shares letters with a status name means none: change nothing and ask, listing the seven. The current status is not terminal. Other people act on a status, and no verb reverses a terminal move | the backend reports the new status |
-| `milestone` | a name is given, and no milestone has exactly that name. An open one needs no write: report it. A closed one is a stop, because reopening it is a person's decision | the backend lists an open milestone with exactly that name |
+| `milestone <name>` | a name is given, and no milestone has exactly that name. An open one needs no write: report it. A closed one is a stop, because reopening it is a person's decision | the backend lists an open milestone with exactly that name |
 
 ## 4. Verbs
 
@@ -102,6 +102,24 @@ what you did about it. A verb that cannot confirm its own write has failed.
 | `move <id> <status> [original]` | Change status, including a terminal close |
 | `link <id> blocked-by <id>` | Record that the first ticket is blocked by the second |
 | `milestone <name>` | Create an open milestone with that name when none exists. Never rename, close, or reopen one |
+| `milestone list` | Every milestone the backend holds, closed ones included. Read only |
+| `milestone show <name>` | One milestone and its ticket counts by status. Read only |
+
+**`milestone`** has three forms, chosen by the first word. `list` alone is the listing; `show`
+followed by a name is the inspection; anything else is a name to ensure, and a name may contain
+spaces, such as `M2: Reply handling`. To ensure a milestone named exactly `list`, or one whose name
+starts with `show `, quote the whole name: `milestone "list"`.
+
+- `milestone list` reports each milestone's name, plus its id or URL and its state where the
+  backend has them. No milestones is an explicit empty result, never an error or a ticket list.
+- `milestone show <name>` matches the name exactly, never a similar one. It reports the name, id or
+  URL, and state where the backend has them, the total tickets, and a count for each of the seven
+  statuses. `done`, `cancel`, and `duplicate` are different outcomes: never add them up as
+  "completed". Tickets with no clean status are counted on their own line. An empty milestone shows
+  zero tickets. For the tickets themselves, use `list <status> <milestone>`.
+- Neither read writes anything. No verb closes a milestone, including when all its tickets are done.
+
+A milestone that `show` cannot find is a stop that names the milestones that exist, like `list`.
 
 In `list`, a milestone that matches none is a stop that names the milestones that exist, never an empty or
 unscoped list.
