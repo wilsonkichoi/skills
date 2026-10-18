@@ -82,7 +82,8 @@ it replaced. Do not rename a milestone that already has tickets; the tracker can
 ## 3. Draft tickets for one milestone
 
 Plan the milestone the user named, or else the first one in ROADMAP order whose scope existing
-tickets do not cover. Later milestones get tickets when they come up.
+tickets do not cover. Later milestones get tickets when they come up; do not draft them now, even
+to show the graph.
 
 Compare the milestone's scope with the existing tickets by substance, not by title. Reuse one that
 already covers part of it and name it by its tracker id instead of writing a duplicate. Never
