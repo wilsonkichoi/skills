@@ -4,11 +4,11 @@
 - Statuses
 - Reading rules
 - list, show, next, create
+- milestone: ensure, list, show
 - assign, bare and explicit forms
 - move, to an open or a terminal status, then verifying a move
 - comment, link
-- milestone: ensure, list, show
-- duplicate originals
+- Duplicate originals
 
 Use the `gh` CLI. Resolve `OWNER/REPO` once from the `origin` remote and pass `--repo` on every
 command.

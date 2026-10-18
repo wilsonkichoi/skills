@@ -269,6 +269,9 @@ Before any commit that adds, removes, or modifies files under `skills/`:
 4. `README.md` roster row added or updated when a skill is added, renamed, or removed
 5. `validation/wkc-<name>.md` updated when a verb, a command, or a guarantee changed. A runbook
    that still tests the old behaviour is worse than none, because it reports PASS
+6. Every supporting `.md` file in a changed skill that is now over 100 lines has a `## Contents`
+   list naming its current `##` sections (see [`skill-template/README.md`](./skill-template/README.md#authoring-guidance)).
+   `SKILL.md` is exempt: it loads whole
 
 Do not commit skill changes without completing this checklist. Read the checklist, don't rely on memory.
 
