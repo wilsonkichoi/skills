@@ -45,8 +45,8 @@ frontmatter of the files in `issues_dir` with a YAML parser, never from the skil
    `git diff` shows the SPEC and PRD unchanged.
 
 5. **Publication.** Continue case 3 and answer `1`.
-   PASS: one ticket file per drafted ticket, each with the milestone named as the ROADMAP heading, in draft order by
-   id, all at `ready`. Every `blocked_by` holds real ids in the right direction and matches the draft, with no edge
+   PASS: one ticket file per drafted ticket, each with the milestone named as the ROADMAP heading, created so every
+   new blocker has a lower id than the tickets it blocks, all at `ready`. Every `blocked_by` holds real ids in the right direction and matches the draft, with no edge
    that only encodes priority. `wkc-tracker next`, read independently from the files, excludes every ticket with an
    open blocker. The ROADMAP reads `Status: approved (YYYY-MM-DD)` with the run date, and the PRD and SPEC are unchanged.
    The transcript shows the `wkc-tracker` skill invoked before the first ticket file is written.
@@ -74,6 +74,35 @@ frontmatter of the files in `issues_dir` with a YAML parser, never from the skil
     PASS: only the affected milestones change by `git diff`, the status resets to `Status: draft`, a dated **Changes**
     entry names what it replaced, a milestone that already has tickets keeps its name, and no ticket file changes
     before approval.
+
+11. **Graph and waves.** Continue case 3 before answering, or use any draft with at least four tickets.
+    PASS: the draft shows an edge table and the waves, plus a Mermaid diagram or a stated reason for none.
+    Checked by hand against the edge table: every id resolves, there is no self-edge or cycle, no edge is implied by
+    two others, wave 1 holds every ticket with no blocker (at least two when the milestone has independent work),
+    every ticket's blockers sit in earlier waves, and the creation order is topological. The reply does not promise
+    simultaneous work, durations, or a number of agents, and does not call creation order the build order.
+
+12. **An invalid graph is not published.** After a draft, ask for an edge that closes a cycle, such as making an
+    early ticket blocked by one that already depends on it.
+    PASS: the reply names the cycle as a path and keeps the turn on a question; `cksum` of `issues_dir` is unchanged.
+    Repeat with an edge to an id that is neither a draft nor a real ticket: it is named as unknown, not dropped.
+
+13. **Cross-milestone blocker that exists.** On a fixture where M1 is published, invoke for M2.
+    PASS: an M2 ticket that builds on M1 work lists that M1 ticket's real id under **Blocked by**, the id resolves by
+    a direct read, and the ROADMAP's **Depends on** for M2 is unchanged. After publishing, the M2 ticket's
+    `blocked_by` holds the M1 id.
+
+14. **Cross-milestone blocker that has no ticket.** Approve the ROADMAP with option 4, so M1 has no tickets, then
+    invoke for M2.
+    PASS: the draft names the missing M1 work as an unresolved prerequisite, no **Blocked by** entry holds an invented
+    id, option 1 says which tickets stay at `backlog` and why, and nothing is written to `issues_dir` before an answer.
+
+15. **Coordination risk.** Use a milestone with two independent tickets that both change the `appointments` table.
+    PASS: the draft names the shared table as a coordination risk, and neither ticket blocks the other for that reason
+    alone.
+
+16. **No answer, no writes.** After a draft, answer `3` with a change, then answer `4`.
+    PASS: `cksum` of `issues_dir` is unchanged after both turns, and only option 4 changes the ROADMAP's status line.
 
 ## Dated report: 2026-10-17
 

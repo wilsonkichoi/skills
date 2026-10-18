@@ -85,30 +85,66 @@ Plan the milestone the user named, or else the first one in ROADMAP order whose 
 tickets do not cover. Later milestones get tickets when they come up.
 
 Compare the milestone's scope with the existing tickets by substance, not by title. Reuse one that
-already covers part of it and name it in the draft instead of writing a duplicate.
+already covers part of it and name it by its tracker id instead of writing a duplicate. Never
+change a reused ticket; if it needs changing, say so in the report.
 
-Write each ticket in the shape `wkc-tracker` uses (**What to build**, **Acceptance criteria**,
-**Blocked by**, **Related**, **Notes**), with draft ids such as T1 and T2:
+Write each new ticket in the shape `wkc-tracker` uses (**What to build**, **Acceptance criteria**,
+**Blocked by**, **Related**, **Notes**), with draft ids such as T1 and T2, kept apart from tracker ids:
 
-- One outcome that can be checked on its own, sized for one pull request.
+- One outcome that can be checked on its own, sized for one pull request. Do not split tightly
+  coupled work, or invent tickets, to get more of them.
 - Acceptance criteria someone else can check: a command and its expected output, a request and its
   response, a file, or a named manual check. Broad criteria, such as validation or error handling,
   list their cases.
 - **Notes** copy the SPEC excerpt the work needs, such as a contract's fields and error responses,
   with the section it came from, so a fresh session does not have to go looking.
-- **Blocked by** only for a real prerequisite: work this ticket builds on. Never to encode priority.
 - A spike for an unknown names the question, the evidence that settles it, and where the answer
   goes, usually a SPEC update through `wkc-architect`. Its code is thrown away, not shipped.
 
-Order the draft so every ticket follows its blockers, then by what to build first. Tickets are
-created in that order, and `wkc-tracker next` returns the lowest id first, so the draft order is the
-build order.
+## 4. Build the dependency graph
 
-## 4. Approval
+Give each ticket its direct prerequisites: the tickets whose work it builds on and cannot start
+without. "T3 is **Blocked by** T1" is the edge T1 → T3. Never add an edge for priority, a preferred
+order, or because two tickets touch the same files, and drop a blocker that another blocker already
+implies.
 
-Show the ROADMAP or what changed in it, the milestone being planned, every ticket with its criteria
-and edges, the existing tickets reused, and what publishing will do: create the milestone in the
-tracker if it has none, create N tickets at `backlog` with M edges, then move them to `ready`.
+A blocker is a draft id, a reused ticket, or a ticket in an earlier milestone. When the ROADMAP
+says this milestone **Depends on** another, read that milestone's tickets with `wkc-tracker list
+<milestone>` and link the specific ticket that delivers what is needed. A prerequisite in a terminal
+status is already met and needs no edge. When the needed work has no ticket yet, never invent an
+id: name it as an **unresolved prerequisite**. The ROADMAP keeps its milestone-level **Depends on**;
+ticket edges live only in the tracker.
+
+When the SPEC leaves open a decision that two tickets share, such as a contract between them, do not
+call them independent. Make it work for `wkc-architect` or a spike, and keep the edge.
+
+Check the graph before showing it: every id resolves to a draft or a real ticket, no ticket blocks
+itself, and there is no cycle. Fix a graph that fails; never publish one. Then derive:
+
+- **Creation order**: a topological order, so a new ticket is created after its new blockers. It
+  is publishing order, not execution order.
+- **Waves**: wave 1 is every ticket with no open blocker; each later wave is the tickets whose
+  blockers all sit in earlier waves. A wave is a possible schedule once its prerequisites finish,
+  not a promise that its tickets run at once, a duration, or a count of people or agents.
+- **Coordination risks**: tickets that can run side by side but edit the same schema, migration,
+  generated file, or config. Name the risk; it is not an edge.
+
+What can start is decided later by `wkc-tracker next`, which returns every eligible ticket, lowest
+id first only as a tie-break.
+
+## 5. Approval
+
+Show the ROADMAP or what changed in it, the milestone being planned, and:
+
+- every new ticket with its criteria, and the reused tickets by tracker id;
+- the edges as a table (ticket, blocked by), plus a Mermaid `graph LR` when it helps;
+- the waves, the tickets that would be on the frontier first, the coordination risks, and any
+  unresolved prerequisites with the tickets they hold back;
+- what publishing will do: create the milestone in the tracker if it has none, create N tickets at
+  `backlog` with M edges, then move them to `ready`.
+
+A ticket with an unresolved prerequisite is not safe to start, so option 1 must say it stays at
+`backlog`, and why. The diagram is for review, not a file to keep.
 
 A question ends its turn. Number the options, put the recommended one first, and accept a digit:
 
@@ -124,25 +160,26 @@ then `Status: approved (YYYY-MM-DD)` with that day's date. Write it, and publish
 in this conversation. Adding, removing, or reordering milestones sets an approved ROADMAP back to
 `Status: draft`.
 
-## 5. Publish
+## 6. Publish
 
 Tracker writes are hard to take back, so run them in this order, through `wkc-tracker`, and stop at
 the first failure:
 
 1. `wkc-tracker milestone <name>`, so the milestone exists. If it cannot, create nothing and say
    what the user needs to do.
-2. `wkc-tracker create` each ticket in draft order, with its milestone, and its `## Blocked by`
-   entries rewritten from draft ids to the ids already returned.
+2. `wkc-tracker create` each ticket in creation order, with its milestone, and its `## Blocked by`
+   entries rewritten from draft ids to the tracker ids already returned.
 3. `wkc-tracker list <milestone>` once, and compare it with the draft: every ticket present, with
-   the blockers it was given.
-4. Only when all of that matched, `wkc-tracker move <id> ready` for each ticket, if the user chose
-   `ready`. Half-published work never reaches the frontier.
+   exactly the blockers in the approved table.
+4. Only when all of that matched, `wkc-tracker move <id> ready` for each ticket the user approved
+   for `ready`. Half-published work never reaches the frontier. If something learned while
+   publishing makes a ticket unsafe to start, leave it at `backlog` and ask.
 
 On a failure, report the ids created, the edges that landed, and what is missing. On a rerun, list
 the milestone first and create only what is missing; never recreate a ticket that exists.
 
-## 6. Report
+## 7. Report
 
 Say what changed in the ROADMAP and its status line, the tickets created with their ids or URLs and
-edges, which are `ready`, anything that failed, and the open decisions for `wkc-architect`. Run
-`wkc-plan` again when the next milestone needs tickets.
+edges, which are `ready`, unresolved prerequisites, anything that failed, and the open decisions
+for `wkc-architect`. Run `wkc-plan` again when the next milestone needs tickets.
