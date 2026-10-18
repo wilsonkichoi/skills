@@ -65,7 +65,8 @@ frontmatter of the files in `issues_dir` with a YAML parser, never from the skil
 8. **Interrupted publication and rerun.** Publish a milestone, then delete the last created ticket file and set the
    others back to `backlog`, as a run that stopped before its `move` step would leave them. Invoke again for that milestone.
    PASS: the rerun reads the milestone first, creates only the missing ticket, checks each ticket's milestone,
-   status, and edges, and no title or outcome appears twice.
+   status, and edges, and no title or outcome appears twice. After `1`, the tickets the interrupted run left at
+   `backlog` are at `ready` with the new one, except decision tickets and ones the draft said stay at `backlog`.
 
 9. **Custom paths.** Set `roadmap_file` to a non-default path and add authored body text to the config and context file.
    PASS: the ROADMAP lands at the configured path, no `docs/dev-agents/ROADMAP.md` appears, and `git diff` shows the
@@ -177,3 +178,21 @@ tickets. 3 sessions, $1.80 in total, at most $1.15 in one session across its res
 | 14, cross-milestone blocker with no ticket | PASS | Session 12, approved ROADMAP and no tickets: M1's importer and staff page work named as unresolved prerequisites, shown as dashed nodes with no id, option 1 publishing T1 and T2 at `backlog` with the reason, and `issues_dir` unchanged before an answer. |
 | 6, 7, 8 | Not rerun | Passed on `076d84b`. Their paths changed with the graph step (reuse by tracker id, creation order, edge check), so that evidence covers the old text only. |
 | 9, 10 | Reused | Passed on `076d84b`; the ROADMAP paths they test did not change. |
+
+### Dependency safety run, 2026-10-18
+
+Claude Code 2.1.302, Sonnet 5.5, same flags, sessions 15 to 24 of 10 more authorized at $2 each (15 to 17 were tracker
+cases). `wkc-plan` and `wkc-tracker` from a clean `git archive` of `ebb3204`, installed with `-a claude-code`.
+Cases 17 to 20 used the published M1 fixture from the graph run, with M1 ticket states edited by hand; cases 6 to 8 used
+the original fixtures. Plan sessions cost $2.79 in total, at most $0.59 in one session across its resumed turns.
+Ticket state was scored with PyYAML from the files.
+
+| Case | Result | Evidence |
+|---|---|---|
+| 17, earlier milestone all done | PASS | Session 18: "M1 has 4 tickets, all `done`, and the files add up to that count"; no M2 draft repeats M1 work. After `1`: 005 decision at `backlog`, 006 `ready` with no blocker, 007 `ready` blocked by 005 and 006; no M2 ticket blocked by an M1 id. |
+| 18, canceled and duplicate | PASS | Session 19: 002 (duplicate of in-progress 006) mapped to "Link 006, never 002"; 007 (duplicate of done 003) "Met, no edge"; canceled sender 004 named as an unresolved prerequisite, with a replacement ticket offered and no edge. After `1`: 009 `blocked_by: ['008', '006']`; 002, 004, and 007 unchanged by `git diff`. |
+| 19, unresolved prerequisite, no ticket | PASS | Session 20: the draft offered a decision ticket; after `3` declining it, the webhook kept the gap in **Notes** with "a note is not a dependency edge... If anyone moves T2 to `ready` by hand, it goes onto the frontier". After `1`: 005 at `backlog`, `blocked_by: []`, Notes hold the gap. It was the only ticket. |
+| 20, shared undecided contract | PASS | Session 21: decision ticket for the `replies` table blocking both the webhook and the export, no edge between them, shared schema named as a coordination risk. After `1`: 005 `backlog`, 006 and 007 `ready`, each `blocked_by: ['005']`. |
+| 6, existing work | PASS | Session 22: hand-written 001 reused, not redrafted; after `1`, 002 to 005 in M1, 004 blocked by 001, no two tickets with the same outcome. Its report miscounted the edges in one line. It kept 005, which waits on a decision ticket, at `backlog`, while sessions 18 and 21 moved such tickets to `ready`; both are safe. |
+| 7, spec gap and unknown | PASS | Session 23: no columns invented; the undecided table became a decision ticket for `wkc-architect` blocking the table work; the spike names its question, the evidence, and the SPEC sections, with throwaway code. `issues_dir` unchanged. |
+| 8, interrupted publication | PASS on the old check | Session 24: counted M1's four tickets, drafted only the deployment ticket, and after `1` created 005 alone with `blocked_by: ['001', '003']`; no title appears twice. It treated 001 to 004 as reused and left them at `backlog`, so nothing reached the frontier; the `076d84b` run had moved them to `ready`. A sentence now makes leftover tickets part of the publication, and case 8's check was tightened to match. Not rerun on that sentence. |

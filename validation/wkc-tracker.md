@@ -1353,6 +1353,21 @@ Versions 0.0.9 to 0.0.41 below were development steps on the `feat/tracker` bran
 together as 0.0.8, so an entry's version names a branch state, and its skill ref names the exact
 commit it tested.
 
+### 2026-10-17T21:50:00-07:00 Focused blocker and milestone run, Claude Code
+
+Skill ref `ebb3204`, a clean `git archive` installed with `-a claude-code` into local-backend fixtures. Claude Code
+2.1.302 ran `claude-sonnet-5-5` in print mode with `--max-budget-usd 2`, authorized by the maintainer at 10 sessions and
+$2 each, shared with `wkc-plan`. 3 sessions here, $1.14 in total.
+
+| Case | Verdict | Independent evidence |
+|---|---|---|
+| B23 | PASS | Frontier 003, 009, 012. Held: 010 (`cancel`, left to a person), 011 (chain ends at 003, `ready`), 013 (loop `006 → 007 → 006`), 014 (no `duplicate_of`), 015 (no file for 099), 016 (`cancel` 002). `cksum` unchanged. Then `move 003 done` and `next`: 011 joined the frontier through its duplicate's original, the B9 path for duplicates. |
+| B24 | PASS | `create` in `M2: it's "quoted"` wrote 007 with that milestone exactly, by PyYAML, and said the ticket starts it, naming `M1` and `M1 extra`. Older files unchanged by `cksum`. |
+| B22 | PASS | Recheck in the same session: `milestone list` gave `M1` 4, `M1 extra` 1, `M2: it's "quoted"` 1, no id or state; `show M1` gave one each of `backlog`, `ready`, `done`, `cancel`. `cksum` unchanged. |
+| B21 | PASS | Recheck: `milestone M9` wrote nothing by `cksum`; `create` in `M9` wrote `milestone: 'M9'` at `backlog`, said it starts the milestone, and `list backlog M9` returned only it. The reply offered to fix a typo, which no verb can do on another backend. |
+
+PASS 4, FAIL 0, SKIP 0 for the cases selected. A36 to A38, C28, and C29 remain unrun.
+
 ### 2026-10-17T21:00:33-07:00 Direct checks of blocker semantics and milestone matching
 
 Skill ref `3f05ec2`. No harness session. The `next`, milestone resolve, ensure read, `milestone show`, and `create`

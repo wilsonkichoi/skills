@@ -196,7 +196,9 @@ the first failure:
 
 On a failure, report the ids created, their milestones, the edges that landed, and what is missing.
 On a rerun, read the milestone and `show` each id the failed run reported, then create only what is
-missing; never recreate a ticket that exists.
+missing; never recreate a ticket that exists. Tickets an earlier run of this milestone left at
+`backlog` are part of this publication, not reused tickets: check them like new ones, and option 1
+moves them to `ready` too.
 
 ## 7. Report
 
