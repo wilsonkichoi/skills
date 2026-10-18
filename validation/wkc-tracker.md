@@ -1353,7 +1353,7 @@ Versions 0.0.9 to 0.0.41 below were development steps on the `feat/tracker` bran
 together as 0.0.8, so an entry's version names a branch state, and its skill ref names the exact
 commit it tested.
 
-### 2026-10-17T21:50:00-07:00 Focused blocker and milestone run, Claude Code
+### 2026-10-17T21:17:00-07:00 Focused blocker and milestone run, Claude Code
 
 Skill ref `ebb3204`, a clean `git archive` installed with `-a claude-code` into local-backend fixtures. Claude Code
 2.1.302 ran `claude-sonnet-5-5` in print mode with `--max-budget-usd 2`, authorized by the maintainer at 10 sessions and
