@@ -8,7 +8,7 @@
 - assign, bare and explicit forms
 - move, to an open or a terminal status, then verifying a move
 - comment, link
-- Duplicate originals
+- Blockers and duplicate originals
 
 Use the `gh` CLI. Resolve `OWNER/REPO` once from the `origin` remote and pass `--repo` on every
 command.
@@ -36,14 +36,15 @@ def status:
   else status_labels
     | if length > 1 then "inconsistent" elif length == 0 then "backlog" else .[0] end
   end;
-def blockers($st): [.blockedBy.nodes[]
-  | {number, status: (if .state == "OPEN" then "open" else ($st[.number | tostring] // "unknown") end)}];
-def unmet($st): [blockers($st)[] | select(.status != "done")];
+def open_blockers: [.blockedBy.nodes[] | select(.state == "OPEN") | .number];
+def closed_blockers: [.blockedBy.nodes[] | select(.state != "OPEN") | .number];
+def truncated: .blockedBy.totalCount != (.blockedBy.nodes | length);
 ```
 
-`$st` maps each issue number to its status, from a `--state all` read. A blocker is met only when it
-reads `done`. A closed issue with no close reason reads `closed, no reason`, and a blocker missing
-from the read reads `unknown`; both are unmet.
+An open blocker is unmet. A closed one is met only when the blocker query in **Blockers and
+duplicate originals** shows it `done`, or a duplicate whose originals end at `done`. Never judge a
+closed blocker by looking its number up in this repository: the number may belong to another
+repository, and the list does not say why it closed.
 
 A title, a milestone name, or any other value from the user never goes inside a `jq` program. Pipe
 `gh` into `jq --arg t '<title>'` and compare with `$t`. Write each value as one single-quoted shell
@@ -95,41 +96,38 @@ gh issue view <n> --repo <owner/repo> \
 ```
 
 Never use the `--comments` flag. For an `inconsistent` issue, name both status labels and point at
-`move <id> <status>`. For a `duplicate`, name its original from the duplicate query below. Give each
-closed blocker its status with `gh issue view <blocker> --json state,stateReason`.
+`move <id> <status>`. For a `duplicate`, name its original from the issue query in **Blockers and
+duplicate originals**. Give each closed blocker its repository and status from the blocker query.
 
 ## next
 
 ```
-gh issue list --repo <owner/repo> --state all --limit 1000 \
-  --json number,title,state,stateReason,assignees,labels,blockedBy \
-  --jq '<prelude> (map({key: (.number | tostring), value: status}) | from_entries) as $st
-       | {rows: length,
+gh issue list --repo <owner/repo> --state open --limit 200 \
+  --json number,title,state,assignees,labels,blockedBy \
+  --jq '<prelude> {rows: length,
          frontier: [.[]
-           | select(.state == "OPEN")
            | if .blockedBy == null
              then error("blockedBy is null: this host does not expose issue dependencies")
              else . end
            | select(status == "ready")
            | select((.assignees | length) == 0)
-           | select(.blockedBy.totalCount == (.blockedBy.nodes | length))
-           | select(unmet($st) | length == 0)]
+           | select(truncated | not)
+           | select((open_blockers | length) == 0 and (closed_blockers | length) == 0)]
            | sort_by(.number),
-         inconsistent: [.[] | select(.state == "OPEN" and status == "inconsistent") | .number],
-         held: [.[] | select(.state == "OPEN" and status == "ready")
-           | select((.assignees | length) > 0
-                    or (unmet($st) | length) > 0
-                    or .blockedBy.totalCount != (.blockedBy.nodes | length))
-           | {number, assignees: [.assignees[].login], blockers: unmet($st),
-              truncated: (.blockedBy.totalCount != (.blockedBy.nodes | length)),
-              only_duplicates: ((.assignees | length) == 0
-                and .blockedBy.totalCount == (.blockedBy.nodes | length)
-                and (unmet($st) | all(.status == "duplicate")))}]
+         check: [.[] | select(status == "ready")
+           | select((.assignees | length) == 0 and (truncated | not))
+           | select((open_blockers | length) == 0 and (closed_blockers | length) > 0)
+           | {number, closed: closed_blockers}]
            | sort_by(.number),
-         open: (map(select(.state == "OPEN")
-                    | {key: (.number | tostring),
-                       value: {status: status, assignees: [.assignees[].login],
-                               blockers: [unmet($st)[].number]}})
+         inconsistent: [.[] | select(status == "inconsistent") | .number],
+         held: [.[] | select(status == "ready")
+           | select((.assignees | length) > 0 or (open_blockers | length) > 0 or truncated)
+           | {number, assignees: [.assignees[].login], blockers: open_blockers,
+              truncated: truncated}]
+           | sort_by(.number),
+         open: (map({key: (.number | tostring),
+                     value: {status: status, assignees: [.assignees[].login],
+                             blockers: open_blockers}})
                 | from_entries)}'
 ```
 
@@ -137,12 +135,13 @@ Run it as written. Never soften the `error()` with `?` or `// []`, and never tes
 `totalCount` or the blocker's `state` alone: the count includes closed blockers, and a closed one
 may be canceled.
 
-A held ticket with `only_duplicates` waits on duplicate blockers alone. Follow each one's chain with
-the duplicate query below. When every chain ends at a `done` ticket, the ticket joins the frontier
-in id order; otherwise it stays held, with the chain and where it ends.
+Each ticket in `check` has only closed blockers. Run the blocker query on it. When every blocker is
+met, the ticket joins the frontier in id order; otherwise it is held, with each unmet blocker's
+repository, number, and reason.
 
-For an empty frontier, report `held`. Look up each blocker in `open` for its holder, and walk `open`
-for cycles. A blocker missing from `open` is closed: its status is in `held`.
+For an empty frontier, report `held` and the `check` tickets left out. Look up each open blocker in
+`open` for its holder, and walk `open` for cycles. An open blocker missing from `open` is in another
+repository: read it with the issue query.
 
 When `assign` refuses a frontier candidate, take the next one.
 
@@ -300,10 +299,9 @@ landed.
 ## link
 
 Refuse a self-link. For a cycle, run the `next` query and walk `open` from the blocker through each
-entry's `blockers`. A blocker missing from `open` is closed: read it with `gh issue view --json
-state,stateReason`. Stop at `done` or `cancel`; for a `duplicate`, continue at its original from the
-duplicate query. Reaching the blocked issue is a cycle: refuse and name the
-path. GitHub refuses only self-links and two-issue cycles.
+entry's `blockers`, then its closed blockers from the blocker query. Stop at `done` or `cancel`; for
+a `duplicate`, continue at its `duplicateOf`. Reaching the blocked issue is a cycle: refuse and name
+the path. GitHub refuses only self-links and two-issue cycles.
 
 The endpoint takes the blocker's database id, not its number or `node_id`:
 
@@ -315,24 +313,34 @@ gh issue view <n> --repo <owner/repo> --json blockedBy --jq '[.blockedBy.nodes[]
 
 The blocker's number must be in the list.
 
-## Duplicate originals
+## Blockers and duplicate originals
 
-`gh issue view` does not say which issue a duplicate duplicates. Read it from the timeline:
+`gh issue list` cannot say why a blocker closed, which repository it is in, or which issue a
+duplicate duplicates. GraphQL can. The blocker query reads one ticket's blockers:
 
 ```
 gh api graphql -f owner='<owner>' -f repo='<repo>' -F n=<number> -f query='
   query($owner: String!, $repo: String!, $n: Int!) {
     repository(owner: $owner, name: $repo) {
       issue(number: $n) {
-        number state stateReason(enableDuplicate: true)
-        timelineItems(itemTypes: [MARKED_AS_DUPLICATE_EVENT, UNMARKED_AS_DUPLICATE_EVENT], last: 1) {
-          nodes { __typename
-            ... on MarkedAsDuplicateEvent { isCrossRepository
-              canonical { __typename ... on Issue { number } } } } } } } }'
+        blockedBy(first: 50) { totalCount nodes {
+          number state stateReason(enableDuplicate: true) repository { nameWithOwner }
+          duplicateOf { number repository { nameWithOwner } } } } } } }'
 ```
 
-The original is `canonical.number` when the last node is a `MarkedAsDuplicateEvent` with an `Issue`
-in this repository. Read the original's status; if it is a duplicate too, run the query on it, and
-so on. The chain cannot be followed, and the blocker is unmet, when there is no such event, the last
-one is an `UnmarkedAsDuplicateEvent`, the canonical is a pull request or in another repository, the
-query fails, or the chain reaches an issue already in it. Name where it stopped.
+The issue query reads one issue, in whatever repository `nameWithOwner` names:
+
+```
+gh api graphql -f owner='<owner>' -f repo='<repo>' -F n=<number> -f query='
+  query($owner: String!, $repo: String!, $n: Int!) {
+    repository(owner: $owner, name: $repo) {
+      issue(number: $n) {
+        number state stateReason(enableDuplicate: true) repository { nameWithOwner }
+        duplicateOf { number repository { nameWithOwner } } } } }'
+```
+
+Name every issue by `nameWithOwner` and number, never by number alone. A blocker is met when it is
+`CLOSED` with `COMPLETED`. A `DUPLICATE` is met when its `duplicateOf` chain, followed with the issue
+query, ends at an issue closed as `COMPLETED`. Everything else is unmet: `OPEN`, `NOT_PLANNED`, no
+close reason, a duplicate with no `duplicateOf`, a query that fails, a chain that reaches an issue
+already in it, and a blocker list longer than its `nodes`. Name where it stopped.

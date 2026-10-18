@@ -16,7 +16,7 @@ disable-model-invocation: true
 - **Dependencies:** `prd_file`, `spec_file`, and `roadmap_file` from `docs/dev-agents/config.md`,
   falling back to `docs/dev-agents/PRD.md`, `SPEC.md`, and `ROADMAP.md` when there is no config.
   The `wkc-tracker` skill for every ticket read and write: `list`, `show`, `milestone`, `create`,
-  and `move`.
+  `link`, and `move`.
 - **Input:** free text: a milestone name or number to plan, or a change to the plan. With nothing
   given, read the documents and the tracker, write or update the ROADMAP, and draft tickets for the
   first milestone in order whose scope has no tickets yet.
@@ -198,7 +198,8 @@ On a failure, report the ids created, their milestones, the edges that landed, a
 On a rerun, read the milestone and `show` each id the failed run reported, then create only what is
 missing; never recreate a ticket that exists. Tickets an earlier run of this milestone left at
 `backlog` are part of this publication, not reused tickets: check them like new ones, and option 1
-moves them to `ready` too.
+moves them to `ready` too. For any of them missing an approved edge, run `wkc-tracker link <id>
+blocked-by <blocker>` before step 3; never remove an edge that is not in the table, report it.
 
 ## 7. Report
 

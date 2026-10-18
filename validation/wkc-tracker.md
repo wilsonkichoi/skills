@@ -507,15 +507,18 @@ its own blocker, with `gh` and the `link` pair, not the skill:
 | K3 | closed as a duplicate of an open issue O |
 | K4 | closed as a duplicate of an issue closed as completed |
 | K5 | closed as a duplicate of an issue that was then unmarked as a duplicate in the web UI |
+| K6 | an issue in a second scratch repository, closed as not planned, with the same number as a local issue closed as completed |
 
 Record `gh issue list --repo <R> --state all --json number,state,stateReason,labels,assignees,updatedAt`.
-Check the fixture first: the duplicate query from `github.md`'s **Duplicate originals** section
-names O for K3's blocker and the completed issue for K4's, and the `next` query run by hand lists
-K1 in `frontier` and K2 to K5 in `held`, with `only_duplicates` true for K3 to K5. Then
+Check the fixture first: the blocker query from `github.md`'s **Blockers and duplicate originals**
+section shows `duplicateOf` O for K3's blocker and the completed issue for K4's, and K6's blocker
+under the second repository's `nameWithOwner`. The `next` query run by hand lists K1 to K6 in
+`check`, none in `frontier`. Then
 `$wkc-tracker next`. Expect K1 and K4 on the frontier, and K2, K3, and K5 named as held: K2's
 blocker as `cancel` with the decision left to a person, K3's chain ending at O still open, and K5's
-chain as one that cannot be followed. The record afterwards is identical: no ticket was reopened,
-relinked, or moved. A frontier holding K2, K3, or K5 is a FAIL.
+chain as one that cannot be followed, and K6's blocker named with its own repository as `cancel`.
+The record afterwards is identical: no ticket was reopened, relinked, or moved. A frontier holding
+K2, K3, K5, or K6 is a FAIL.
 
 **A37 create checks the milestone it lands in.** With open milestones `M1` and `M2: it's "quoted"`,
 and a closed `M3`:
@@ -1272,8 +1275,10 @@ in the run log below, so a rule can be re-checked when a backend changes.
 - **GitHub `blockedBy.totalCount`.** It counts closed blockers, measured 2026-09-18 on `gh` 2.97.0.
   The GraphQL schema agrees: `totalBlockedBy` is documented as "open and closed".
 - **GitHub duplicate originals.** `gh` 2.89.0 lists no duplicate field for `gh issue view --json`. GitHub's GraphQL
-  schema returns `DUPLICATE` from `stateReason` only with `enableDuplicate: true`, and names the original in
-  `MarkedAsDuplicateEvent.canonical` on the issue timeline. Checked against the schema on 2026-10-18, not live.
+  returns `DUPLICATE` from `stateReason` only with `enableDuplicate: true`. A review on 2026-10-18 found duplicates
+  with `Issue.duplicateOf` set and no `MarkedAsDuplicateEvent`, such as `microsoft/vscode#341504`, so the timeline is
+  not a reliable source. The latest npm copy of the public schema (`@octokit/graphql-schema` 15.26.1, November 2025)
+  has neither `duplicateOf` nor `blockedBy`, so the queries could not be checked against it here.
 - **GitHub cycles.** Measured 2026-09-21 on `wilsonkichoi/tracker-gh`: a self-link returns HTTP 422
   `Target issue cannot be the same as the source issue`, a two-issue cycle returns HTTP 422
   `this dependency would create a cycle where the target is already blocked by the source`, and the
@@ -1352,6 +1357,19 @@ here.
 Versions 0.0.9 to 0.0.41 below were development steps on the `feat/tracker` branch. They shipped
 together as 0.0.8, so an entry's version names a branch state, and its skill ref names the exact
 commit it tested.
+
+### 2026-10-17T21:58:00-07:00 Direct check after the 18b3ba9 review
+
+A review of `18b3ba9` found that GitHub duplicates can carry `Issue.duplicateOf` with no `MarkedAsDuplicateEvent`,
+and that looking a closed blocker up by number confuses a blocker in another repository with a local issue. `next`
+now sends tickets whose blockers are all closed to a GraphQL blocker query that names each blocker by
+`nameWithOwner` and follows `duplicateOf`. No harness session.
+
+| Check | Verdict | Evidence |
+|---|---|---|
+| `next` query, run verbatim through the stand-in `gh` | PASS | 15 open issues. Frontier `[30]`, the only ready ticket with no blockers. `check` holds every ready ticket whose blockers are all closed, including #31, blocked by a closed #7 from another repository, which is no longer judged by local numbers. `held`: #16 with open #5, #18 assigned, #19 truncated. A `null` `blockedBy` still stops with the error. |
+| `milestone show` after the prelude change | PASS | Counts unchanged from the previous entry; empty milestone `{}`. |
+| GraphQL blocker and issue queries | SKIP, schema | Both parse. The newest npm copy of the public schema lacks `Issue.blockedBy` and `Issue.duplicateOf`, which were the only validation errors, so the fields are unchecked here. No signed-in `gh` to run them live. |
 
 ### 2026-10-17T21:17:00-07:00 Focused blocker and milestone run, Claude Code
 

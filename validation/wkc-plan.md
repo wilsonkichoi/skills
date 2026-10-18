@@ -65,7 +65,8 @@ frontmatter of the files in `issues_dir` with a YAML parser, never from the skil
 8. **Interrupted publication and rerun.** Publish a milestone, then delete the last created ticket file and set the
    others back to `backlog`, as a run that stopped before its `move` step would leave them. Invoke again for that milestone.
    PASS: the rerun reads the milestone first, creates only the missing ticket, checks each ticket's milestone,
-   status, and edges, and no title or outcome appears twice. After `1`, the tickets the interrupted run left at
+   status, and edges, and no title or outcome appears twice. Repeat with one approved edge removed from a surviving
+   ticket's `blocked_by`: the rerun restores it with `link` before checking. After `1`, the tickets the interrupted run left at
    `backlog` are at `ready` with the new one, except decision tickets and ones the draft said stay at `backlog`.
 
 9. **Custom paths.** Set `roadmap_file` to a non-default path and add authored body text to the config and context file.
