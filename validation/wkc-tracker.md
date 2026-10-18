@@ -154,7 +154,7 @@ Expect `wkc-tracker`'s `argument-hint` to be the string `<verb> [args]` and `wkc
 Check each opening block for exactly five fields, in order: **What it does**, **When to use it**,
 **Dependencies**, **Input**, and **Output**, with no **How to call it** field.
 Compare the verb table against the pre-conversion source. Expect all eight existing forms and their semantics unchanged:
-`list`, `show`, `next`, `create`, `assign`, `comment`, `move`, and `link`.
+`list`, `show`, `next`, `create`, `assign`, `comment`, `move`, and `link`. From 0.0.22 the table also has `milestone`.
 Expect **Input** to explain the existing omission behaviour and required context; setup requires no invocation arguments.
 Use a separate throwaway repository with `issue_tracker: local`, `issues_dir`, and known fixture files.
 Run `list ready`. Independently parse those files, compare returned ids, titles,
@@ -248,12 +248,13 @@ nothing is supposed to compute on.
 then `$wkc-tracker next`.
 Expect A and not B.
 
-**A10 closed blocker releases the frontier.** `$wkc-tracker move <A> done`, then `$wkc-tracker next`.
+**A10 a done blocker releases the frontier.** `$wkc-tracker move <A> done`, then `$wkc-tracker next`.
 Expect B.
 Check the reason by hand:
 `gh issue list --repo <R> --state open --json number,blockedBy --jq '.[]|select(.number==<B>)'`
 Expect `blockedBy.totalCount` still `1` with the node `CLOSED`. A `next` that filtered on
-`totalCount` would never return this ticket.
+`totalCount` would never return this ticket. Only `done` releases it: a canceled or duplicate
+blocker is A36's case.
 
 **A11 topic labels do not block a pull, including one named after a status.**
 `gh issue edit <B> --repo <R> --add-label bug --add-label duplicate`, then `$wkc-tracker assign <B>`.
@@ -462,6 +463,77 @@ Check: `gh issue view <X> --repo <R> --json blockedBy --jq '[.blockedBy.nodes[].
 the backend. The refusal must come from the skill: `gh` would print a 422 for the self-link, and a
 reply that relays that error has not run the check.
 
+**A33 milestone creates one and touches nothing else.** Pick a title no milestone has, such as
+`A33 <run id>`, and confirm with `gh api 'repos/<R>/milestones?state=all' --jq '[.[].title]'`.
+`$wkc-tracker milestone "<title>"`. Check with the same read: exactly one milestone has the title,
+and it is `open`. Run it again: the reply says it already exists, and the milestone count is unchanged.
+Then `gh api --method PATCH repos/<R>/milestones/<its number> -f state=closed` and run it a third
+time: expect a stop that says it is closed and leaves reopening to a person, and the read still shows
+it `closed`. Finally `$wkc-tracker create` a one-line ticket naming a fresh open milestone made by this
+verb, and check `gh issue view <n> --repo <R> --json milestone` names it.
+
+**A34 milestone list shows every milestone, and only reads.** In a scratch repository with no
+milestones, `$wkc-tracker milestone list`: expect an explicit "no milestones", not an error or a ticket
+list. Then create, with `gh api`, `M1`, `M1 extra`, `M2: Reply handling` (no issues, so empty), and
+`M3`, and close `M3` with a PATCH. For the paging check, add milestones `P001` to `P101` in a loop so
+there are more than 100. Record `gh api --paginate 'repos/<R>/milestones?state=all&per_page=100'
+--jq '[.[] | {number, title, state, updated_at}]'` before and after. Expect the reply to list all
+105 by exact title, with `M3` shown `closed` and `M2: Reply handling` present though empty, and the
+before and after records identical.
+
+**A35 milestone show counts by status, exactly.** Put six issues in `M1`: one with no label, one
+`ready`, one `in-review`, and one each closed as completed, not planned, and duplicate. Put one
+`ready` issue in `M1 extra`. Then:
+
+1. `$wkc-tracker milestone show M1`: expect total 6, with `backlog` 1, `ready` 1, `in-review` 1,
+   `done` 1, `cancel` 1, `duplicate` 1, the three terminal outcomes on separate lines and never
+   summed as "completed", and the `M1 extra` issue not counted.
+2. `$wkc-tracker milestone show M2: Reply handling` and the same name quoted: expect that milestone
+   with zero tickets, not "not found".
+3. `$wkc-tracker milestone show M3`: expect `closed` and its tickets, with M3 still closed afterwards.
+4. `$wkc-tracker milestone show M`: expect a stop naming the milestones that exist, not `M1`.
+
+Check: the milestones record from A34 and `gh issue list --repo <R> --state all --json
+number,state,labels,milestone,updatedAt` are identical before and after all four. Teardown deletes
+the scratch repository.
+
+**A36 only done releases a blocker.** Create one `ready` ticket per blocker shape, each blocked by
+its own blocker, with `gh` and the `link` pair, not the skill:
+
+| Ticket | Its blocker |
+|---|---|
+| K1 | closed as completed |
+| K2 | closed as not planned |
+| K3 | closed as a duplicate of an open issue O |
+| K4 | closed as a duplicate of an issue closed as completed |
+| K5 | closed as a duplicate of an issue that was then unmarked as a duplicate in the web UI |
+| K6 | an issue in a second scratch repository, closed as not planned, with the same number as a local issue closed as completed |
+
+Record `gh issue list --repo <R> --state all --json number,state,stateReason,labels,assignees,updatedAt`.
+Check the fixture first: the blocker query from `github.md`'s **Blockers and duplicate originals**
+section shows `duplicateOf` O for K3's blocker and the completed issue for K4's, and K6's blocker
+under the second repository's `nameWithOwner`. The `next` query run by hand lists K1 to K6 in
+`check`, none in `frontier`. Then
+`$wkc-tracker next`. Expect K1 and K4 on the frontier, and K2, K3, and K5 named as held: K2's
+blocker as `cancel` with the decision left to a person, K3's chain ending at O still open, and K5's
+chain as one that cannot be followed, and K6's blocker named with its own repository as `cancel`.
+The record afterwards is identical: no ticket was reopened, relinked, or moved. A frontier holding
+K2, K3, K5, or K6 is a FAIL.
+
+**A37 create checks the milestone it lands in.** With open milestones `M1` and `M2: it's "quoted"`,
+and a closed `M3`:
+
+1. `$wkc-tracker create` a one-line ticket in `M2: it's "quoted"`: expect
+   `gh issue view <n> --repo <R> --json milestone` to name exactly that title.
+2. The same with milestone `m1`, then `M3`, then `M`: expect a stop each time that names the
+   milestones that exist, and no new issue, checked by issue count before and after. `gh` would
+   accept `m1` and file the issue under `M1`.
+
+**A38 [MANUAL] milestone show past the issue limit.** Needs a repository with more issues than the
+`show` query's limit, which this runbook does not create. `$wkc-tracker milestone show <name>`:
+expect counts from a rerun with a higher limit, or a stop that says the read was truncated, never
+counts from the first page.
+
 **A32 an empty frontier says why.** This case needs a frontier with nothing on it, so run it after
 every other A case. For each ticket `$wkc-tracker next` returns, `gh issue edit <n> --repo <R>
 --remove-label ready` until it returns nothing. Then build three held tickets with `gh`, not the
@@ -562,7 +634,8 @@ than in a backend.
 Check the file: `status: 'in-progress'` and `assignee` equal to `git config user.name`. An empty
 assignee is a FAIL; the skill should have stopped and said the identity was unresolvable.
 
-**B9 terminal releases the frontier.** `$wkc-tracker move <A> done`, then `$wkc-tracker next`. Expect B.
+**B9 done releases the frontier.** `$wkc-tracker move <A> done`, then `$wkc-tracker next`. Expect B.
+Other terminal statuses are B23's case.
 
 **B9b a status is read the way a person would.** Take four `backlog` tickets, X, Y, Z, and W, one
 per step, for the reasons A17b gives. A step that expects a SHA-256 unchanged also expects no write
@@ -714,6 +787,44 @@ refuse as a self-link.
 Check with the B2 parser, not by eye: X's `blocked_by` is still empty, Y's is exactly X's id, and
 Z's is exactly Y's id.
 
+**B21 milestone writes nothing here.** Record `cksum` of every file under `issues_dir`, then
+`$wkc-tracker milestone M9`, where no ticket carries `M9`. Expect a reply that there is nothing to
+create and that `create` starts it, and no file added or changed. Then `$wkc-tracker create` a
+one-line ticket naming milestone `M9`: its frontmatter must carry `milestone: 'M9'`, and
+`$wkc-tracker list backlog M9` must return it.
+
+**B22 milestone list and show come from the tickets.** Give tickets `milestone: 'M1'` at
+`backlog`, `ready`, `done`, and `cancel`, and one ticket `milestone: 'M1 extra'` at `duplicate`.
+Record `cksum` of every file. Then `$wkc-tracker milestone list`: expect `M1` with 4 tickets and
+`M1 extra` with 1, the terminal tickets counted, and no id or state claimed. `$wkc-tracker milestone
+show M1`: expect total 4 with `backlog`, `ready`, `done`, and `cancel` at 1 each. `$wkc-tracker
+milestone show M2`, which no ticket carries: expect a stop naming `M1` and `M1 extra`, since an empty
+local milestone does not exist. `$wkc-tracker milestone "list"`: expect the ensure reply for a
+milestone named `list`, not the listing. Check: every `cksum` unchanged.
+
+**B23 only done releases a blocker.** Write these files by hand, with full frontmatter and ids past
+the highest in the directory, then record `cksum` of every file:
+
+```
+b1  status: 'done'
+b2  status: 'cancel'
+b3  status: 'duplicate'  duplicate_of: '<o>'     o   status: 'ready'
+b4  status: 'duplicate'  duplicate_of: '<b1>'
+b5  status: 'duplicate'  duplicate_of: '<b6>'    b6  status: 'duplicate'  duplicate_of: '<b5>'
+b7  status: 'duplicate'  duplicate_of: ''
+k1 to k8  status: 'ready', blocked by b1, b2, b3, b4, b5, b7, a missing id, and b1 with b2
+```
+
+`$wkc-tracker next`. Expect k1 and k4 on the frontier, and k2, k3, k5, k6, k7, and k8 held with
+their reasons: `cancel` left to a person, the chain ending at `o` still `ready`, the loop b5 → b6 →
+b5, the empty `duplicate_of`, the missing file, and k8's `cancel` blocker. `o` itself is on the
+frontier. Check: every `cksum` unchanged.
+
+**B24 create checks the milestone it starts.** With tickets in `M1` only,
+`$wkc-tracker create` a one-line ticket in `M2: it's "quoted"`. Expect the reply to say the ticket
+starts that milestone and to name `M1`, and the B2 parser to read `milestone` exactly
+`M2: it's "quoted"`.
+
 **B20 an empty frontier says why.** Run it after every other B case. Move every ticket
 `$wkc-tracker next` returns to `backlog` by editing its `status`, until it returns nothing. Then write
 six files by hand, since the skill will not write the cycle:
@@ -794,7 +905,8 @@ uses the first of each list, run 2 the second, and so on.
 
 **C7 the frontier reads blocker statuses.** Create A and B with B blocked by A, both `Todo` and
 unassigned. `$wkc-tracker next`.
-Expect A and not B. Then move A to `Done` and re-run: expect B.
+Expect A and not B. Then move A to `Done` and re-run: expect B. Other terminal statuses are C28's
+case.
 A relation carries only the blocker's id and title, so a frontier that never fetched A's status
 cannot have filtered correctly, even if the answer looks right on one sample.
 
@@ -954,6 +1066,35 @@ the exact `warnings` or error text, in the run log.
 Expect the issue listed under its Linear name, not dropped and not folded into one of the seven.
 Check the calls: one `list_issues` per open team status, the extra one included, and none for Done,
 Canceled, or Duplicate.
+
+**C26 milestone creates one, or says it cannot.** Pick a name no milestone in `linear_project` has,
+checked with `list_milestones`, then `$wkc-tracker milestone "<name>"`. If the server has
+`save_milestone` or another tool that creates project milestones, expect one call with the project
+and name and no `id`, `list_milestones` to show exactly one with that name afterwards,
+and a second run to report it exists without a write. If it has none, expect a stop that asks a
+person to add it in Linear, and `list_milestones` unchanged. Record which tool was used, or that none
+was offered, in the run log.
+
+**C28 only Done releases a blocker.** Create `Todo` issues K1, K2, K3, and K4, unassigned. Block K1
+by an issue moved to `Done`, K2 by one moved to `Canceled`. Mark X a duplicate of an open issue O,
+and Y a duplicate of a `Done` issue, then block K3 by X and K4 by Y with `save_issue` afterwards, so
+Linear has no relation to move. `$wkc-tracker next`. Expect K1 and K4 on the frontier; K2 held with
+its `cancel` blocker left to a person, and K3 held with the chain ending at O. Check with `get_issue`
+that no status or relation changed.
+
+**C29 create checks the milestone it lands in.** With milestone M1 in `linear_project` and no
+milestone named `M9`, `$wkc-tracker create` a one-line ticket in `M9`: expect a stop naming M1, and
+no new issue by `list_issues`. Then in `M1`: expect `get_issue` to show the configured project and
+`projectMilestone` M1.
+
+**C27 milestone list and show on Linear.** In `linear_project`, add one milestone with no issues and
+one with issues in Backlog, Todo, Done, Canceled, and Duplicate. `$wkc-tracker milestone list`: expect
+both by exact name with their ids, no open or closed state, and `progress` not presented as a status.
+`$wkc-tracker milestone show <the second>`: expect total 5 with one each of `backlog`, `ready`,
+`done`, `cancel`, and `duplicate`, terminal outcomes apart, checked against `list_issues` by hand.
+`show` on the empty one: zero tickets. Check: `get_issue` on each issue shows no change in status or
+milestone, and `list_milestones` is unchanged. With `list_milestones` unavailable, `show` must stop
+and say so rather than report zero.
 
 ---
 
@@ -1133,6 +1274,11 @@ in the run log below, so a rule can be re-checked when a backend changes.
   in the unfiltered read on all three.
 - **GitHub `blockedBy.totalCount`.** It counts closed blockers, measured 2026-09-18 on `gh` 2.97.0.
   The GraphQL schema agrees: `totalBlockedBy` is documented as "open and closed".
+- **GitHub duplicate originals.** `gh` 2.89.0 lists no duplicate field for `gh issue view --json`. GitHub's GraphQL
+  returns `DUPLICATE` from `stateReason` only with `enableDuplicate: true`. A review on 2026-10-18 found duplicates
+  with `Issue.duplicateOf` set and no `MarkedAsDuplicateEvent`, such as `microsoft/vscode#341504`, so the timeline is
+  not a reliable source. The latest npm copy of the public schema (`@octokit/graphql-schema` 15.26.1, November 2025)
+  has neither `duplicateOf` nor `blockedBy`, so the queries could not be checked against it here.
 - **GitHub cycles.** Measured 2026-09-21 on `wilsonkichoi/tracker-gh`: a self-link returns HTTP 422
   `Target issue cannot be the same as the source issue`, a two-issue cycle returns HTTP 422
   `this dependency would create a cycle where the target is already blocked by the source`, and the
@@ -1211,6 +1357,98 @@ here.
 Versions 0.0.9 to 0.0.41 below were development steps on the `feat/tracker` branch. They shipped
 together as 0.0.8, so an entry's version names a branch state, and its skill ref names the exact
 commit it tested.
+
+### 2026-10-17T21:58:00-07:00 Direct check after the 18b3ba9 review
+
+A review of `18b3ba9` found that GitHub duplicates can carry `Issue.duplicateOf` with no `MarkedAsDuplicateEvent`,
+and that looking a closed blocker up by number confuses a blocker in another repository with a local issue. `next`
+now sends tickets whose blockers are all closed to a GraphQL blocker query that names each blocker by
+`nameWithOwner` and follows `duplicateOf`. No harness session.
+
+| Check | Verdict | Evidence |
+|---|---|---|
+| `next` query, run verbatim through the stand-in `gh` | PASS | 15 open issues. Frontier `[30]`, the only ready ticket with no blockers. `check` holds every ready ticket whose blockers are all closed, including #31, blocked by a closed #7 from another repository, which is no longer judged by local numbers. `held`: #16 with open #5, #18 assigned, #19 truncated. A `null` `blockedBy` still stops with the error. |
+| `milestone show` after the prelude change | PASS | Counts unchanged from the previous entry; empty milestone `{}`. |
+| GraphQL blocker and issue queries | SKIP, schema | Both parse. The newest npm copy of the public schema lacks `Issue.blockedBy` and `Issue.duplicateOf`, which were the only validation errors, so the fields are unchecked here. No signed-in `gh` to run them live. |
+
+### 2026-10-17T21:17:00-07:00 Focused blocker and milestone run, Claude Code
+
+Skill ref `ebb3204`, a clean `git archive` installed with `-a claude-code` into local-backend fixtures. Claude Code
+2.1.302 ran `claude-sonnet-5-5` in print mode with `--max-budget-usd 2`, authorized by the maintainer at 10 sessions and
+$2 each, shared with `wkc-plan`. 3 sessions here, $1.14 in total.
+
+| Case | Verdict | Independent evidence |
+|---|---|---|
+| B23 | PASS | Frontier 003, 009, 012. Held: 010 (`cancel`, left to a person), 011 (chain ends at 003, `ready`), 013 (loop `006 → 007 → 006`), 014 (no `duplicate_of`), 015 (no file for 099), 016 (`cancel` 002). `cksum` unchanged. Then `move 003 done` and `next`: 011 joined the frontier through its duplicate's original, the B9 path for duplicates. |
+| B24 | PASS | `create` in `M2: it's "quoted"` wrote 007 with that milestone exactly, by PyYAML, and said the ticket starts it, naming `M1` and `M1 extra`. Older files unchanged by `cksum`. |
+| B22 | PASS | Recheck in the same session: `milestone list` gave `M1` 4, `M1 extra` 1, `M2: it's "quoted"` 1, no id or state; `show M1` gave one each of `backlog`, `ready`, `done`, `cancel`. `cksum` unchanged. |
+| B21 | PASS | Recheck: `milestone M9` wrote nothing by `cksum`; `create` in `M9` wrote `milestone: 'M9'` at `backlog`, said it starts the milestone, and `list backlog M9` returned only it. The reply offered to fix a typo, which no verb can do on another backend. |
+
+PASS 4, FAIL 0, SKIP 0 for the cases selected. A36 to A38, C28, and C29 remain unrun.
+
+### 2026-10-17T21:00:33-07:00 Direct checks of blocker semantics and milestone matching
+
+Skill ref `3f05ec2`. No harness session. The `next`, milestone resolve, ensure read, `milestone show`, and `create`
+verification commands were extracted from `github.md` and run verbatim by `bash`, with placeholders filled and titles
+single-quoted by the file's own rule, against a stand-in `gh` that served fixture JSON and applied `--jq`. `jq` 1.7.
+
+| Check | Verdict | Evidence |
+|---|---|---|
+| `next` blocker states | PASS | 19 issues. Frontier `[10]`, the ticket blocked only by a completed issue. Held with reasons: not planned (`cancel`), duplicate of an open issue and of a completed one (`only_duplicates` true), closed with no reason, a number missing from the read (`unknown`), an open blocker, a duplicate plus a cancel (`only_duplicates` false), an assignee, and a truncated list. `inconsistent` `[21]`. A `null` `blockedBy` still stops with the error. |
+| Exact titles through `--arg` | PASS | 208 milestones over three concatenated pages. `M2: it's "quoted"` resolved to 301, `M205` on page three to 205, `list` to 302, and `M2: it` to 303 only. `m205`, `show M1`, and `") \| true \| ("` matched nothing. |
+| `milestone show` counts | PASS | `M1` counted `done`, `cancel`, `duplicate`, and `closed, no reason` at 1 each; the quoted title counted its one `ready` issue; an empty milestone gave `{}`, total 0. |
+| `create` milestone check | PASS | `milestone_ok` true for the exact title, false for a prefix and for a case variant. |
+| Prelude on a closed issue with no reason | PASS | Reads `closed, no reason`. The previous prelude failed in `jq` 1.7 with `Cannot index object with null`, which any `--state closed` list holding such an issue would hit. |
+| Duplicate original query | PASS, schema only | Validated with `graphql-core` against the octokit mirror of GitHub's public schema; a misspelled argument, field, and enum value were each rejected. Whether `gh issue close --duplicate-of` writes the timeline event is untested. |
+
+A36 to A38, C28, and C29 not run: no signed-in `gh`, no Linear MCP server. B23 and B24 not run: no session authorized.
+
+### 2026-10-17T20:33:50-07:00 Focused 0.0.22 milestone list and show run, Claude Code
+
+Skill ref `0ad54b4`, a clean `git archive` installed with `skills` 1.7.2 and `-a claude-code` into a local-backend
+fixture: `M1` tickets at `backlog`, `ready`, `done`, and `cancel`, one `M1 extra` ticket at `duplicate`, and one ticket
+with no milestone. Claude Code 2.1.302 ran `claude-sonnet-5-5` in print mode with `--max-budget-usd 2`, authorized by
+the maintainer at 2 sessions and $2 each. 2 sessions, 7 turns through `--resume`, $0.80 in total.
+
+| Case | Verdict | Independent evidence |
+|---|---|---|
+| B22 | PASS | `milestone list` gave `M1` with 4 and `M1 extra` with 1, said there is no id or state, and left out the unmilestoned ticket. `show M1` gave total 4: `backlog`, `ready`, `done`, `cancel` 1 each, `in-progress`, `in-review`, `duplicate` 0, and did not count `M1 extra`'s duplicate. `show M2` stopped and named both milestones. `milestone "list"` took the ensure form and wrote nothing. `cksum` of all six files unchanged after every turn. |
+| B21 | PASS | Regression on the new text, fresh session: `milestone M9` wrote nothing, by `cksum`. `create` with milestone `M9` wrote `007` with `milestone: 'M9'` at `backlog`, by PyYAML, and `list backlog M9` returned only `007`. |
+
+PASS 2, FAIL 0, SKIP 0 for the cases selected. Print mode keeps quotes; a harness that strips them, such as
+interactive Kiro, was not tested on the quoted form.
+
+### 2026-10-17T20:21:56-07:00 Direct check of the milestone show query
+
+No harness session. The `milestone show` query was copied out of `github.md` with its prelude and run
+with `jq` 1.7 against ten fixture issues shaped like `gh issue list --json` output: `M1` holding no
+label, `ready` plus a topic label, `in-review`, closed completed, not planned, duplicate, and with no
+reason, and two status labels at once; one `ready` issue in `M1 extra`; one with no milestone.
+
+| Check | Verdict | Evidence |
+|---|---|---|
+| Counts for `M1` | PASS | `backlog` 1, `ready` 1, `in-review` 1, `done` 1, `cancel` 1, `duplicate` 1, `inconsistent` 1, `closed, no reason` 1; the `M1 extra` and unmilestoned issues not counted. |
+| Exact match | PASS | `M1 extra` counted only its own issue; `M` matched nothing. |
+| Empty milestone | PASS | `M2: Reply handling` gave `counts: {}`, so zero tickets. |
+| A34, A35 | SKIP | No signed-in `gh` in the cloud container; `--paginate` and the live milestones API are untested. |
+| B22 | SKIP | No harness session authorized for it yet. |
+| C27 | SKIP | Linear MCP server not connected. |
+
+### 2026-10-17T11:56:11-07:00 Focused 0.0.22 milestone verb run, Claude Code
+
+Skill ref `076d84b` on `claude/wkc-plan-huujrr`, a clean `git archive` installed with `skills` 1.7.2 and `-a claude-code`
+into a scratch fixture with the local backend and tickets 001 to 005 in one milestone. Claude Code 2.1.302 ran
+`claude-sonnet-5-5` in print mode with `--max-budget-usd 2`, within the `wkc-plan` run's budget. One session, three
+turns through `--resume`, $0.30 in total. Only B21 ran; A33 and C26 need `gh` signed in and the Linear MCP server, and
+neither was available in the cloud container.
+
+| Case | Verdict | Independent evidence |
+|---|---|---|
+| B21 | PASS | `milestone M9` replied that there is nothing to write and that `create` starts it; `cksum` of every file under `issues_dir` matched before and after. `create` with milestone `M9` wrote `006` with `milestone: 'M9'` and `status: 'backlog'`, by PyYAML; `list backlog M9` returned only `006`. |
+| A33 | SKIP | No signed-in `gh` in the cloud container. |
+| C26 | SKIP | Linear MCP server not connected. |
+
+PASS 1, FAIL 0, SKIP 2 for the cases selected.
 
 ### 2026-10-02T14:27:21-07:00 Focused 0.0.12 model invocation run, Claude Code and Codex interactive
 

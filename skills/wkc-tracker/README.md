@@ -10,7 +10,7 @@ backend files beside it hold the commands for one backend each.
 - Why it exists
 - Setup
 - The seven statuses
-- The eight verbs
+- The verbs
 - `next`, and the frontier
 - There is no `blocked` status
 - Ticket shape
@@ -58,7 +58,7 @@ you make yourself, in the tracker.
 A ticket nobody has labelled reads as `backlog`. That is deliberate: it means an issue a colleague
 filed by hand in the web UI is a real ticket immediately, with no import step.
 
-## The eight verbs
+## The verbs
 
 ```
 /wkc-tracker list [status] [milestone]
@@ -69,6 +69,9 @@ filed by hand in the web UI is a real ticket immediately, with no import step.
 /wkc-tracker comment <id> <body>
 /wkc-tracker move <id> <status> [original]
 /wkc-tracker link <id> blocked-by <id>
+/wkc-tracker milestone <name>
+/wkc-tracker milestone list
+/wkc-tracker milestone show <name>
 ```
 
 **`list`** shows tickets with their id, title, status, assignee, and blockers. Both arguments are
@@ -115,6 +118,19 @@ refuses an edge that would close a cycle and names the loop it found, because ti
 wait on each other forever. It runs this check itself, because neither GitHub nor Linear refuses
 every cycle.
 
+**`milestone`** makes sure a milestone exists before tickets go into it:
+`/wkc-tracker milestone "M2: Reply handling"`. It creates an open one when nothing has that name, and
+leaves an existing open one alone. It never renames, closes, or reopens a milestone: a closed one is
+reported, and reopening it is your call. In local markdown there is nothing to create, since a
+milestone exists as soon as a ticket carries it. `wkc-plan` uses it before creating a milestone's
+tickets.
+
+`/wkc-tracker milestone list` and `/wkc-tracker milestone show "M2: Reply handling"` only read.
+`list` shows every milestone, closed and empty ones included on GitHub and Linear. `show` gives one
+milestone's tickets counted by status, with `done`, `cancel`, and `duplicate` kept apart. In local
+markdown both are worked out from the tickets, so a milestone with no tickets does not exist there.
+To ensure a milestone literally named `list`, quote it: `/wkc-tracker milestone "list"`.
+
 ## `next`, and the frontier
 
 `next` answers "what should I work on". It returns the **frontier**: every ticket that is `ready`,
@@ -150,7 +166,13 @@ unassigned, with the question in the body, and `list backlog` is where someone f
 them.
 
 The blocked ticket keeps whatever status it had and simply drops off the frontier, because it now
-has an open blocker. When the blocker closes, it reappears. Nobody has to remember to unblock it.
+has an unmet blocker. When the blocker is `done`, it reappears. Nobody has to remember to unblock it.
+
+Only `done` releases a blocker. A `duplicate` blocker counts as its original, followed down the
+chain, so it releases the ticket once the original is `done`. A `cancel` blocker keeps the ticket
+held: the work it stood for was dropped, not delivered, so you decide in the tracker whether to
+remove the edge or link something that will deliver it. When a chain cannot be followed, or a
+backend cannot say why a ticket closed, the blocker counts as unmet and `next` says why.
 
 ## Ticket shape
 

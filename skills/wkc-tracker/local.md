@@ -64,17 +64,24 @@ Terminal statuses are `done`, `cancel`, and `duplicate`.
 | Verb | File operation |
 |---|---|
 | `list` | Read every frontmatter in `issues_dir` and filter |
-| `show` | Read the one file whole |
-| `next` | Keep `status: ready` with an empty `assignee` and every `blocked_by` id terminal. Sort by id |
-| `create` | Write one file with `status: 'backlog'` and its `blocked_by`, in one write. No cycle walk |
+| `show` | Read the one file whole. For a duplicate, name its `duplicate_of` |
+| `next` | Keep `status: ready` with an empty `assignee` and every `blocked_by` id met. Sort by id |
+| `create` | Write one file with `status: 'backlog'`, its `blocked_by`, and its `milestone` when given, in one write. No cycle walk. When no other file carries that milestone, say the ticket starts it and name the milestones that exist, so a typo shows |
 | `assign` | Bare: require `ready` with no `assignee`, then set `in-progress` and `assignee` in one write. Explicit: set `assignee` only, `''` for `none`. Refuse a terminal status and an unnamed holder |
 | `comment` | Append under `## Comments`, adding the heading if missing |
 | `move` | Refuse a move out of a terminal status. `backlog` or `ready` also sets `assignee: ''`; `duplicate` also sets `duplicate_of` |
-| `link` | Refuse a self-link. Walk the blocker's `blocked_by` through non-terminal files; reaching the blocked id is a cycle, so refuse and name the path. Otherwise add the id |
+| `milestone <name>` | Write nothing: a milestone exists once a ticket carries it. Report the tickets that already carry it, or that `create` starts it |
+| `milestone list` | The distinct non-empty `milestone` values across every file, terminal tickets included, each with its ticket count. There is no milestone object, so no id, no state, and no empty milestone: one exists only while a ticket carries it |
+| `milestone show` | The files whose `milestone` matches exactly, counted by `status`, terminal ones included |
+| `link` | Refuse a self-link. Walk the blocker's `blocked_by` through files that are not `done` or `cancel`, and from a `duplicate` to its `duplicate_of`; reaching the blocked id is a cycle, so refuse and name the path. Otherwise add the id |
 
-A `blocked_by` id with no file is an open blocker; name the missing id. For an empty frontier, the
-same pass names each held ticket's holder or open blockers, each blocker's status and assignee, and
-any cycle. Milestones are the distinct non-empty `milestone` values.
+A `blocked_by` id is met when its file is `done`, or `duplicate` with a `duplicate_of` chain that
+ends at a `done` file. It is unmet when the file is missing, open, inconsistent, or `cancel`, or the
+chain has an empty `duplicate_of`, a missing file, or an id already in it. Name the missing id or
+where the chain stopped.
+
+For an empty frontier, the same pass names each held ticket's holder or unmet blockers, each
+blocker's status and assignee, and any cycle. Milestones are the distinct non-empty `milestone` values.
 
 ## Verifying a write
 
@@ -82,7 +89,7 @@ Re-read the file and parse its frontmatter with a YAML parser.
 
 | Verb | The parse must show |
 |---|---|
-| `create` | the new id, `status: 'backlog'`, every blocker in `blocked_by` |
+| `create` | the new id, `status: 'backlog'`, every blocker in `blocked_by`, and `milestone` exactly as given, or empty |
 | `link` | the blocker in `blocked_by`, and the blocker's own `blocked_by` unchanged |
 | `assign` | `assignee` exactly as asked, or empty; on the bare form, `in-progress` |
 | `comment` | the body under `## Comments` |

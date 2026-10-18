@@ -69,7 +69,9 @@ These come from Anthropic's
 - Link every supporting file the agent may read directly from `SKILL.md`, with a line saying when
   to read it. A file reached only through another supporting file may be read partially.
 - Give any supporting file over 100 lines a `## Contents` list right after its title or intro, so a
-  partial read still shows everything the file covers.
+  partial read still shows everything the file covers. This includes a file that grows past 100
+  lines in a later change, and a list that a new section makes stale. `SKILL.md` loads whole and
+  needs none; the pre-commit checklist in `AGENTS.md` repeats this check.
 - Leave out guidance that depends on a date, such as "before August, use the old API". State the
   current behaviour.
 - Use the same term for the same thing throughout a skill and its supporting files.

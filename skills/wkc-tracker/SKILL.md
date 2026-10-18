@@ -64,12 +64,25 @@ never return it as a normal ticket and never drop it silently: they name it sepa
 There is no `blocked` status. Anything that blocks a ticket, other work or a decision only a person
 can make, becomes its own ticket, joined with `link`. A decision ticket sits in `backlog`,
 unassigned, with the question in its body. The blocked ticket keeps its status and leaves the
-frontier because it has an open blocker. The **frontier** is the set of tickets that could be
+frontier because it has an unmet blocker. The **frontier** is the set of tickets that could be
 started right now, and `next` returns it.
+
+**A blocker is met only when it is `done`.** A `duplicate` blocker stands for its original: follow
+the original, and its original when that is a duplicate too, and the blocker is met when the ticket
+at the end of the chain is `done`. Every other blocker is unmet and keeps the ticket off the frontier:
+
+- an open or inconsistent one, or one the read could not see;
+- a `cancel` one, because the work was dropped, not delivered. Whether the blocked ticket still
+  needs it is a person's decision, made in the tracker by removing the edge or linking a ticket that
+  will deliver the work. No verb removes an edge, reopens a ticket, or deletes one;
+- a duplicate whose chain cannot be followed: the original is missing or unreadable, or the chain
+  comes back to a ticket already in it.
+
+The backend file says how to read each case. Where it cannot, the blocker is unmet.
 
 ## 3. Read, write, verify
 
-`create`, `assign`, `comment`, `move`, and `link` change state. Each runs read, write, and verify:
+`create`, `assign`, `comment`, `move`, `link`, and `milestone <name>` change state. Each runs read, write, and verify:
 
 1. **Read.** Fetch the current state and check this verb's precondition. If it fails, write nothing
    and say why.
@@ -82,29 +95,49 @@ what you did about it. A verb that cannot confirm its own write has failed.
 
 | Verb | Precondition | Verification |
 |---|---|---|
-| `create` | the ticket text is given | the ticket exists by id, at `backlog`, with every section it was given. The backend file says how to compare the body |
+| `create` | the ticket text is given. A milestone, when given, matches exactly one open milestone; otherwise write nothing and name the ones that exist. Local markdown has no milestone objects; its backend file says what it checks | the ticket exists by id, at `backlog`, with every section it was given, and in exactly the milestone it was given, or in none. The backend file says how to compare the body |
 | `link` | both tickets exist, they differ, and the edge would not close a cycle | the edge is on the blocked ticket, and the blocker's own blockers are unchanged |
 | `assign` | not terminal. The bare form also needs `ready` with no assignee. Any other holder must be named | the assignee is exactly the one asked for, or nobody for `none`. The bare form also shows `in-progress` |
 | `comment` | the ticket exists | the comment body is on the ticket |
 | `move` | the user's words mean one of the seven statuses: its name, misspelled or in another form, or a word with the same meaning. A real word with its own unrelated meaning that shares letters with a status name means none: change nothing and ask, listing the seven. The current status is not terminal. Other people act on a status, and no verb reverses a terminal move | the backend reports the new status |
+| `milestone <name>` | a name is given, and no milestone has exactly that name. An open one needs no write: report it. A closed one is a stop, because reopening it is a person's decision | the backend lists an open milestone with exactly that name |
 
 ## 4. Verbs
 
 | Verb | Semantics |
 |---|---|
 | `list [status] [milestone]` | Tickets with id, title, status, assignee, and blockers. Both filters are optional. An argument that names a milestone is that milestone; otherwise it is a status. With no status, open tickets only |
-| `show <id>` | One ticket in full: body, comments, labels, blockers, assignee |
+| `show <id>` | One ticket in full: body, comments, labels, blockers, assignee, milestone, and a duplicate's original |
 | `next` | The frontier |
 | `create <ticket>` | One ticket at `backlog`, in the shape from section 5, plus its dependency edges. Everything given to `create` is the ticket. A word in it that names a status or another verb is ticket text, not a request |
 | `assign <id> [who] [from <holder>]` | Set who holds the ticket |
 | `comment <id> <body>` | Append a comment. Never edit or delete an existing one |
 | `move <id> <status> [original]` | Change status, including a terminal close |
 | `link <id> blocked-by <id>` | Record that the first ticket is blocked by the second |
+| `milestone <name>` | Create an open milestone with that name when none exists. Never rename, close, or reopen one |
+| `milestone list` | Every milestone the backend holds, closed ones included. Read only |
+| `milestone show <name>` | One milestone and its ticket counts by status. Read only |
 
-A milestone that matches none is a stop that names the milestones that exist, never an empty or
+**`milestone`** has three forms, chosen by the first word. `list` alone is the listing; `show`
+followed by a name is the inspection; anything else is a name to ensure, and a name may contain
+spaces, such as `M2: Reply handling`. To ensure a milestone named exactly `list`, or one whose name
+starts with `show `, quote the whole name: `milestone "list"`.
+
+- `milestone list` reports each milestone's name, plus its id or URL and its state where the
+  backend has them. No milestones is an explicit empty result, never an error or a ticket list.
+- `milestone show <name>` matches the name exactly, never a similar one. It reports the name, id or
+  URL, and state where the backend has them, the total tickets, and a count for each of the seven
+  statuses. `done`, `cancel`, and `duplicate` are different outcomes: never add them up as
+  "completed". Tickets with no clean status are counted on their own line. An empty milestone shows
+  zero tickets. For the tickets themselves, use `list <status> <milestone>`.
+- Neither read writes anything. No verb closes a milestone, including when all its tickets are done.
+
+A milestone that `show` cannot find is a stop that names the milestones that exist, like `list`.
+
+In `list`, a milestone that matches none is a stop that names the milestones that exist, never an empty or
 unscoped list.
 
-**`next`** returns every ticket that is `ready`, has no assignee, and has no open blocker, lowest id
+**`next`** returns every ticket that is `ready`, has no assignee, and has every blocker met, lowest id
 first. Never report an empty frontier from a read that could not see dependency edges, that came
 back truncated, or that lags behind recent writes. If the backend cannot report blockers at all,
 stop with an error that says so.
@@ -113,22 +146,24 @@ stop with an error that says so.
 and the reason:
 
 - its assignee, when the ticket is reserved;
-- each open blocker, with that blocker's status and assignee;
+- each unmet blocker, with that blocker's status and assignee. For a `cancel` blocker, say a person
+  decides whether the work is still needed. For a duplicate, give the chain and where it ends;
 - a blocker list the backend truncated.
 
-Walk each held ticket's open blockers through their own open blockers, and name any cycle as its
-path, such as `#12 → #14 → #15 → #12`. With no `ready` ticket at all, say so and count the open
-tickets in each other status. "Nothing to do" and "everything is stuck" must never give the same
-answer.
+Walk each held ticket's unmet blockers through their own, a duplicate through its original, and name
+any cycle as its path, such as `#12 → #14 → #15 → #12`. With no `ready` ticket at all, say so and
+count the open tickets in each other status. "Nothing to do" and "everything is stuck" must never
+give the same answer.
 
 **`create`** writes the ticket at `backlog`, then one `link` per `## Blocked by` entry, or the edges
 together with the ticket where the backend can. If a step fails, report the id and which edges
-landed.
+landed. A ticket that lands in another milestone, or in none, is a partial write: report it, and
+never create a milestone or move the ticket to repair it.
 
 **`link`** refuses a self-link. Before writing `link <A> blocked-by <B>`, start at B and follow its
-open blockers, then theirs, and so on. If the walk reaches A, refuse, write nothing, and name the
-path. A ticket in a terminal status ends that branch of the walk. Run the check yourself: no backend
-refuses every cycle. `create` skips the walk.
+blockers, then theirs, and so on. A `done` or `cancel` ticket ends that branch of the walk; a
+`duplicate` one continues at its original. If the walk reaches A, refuse, write nothing, and name
+the path. Run the check yourself: no backend refuses every cycle. `create` skips the walk.
 
 **`assign`** has four forms. Only the bare form changes status:
 
