@@ -1277,6 +1277,21 @@ Versions 0.0.9 to 0.0.41 below were development steps on the `feat/tracker` bran
 together as 0.0.8, so an entry's version names a branch state, and its skill ref names the exact
 commit it tested.
 
+### 2026-10-17T20:33:50-07:00 Focused 0.0.22 milestone list and show run, Claude Code
+
+Skill ref `0ad54b4`, a clean `git archive` installed with `skills` 1.7.2 and `-a claude-code` into a local-backend
+fixture: `M1` tickets at `backlog`, `ready`, `done`, and `cancel`, one `M1 extra` ticket at `duplicate`, and one ticket
+with no milestone. Claude Code 2.1.302 ran `claude-sonnet-5-5` in print mode with `--max-budget-usd 2`, authorized by
+the maintainer at 2 sessions and $2 each. 2 sessions, 7 turns through `--resume`, $0.80 in total.
+
+| Case | Verdict | Independent evidence |
+|---|---|---|
+| B22 | PASS | `milestone list` gave `M1` with 4 and `M1 extra` with 1, said there is no id or state, and left out the unmilestoned ticket. `show M1` gave total 4: `backlog`, `ready`, `done`, `cancel` 1 each, `in-progress`, `in-review`, `duplicate` 0, and did not count `M1 extra`'s duplicate. `show M2` stopped and named both milestones. `milestone "list"` took the ensure form and wrote nothing. `cksum` of all six files unchanged after every turn. |
+| B21 | PASS | Regression on the new text, fresh session: `milestone M9` wrote nothing, by `cksum`. `create` with milestone `M9` wrote `007` with `milestone: 'M9'` at `backlog`, by PyYAML, and `list backlog M9` returned only `007`. |
+
+PASS 2, FAIL 0, SKIP 0 for the cases selected. Print mode keeps quotes; a harness that strips them, such as
+interactive Kiro, was not tested on the quoted form.
+
 ### 2026-10-17T20:21:56-07:00 Direct check of the milestone show query
 
 No harness session. The `milestone show` query was copied out of `github.md` with its prelude and run
