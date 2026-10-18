@@ -1271,6 +1271,9 @@ in the run log below, so a rule can be re-checked when a backend changes.
   in the unfiltered read on all three.
 - **GitHub `blockedBy.totalCount`.** It counts closed blockers, measured 2026-09-18 on `gh` 2.97.0.
   The GraphQL schema agrees: `totalBlockedBy` is documented as "open and closed".
+- **GitHub duplicate originals.** `gh` 2.89.0 lists no duplicate field for `gh issue view --json`. GitHub's GraphQL
+  schema returns `DUPLICATE` from `stateReason` only with `enableDuplicate: true`, and names the original in
+  `MarkedAsDuplicateEvent.canonical` on the issue timeline. Checked against the schema on 2026-10-18, not live.
 - **GitHub cycles.** Measured 2026-09-21 on `wilsonkichoi/tracker-gh`: a self-link returns HTTP 422
   `Target issue cannot be the same as the source issue`, a two-issue cycle returns HTTP 422
   `this dependency would create a cycle where the target is already blocked by the source`, and the
@@ -1349,6 +1352,23 @@ here.
 Versions 0.0.9 to 0.0.41 below were development steps on the `feat/tracker` branch. They shipped
 together as 0.0.8, so an entry's version names a branch state, and its skill ref names the exact
 commit it tested.
+
+### 2026-10-17T21:00:33-07:00 Direct checks of blocker semantics and milestone matching
+
+Skill ref `3f05ec2`. No harness session. The `next`, milestone resolve, ensure read, `milestone show`, and `create`
+verification commands were extracted from `github.md` and run verbatim by `bash`, with placeholders filled and titles
+single-quoted by the file's own rule, against a stand-in `gh` that served fixture JSON and applied `--jq`. `jq` 1.7.
+
+| Check | Verdict | Evidence |
+|---|---|---|
+| `next` blocker states | PASS | 19 issues. Frontier `[10]`, the ticket blocked only by a completed issue. Held with reasons: not planned (`cancel`), duplicate of an open issue and of a completed one (`only_duplicates` true), closed with no reason, a number missing from the read (`unknown`), an open blocker, a duplicate plus a cancel (`only_duplicates` false), an assignee, and a truncated list. `inconsistent` `[21]`. A `null` `blockedBy` still stops with the error. |
+| Exact titles through `--arg` | PASS | 208 milestones over three concatenated pages. `M2: it's "quoted"` resolved to 301, `M205` on page three to 205, `list` to 302, and `M2: it` to 303 only. `m205`, `show M1`, and `") \| true \| ("` matched nothing. |
+| `milestone show` counts | PASS | `M1` counted `done`, `cancel`, `duplicate`, and `closed, no reason` at 1 each; the quoted title counted its one `ready` issue; an empty milestone gave `{}`, total 0. |
+| `create` milestone check | PASS | `milestone_ok` true for the exact title, false for a prefix and for a case variant. |
+| Prelude on a closed issue with no reason | PASS | Reads `closed, no reason`. The previous prelude failed in `jq` 1.7 with `Cannot index object with null`, which any `--state closed` list holding such an issue would hit. |
+| Duplicate original query | PASS, schema only | Validated with `graphql-core` against the octokit mirror of GitHub's public schema; a misspelled argument, field, and enum value were each rejected. Whether `gh issue close --duplicate-of` writes the timeline event is untested. |
+
+A36 to A38, C28, and C29 not run: no signed-in `gh`, no Linear MCP server. B23 and B24 not run: no session authorized.
 
 ### 2026-10-17T20:33:50-07:00 Focused 0.0.22 milestone list and show run, Claude Code
 
