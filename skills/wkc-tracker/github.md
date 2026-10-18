@@ -8,6 +8,7 @@
 - move, to an open or a terminal status, then verifying a move
 - comment, link
 - milestone: ensure, list, show
+- duplicate originals
 
 Use the `gh` CLI. Resolve `OWNER/REPO` once from the `origin` remote and pass `--repo` on every
 command.
@@ -31,12 +32,22 @@ def STATUS: ["backlog","ready","in-progress","in-review"];
 def CLOSED: {"COMPLETED": "done", "NOT_PLANNED": "cancel", "DUPLICATE": "duplicate"};
 def status_labels: [.labels[].name] - ([.labels[].name] - STATUS);
 def status:
-  if .state == "CLOSED" then CLOSED[.stateReason]
+  if .state == "CLOSED" then CLOSED[.stateReason // ""] // "closed, no reason"
   else status_labels
     | if length > 1 then "inconsistent" elif length == 0 then "backlog" else .[0] end
   end;
-def open_blockers: [.blockedBy.nodes[] | select(.state == "OPEN") | .number];
+def blockers($st): [.blockedBy.nodes[]
+  | {number, status: (if .state == "OPEN" then "open" else ($st[.number | tostring] // "unknown") end)}];
+def unmet($st): [blockers($st)[] | select(.status != "done")];
 ```
+
+`$st` maps each issue number to its status, from a `--state all` read. A blocker is met only when it
+reads `done`. A closed issue with no close reason reads `closed, no reason`, and a blocker missing
+from the read reads `unknown`; both are unmet.
+
+A title, a milestone name, or any other value from the user never goes inside a `jq` program. Pipe
+`gh` into `jq --arg t '<title>'` and compare with `$t`. Write each value as one single-quoted shell
+word, with each `'` inside it written as `'\''`.
 
 ## Reading rules
 
@@ -63,11 +74,13 @@ only under `inconsistent`. For a terminal status, use `--state closed` and drop 
 For a milestone, resolve the title first:
 
 ```
-gh api --paginate 'repos/<owner>/<repo>/milestones?state=all&per_page=100' --jq '.[] | select(.title == "<title>") | .number'
+gh api --paginate 'repos/<owner>/<repo>/milestones?state=all&per_page=100' \
+  | jq --arg t '<title>' '.[] | select(.title == $t) | .number'
 ```
 
 Empty output means no such milestone; the same call with `--jq '.[].title'` lists the ones that
-exist. Otherwise add `select(.milestone.title == "<title>")` to the list query. `gh issue create` and
+exist. Otherwise pipe the list query into `jq --arg t '<title>'` instead of using `--jq`, and add
+`select(.milestone.title == $t)`. `gh issue create` and
 `gh issue edit` accept only an open milestone.
 
 ## show
@@ -82,62 +95,78 @@ gh issue view <n> --repo <owner/repo> \
 ```
 
 Never use the `--comments` flag. For an `inconsistent` issue, name both status labels and point at
-`move <id> <status>`.
+`move <id> <status>`. For a `duplicate`, name its original from the duplicate query below. Give each
+closed blocker its status with `gh issue view <blocker> --json state,stateReason`.
 
 ## next
 
 ```
-gh issue list --repo <owner/repo> --state open --limit 200 \
-  --json number,title,state,assignees,labels,blockedBy \
-  --jq '<prelude> {rows: length,
+gh issue list --repo <owner/repo> --state all --limit 1000 \
+  --json number,title,state,stateReason,assignees,labels,blockedBy \
+  --jq '<prelude> (map({key: (.number | tostring), value: status}) | from_entries) as $st
+       | {rows: length,
          frontier: [.[]
+           | select(.state == "OPEN")
            | if .blockedBy == null
              then error("blockedBy is null: this host does not expose issue dependencies")
              else . end
            | select(status == "ready")
            | select((.assignees | length) == 0)
            | select(.blockedBy.totalCount == (.blockedBy.nodes | length))
-           | select(open_blockers | length == 0)]
+           | select(unmet($st) | length == 0)]
            | sort_by(.number),
-         inconsistent: [.[] | select(status == "inconsistent") | .number],
-         held: [.[] | select(status == "ready")
+         inconsistent: [.[] | select(.state == "OPEN" and status == "inconsistent") | .number],
+         held: [.[] | select(.state == "OPEN" and status == "ready")
            | select((.assignees | length) > 0
-                    or (open_blockers | length) > 0
+                    or (unmet($st) | length) > 0
                     or .blockedBy.totalCount != (.blockedBy.nodes | length))
-           | {number, assignees: [.assignees[].login], blockers: open_blockers,
-              truncated: (.blockedBy.totalCount != (.blockedBy.nodes | length))}]
+           | {number, assignees: [.assignees[].login], blockers: unmet($st),
+              truncated: (.blockedBy.totalCount != (.blockedBy.nodes | length)),
+              only_duplicates: ((.assignees | length) == 0
+                and .blockedBy.totalCount == (.blockedBy.nodes | length)
+                and (unmet($st) | all(.status == "duplicate")))}]
            | sort_by(.number),
-         open: (map({key: (.number | tostring),
-                     value: {status: status, assignees: [.assignees[].login],
-                             blockers: open_blockers}})
+         open: (map(select(.state == "OPEN")
+                    | {key: (.number | tostring),
+                       value: {status: status, assignees: [.assignees[].login],
+                               blockers: [unmet($st)[].number]}})
                 | from_entries)}'
 ```
 
 Run it as written. Never soften the `error()` with `?` or `// []`, and never test blockers with
-`totalCount` alone: it counts closed blockers.
+`totalCount` or the blocker's `state` alone: the count includes closed blockers, and a closed one
+may be canceled.
 
-For an empty frontier, report `held`. Look up each blocker in `open` for its status and holder, and
-walk `open` for cycles. Read a blocker missing from `open` with `gh issue view` before naming its
-status.
+A held ticket with `only_duplicates` waits on duplicate blockers alone. Follow each one's chain with
+the duplicate query below. When every chain ends at a `done` ticket, the ticket joins the frontier
+in id order; otherwise it stays held, with the chain and where it ends.
+
+For an empty frontier, report `held`. Look up each blocker in `open` for its holder, and walk `open`
+for cycles. A blocker missing from `open` is closed: its status is in `held`.
 
 When `assign` refuses a frontier candidate, take the next one.
 
 ## create
 
 ```
-gh issue create --repo <owner/repo> --title "<title>" --body-file <file> [--milestone "<title>"]
+gh issue create --repo <owner/repo> --title "<title>" --body-file <file> [--milestone '<milestone>']
 ```
 
-Create with no status label, then run `link` once per `## Blocked by` entry without the cycle walk.
-Verify by number:
+With a milestone, first run the ensure form's read: it must print exactly one milestone, `open`.
+`gh` matches a milestone title loosely, so never let `--milestone` decide. Create with no status
+label, then run `link` once per `## Blocked by` entry without the cycle walk. Verify by number:
 
 ```
-gh issue view <n> --repo <owner/repo> --json number,title,labels,blockedBy
+gh issue view <n> --repo <owner/repo> --json number,title,labels,blockedBy,milestone \
+  | jq --arg m '<milestone>' '{number, title, labels: [.labels[].name],
+      blockers: [.blockedBy.nodes[].number], milestone: .milestone.title,
+      milestone_ok: (.milestone.title == $m)}'
 gh issue view <n> --repo <owner/repo> --json body | jq --rawfile sent <file> -e '.body == $sent'
 ```
 
-The first must show every blocker and no status label. The second must print `true`. Compare
-exactly this way, never through a shell variable or `--jq .body`.
+The first must show every blocker, no status label, and `milestone_ok: true`; with no milestone
+given, `milestone: null`. The second must print `true`. Compare exactly this way, never through a
+shell variable or `--jq .body`.
 
 ## milestone
 
@@ -147,12 +176,14 @@ closed milestone is invisible, and without paging the read stops at the first pa
 `milestone <name>`, the ensure form:
 
 ```
-gh api --paginate 'repos/<owner>/<repo>/milestones?state=all&per_page=100' --jq '.[] | select(.title == "<title>") | {number, state}'
+gh api --paginate 'repos/<owner>/<repo>/milestones?state=all&per_page=100' \
+  | jq --arg t '<title>' '.[] | select(.title == $t) | {number, state}'
 gh api repos/<owner>/<repo>/milestones -f title='<title>'
 ```
 
-Run the read first. An open match needs no write; a closed one is a stop. Otherwise create it, and
-verify by running the read again: it must print one milestone, `open`. Never pass `-f state` or
+Run the read first. An open match needs no write; a closed one is a stop; two matches are a stop
+that names both. Otherwise create it, and verify by running the read again: it must print exactly
+one milestone, `open`. Never pass `-f state` or
 PATCH an existing milestone.
 
 `milestone list`:
@@ -170,14 +201,14 @@ the unfiltered list, by the reading rules:
 ```
 gh issue list --repo <owner/repo> --state all --limit 1000 \
   --json number,state,stateReason,labels,milestone \
-  --jq '<prelude> {rows: length,
-         counts: ([.[] | select(.milestone.title == "<title>")
-                   | if .state == "CLOSED" and .stateReason == null then "closed, no reason"
-                     else status end]
+  | jq --arg t '<title>' '<prelude> {rows: length,
+         counts: ([.[] | select(.milestone.title == $t) | status]
                   | group_by(.) | map({key: .[0], value: length}) | from_entries)}'
 ```
 
-The total is the sum of `counts`. Report `inconsistent` and `closed, no reason` on their own lines.
+When `rows` equals the limit, rerun with a higher one; never report counts from a full page. The
+total is the sum of `counts`, and an empty milestone has a total of zero. Report `inconsistent` and
+`closed, no reason` on their own lines.
 Never use the milestone's `open_issues` or `closed_issues`: they count pull requests, and a closed
 issue is not necessarily `done`.
 
@@ -269,8 +300,9 @@ landed.
 ## link
 
 Refuse a self-link. For a cycle, run the `next` query and walk `open` from the blocker through each
-entry's `blockers`. Read a blocker missing from `open` with `gh issue view --json state,blockedBy`
-and keep walking only if it is open. Reaching the blocked issue is a cycle: refuse and name the
+entry's `blockers`. A blocker missing from `open` is closed: read it with `gh issue view --json
+state,stateReason`. Stop at `done` or `cancel`; for a `duplicate`, continue at its original from the
+duplicate query. Reaching the blocked issue is a cycle: refuse and name the
 path. GitHub refuses only self-links and two-issue cycles.
 
 The endpoint takes the blocker's database id, not its number or `node_id`:
@@ -282,3 +314,25 @@ gh issue view <n> --repo <owner/repo> --json blockedBy --jq '[.blockedBy.nodes[]
 ```
 
 The blocker's number must be in the list.
+
+## Duplicate originals
+
+`gh issue view` does not say which issue a duplicate duplicates. Read it from the timeline:
+
+```
+gh api graphql -f owner='<owner>' -f repo='<repo>' -F n=<number> -f query='
+  query($owner: String!, $repo: String!, $n: Int!) {
+    repository(owner: $owner, name: $repo) {
+      issue(number: $n) {
+        number state stateReason(enableDuplicate: true)
+        timelineItems(itemTypes: [MARKED_AS_DUPLICATE_EVENT, UNMARKED_AS_DUPLICATE_EVENT], last: 1) {
+          nodes { __typename
+            ... on MarkedAsDuplicateEvent { isCrossRepository
+              canonical { __typename ... on Issue { number } } } } } } } }'
+```
+
+The original is `canonical.number` when the last node is a `MarkedAsDuplicateEvent` with an `Issue`
+in this repository. Read the original's status; if it is a duplicate too, run the query on it, and
+so on. The chain cannot be followed, and the blocker is unmet, when there is no such event, the last
+one is an `UnmarkedAsDuplicateEvent`, the canonical is a pull request or in another repository, the
+query fails, or the chain reaches an issue already in it. Name where it stopped.

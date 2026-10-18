@@ -248,12 +248,13 @@ nothing is supposed to compute on.
 then `$wkc-tracker next`.
 Expect A and not B.
 
-**A10 closed blocker releases the frontier.** `$wkc-tracker move <A> done`, then `$wkc-tracker next`.
+**A10 a done blocker releases the frontier.** `$wkc-tracker move <A> done`, then `$wkc-tracker next`.
 Expect B.
 Check the reason by hand:
 `gh issue list --repo <R> --state open --json number,blockedBy --jq '.[]|select(.number==<B>)'`
 Expect `blockedBy.totalCount` still `1` with the node `CLOSED`. A `next` that filtered on
-`totalCount` would never return this ticket.
+`totalCount` would never return this ticket. Only `done` releases it: a canceled or duplicate
+blocker is A36's case.
 
 **A11 topic labels do not block a pull, including one named after a status.**
 `gh issue edit <B> --repo <R> --add-label bug --add-label duplicate`, then `$wkc-tracker assign <B>`.
@@ -496,6 +497,40 @@ Check: the milestones record from A34 and `gh issue list --repo <R> --state all 
 number,state,labels,milestone,updatedAt` are identical before and after all four. Teardown deletes
 the scratch repository.
 
+**A36 only done releases a blocker.** Create one `ready` ticket per blocker shape, each blocked by
+its own blocker, with `gh` and the `link` pair, not the skill:
+
+| Ticket | Its blocker |
+|---|---|
+| K1 | closed as completed |
+| K2 | closed as not planned |
+| K3 | closed as a duplicate of an open issue O |
+| K4 | closed as a duplicate of an issue closed as completed |
+| K5 | closed as a duplicate of an issue that was then unmarked as a duplicate in the web UI |
+
+Record `gh issue list --repo <R> --state all --json number,state,stateReason,labels,assignees,updatedAt`.
+Check the fixture first: the duplicate query from `github.md`'s **Duplicate originals** section
+names O for K3's blocker and the completed issue for K4's, and the `next` query run by hand lists
+K1 in `frontier` and K2 to K5 in `held`, with `only_duplicates` true for K3 to K5. Then
+`$wkc-tracker next`. Expect K1 and K4 on the frontier, and K2, K3, and K5 named as held: K2's
+blocker as `cancel` with the decision left to a person, K3's chain ending at O still open, and K5's
+chain as one that cannot be followed. The record afterwards is identical: no ticket was reopened,
+relinked, or moved. A frontier holding K2, K3, or K5 is a FAIL.
+
+**A37 create checks the milestone it lands in.** With open milestones `M1` and `M2: it's "quoted"`,
+and a closed `M3`:
+
+1. `$wkc-tracker create` a one-line ticket in `M2: it's "quoted"`: expect
+   `gh issue view <n> --repo <R> --json milestone` to name exactly that title.
+2. The same with milestone `m1`, then `M3`, then `M`: expect a stop each time that names the
+   milestones that exist, and no new issue, checked by issue count before and after. `gh` would
+   accept `m1` and file the issue under `M1`.
+
+**A38 [MANUAL] milestone show past the issue limit.** Needs a repository with more issues than the
+`show` query's limit, which this runbook does not create. `$wkc-tracker milestone show <name>`:
+expect counts from a rerun with a higher limit, or a stop that says the read was truncated, never
+counts from the first page.
+
 **A32 an empty frontier says why.** This case needs a frontier with nothing on it, so run it after
 every other A case. For each ticket `$wkc-tracker next` returns, `gh issue edit <n> --repo <R>
 --remove-label ready` until it returns nothing. Then build three held tickets with `gh`, not the
@@ -596,7 +631,8 @@ than in a backend.
 Check the file: `status: 'in-progress'` and `assignee` equal to `git config user.name`. An empty
 assignee is a FAIL; the skill should have stopped and said the identity was unresolvable.
 
-**B9 terminal releases the frontier.** `$wkc-tracker move <A> done`, then `$wkc-tracker next`. Expect B.
+**B9 done releases the frontier.** `$wkc-tracker move <A> done`, then `$wkc-tracker next`. Expect B.
+Other terminal statuses are B23's case.
 
 **B9b a status is read the way a person would.** Take four `backlog` tickets, X, Y, Z, and W, one
 per step, for the reasons A17b gives. A step that expects a SHA-256 unchanged also expects no write
@@ -763,6 +799,29 @@ milestone show M2`, which no ticket carries: expect a stop naming `M1` and `M1 e
 local milestone does not exist. `$wkc-tracker milestone "list"`: expect the ensure reply for a
 milestone named `list`, not the listing. Check: every `cksum` unchanged.
 
+**B23 only done releases a blocker.** Write these files by hand, with full frontmatter and ids past
+the highest in the directory, then record `cksum` of every file:
+
+```
+b1  status: 'done'
+b2  status: 'cancel'
+b3  status: 'duplicate'  duplicate_of: '<o>'     o   status: 'ready'
+b4  status: 'duplicate'  duplicate_of: '<b1>'
+b5  status: 'duplicate'  duplicate_of: '<b6>'    b6  status: 'duplicate'  duplicate_of: '<b5>'
+b7  status: 'duplicate'  duplicate_of: ''
+k1 to k8  status: 'ready', blocked by b1, b2, b3, b4, b5, b7, a missing id, and b1 with b2
+```
+
+`$wkc-tracker next`. Expect k1 and k4 on the frontier, and k2, k3, k5, k6, k7, and k8 held with
+their reasons: `cancel` left to a person, the chain ending at `o` still `ready`, the loop b5 → b6 →
+b5, the empty `duplicate_of`, the missing file, and k8's `cancel` blocker. `o` itself is on the
+frontier. Check: every `cksum` unchanged.
+
+**B24 create checks the milestone it starts.** With tickets in `M1` only,
+`$wkc-tracker create` a one-line ticket in `M2: it's "quoted"`. Expect the reply to say the ticket
+starts that milestone and to name `M1`, and the B2 parser to read `milestone` exactly
+`M2: it's "quoted"`.
+
 **B20 an empty frontier says why.** Run it after every other B case. Move every ticket
 `$wkc-tracker next` returns to `backlog` by editing its `status`, until it returns nothing. Then write
 six files by hand, since the skill will not write the cycle:
@@ -843,7 +902,8 @@ uses the first of each list, run 2 the second, and so on.
 
 **C7 the frontier reads blocker statuses.** Create A and B with B blocked by A, both `Todo` and
 unassigned. `$wkc-tracker next`.
-Expect A and not B. Then move A to `Done` and re-run: expect B.
+Expect A and not B. Then move A to `Done` and re-run: expect B. Other terminal statuses are C28's
+case.
 A relation carries only the blocker's id and title, so a frontier that never fetched A's status
 cannot have filtered correctly, even if the answer looks right on one sample.
 
@@ -1005,11 +1065,24 @@ Check the calls: one `list_issues` per open team status, the extra one included,
 Canceled, or Duplicate.
 
 **C26 milestone creates one, or says it cannot.** Pick a name no milestone in `linear_project` has,
-checked with `list_milestones`, then `$wkc-tracker milestone "<name>"`. If the server has a tool that
-creates project milestones, expect `list_milestones` to show exactly one with that name afterwards,
+checked with `list_milestones`, then `$wkc-tracker milestone "<name>"`. If the server has
+`save_milestone` or another tool that creates project milestones, expect one call with the project
+and name and no `id`, `list_milestones` to show exactly one with that name afterwards,
 and a second run to report it exists without a write. If it has none, expect a stop that asks a
 person to add it in Linear, and `list_milestones` unchanged. Record which tool was used, or that none
 was offered, in the run log.
+
+**C28 only Done releases a blocker.** Create `Todo` issues K1, K2, K3, and K4, unassigned. Block K1
+by an issue moved to `Done`, K2 by one moved to `Canceled`. Mark X a duplicate of an open issue O,
+and Y a duplicate of a `Done` issue, then block K3 by X and K4 by Y with `save_issue` afterwards, so
+Linear has no relation to move. `$wkc-tracker next`. Expect K1 and K4 on the frontier; K2 held with
+its `cancel` blocker left to a person, and K3 held with the chain ending at O. Check with `get_issue`
+that no status or relation changed.
+
+**C29 create checks the milestone it lands in.** With milestone M1 in `linear_project` and no
+milestone named `M9`, `$wkc-tracker create` a one-line ticket in `M9`: expect a stop naming M1, and
+no new issue by `list_issues`. Then in `M1`: expect `get_issue` to show the configured project and
+`projectMilestone` M1.
 
 **C27 milestone list and show on Linear.** In `linear_project`, add one milestone with no issues and
 one with issues in Backlog, Todo, Done, Canceled, and Duplicate. `$wkc-tracker milestone list`: expect

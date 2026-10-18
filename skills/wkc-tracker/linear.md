@@ -35,7 +35,10 @@ substitute a similar status. Report an issue in any other status by its Linear n
 | List issues | `list_issues` |
 | Comment | `save_comment` with `issueId`; read back with `list_comments` |
 | Team statuses | `list_issue_statuses` |
-| Milestones | `list_milestones`; `milestone` on `save_issue`; the server's milestone tool to create one |
+| Milestones | `list_milestones` and `get_milestone` to read; `save_milestone` with `project` and `name`, and no `id`, to create; `milestone` on `save_issue` |
+
+A server that names these tools differently is fine: use the tool that does the job. When none
+does, stop and say which job has no tool.
 
 Relations are `save_issue` parameters: `blockedBy`, `blocks`, `relatedTo`, `duplicateOf`, and a
 `remove*` form of each.
@@ -61,7 +64,7 @@ Read `warnings` in every `save_issue` result: a success can carry a refusal. Ver
 | Verb | Linear |
 |---|---|
 | `list` | `list_issues` with `state` and `project` |
-| `show` | `get_issue` with `includeRelations: true`, plus `list_comments` |
+| `show` | `get_issue` with `includeRelations: true`, plus `list_comments`. Name the project milestone, and a duplicate's `duplicateOf` |
 | `comment` | `save_comment`, then find the exact body with `list_comments`. Before retrying, check whether the first attempt landed |
 | `move` | `get_issue`, refuse a move out of Done, Canceled, or Duplicate, then `save_issue` with the status name, then `get_issue`. Moving to `backlog` or `ready` also sets `assignee: null`. For `duplicate`, follow its own section below instead |
 
@@ -70,11 +73,17 @@ Read `warnings` in every `save_issue` result: a success can carry a refusal. Ver
 1. `list_issues` with `state: 'Todo'` and `project`. An issue with an assignee is held and needs no more
    reads.
 2. For each unassigned issue, `get_issue` with `includeRelations: true`.
-3. For each `blockedBy` entry, read its status. Done, Canceled, and Duplicate no longer block.
-4. Keep issues with no open blocker, lowest number first.
+3. For each `blockedBy` entry, read its status. Only Done meets it. For Duplicate, `get_issue` its
+   `duplicateOf`, and that issue's when it is a Duplicate too; it is met only when the chain ends at
+   Done. Canceled, any other status, a Duplicate with no `duplicateOf`, a read that fails, and a
+   chain that comes back to an issue already in it are unmet.
+4. Keep issues with every blocker met, lowest number first.
+
+Setting `duplicateOf` moves the duplicate's relations onto the original (see below), so a dependent
+usually ends up blocked by the original itself. The chain rule covers the edges that did not move.
 
 Cache blocker statuses within the run, and on a large backlog say how many reads it took. For an
-empty frontier, `get_issue` each open blocker for its assignee, and follow open `blockedBy` entries
+empty frontier, `get_issue` each unmet blocker for its assignee, and follow unmet `blockedBy` entries
 for cycles. Never report an empty frontier after a failed step.
 
 ### create
@@ -85,15 +94,17 @@ Without the cycle walk:
 save_issue { team, project, title, description, state: 'Backlog', blockedBy, milestone }
 ```
 
-Check `warnings`, then `get_issue` with `includeRelations: true`: every `blockedBy` entry and every
-section. Report any edge that did not land.
+With a milestone, first find exactly one project milestone of that name with `list_milestones`;
+otherwise write nothing. Check `warnings`, then `get_issue` with `includeRelations: true`: every
+`blockedBy` entry, every section, the project, and exactly that project milestone, or none when none
+was given. Report any edge that did not land, and a milestone that differs as a partial write.
 
 ### link
 
 For `link <A> blocked-by <B>`, refuse a self-link before any call. Walk from B through `get_issue`
-with `includeRelations: true`, following `blockedBy` entries not in Done, Canceled, or Duplicate. If
-the walk reaches A, refuse and name the path. Linear accepts long cycles, and replaces an existing
-reverse edge without warning.
+with `includeRelations: true`, following `blockedBy` entries not in Done or Canceled, and a
+Duplicate's `duplicateOf`. If the walk reaches A, refuse and name the path. Linear accepts long
+cycles, and replaces an existing reverse edge without warning.
 
 Then `save_issue` A with `blockedBy: [B]`, and `get_issue` both. A must list B, and B's `blockedBy`
 must be unchanged.
@@ -122,21 +133,28 @@ A milestone is a project milestone in `linear_project`, never a cycle. To scope 
 
 Never pass `milestone` to `list_issues`, and never use `list_projects` with `includeMilestones`.
 
-For the `milestone` verb, read `list_milestones` with `linear_project` first. A match needs no
-write. Otherwise create a project milestone in `linear_project` with the server's milestone tool,
-then confirm it with `list_milestones`. If the server offers no tool that creates one, write
-nothing and ask the person to add the milestone to the project in Linear.
+For the `milestone` verb, read `list_milestones` with `linear_project` first and compare names
+exactly. One match needs no write; two are a stop that names both. Only on no match, create it:
 
-`milestone list` is `list_milestones` with `linear_project`: report each milestone's name and id.
-Linear project milestones have no open or closed state, so report none; `progress` is Linear's own
-figure, not a ticket status. No milestones is an explicit empty result.
+```
+save_milestone { project: <linear_project>, name: <name> }
+```
 
-`milestone show <name>` matches the name exactly in `list_milestones`, then counts the project's
-issues in that milestone: `list_issues` with `project` and `projectMilestone` in `fields`, once per
-team status from `list_issue_statuses`, terminal ones included with `includeArchived: true`,
-following `hasNextPage`. Count each issue under its status from the table above, and any issue in an
-unmapped status under its Linear name. If `list_milestones` is missing or fails, stop and say so;
-never report a milestone, or zero tickets, from a read that did not run.
+Never pass `id`, which updates an existing milestone. Then read `list_milestones` again: exactly one
+milestone has that name. If the server offers no tool that creates one, write nothing and ask the
+person to add the milestone to the project in Linear.
+
+`milestone list` is `list_milestones` with `linear_project`, following `hasNextPage`: report each
+milestone's name and id. Linear project milestones have no open or closed state, so report none;
+`progress` is Linear's own figure, not a ticket status. No milestones is an explicit empty result.
+
+`milestone show <name>` matches the name exactly in `list_milestones`, or reads it with
+`get_milestone`, then counts the project's issues in that milestone: `list_issues` with `project`
+and `projectMilestone` in `fields`, once per team status from `list_issue_statuses`, terminal ones
+included with `includeArchived: true`, following `hasNextPage`. Count each issue under its status
+from the table above, and any issue in an unmapped status under its Linear name. A milestone with no
+issues shows zero. If `list_milestones` is missing or fails, stop and say so; never report a
+milestone, or zero tickets, from a read that did not run.
 
 ### duplicate
 

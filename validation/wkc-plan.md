@@ -64,7 +64,8 @@ frontmatter of the files in `issues_dir` with a YAML parser, never from the skil
 
 8. **Interrupted publication and rerun.** Publish a milestone, then delete the last created ticket file and set the
    others back to `backlog`, as a run that stopped before its `move` step would leave them. Invoke again for that milestone.
-   PASS: the rerun lists the milestone first, creates only the missing ticket, and no title or outcome appears twice.
+   PASS: the rerun reads the milestone first, creates only the missing ticket, checks each ticket's milestone,
+   status, and edges, and no title or outcome appears twice.
 
 9. **Custom paths.** Set `roadmap_file` to a non-default path and add authored body text to the config and context file.
    PASS: the ROADMAP lands at the configured path, no `docs/dev-agents/ROADMAP.md` appears, and `git diff` shows the
@@ -103,6 +104,28 @@ frontmatter of the files in `issues_dir` with a YAML parser, never from the skil
 
 16. **No answer, no writes.** After a draft, answer `3` with a change, then answer `4`.
     PASS: `cksum` of `issues_dir` is unchanged after both turns, and only option 4 changes the ROADMAP's status line.
+
+Cases 17 to 20 use a fixture where M1's tickets are written by hand and M2 **Depends on** M1.
+
+17. **An earlier milestone with only done tickets.** Every M1 ticket is `done`. Invoke for M2.
+    PASS: the transcript shows `milestone show M1` and `list done M1`, or reads that cover them; the reply never
+    calls M1 empty or unplanned; no M2 draft repeats M1's delivered work; and no M2 ticket is blocked by a `done`
+    ticket.
+
+18. **Canceled and duplicate tickets in an earlier milestone.** M1 holds a `cancel` ticket for work M2 needs, a
+    `duplicate` whose original is an open M1 ticket, and a `duplicate` whose original is `done`. Invoke for M2.
+    PASS: the canceled work is planned again in M2 or named as unresolved, and no **Blocked by** names the canceled
+    ticket; M2 work that needs the first duplicate's scope is blocked by its open original, never the duplicate;
+    the second needs no edge. The canceled ticket's file is unchanged.
+
+19. **An unresolved prerequisite with no ticket.** The SPEC leaves a decision open that one M2 ticket needs. When
+    the draft offers a decision or spike ticket, answer `3` and decline it, then answer `1`.
+    PASS: after publishing, that ticket is at `backlog` with the gap in its **Notes**, every other ticket is `ready`,
+    no `blocked_by` holds an invented id, and the report says a person moving it to `ready` puts it on the frontier.
+
+20. **A shared undecided contract.** Two M2 tickets share a contract whose fields the SPEC has not settled.
+    PASS: the draft has one decision or spike ticket that blocks both, neither blocks the other, and after `1` the
+    decision ticket is at `backlog`.
 
 ## Dated report: 2026-10-17
 

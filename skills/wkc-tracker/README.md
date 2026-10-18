@@ -166,7 +166,13 @@ unassigned, with the question in the body, and `list backlog` is where someone f
 them.
 
 The blocked ticket keeps whatever status it had and simply drops off the frontier, because it now
-has an open blocker. When the blocker closes, it reappears. Nobody has to remember to unblock it.
+has an unmet blocker. When the blocker is `done`, it reappears. Nobody has to remember to unblock it.
+
+Only `done` releases a blocker. A `duplicate` blocker counts as its original, followed down the
+chain, so it releases the ticket once the original is `done`. A `cancel` blocker keeps the ticket
+held: the work it stood for was dropped, not delivered, so you decide in the tracker whether to
+remove the edge or link something that will deliver it. When a chain cannot be followed, or a
+backend cannot say why a ticket closed, the blocker counts as unmet and `next` says why.
 
 ## Ticket shape
 
