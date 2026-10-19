@@ -96,14 +96,19 @@ validated before the next starts. See [AGENTS.md](./AGENTS.md) for how a skill i
 | [`wkc-research`](./skills/wkc-research/SKILL.md) | Turn research and an interview into the product requirements document (`PRD.md`) | shipped |
 | [`wkc-architect`](./skills/wkc-architect/SKILL.md) | Turn approved product intent and the existing code into the technical specification (`SPEC.md`) and ADRs | shipped |
 | [`wkc-plan`](./skills/wkc-plan/SKILL.md) | Turn an approved spec into ordered milestones (`ROADMAP.md`), then tickets with dependencies for one milestone | shipped |
-| `wkc-create-ticket` | Write one well-formed ticket into the tracker | planned |
-| `wkc-backlog` | Groom, refine, and re-order the queue | planned |
-| `wkc-implement` | Take a ticket to a pull request | planned |
-| `wkc-code-review` | Review a pull request against its ticket | planned |
-| `wkc-verify` | Check the work against the ticket's acceptance criteria | planned |
-| `wkc-git-fu` | Branch, rebase, merge, and conflict work | planned |
+| `wkc-backlog` | Take a new request or change between planning runs: judge whether it touches only tickets, the SPEC, or the PRD, send document changes to `wkc-architect` or `wkc-research`, then create, edit, split, re-order, or close tickets through `wkc-tracker` | planned |
+| `wkc-implement` | Take a ticket to a pull request: branch, build, stay current with `main`, resolve conflicts, and run the ticket's acceptance checks | planned |
+| `wkc-code-review` | Review a pull request against its ticket and acceptance criteria, in a context separate from the one that wrote it | planned |
 | [`wkc-skills-release`](./skills/wkc-skills-release/SKILL.md) | Publish this collection's tags and GitHub Releases | shipped, internal |
-| `wkc-yolo` | Run the loop unattended across several tickets | planned |
+| `wkc-yolo` | Ask every question before the run, then run one milestone unattended: take tickets from `wkc-tracker next`, run `wkc-implement` and `wkc-code-review` on each, decide open questions from the PRD, SPEC, ROADMAP, and milestone goal, record each decision, and stop when the milestone's exit check passes or an agreed limit is reached | planned |
+
+`wkc-create-ticket`, `wkc-verify`, and `wkc-git-fu` were folded into the rows above. One request
+becoming tickets is `wkc-backlog`'s intake. Running the acceptance checks belongs to the skill that
+writes the code, and judging them belongs to the review. Branch and conflict work is part of taking
+a ticket to a pull request. `wkc-yolo` comes last because it only composes skills that already
+work by hand. It keeps its state in the tracker and git, not in one session, so a run can stop and
+resume. Once the run starts, it asks nothing; the decisions it records are what a person reviews
+afterwards.
 
 ## Workflow diagrams
 
