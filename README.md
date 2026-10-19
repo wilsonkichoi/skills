@@ -100,7 +100,7 @@ validated before the next starts. See [AGENTS.md](./AGENTS.md) for how a skill i
 | `wkc-implement` | Take a ticket to a pull request: branch, build, stay current with `main`, resolve conflicts, and run the ticket's acceptance checks | planned |
 | `wkc-code-review` | Review a pull request against its ticket and acceptance criteria, in a context separate from the one that wrote it | planned |
 | [`wkc-skills-release`](./skills/wkc-skills-release/SKILL.md) | Publish this collection's tags and GitHub Releases | shipped, internal |
-| `wkc-yolo` | Ask every question before the run, then run one milestone unattended: take tickets from `wkc-tracker next`, run `wkc-implement` and `wkc-code-review` on each, decide open questions from the PRD, SPEC, ROADMAP, and milestone goal, record each decision, and stop when the milestone's exit check passes or an agreed limit is reached | planned |
+| `wkc-yolo` | Check the milestone is ready and agree run limits before starting, then run it unattended: take tickets from `wkc-tracker next`, run `wkc-implement` and `wkc-code-review` on each, decide what the code reveals from the PRD, SPEC, ROADMAP, and milestone goal, record each decision, and stop when the milestone's exit check passes or an agreed limit is reached | planned |
 
 `wkc-create-ticket`, `wkc-verify`, and `wkc-git-fu` were folded into the rows above. One request
 becoming tickets is `wkc-backlog`'s intake. Running the acceptance checks belongs to the skill that
