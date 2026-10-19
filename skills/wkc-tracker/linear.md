@@ -108,8 +108,9 @@ save_issue { id, title, patch, milestone, blockedBy: <added>, removeBlockedBy: <
 ```
 
 Pass only what changes. For each given section, a `patch` op: `replace` with `old_string` set to that
-section exactly as `get_issue` returned it, heading to the next heading, or `append` for a section
-the issue lacks. One failed match aborts the whole call. Resolve a milestone as `create` does.
+section exactly as `get_issue` returned it, over the span SKILL.md's `edit` defines, `###`
+subsections included, or `append` for a section the issue lacks. One failed match aborts the whole
+call. Resolve a milestone as `create` does.
 `milestone none` is a stop: the tools cannot clear a milestone. An empty string changes nothing,
 and `null` is read as a name. Done, Canceled, and Duplicate issues take the edit and keep their
 status.

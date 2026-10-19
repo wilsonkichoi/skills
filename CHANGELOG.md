@@ -4,10 +4,10 @@ Newest first. Each version is a `## {version} ({ISO 8601 timestamp with local of
 
 ## 0.0.24 (2026-10-19T12:20:54-07:00)
 
-- `wkc-tracker` gains `edit <id> <changes>`, which changes a ticket's title, named body sections, `## Blocked by`, or milestone and nothing else. A changed `## Blocked by` adds and removes exactly the edges that differ, with the `link` cycle walk over the edges as they will stand; a cycle refuses the whole edit. A milestone follows `create`'s rule, and `milestone none` clears it, except on Linear, whose MCP tools cannot clear one, so it stops there. `edit` works on a terminal ticket and never changes status, assignees, or comments.
+- `wkc-tracker` gains `edit <id> <changes>`, which changes a ticket's title, named body sections, `## Blocked by`, or milestone and nothing else. A changed `## Blocked by` adds and removes exactly the edges that differ, with the `link` cycle walk over the edges as they will stand; a cycle refuses the whole edit. A milestone follows `create`'s rule, and `milestone none` clears it, except on Linear, whose MCP tools cannot clear one, so it stops there. `edit` works on a terminal ticket and never changes status, assignees, or comments. A section runs to the next `# ` or `## ` heading outside a fenced code block, so its `###` subsections are replaced with it, and on GitHub only an edit that gives a section sends the body, so a title or milestone edit cannot overwrite someone else's body change.
 - `wkc-tracker` gains `unlink <id> blocked-by <id>`, which removes one dependency edge. An edge that does not exist writes nothing and says so, because GitHub's DELETE endpoint, `gh issue edit --remove-blocked-by`, and Linear's `removeBlockedBy` all report success for one.
 - `wkc-tracker` no longer judges for its callers: a `cancel` blocker is the caller's decision to `unlink` or deliver, not only a person's, and a refused `assign` reports the refusal instead of taking another ticket.
-- Add tracker cases A39 to A44, B25 to B30, and C30 to C34, with backend evidence for edge removal and terminal-ticket edits.
+- Add tracker cases A39 to A46, B25 to B31, and C30 to C35, with backend evidence for edge removal and terminal-ticket edits.
 
 ## 0.0.23 (2026-10-18T21:39:48-07:00)
 

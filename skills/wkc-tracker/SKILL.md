@@ -171,12 +171,14 @@ blockers, then theirs, and so on. A `done` or `cancel` ticket ends that branch o
 `duplicate` one continues at its original. If the walk reaches A, refuse, write nothing, and name
 the path. Run the check yourself: no backend refuses every cycle. `create` skips the walk.
 
-**`edit`** changes only what it is given, never status, assignees, or comments. A given section
-replaces that section from its heading to the next one, and a section the ticket lacks is added. A
-given `## Blocked by` is the new edge set: `unlink` each current edge it no longer lists and `link`
-each one it adds, walking every added edge over the edges as they will stand. A cycle refuses the
-whole edit, and nothing is written. `milestone none` clears the milestone. Check every part before
-writing any; a part the backend cannot write is a stop. If a step fails, report what landed.
+**`edit`** changes only what it is given, never status, assignees, or comments. A section runs from
+its `## ` heading to the next `# ` or `## ` heading, or the end of the body. Its `###` subsections
+belong to it, and a line inside a fenced code block is never a heading. A given section replaces
+that whole span, and a section the ticket lacks is added. A given `## Blocked by` is the new edge
+set: `unlink` each current edge it no longer lists and `link` each one it adds, walking every added
+edge over the edges as they will stand. A cycle refuses the whole edit, and nothing is written.
+`milestone none` clears the milestone. Check every part before writing any; a part the backend
+cannot write is a stop. If a step fails, report what landed.
 
 **`unlink`** removes exactly the named edge and needs no cycle walk. Backends report success for
 removing an edge that is not there, so only the read can tell. A backend with no way to remove an

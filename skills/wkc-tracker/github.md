@@ -174,14 +174,18 @@ gh issue view <n> --repo <owner/repo> --json number,title,body,state,stateReason
 gh issue edit <n> --repo <owner/repo> [--title '<title>'] [--body-file <file>] [--milestone '<milestone>' | --remove-milestone]
 ```
 
-Write the body the read returned to a file, replace or add only the given sections, and pass that
-file. Resolve a milestone with the ensure form's read first: exactly one, `open`. Apply a changed
+Pass `--body-file` only when the edit gives a section, `## Blocked by` included. A title or
+milestone edit sends no body. With a section, write the body the read returned to a file, replace
+or add only the given sections, and pass that file. GitHub has no conditional write, so a body
+change someone makes between the read and the write is lost: run the write right after the read.
+Resolve a milestone with the ensure form's read first: exactly one, `open`. Apply a changed
 `## Blocked by` with the `unlink` and `link` commands below, one per edge that differs. A closed
 issue takes the edit and stays closed with its reason.
 
 Verify with the read again: the given title and milestone, or `milestone: null` for `none`; the
 blockers exactly the new set; `state`, `stateReason`, labels, and assignees as the first read found
-them. Compare the body with `--rawfile` against the file you wrote, as `create` does.
+them. When a section was given, compare the body with `--rawfile` against the file you wrote, as
+`create` does. Otherwise the write sent no body, so there is nothing to compare.
 
 ## milestone
 

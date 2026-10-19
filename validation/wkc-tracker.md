@@ -564,6 +564,16 @@ reports a removal is a FAIL even though the backend agrees: the DELETE returns `
 issue. `$wkc-tracker edit <K> title "<new title>"`, then `$wkc-tracker unlink <K> blocked-by
 <that issue>`. Check: `CLOSED`, `COMPLETED`, no status label, the new title, and no blockers.
 
+**A45 edit replaces a section with its subsections.** Create T whose `## Notes` holds a line, a
+`### Constraints` subsection, and a fenced code block containing a `## Not a heading` line, followed
+by `## Related`. `$wkc-tracker edit <T>` with a new `## Notes` of one line. Check with the `show`
+query: `## Notes` is exactly the new line, no `### Constraints` or fenced block is left, and
+`## Related` is byte for byte as before.
+
+**A46 a title-only edit sends no body.** Create T. Read it as `edit` does, then change its body with
+`gh api -X PATCH`, standing in for another person, before `$wkc-tracker edit <T> title "<new
+title>"` writes. Check: the new title, and the body exactly as the other person left it.
+
 **A32 an empty frontier says why.** This case needs a frontier with nothing on it, so run it after
 every other A case. For each ticket `$wkc-tracker next` returns, `gh issue edit <n> --repo <R>
 --remove-label ready` until it returns nothing. Then build three held tickets with `gh`, not the
@@ -881,6 +891,10 @@ edge does not exist. Check: `cksum` unchanged.
 `$wkc-tracker edit <it>` with a new `## Comments` section: expect a refusal and an unchanged `cksum`.
 Then a title edit: `status` stays `'done'`.
 
+**B31 edit replaces a section with its subsections.** The same body as A45 in a local file, with
+`## Comments` after `## Related`. Edit `## Notes` the same way. Check with `diff` against a copy: only
+the `## Notes` span differs, and `## Related` and the comments are unchanged.
+
 **B20 an empty frontier says why.** Run it after every other B case. Move every ticket
 `$wkc-tracker next` returns to `backlog` by editing its `status`, until it returns nothing. Then write
 six files by hand, since the skill will not write the cycle:
@@ -1175,6 +1189,10 @@ by two. `$wkc-tracker unlink <it> blocked-by <one>`, then the same command again
 "<new title>"`, then `$wkc-tracker unlink` its blocker. Check: status Done, `completedAt` unchanged,
 the new title, and an empty `blockedBy`.
 
+**C35 edit replaces a section with its subsections.** The same body as A45 in an issue. Edit
+`## Notes` the same way. Check with `get_issue`: `## Notes` is exactly the new line, no
+`### Constraints` or fenced block is left, and `## Related` is unchanged by the reading rules.
+
 ---
 
 ## D. Harness parity
@@ -1450,6 +1468,27 @@ here.
 Versions 0.0.9 to 0.0.41 below were development steps on the `feat/tracker` branch. They shipped
 together as 0.0.8, so an entry's version names a branch state, and its skill ref names the exact
 commit it tested.
+
+### 2026-10-19T13:45:30-07:00 Direct checks after the 96fa6cb review, 0.0.24, Claude Code
+
+A review of `96fa6cb` found two defects. Linear's `edit` replaced a section only to the next heading
+of any level, so a `### ` subsection survived a `## Notes` edit. GitHub's `edit` always resent the
+body it read, so a title-only edit could overwrite a body change made after the read. SKILL.md now
+bounds a section at the next `# ` or `## ` heading outside a fenced code block, and GitHub sends
+`--body-file` only when a section is given. Same session, fixtures, and author caveat as the entry
+below. No harness session.
+
+| Case | Verdict | Evidence |
+|---|---|---|
+| A45 | PASS | #16: `## Notes` is the new line, `### Constraints` and the fenced `## Not a heading` are gone, `## Related` byte for byte; the body matches the sent file by `--rawfile`. |
+| A46 | PASS | #15: after the read, a `gh api -X PATCH` changed `## What to build`; `gh issue edit --title` with no `--body-file` set the new title and the body stayed exactly as the other writer left it (gh 2.102.0). |
+| B31 | PASS | `diff` against the copy shows only the `## Notes` span; `## Related` and the comment unchanged; YAML parse clean. |
+| C35 | PASS | DEV-32: one `replace` patch over the whole span; `get_issue` shows Notes as the new line with no subsection or fence, `## Related` unchanged, status Backlog, no milestone or assignee. |
+| Codex, Kiro CLI | SKIP | This session may not launch another harness, and no new session was authorized. |
+
+The remaining GitHub limit: an edit that gives a section still rewrites the whole body, and GitHub
+has no conditional write, so a body change landing between that read and write is lost. The backend
+file says to run the write right after the read.
 
 ### 2026-10-19T12:40:00-07:00 Direct checks of edit and unlink, 0.0.24, Claude Code
 

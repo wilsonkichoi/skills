@@ -91,7 +91,7 @@ status. If the body has a `## Blocked by` section, `create` writes those depende
 
 **`edit`** changes a ticket's title, named body sections, `## Blocked by`, or milestone, and
 nothing else: `/wkc-tracker edit 42 title "CSV export, streamed"`. A section you give replaces that
-section, and the others stay as they were. Give it a new `## Blocked by` and it works out which
+section, its `###` subsections included, and the others stay as they were. Give it a new `## Blocked by` and it works out which
 edges to add and which to remove, then applies exactly that difference, refusing the whole edit
 if an added edge would close a cycle. `milestone none` takes the ticket out of its milestone,
 except on Linear, whose tools cannot. It never touches status, assignees, or comments, so it also
