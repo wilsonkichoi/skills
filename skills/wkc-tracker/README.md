@@ -65,10 +65,12 @@ filed by hand in the web UI is a real ticket immediately, with no import step.
 /wkc-tracker show <id>
 /wkc-tracker next
 /wkc-tracker create <ticket>
+/wkc-tracker edit <id> <changes>
 /wkc-tracker assign <id> [who] [from <holder>]
 /wkc-tracker comment <id> <body>
 /wkc-tracker move <id> <status> [original]
 /wkc-tracker link <id> blocked-by <id>
+/wkc-tracker unlink <id> blocked-by <id>
 /wkc-tracker milestone <name>
 /wkc-tracker milestone list
 /wkc-tracker milestone show <name>
@@ -86,6 +88,14 @@ blocking it.
 
 **`create`** makes a ticket from the shape below, always at `backlog`. Use `move` to give it another
 status. If the body has a `## Blocked by` section, `create` writes those dependency edges too.
+
+**`edit`** changes a ticket's title, named body sections, `## Blocked by`, or milestone, and
+nothing else: `/wkc-tracker edit 42 title "CSV export, streamed"`. A section you give replaces that
+section, and the others stay as they were. Give it a new `## Blocked by` and it works out which
+edges to add and which to remove, then applies exactly that difference, refusing the whole edit
+if an added edge would close a cycle. `milestone none` takes the ticket out of its milestone,
+except on Linear, whose tools cannot. It never touches status, assignees, or comments, so it also
+works on a closed ticket without reopening it.
 
 **`assign`** says who holds a ticket. Bare, `/wkc-tracker assign 42`, it takes the ticket for you: it
 requires `ready` with nobody on it, and sets the assignee and `in-progress` together. That is the
@@ -117,6 +127,14 @@ and refuses when a moved edge would close a cycle.
 refuses an edge that would close a cycle and names the loop it found, because tickets in a cycle
 wait on each other forever. It runs this check itself, because neither GitHub nor Linear refuses
 every cycle.
+
+**`unlink`** removes one dependency edge: `/wkc-tracker unlink 42 blocked-by 17`. If 42 is not blocked
+by 17, it says so and writes nothing. That check matters because GitHub and Linear both report
+success for removing an edge that was never there.
+
+Neither `edit` nor `unlink` judges whether a change makes sense. The caller, whether that is you,
+`wkc-plan`, or an agent you gave the job, decides what the tickets should say and how they relate.
+The tracker carries it out and keeps the graph valid.
 
 **`milestone`** makes sure a milestone exists before tickets go into it:
 `/wkc-tracker milestone "M2: Reply handling"`. It creates an open one when nothing has that name, and
@@ -170,8 +188,8 @@ has an unmet blocker. When the blocker is `done`, it reappears. Nobody has to re
 
 Only `done` releases a blocker. A `duplicate` blocker counts as its original, followed down the
 chain, so it releases the ticket once the original is `done`. A `cancel` blocker keeps the ticket
-held: the work it stood for was dropped, not delivered, so you decide in the tracker whether to
-remove the edge or link something that will deliver it. When a chain cannot be followed, or a
+held: the work it stood for was dropped, not delivered, so the caller decides whether to `unlink`
+the edge or `link` something that will deliver it. When a chain cannot be followed, or a
 backend cannot say why a ticket closed, the blocker counts as unmet and `next` says why.
 
 ## Ticket shape
@@ -238,7 +256,9 @@ says, and what it did about it.
 
 ## Things it will not do
 
-- Reopen a terminal ticket. Terminal is terminal.
+- Reopen a terminal ticket. Terminal is terminal. `edit` and `unlink` work on one without
+  changing its status.
+- Delete a ticket, or edit or delete a comment.
 - Guess. If a Linear workflow is missing a status it needs, it stops and says so instead of
   picking a similar one. If two sessions take the same free ticket at once, a fixed rule decides
   which one keeps it, and the other steps back and says so.

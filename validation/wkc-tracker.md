@@ -154,7 +154,7 @@ Expect `wkc-tracker`'s `argument-hint` to be the string `<verb> [args]` and `wkc
 Check each opening block for exactly five fields, in order: **What it does**, **When to use it**,
 **Dependencies**, **Input**, and **Output**, with no **How to call it** field.
 Compare the verb table against the pre-conversion source. Expect all eight existing forms and their semantics unchanged:
-`list`, `show`, `next`, `create`, `assign`, `comment`, `move`, and `link`. From 0.0.22 the table also has `milestone`.
+`list`, `show`, `next`, `create`, `assign`, `comment`, `move`, and `link`. From 0.0.22 the table also has `milestone`, and from 0.0.24 `edit` and `unlink`.
 Expect **Input** to explain the existing omission behaviour and required context; setup requires no invocation arguments.
 Use a separate throwaway repository with `issue_tracker: local`, `issues_dir`, and known fixture files.
 Run `list ready`. Independently parse those files, compare returned ids, titles,
@@ -534,6 +534,36 @@ and a closed `M3`:
 expect counts from a rerun with a higher limit, or a stop that says the read was truncated, never
 counts from the first page.
 
+**A39 edit changes only what it is given.** Create T with `## What to build`, `## Acceptance
+criteria`, and `## Notes`, in open milestone `M1`, blocked by one issue, with a topic label and an
+assignee. Save its body to a file. `$wkc-tracker edit <T> title "<new title>"` with a new `## Notes`
+section. Check with the `show` query: the new title, `## Notes` as given, every other section byte
+for byte as saved, and milestone, blockers, labels, assignees, `state`, and `stateReason` unchanged.
+
+**A40 edit applies the milestone rule.** With open `M1`, closed `M2`, and no `M9`:
+`$wkc-tracker edit <T> milestone M9` and `$wkc-tracker edit <T> milestone M2` must each stop, naming
+the milestones that exist, with `milestone.title` unchanged. Then `$wkc-tracker edit <T> milestone
+none`: `milestone` must be `null`.
+
+**A41 edit applies exactly the edge difference, and a cycle writes nothing.** P blocked by X and Y.
+`$wkc-tracker edit <P>` with `## Blocked by` listing Y and Z. Check: P's blockers are exactly Y and
+Z, and X's, Y's, and Z's own blockers are unchanged. Then Q blocked by P, and
+`$wkc-tracker edit <Z>` with `## Blocked by` listing Q and nothing else, which would close
+Z → Q → P → Z and remove nothing. Expect a refusal naming that path. Check: Z's blockers and body
+are unchanged.
+
+**A42 unlink removes exactly the named edge.** P blocked by Y and Z, from A41.
+`$wkc-tracker unlink <P> blocked-by <Y>`. Check: P's blockers are exactly Z, and Y's own blockers are
+unchanged.
+
+**A43 unlink of a missing edge writes nothing.** `$wkc-tracker unlink <P> blocked-by <Y>` again.
+Expect a reply that says P is not blocked by Y. Check: P's blockers are still exactly Z. A reply that
+reports a removal is a FAIL even though the backend agrees: the DELETE returns `200 OK` here.
+
+**A44 edit and unlink keep a closed issue closed.** Close K as completed while it is blocked by one
+issue. `$wkc-tracker edit <K> title "<new title>"`, then `$wkc-tracker unlink <K> blocked-by
+<that issue>`. Check: `CLOSED`, `COMPLETED`, no status label, the new title, and no blockers.
+
 **A32 an empty frontier says why.** This case needs a frontier with nothing on it, so run it after
 every other A case. For each ticket `$wkc-tracker next` returns, `gh issue edit <n> --repo <R>
 --remove-label ready` until it returns nothing. Then build three held tickets with `gh`, not the
@@ -825,6 +855,32 @@ frontier. Check: every `cksum` unchanged.
 starts that milestone and to name `M1`, and the B2 parser to read `milestone` exactly
 `M2: it's "quoted"`.
 
+**B25 edit changes only what it is given.** Hand-write a file with `title`, `milestone: 'M1'`,
+one `blocked_by` id, `## What to build`, `## Notes`, and two comments under `## Comments`, then
+copy it. `$wkc-tracker edit <it> title "<new title>"` with a new `## Notes` and a new
+`## Acceptance criteria`. Check with `diff` against the copy: only `title`, the `## Notes` content,
+and an `## Acceptance criteria` section placed before `## Comments` differ. Parse the frontmatter
+with a YAML parser.
+
+**B26 edit applies the milestone rule here too.** `$wkc-tracker edit <it> milestone M9` with no file
+in `M9`: expect the reply to say the ticket starts `M9` and to name the milestones that exist.
+`$wkc-tracker edit <it> milestone none`: `milestone` parses as `''`.
+
+**B27 edit applies exactly the edge difference, and a cycle writes nothing.** The same shape as A41
+with local files. Check `blocked_by` by YAML parse and `cksum` the refused file before and after.
+
+**B28 unlink removes exactly the named edge, and keeps the body in step.** A file with
+`blocked_by: ['010', '011']` and a `## Blocked by` listing both. `$wkc-tracker unlink <it> blocked-by
+010`. Check: `blocked_by` is exactly `['011']`, the section lists only `011`, and nothing else
+differs.
+
+**B29 unlink of a missing edge writes nothing.** Repeat B28's command. Expect a reply that says the
+edge does not exist. Check: `cksum` unchanged.
+
+**B30 edit never touches a comment, or a done ticket's status.** On a `status: 'done'` file,
+`$wkc-tracker edit <it>` with a new `## Comments` section: expect a refusal and an unchanged `cksum`.
+Then a title edit: `status` stays `'done'`.
+
 **B20 an empty frontier says why.** Run it after every other B case. Move every ticket
 `$wkc-tracker next` returns to `backlog` by editing its `status`, until it returns nothing. Then write
 six files by hand, since the skill will not write the cycle:
@@ -1096,6 +1152,29 @@ both by exact name with their ids, no open or closed state, and `progress` not p
 milestone, and `list_milestones` is unchanged. With `list_milestones` unavailable, `show` must stop
 and say so rather than report zero.
 
+**C30 edit changes only what it is given.** An issue with three sections, in milestone M1, blocked
+by one issue, assigned to you. `$wkc-tracker edit <id> title "<new title>"` with a new `## Notes`.
+Check with `get_issue` and `includeRelations: true`: the new title, `## Notes` as given, the other
+sections unchanged by the reading rules, and `projectMilestone`, `blockedBy`, status, and assignee
+unchanged.
+
+**C31 edit applies exactly the edge difference, and a cycle writes nothing.** The same shape as A41.
+Linear writes long cycles, so the refusal is the skill's own. Check every `blockedBy` with
+`get_issue`.
+
+**C32 edit cannot clear a milestone here.** `$wkc-tracker edit <id> milestone none`. Expect a stop
+that says the tools cannot clear a milestone, with nothing else in the same edit written. Check:
+`projectMilestone` unchanged.
+
+**C33 unlink removes exactly the named edge, and a missing edge writes nothing.** An issue blocked
+by two. `$wkc-tracker unlink <it> blocked-by <one>`, then the same command again. Check after each:
+`blockedBy` is exactly the other one. The second reply must say the edge does not exist;
+`removeBlockedBy` succeeds silently for a missing edge.
+
+**C34 edit and unlink keep Done.** A Done issue blocked by one. `$wkc-tracker edit <it> title
+"<new title>"`, then `$wkc-tracker unlink` its blocker. Check: status Done, `completedAt` unchanged,
+the new title, and an empty `blockedBy`.
+
 ---
 
 ## D. Harness parity
@@ -1288,6 +1367,20 @@ in the run log below, so a rule can be re-checked when a backend changes.
   CLE-5 → CLE-6 → CLE-4 → CLE-5 was written and read back intact. A self-link returned success with
   `Could not add CLE-6 to blockedBy: Argument Validation Error - relatedIssueId cannot have the same value as issueId.`
   in `warnings`.
+- **GitHub edge removal and closed-issue edits.** Measured 2026-10-19 on
+  `wilsonkichoi/tracker-edit-val` with `gh` 2.102.0. `DELETE .../dependencies/blocked_by/<id>` takes
+  the blocker's database id, removes exactly that edge, and returns `200 OK`. It also returns
+  `200 OK` for an edge that does not exist, and `gh issue edit --remove-blocked-by` exits 0 for one.
+  A closed issue takes `--title`, `--body-file`, `--milestone`, and `--remove-milestone` and stays
+  `CLOSED` with its reason. `--milestone` naming a closed milestone exits 1 with `'M2' not found`.
+- **Linear relation removal and Done edits.** Measured 2026-10-19 on team `dev`, project `skills`,
+  in the `wkc-sandbox` workspace. The `save_issue` schema marks `blockedBy`, `blocks`, and
+  `relatedTo` append-only. `removeBlockedBy` removes exactly the named edge, and succeeds with no
+  warning for an edge that does not exist. One call with `blockedBy`, `removeBlockedBy`, and `patch`
+  landed all three. `patch` `replace` and `append` landed, and a bare id in an appended section made
+  no relation. A Done issue took a title, description, milestone, and `removeBlockedBy` and kept
+  Done and its `completedAt`. `milestone: ""` changed nothing, and `milestone: null` failed with
+  `Could not find milestone "null"`, so the tools cannot clear a milestone.
 - **Linear status names.** The predecessor recorded that an inexact status name fails silently. It
   did not reproduce: the server matches case-insensitively and rejects an unknown name with
   `Could not find state "<name>"`.
@@ -1357,6 +1450,40 @@ here.
 Versions 0.0.9 to 0.0.41 below were development steps on the `feat/tracker` branch. They shipped
 together as 0.0.8, so an entry's version names a branch state, and its skill ref names the exact
 commit it tested.
+
+### 2026-10-19T12:40:00-07:00 Direct checks of edit and unlink, 0.0.24, Claude Code
+
+Scope: the new `edit` and `unlink` verbs and the caller-decides wording, issue #28. Cases A39 to A44,
+B25 to B30, and C30 to C34, plus static S6 and S7 parses of the source frontmatter. Each case ran
+the commands its backend file gives, from this Claude Code session, and an independent read decided
+the verdict. The model steps (section diff, cycle walk, refusals) were run by the author of the
+change in the same session, so they show the commands work, not that another model follows the
+text. Fixtures: GitHub `wilsonkichoi/tracker-edit-val` #6 to #14, local files in a scratch
+directory, Linear DEV-24 to DEV-31 and milestone EV1.
+
+| Case | Verdict | Evidence |
+|---|---|---|
+| A39 | PASS | Title and `## Notes` changed; the body diff shows only the Notes line; milestone `M1`, blocker #6, labels, assignee, and state unchanged. |
+| A40 | PASS | `M9` matched nothing and closed `M2` matched closed, so both stopped with `M1` unchanged; `none` left `milestone: null`. |
+| A41 | PASS | #11 went from #9 and #8 to exactly #10 and #9; #8, #9, and #10 kept their blockers. The walk for #10 blocked by #12 found #10 → #12 → #11 → #10; #10's title, body, and blockers had the same `cksum` afterwards. |
+| A42 | PASS | #11 is blocked by exactly #10; #9's own blockers unchanged. |
+| A43 | PASS | The read lacked #9, so nothing was sent; #11 still exactly #10. |
+| A44 | PASS | #14 `CLOSED` `COMPLETED`, no labels, new title, no blockers. |
+| B25 | PASS | `diff` shows only `title`, the Notes content, and `## Acceptance criteria` placed before `## Comments`; both comments intact; YAML parse clean. |
+| B26 | PASS | No file carried `M9`, and `M1` and empty were the existing values; `none` parsed as `''`. |
+| B27 | PASS | `blocked_by` went from `['010', '011']` to `['011', '012']` with the section in step; the walk 012 → 050 → 030 → 012 refused, and the `cksum` of 012 was unchanged. |
+| B28 | PASS | `blocked_by: ['011']`, and the section lost only `- 010`. |
+| B29 | PASS | `cksum` unchanged on the repeat. |
+| B30 | PASS | The `## Comments` edit was refused with the `cksum` unchanged; a title edit kept `status: 'done'` and the comment. |
+| C30 | PASS | New title, Notes replaced by `patch`, Related appended; EV1, DEV-24, Todo, and the assignee unchanged. |
+| C31 | PASS | DEV-30 went from DEV-24 and DEV-25 to exactly DEV-25 and DEV-29 in one call; DEV-25's and DEV-29's blockers unchanged. The walk for DEV-29 blocked by DEV-31 found DEV-29 → DEV-31 → DEV-30 → DEV-29, nothing was sent, and DEV-29 still has no blockers. |
+| C32 | PASS | `none` stopped; DEV-28 still in EV1. The stop rests on the measured tool limits above. |
+| C33 | PASS | DEV-30 exactly DEV-29 after the first `unlink`; the repeat read lacked DEV-25 and sent nothing. |
+| C34 | PASS | DEV-27 Done, `completedAt` unchanged, new title, empty `blockedBy`. |
+| S6, S7 static | PASS | Source frontmatter parses: `argument-hint` `<verb> [args]`, `disable-model-invocation` boolean `false`, `allow_implicit_invocation` boolean `true`; the verb table has `edit` and `unlink`. |
+| Codex, Kiro CLI | SKIP | This session may not launch another harness, and no new session was authorized. |
+
+The fixtures stay in place. `wilsonkichoi/tracker-edit-val` is a private throwaway that a person deletes.
 
 ### 2026-10-17T21:58:00-07:00 Direct check after the 18b3ba9 review
 

@@ -4,7 +4,7 @@
 - Statuses
 - Tools
 - Reading rules
-- Per verb: next, create, link, assign, milestones (ensure, list, show), duplicate
+- Per verb: next, create, edit, link, unlink, assign, milestones (ensure, list, show), duplicate
 
 Use the official Linear MCP server. Scope every call with `linear_team` from
 `docs/dev-agents/config.md`, and with `linear_project` wherever the tool takes a project. Never
@@ -40,8 +40,8 @@ substitute a similar status. Report an issue in any other status by its Linear n
 A server that names these tools differently is fine: use the tool that does the job. When none
 does, stop and say which job has no tool.
 
-Relations are `save_issue` parameters: `blockedBy`, `blocks`, `relatedTo`, `duplicateOf`, and a
-`remove*` form of each.
+Relations are `save_issue` parameters. `blockedBy`, `blocks`, and `relatedTo` only add;
+`removeBlockedBy`, `removeBlocks`, and `removeRelatedTo` remove; `duplicateOf` takes `null`.
 
 Read `warnings` in every `save_issue` result: a success can carry a refusal. Verify every write with
 `get_issue`.
@@ -99,6 +99,24 @@ otherwise write nothing. Check `warnings`, then `get_issue` with `includeRelatio
 `blockedBy` entry, every section, the project, and exactly that project milestone, or none when none
 was given. Report any edge that did not land, and a milestone that differs as a partial write.
 
+### edit
+
+`get_issue` with `includeRelations: true`, then one call:
+
+```
+save_issue { id, title, patch, milestone, blockedBy: <added>, removeBlockedBy: <removed> }
+```
+
+Pass only what changes. For each given section, a `patch` op: `replace` with `old_string` set to that
+section exactly as `get_issue` returned it, heading to the next heading, or `append` for a section
+the issue lacks. One failed match aborts the whole call. Resolve a milestone as `create` does.
+`milestone none` is a stop: the tools cannot clear a milestone. An empty string changes nothing,
+and `null` is read as a name. Done, Canceled, and Duplicate issues take the edit and keep their
+status.
+
+Verify with `get_issue`: title, sections as the reading rules compare them, `projectMilestone`,
+`blockedBy` exactly the new set, and status and assignee unchanged.
+
 ### link
 
 For `link <A> blocked-by <B>`, refuse a self-link before any call. Walk from B through `get_issue`
@@ -109,6 +127,13 @@ cycles, and replaces an existing reverse edge without warning.
 Then `save_issue` A with `blockedBy: [B]`, and `get_issue` both. A must list B, and B's `blockedBy`
 must be unchanged.
 
+### unlink
+
+`get_issue` A with `includeRelations: true`: B must be in its `blockedBy`. Otherwise write nothing:
+`removeBlockedBy` with an edge that does not exist succeeds with no warning. Then
+`save_issue { id: A, removeBlockedBy: [B] }`, and `get_issue` A: B is gone, every other blocker is
+still there.
+
 ### assign
 
 Bare form: one `save_issue` with `state: 'In Progress'` and `assignee: 'me'`. Explicit forms:
@@ -118,8 +143,8 @@ Verify with `get_issue`:
 
 - Bare form with a status other than In Progress: if you are still the assignee, set
   `assignee: null`, leave the status, and report.
-- An assignee other than the one you set: another session won. Write nothing, report, and take
-  another ticket.
+- An assignee other than the one you set: another session won. Write nothing and report. Which
+  ticket to take instead is the caller's choice.
 
 An issue holds one assignee, so the `SKILL.md` tie-break never fires here.
 
