@@ -7,15 +7,29 @@ Width stays between 280 pixels and the canvas width minus 200 pixels. It persist
 Narrow layouts keep the full-width bottom sheet.
 The default zoom is 70%, or smaller when needed to fit. Selection centers the card in available space at the current zoom.
 Closing slides the panel away without changing card positions or zoom.
-Tinted boxes group Configuration, Coordination, Documentation, and Independent cards. Purple, green, amber, and gray distinguish those regions in both themes.
-The map contains all five shipped definitions in this repository: `wkc-setup`, `wkc-tracker`,
-`wkc-workflow-diagram`, `wkc-help`, and internal `wkc-skills-release`. Planned skills are excluded.
+Tinted boxes group Configuration, Planning, Coordination, Documentation, and Independent cards. Purple, blue, green, amber, and gray distinguish those regions in both themes.
+The map contains all eight shipped definitions in this repository: `wkc-setup`, `wkc-research`, `wkc-architect`,
+`wkc-plan`, `wkc-tracker`, `wkc-workflow-diagram`, `wkc-help`, and internal `wkc-skills-release`.
+Planned skills are excluded.
 Every card is a skill. External systems, outputs, and results appear in the owning skill's details.
 The four system cards and their six action arrows are removed at the user's direction.
-No skill-to-skill runtime action is established by these definitions, so the current map has no arrows.
-The configured backend and prerequisite remain in tracker details. Help's installer operations remain conditional on a person's request.
-Future arrows default to workflow actions and runtime interactions between skills, following the meaning requested from `.local/architecture.excalidraw`.
-They do not show prerequisites or automatic skill invocation. The sketch supplies no planned skills or obsolete distribution details.
+
+The map exists to show how the skills connect in a development workflow, so a person knows which one to run next.
+The main flow runs left to right in one row: setup, research, architect, plan, tracker.
+Documentation and Independent cards sit in a lower row, out of the main flow, at the user's direction.
+Card order (Previous/Next) and lane chip order follow the same flow.
+
+Arrows show the workflow, at the user's direction on 2026-10-19. There are two kinds:
+
+- **Calls** (verb labels): one skill runs another skill's verbs. Solid when the call always happens, dashed when it is conditional.
+- **Handoffs** (labels name what is handed over): a skill writes something the next skill reads, and its report or contract names that next step.
+  A person starts the next skill. Dashed when the next skill works without it.
+
+The PRD → SPEC → ROADMAP handoffs are dashed because the lifecycle documents are optional, not a pipeline (`AGENTS.md`):
+each skill says small work skips it, and architect and plan offer to proceed on stated intent without an approved document.
+Setup → research is dashed because research falls back to `docs/dev-agents/PRD.md` without config.
+Setup → tracker is solid because tracker stops without the config that setup writes.
+The arrows do not claim automatic skill invocation. Help's installer operations remain conditional on a person's request.
 `wkc-skills-release` publishes this collection without setup or project configuration.
 
 ## Sources and ownership
@@ -27,6 +41,18 @@ They do not show prerequisites or automatic skill invocation. The sketch supplie
 | wkc-workflow-diagram | [skills/wkc-workflow-diagram/SKILL.md](../../../skills/wkc-workflow-diagram/SKILL.md) | Read definitions and update offline diagrams without executing the skills |
 | wkc-help | [skills/wkc-help/SKILL.md](../../../skills/wkc-help/SKILL.md) | Answers from installed definitions; gives installer commands and runs changes only on a person's request |
 | wkc-skills-release | [skills/wkc-skills-release/SKILL.md](../../../skills/wkc-skills-release/SKILL.md) | Internal maintainer skill; clean synchronized main and authenticated GitHub access; merged collection publication without setup |
+| wkc-research | [skills/wkc-research/SKILL.md](../../../skills/wkc-research/SKILL.md) | Writes only the PRD at `prd_file`; approval status line; no tracker; callers are people |
+| wkc-architect | [skills/wkc-architect/SKILL.md](../../../skills/wkc-architect/SKILL.md) | Writes only the SPEC at `spec_file` and ADRs; `wkc-tracker list` when updating with a configured tracker; callers are people |
+| wkc-plan | [skills/wkc-plan/SKILL.md](../../../skills/wkc-plan/SKILL.md) | Writes the ROADMAP at `roadmap_file`; every ticket read and write through `wkc-tracker` verbs; callers are people |
+
+| Edge | Kind | Source evidence |
+| --- | --- | --- |
+| setup → research: Doc paths | Handoff, dashed | Setup section B records the PRD, SPEC, and ROADMAP paths "so later skills read the right files"; section 3 names research, architect, and plan as their writers. Research's Dependencies read `prd_file` from config, falling back to the default |
+| setup → tracker: Tracker config | Handoff, solid | Setup's What it does: writes `docs/dev-agents/config.md`, "which `wkc-tracker` reads"; its report's next step is `wkc-tracker list`. Tracker section 1 stops and asks for `wkc-setup` when the config names no backend |
+| research → architect: Approved PRD | Handoff, dashed | Research's Output: "`wkc-architect` reads an approved PRD next"; section 5 names it as the next step. Architect section 1 requires an approved PRD or offers to proceed on stated intent |
+| architect → plan: Approved SPEC | Handoff, dashed | Architect's Output: "`wkc-plan` reads an approved SPEC next"; section 6 names it as the next step. Plan section 1 requires an approved SPEC or offers to plan from stated intent |
+| plan → tracker: Manages tickets | Call, solid | Plan's Dependencies name `wkc-tracker` for `list`, `show`, `milestone`, `create`, `link`, and `move`; sections 1 and 6 reach tickets only through those verbs |
+| architect → tracker: Lists tickets | Call, dashed | Architect's Dependencies and section 4: on a contract change with a configured tracker, list open tickets through the `wkc-tracker` `list` verb |
 
 Setup and diagram file outputs are described in their own cards. Setup's label creation and tracker's GitHub Issues operations use
 [docs/dev-agents/config.md](../config.md) as backend evidence. Help's card describes the installer; the release card describes tags and GitHub Releases.
@@ -74,7 +100,7 @@ Do not edit diagram.html directly. Keep temporary artifacts in the ignored `.cac
 | Phone details | [Image](screenshots/phone-light-details.png) | [Image](screenshots/phone-dark-details.png) |
 | Phone help details | [Image](screenshots/phone-light-help-details.png) | [Image](screenshots/phone-dark-help-details.png) |
 
-The current details screenshots select `wkc-skills-release`; the help screenshots select `wkc-help`.
+The current details screenshots select `wkc-plan`; the help screenshots select `wkc-help`.
 The dated results below describe earlier versions of the map.
 
 On 2026-09-24, Chromium loaded the three-node HTML offline at 1440 × 900, 768 × 1024, and
@@ -84,6 +110,41 @@ Desktop light overview and phone dark details screenshots were visually inspecte
 The phone sheet scrolls independently; commands below the fold remain reachable.
 
 ## Implementation verification
+
+### Planning skills and workflow layout, 2026-10-19
+
+Sources were read at repository commit `1e39537`. All eight definitions were readable. Generator **0.0.15**.
+
+Content changes:
+
+- Added `research`, `architect`, and `plan` cards in a new blue Planning lane.
+- Applied the user-approved tracker conflict fix: `details.body` now lists `milestone` among the verbs, after the milestone verbs were added to [skills/wkc-tracker/SKILL.md](../../../skills/wkc-tracker/SKILL.md) section 4.
+- Reviewed every other card against its source. Setup dropped its architecture section and release changed changelog parsing, but no card text mentions either. No other card text changed.
+- Added six edges, listed with their evidence in [Sources and ownership](#sources-and-ownership). The arrow meaning changed from calls only to calls plus handoffs, at the user's direction.
+
+Layout changes, at the user's direction, following the left-to-right style of the user's reference map:
+
+- One main row at y = 0: setup, research, architect, plan, tracker, 480 px apart so every handoff label fits between cards.
+- `setup-tracker` arcs above the row; `architect-tracker` runs in a corridor below it.
+- Documentation (`workflow-diagram`, `help`) and Independent (`skills-release`) cards moved to a lower row at y = 440.
+- Lanes and nodes are reordered to the flow; all routes and regions are rewritten.
+
+Selected checks used Node **v24.11.1** and Chrome **155.0.8059.84** in the current session, without other AI sessions or backend writes.
+
+| Check | Result | Independent evidence |
+| --- | --- | --- |
+| Scope | PASS | Node labels match all eight `skills/*/SKILL.md` directories |
+| Helper check/build | PASS | Documented commands passed with the main documentation base and no warnings; a repeat build was byte-identical |
+| Offline rendering | PASS | `file://` with networking disabled in all six viewport/theme combinations; no HTTP requests, page exceptions, or page overflow |
+| Layout | PASS | Eight fitted cards inside the viewport without overlap; all six edge labels clear of every card and each other. An intermediate placement failed when "Lists tickets" overlapped `wkc-tracker` and was replaced |
+| Keyboard and panels | PASS | Enter opens setup, tracker, help, research, architect, and plan; Tab stays in the panel; Escape returns visible focus; relationship counts match the edges (setup 2, research 2, architect 3, plan 2, tracker 3, help 0) |
+| Commands and navigation | PASS | Six new commands copied exactly through preview; Next from setup visits every card in flow order, then disables |
+| Simulated touch | PASS | Taps on the three new cards open their phone sheets; the last link scrolls into reach |
+| Visual review | PASS, with limits | Inspected desktop light overview, desktop dark plan details, tablet dark overview, and phone light overview. The wide row fits phones only at 17% zoom; cards are readable once selected or zoomed |
+| Preview and browser cleanup | PASS | SIGTERM stopped preview and Chrome by their recorded process IDs; neither endpoint answered afterward |
+| Physical touch, screen readers, Safari, Firefox, pinch and pan | SKIP | Not used; the renderer did not change, so pan and pinch were not rerun |
+
+All 18 screenshots were regenerated. No conflicts or unreadable sources remain. Raw evidence is in the ignored `.cache/planning/` directory.
 
 ### Skill cards only, 2026-10-07
 

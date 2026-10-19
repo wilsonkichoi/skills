@@ -11,6 +11,14 @@
       }
     },
     {
+      "id": "planning",
+      "label": "Planning",
+      "color": {
+        "light": "#2f62b5",
+        "dark": "#78a6f0"
+      }
+    },
+    {
       "id": "coordination",
       "label": "Coordination",
       "color": {
@@ -67,12 +75,102 @@
       }
     },
     {
+      "id": "research",
+      "label": "wkc-research",
+      "lane": "planning",
+      "summary": "Write or update the product requirements document (PRD) from research material and an interview.",
+      "details": {
+        "body": "Reads config, context, rules, the current PRD, and supplied material, then asks only what the material leaves open. Output: the PRD at `prd_file`, default docs/dev-agents/PRD.md, with a draft or approved status line; wkc-architect reads an approved PRD next.",
+        "when": "Use when starting a product or making a change that shifts its goals, users, or scope.",
+        "commands": [
+          {
+            "label": "Codex",
+            "text": "$wkc-research"
+          },
+          {
+            "label": "Claude Code / Kiro CLI",
+            "text": "/wkc-research"
+          }
+        ],
+        "links": [
+          {
+            "label": "Read the wkc-research skill",
+            "href": "skills/wkc-research/SKILL.md"
+          },
+          {
+            "label": "PRD approval",
+            "href": "skills/wkc-research/SKILL.md#4-approval"
+          }
+        ]
+      }
+    },
+    {
+      "id": "architect",
+      "label": "wkc-architect",
+      "lane": "planning",
+      "summary": "Write or update the technical specification (SPEC) and ADRs from an approved PRD and the existing code.",
+      "details": {
+        "body": "Shows options and tradeoffs before committing to a choice, and writes an ADR only for a decision costly to reverse. Output: the SPEC at `spec_file` and ADRs; a contract change with a configured tracker lists affected open tickets through wkc-tracker list.",
+        "when": "Use after a PRD is approved, or for a change that needs new contracts, components, or a recorded decision.",
+        "commands": [
+          {
+            "label": "Codex",
+            "text": "$wkc-architect"
+          },
+          {
+            "label": "Claude Code / Kiro CLI",
+            "text": "/wkc-architect"
+          }
+        ],
+        "links": [
+          {
+            "label": "Read the wkc-architect skill",
+            "href": "skills/wkc-architect/SKILL.md"
+          },
+          {
+            "label": "SPEC outline",
+            "href": "skills/wkc-architect/SKILL.md#4-write-the-spec"
+          }
+        ]
+      }
+    },
+    {
+      "id": "plan",
+      "label": "wkc-plan",
+      "lane": "planning",
+      "summary": "Write the ROADMAP for an approved SPEC, then draft and publish one milestone's tickets through wkc-tracker.",
+      "details": {
+        "body": "Orders milestones by dependency and risk, then drafts tickets with a checked dependency graph and waves. Output: the ROADMAP at `roadmap_file`; after approval, tickets created, linked, and moved to `ready` only through wkc-tracker verbs.",
+        "when": "Use when an approved design needs milestones and tickets, or when the next milestone needs tickets.",
+        "commands": [
+          {
+            "label": "Codex",
+            "text": "$wkc-plan"
+          },
+          {
+            "label": "Claude Code / Kiro CLI",
+            "text": "/wkc-plan"
+          }
+        ],
+        "links": [
+          {
+            "label": "Read the wkc-plan skill",
+            "href": "skills/wkc-plan/SKILL.md"
+          },
+          {
+            "label": "Publishing order",
+            "href": "skills/wkc-plan/SKILL.md#6-publish"
+          }
+        ]
+      }
+    },
+    {
       "id": "tracker",
       "label": "wkc-tracker",
       "lane": "coordination",
       "summary": "Read and update tickets in the configured GitHub, Linear, or local backend.",
       "details": {
-        "body": "Reads issue_tracker from docs/dev-agents/config.md, which wkc-setup writes. Reads and changes GitHub Issues here; provides list, show, next, create, assign, comment, move, and link across seven statuses.",
+        "body": "Reads issue_tracker from docs/dev-agents/config.md, which wkc-setup writes. Reads and changes GitHub Issues here; provides list, show, next, create, assign, comment, move, link, and milestone across seven statuses.",
         "when": "Use after wkc-setup to read tickets, change ticket state, or find work ready to start.",
         "commands": [
           {
@@ -195,5 +293,46 @@
       "lane": "independent"
     }
   ],
-  "edges": []
+  "edges": [
+    {
+      "id": "setup-research",
+      "from": "setup",
+      "to": "research",
+      "kind": "optional",
+      "label": "Doc paths"
+    },
+    {
+      "id": "research-architect",
+      "from": "research",
+      "to": "architect",
+      "kind": "optional",
+      "label": "Approved PRD"
+    },
+    {
+      "id": "architect-plan",
+      "from": "architect",
+      "to": "plan",
+      "kind": "optional",
+      "label": "Approved SPEC"
+    },
+    {
+      "id": "plan-tracker",
+      "from": "plan",
+      "to": "tracker",
+      "label": "Manages tickets"
+    },
+    {
+      "id": "architect-tracker",
+      "from": "architect",
+      "to": "tracker",
+      "kind": "optional",
+      "label": "Lists tickets"
+    },
+    {
+      "id": "setup-tracker",
+      "from": "setup",
+      "to": "tracker",
+      "label": "Tracker config"
+    }
+  ]
 }
