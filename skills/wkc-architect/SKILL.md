@@ -98,6 +98,7 @@ Status: draft
 ## Requirements      <!-- measurable: latency, scale, cost, availability -->
 ## Boundaries        <!-- what it must not become, from the PRD non-goals -->
 ## Deployment        <!-- environments, CI/CD shape, rollback -->
+## Development environment   <!-- toolchain, package manager, test and lint commands -->
 ## Coverage          <!-- each PRD goal -> the components or contracts that deliver it -->
 ## Decisions         <!-- one line each; ADR links for the big ones -->
 ## Risks and dependencies   <!-- for wkc-plan to order milestones by -->
@@ -136,5 +137,6 @@ and **Changes** entries keep the approval.
 ## 6. Report
 
 Say what changed, which ADRs were written, which decisions and unknowns are still open, any
-tickets the change affects, and the status line as it now stands. When the SPEC is approved, the
-next step is `wkc-plan`.
+tickets the change affects, and the status line as it now stands. When the SPEC's test command
+differs from `test_command` in the config, say so; the user updates the config. When the SPEC is
+approved, the next step is `wkc-plan`.

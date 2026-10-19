@@ -36,10 +36,13 @@ Material that could not be read is reported by name, never filled in from guesse
 
 ## 2. Ask only what the material leaves open
 
-The PRD needs answers to: what problem, for whom, what value, what observable outcome shows it
-worked, what is out of scope, and what constrains it (time, budget, platforms, integrations).
-Ask about the ones the material does not settle. With no material at all, interview from zero.
-An internal tool, or the maintainer themselves, is a valid customer.
+The PRD needs answers to: what problem, for whom and not for whom, what value, what observable
+outcome shows it worked, what is out of scope, and what constrains it (time, budget, platforms,
+integrations). Ask about the ones the material does not settle. With no material at all, interview
+from zero. An internal tool, or the maintainer themselves, is a valid customer.
+
+The PRD records decisions, not wishes. When an answer is vague or the material contradicts it,
+push back once, then accept the user's call.
 
 A question ends its turn. Number the options, put the recommended one first, and accept a digit.
 Ask questions whose answers change later questions one round at a time. Never ask for something
@@ -56,9 +59,9 @@ outline as a guide and drop sections that say nothing.
 Status: draft
 
 ## Problem
-## Who it is for
+## Who it is for   <!-- and who it is not for -->
 ## Outcomes        <!-- observable signs that it worked -->
-## Goals
+## Goals           <!-- ranked, each phrased as an outcome -->
 ## Non-goals
 ## Constraints
 ## Assumptions     <!-- believed, not yet confirmed -->

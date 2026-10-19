@@ -2,6 +2,13 @@
 
 Newest first. Each version is a `## {version} ({ISO 8601 timestamp with local offset})` heading followed by a bullet list of changes.
 
+## 0.0.23 (2026-10-18T21:39:48-07:00)
+
+- `wkc-research` asks who the product is not for, pushes back once on a vague answer before accepting the user's call, and its outline marks goals as ranked outcomes. These come from the `dev:discover` source.
+- `wkc-architect`'s SPEC outline gains a **Development environment** line for the toolchain, package manager, and test and lint commands. The report says when the SPEC's test command differs from the config's `test_command`, which the user updates.
+- `wkc-plan` prefers acceptance criteria a test or command can check, keeps manual checks for what a person must judge, counts a setup ticket done only when the test command passes a real test against it, and gives each spike a timebox.
+- Add research case 10, architect case 11, and plan case 21. They have not run.
+
 ## 0.0.22 (2026-10-17T11:45:36-07:00)
 
 - Add `wkc-plan`, which writes or updates the ROADMAP at `roadmap_file` from an approved SPEC: milestones in delivery order, each with an outcome and an exit check. It then drafts tickets for one milestone in the `wkc-tracker` ticket shape, with checkable criteria, copied contract excerpts, real dependency edges, and spikes for open unknowns.

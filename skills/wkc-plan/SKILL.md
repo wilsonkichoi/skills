@@ -96,12 +96,15 @@ Write each new ticket in the shape `wkc-tracker` uses (**What to build**, **Acce
 - One outcome that can be checked on its own, sized for one pull request. Do not split tightly
   coupled work, or invent tickets, to get more of them.
 - Acceptance criteria someone else can check: a command and its expected output, a request and its
-  response, a file, or a named manual check. Broad criteria, such as validation or error handling,
-  list their cases.
+  response, a file, or a named manual check. Prefer what a test or command can check; keep manual
+  checks for what a person must judge. Broad criteria, such as validation or error handling, list
+  their cases.
+- A ticket that sets up the project or its tooling is done when the test command runs a real test
+  against it and passes, not when the files exist.
 - **Notes** copy the SPEC excerpt the work needs, such as a contract's fields and error responses,
   with the section it came from, so a fresh session does not have to go looking.
-- A spike for an unknown names the question, the evidence that settles it, and where the answer
-  goes, usually a SPEC update through `wkc-architect`. Its code is thrown away, not shipped.
+- A spike for an unknown names the question, a timebox, the evidence that settles it, and where
+  the answer goes, usually a SPEC update through `wkc-architect`. Its code is thrown away, not shipped.
 - A decision ticket holds a question only a person or `wkc-architect` can answer, in its body. It
   stays at `backlog`, unassigned, and is `done` once the SPEC records the answer.
 
