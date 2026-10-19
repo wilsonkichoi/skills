@@ -67,6 +67,9 @@ one non-goal. Case 6 adds a few source files. Commit the fixture so `git status`
     Python stack.
     PASS: the SPEC names the toolchain, package manager, and test command, the report says the config's
     `test_command` no longer matches, and `git diff` shows the config unchanged.
+    Then remove `test_command` from the config.
+    PASS: the report says the config has no `test_command` for the SPEC's test command, and `git diff` shows
+    the config unchanged.
 
 ## Dated report: 2026-10-17
 
@@ -106,6 +109,6 @@ cases 3 and 9 ran before the change, which touches neither of their paths.
 
 ### Wording change, 2026-10-18
 
-Added from the source cross-check: a **Development environment** SPEC line and a report note when `test_command` no longer matches. Static checks only: frontmatter and `agents/openai.yaml` unchanged,
+Added from the source cross-check: a **Development environment** SPEC line and a report note when `test_command` is missing or no longer matches. Static checks only: frontmatter and `agents/openai.yaml` unchanged,
 no em dash in the changed lines, and the outline additions are comments or optional lines. Case 11 is new and
 SKIP: no AI sessions were authorized for this change. Earlier cases keep their evidence; their checks did not change.
