@@ -129,6 +129,14 @@ Cases 17 to 20 use a fixture where M1's tickets are written by hand and M2 **Dep
     PASS: the draft has one decision or spike ticket that blocks both, neither blocks the other, and after `1` the
     decision ticket is at `backlog`.
 
+21. **Setup ticket and criteria.** Use a greenfield SPEC whose **Development environment** names a test command
+    and whose **Open unknowns** holds one unknown. Invoke with no arguments.
+    PASS: the ticket that sets up the project has a criterion that runs that test command against a real test; no
+    criterion is a manual check for something a command could check; the spike names a timebox.
+    Then remove `test_command` from the config and the test command from the SPEC, for a project with no tests.
+    PASS: the setup ticket still has a criterion that shows its tooling working, and no ticket adds a test framework
+    the SPEC does not call for.
+
 ## Dated report: 2026-10-17
 
 Scope: new skill. Cases 1 and 2 as direct checks; cases 3 to 10 in Claude Code on Sonnet 5.5. Codex and Kiro CLI are
@@ -197,3 +205,9 @@ Ticket state was scored with PyYAML from the files.
 | 6, existing work | PASS | Session 22: hand-written 001 reused, not redrafted; after `1`, 002 to 005 in M1, 004 blocked by 001, no two tickets with the same outcome. Its report miscounted the edges in one line. It kept 005, which waits on a decision ticket, at `backlog`, while sessions 18 and 21 moved such tickets to `ready`; both are safe. |
 | 7, spec gap and unknown | PASS | Session 23: no columns invented; the undecided table became a decision ticket for `wkc-architect` blocking the table work; the spike names its question, the evidence, and the SPEC sections, with throwaway code. `issues_dir` unchanged. |
 | 8, interrupted publication | PASS on the old check | Session 24: counted M1's four tickets, drafted only the deployment ticket, and after `1` created 005 alone with `blocked_by: ['001', '003']`; no title appears twice. It treated 001 to 004 as reused and left them at `backlog`, so nothing reached the frontier; the `076d84b` run had moved them to `ready`. A sentence now makes leftover tickets part of the publication, and case 8's check was tightened to match. Not rerun on that sentence. |
+
+### Wording change, 2026-10-18
+
+Added from the source cross-check: prefer checks a command can run, setup tickets shown working (including with no `test_command`), and spike timeboxes. Static checks only: frontmatter and `agents/openai.yaml` unchanged,
+no em dash in the changed lines, and the outline additions are comments or optional lines. Case 21 is new and
+SKIP: no AI sessions were authorized for this change. Earlier cases keep their evidence; their checks did not change.

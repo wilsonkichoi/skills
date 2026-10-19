@@ -15,7 +15,7 @@ npx skills add "<clean-candidate>" -l
 npx skills add "<clean-candidate>" -s wkc-architect -a claude-code -a codex -a kiro-cli -y
 ```
 
-For cases 3 to 10, the fixture project has `docs/dev-agents/config.md` with `issue_tracker: local`, `prd_file`, and
+For cases 3 to 11, the fixture project has `docs/dev-agents/config.md` with `issue_tracker: local`, `prd_file`, and
 `spec_file` set, and an approved PRD (`Status: approved (<date>)`) for a small web service with at least two goals and
 one non-goal. Case 6 adds a few source files. Commit the fixture so `git status` shows every change.
 
@@ -63,6 +63,14 @@ one non-goal. Case 6 adds a few source files. Commit the fixture so `git status`
     a dated **Changes** entry names what it replaced, the report names the two tickets from a tracker read, and no
     ticket file changes.
 
+11. **Greenfield toolchain.** Set `test_command: "npm test"` in the config and use a PRD whose constraints settle a
+    Python stack.
+    PASS: the SPEC names the toolchain, package manager, and test command, the report says the config's
+    `test_command` no longer matches, and `git diff` shows the config unchanged.
+    Then remove `test_command` from the config.
+    PASS: the report says the config has no `test_command` for the SPEC's test command, and `git diff` shows
+    the config unchanged.
+
 ## Dated report: 2026-10-17
 
 Scope: new skill. Cases 1 and 2 as direct checks; cases 3 to 10 in Claude Code. Codex and Kiro CLI are out of scope, by
@@ -98,3 +106,9 @@ cases 3 and 9 ran before the change, which touches neither of their paths.
 | 8, custom paths | PASS | SPEC at `docs/design/technical-spec.md`, ADR at `docs/design/adr/`, no `docs/dev-agents/SPEC.md`; `git diff` shows the config and context file unchanged. |
 | 9, approval | PASS | A review turn that narrowed the send window kept `Status: draft`; "Approved." set `Status: approved (2026-10-17)`, the run date, in a one-line diff. |
 | 10, update and ticket impact | PASS | The rerun invoked `wkc-tracker list`, named tickets 001 and 002 as building on the Y/N contract and 003 as unaffected, and changed no ticket file. The status reset to draft and a dated **Changes** entry names the Y/N parsing as replaced. The reminder text and prompt no longer mention Y/N; parsing still accepts the old words as a fallback for reminders already sent, raised to the user as a call to check. |
+
+### Wording change, 2026-10-18
+
+Added from the source cross-check: a **Development environment** SPEC line and a report note when `test_command` is missing or no longer matches. Static checks only: frontmatter and `agents/openai.yaml` unchanged,
+no em dash in the changed lines, and the outline additions are comments or optional lines. Case 11 is new and
+SKIP: no AI sessions were authorized for this change. Earlier cases keep their evidence; their checks did not change.

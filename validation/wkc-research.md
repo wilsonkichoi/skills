@@ -15,7 +15,7 @@ npx skills add "<clean-candidate>" -l
 npx skills add "<clean-candidate>" -s wkc-research -a claude-code -a codex -a kiro-cli -y
 ```
 
-For cases 3 to 9, the fixture project has `docs/dev-agents/config.md` with `prd_file` set, and a `research/`
+For cases 3 to 10, the fixture project has `docs/dev-agents/config.md` with `prd_file` set, and a `research/`
 folder holding two short notes that disagree on one fact. Commit the fixture so `git status` shows every change.
 
 ## Cases
@@ -52,6 +52,10 @@ folder holding two short notes that disagree on one fact. Commit the fixture so 
    entry names what it replaced and the downstream work to review;
    the evidence-only update keeps the approval. User-written sections outside the change are unchanged by `git diff`.
 
+10. **Vague answer.** Answer the problem question with a wish, such as "make it better for users".
+    PASS: the next turn pushes back once with a specific question, never twice; after the user restates the same
+    answer, the PRD records it as the user's decision.
+
 ## Dated report: 2026-10-16
 
 Scope: new skill and the `wkc-setup` removal. Cases 1 and 2 as direct checks. Cases 3 to 9 need new AI sessions, which were not authorized.
@@ -80,3 +84,9 @@ Claude Code's reported cost for all ten turns was $0.89.
 | 7, custom path | PASS | With `prd_file: docs/product/requirements.md`, `git status -uall` shows only that file. |
 | 8, approval | PASS | `Status: draft` after a review turn that changed content without approving; `Status: approved (2026-10-17)` after approval, matching the run date. |
 | 9, update | PASS | Replacing reply-to-confirm reset the status to draft, removed the old goal and outcome, and added a dated **Changes** entry naming what it replaced and the SPEC or ticket work to review. Folding in an agreeing interview kept `Status: approved` and touched only evidence and assumption wording. |
+
+### Wording change, 2026-10-18
+
+Added from the source cross-check: push back once on a vague answer, who the product is not for, and ranked goals. Static checks only: frontmatter and `agents/openai.yaml` unchanged,
+no em dash in the changed lines, and the outline additions are comments or optional lines. Case 10 is new and
+SKIP: no AI sessions were authorized for this change. Earlier cases keep their evidence; their checks did not change.
