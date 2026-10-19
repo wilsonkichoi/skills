@@ -170,7 +170,7 @@
       "lane": "coordination",
       "summary": "Read and update tickets in the configured GitHub, Linear, or local backend.",
       "details": {
-        "body": "Reads issue_tracker from docs/dev-agents/config.md, which wkc-setup writes. Reads and changes GitHub Issues here; provides list, show, next, create, assign, comment, move, link, and milestone across seven statuses.",
+        "body": "Reads issue_tracker from docs/dev-agents/config.md, which wkc-setup writes. Reads and changes GitHub Issues here; provides list, show, next, create, edit, assign, comment, move, link, unlink, and milestone across seven statuses.",
         "when": "Use after wkc-setup to read tickets, change ticket state, or find work ready to start.",
         "commands": [
           {
