@@ -37,7 +37,7 @@ The arrows do not claim automatic skill invocation. Help's installer operations 
 | Node | Definition | Relevant contract |
 | --- | --- | --- |
 | wkc-setup | [skills/wkc-setup/SKILL.md](../../../skills/wkc-setup/SKILL.md) | Interview, configuration, scaffolding, and tracker initialization |
-| wkc-tracker | [skills/wkc-tracker/SKILL.md](../../../skills/wkc-tracker/SKILL.md) | Reads the backend from setup's config; manages tickets in seven statuses |
+| wkc-tracker | [skills/wkc-tracker/SKILL.md](../../../skills/wkc-tracker/SKILL.md) | Reads the backend from setup's config; manages tickets in seven statuses; section 4 lists the verbs, including `edit` and `unlink` from 0.0.24 |
 | wkc-workflow-diagram | [skills/wkc-workflow-diagram/SKILL.md](../../../skills/wkc-workflow-diagram/SKILL.md) | Read definitions and update offline diagrams without executing the skills |
 | wkc-help | [skills/wkc-help/SKILL.md](../../../skills/wkc-help/SKILL.md) | Answers from installed definitions; gives installer commands and runs changes only on a person's request |
 | wkc-skills-release | [skills/wkc-skills-release/SKILL.md](../../../skills/wkc-skills-release/SKILL.md) | Internal maintainer skill; clean synchronized main and authenticated GitHub access; merged collection publication without setup |
@@ -99,8 +99,11 @@ Do not edit diagram.html directly. Keep temporary artifacts in the ignored `.cac
 | Phone overview | [Image](screenshots/phone-light.png) | [Image](screenshots/phone-dark.png) |
 | Phone details | [Image](screenshots/phone-light-details.png) | [Image](screenshots/phone-dark-details.png) |
 | Phone help details | [Image](screenshots/phone-light-help-details.png) | [Image](screenshots/phone-dark-help-details.png) |
+| Desktop tracker details | [Image](screenshots/desktop-light-tracker-details.png) | [Image](screenshots/desktop-dark-tracker-details.png) |
+| Tablet tracker details | [Image](screenshots/tablet-light-tracker-details.png) | [Image](screenshots/tablet-dark-tracker-details.png) |
+| Phone tracker details | [Image](screenshots/phone-light-tracker-details.png) | [Image](screenshots/phone-dark-tracker-details.png) |
 
-The current details screenshots select `wkc-plan`; the help screenshots select `wkc-help`.
+The current details screenshots select `wkc-plan`; the help screenshots select `wkc-help`; the tracker screenshots select `wkc-tracker`.
 The dated results below describe earlier versions of the map.
 
 On 2026-09-24, Chromium loaded the three-node HTML offline at 1440 × 900, 768 × 1024, and
@@ -110,6 +113,32 @@ Desktop light overview and phone dark details screenshots were visually inspecte
 The phone sheet scrolls independently; commands below the fold remain reachable.
 
 ## Implementation verification
+
+### Tracker edit and unlink, 2026-10-19
+
+Sources were read at repository commit `446fc6f` (version 0.0.24). All eight definitions were readable. Generator **0.0.15**.
+
+Content changes:
+
+- At the user's direction, the `tracker` card's `details.body` now lists `edit` and `unlink` among the verbs, matching [skills/wkc-tracker/SKILL.md](../../../skills/wkc-tracker/SKILL.md) section 4.
+- Since `1e39537`, only `skills/wkc-tracker/` changed. Every card's summary, body, when, commands, and links were rechecked against its definition's opening fields; all other text still matches, and every linked file and section heading exists.
+- The tracker's new caller wording (callers decide what changes; the tracker keeps the graph valid) does not contradict the card. No edge changed: plan's Dependencies still name `list`, `show`, `milestone`, `create`, `link`, and `move`, and architect still uses `list` only.
+- No node, edge, lane, or layout changed.
+
+Selected checks used Node **v24.11.1** and headless Chrome in the current session, without other AI sessions or backend writes.
+
+| Check | Result | Independent evidence |
+| --- | --- | --- |
+| Helper check/build | PASS | Documented commands passed with the main documentation base and no warnings; a repeat build was byte-identical |
+| Offline rendering and layout | PASS | `file://` with networking disabled in all six viewport/theme combinations: eight cards and six labels inside the viewport without overlap, no HTTP requests or page exceptions |
+| Tracker panel | PASS | The panel shows the new body verbatim, including `create, edit, assign` and `link, unlink, and milestone`, in all six combinations; three relationships |
+| Keyboard, commands, touch | PASS | Enter opens setup, tracker, help, and plan; Tab stays in the panel; Escape returns visible focus; both tracker commands copy exactly; Next visits every card in order; a simulated phone tap opens tracker and its last link scrolls into reach |
+| Unchanged screenshots | PASS | Regenerated overview, plan, and help screenshots were byte-identical to the committed files, so those files were left alone |
+| Visual review | PASS | Inspected desktop light and phone dark tracker details; the verb list wraps cleanly |
+| Preview and browser cleanup | PASS | SIGTERM stopped preview and Chrome by their recorded process IDs; neither endpoint answered afterward |
+| Physical touch, screen readers, Safari, Firefox, pinch and pan | SKIP | Not used; the renderer did not change |
+
+Six tracker details screenshots were added. No conflicts or unreadable sources remain. Raw evidence is in the ignored `.cache/tracker-verbs/` directory.
 
 ### Planning skills and workflow layout, 2026-10-19
 
