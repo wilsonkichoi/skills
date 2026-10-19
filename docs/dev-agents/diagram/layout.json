@@ -1,56 +1,52 @@
 {
   "schemaVersion": 1,
   "nodes": {
-    "setup": {
-      "x": 0,
-      "y": 0
+    "setup": { "x": 0, "y": 0 },
+    "research": { "x": 480, "y": 0 },
+    "architect": { "x": 960, "y": 0 },
+    "plan": { "x": 1440, "y": 0 },
+    "tracker": { "x": 1920, "y": 0 },
+    "workflow-diagram": { "x": 480, "y": 440 },
+    "help": { "x": 960, "y": 440 },
+    "skills-release": { "x": 1440, "y": 440 }
+  },
+  "edges": {
+    "setup-research": {
+      "start": [240, 80],
+      "segments": [[320, 80, 400, 80, 480, 80]]
     },
-    "tracker": {
-      "x": 0,
-      "y": 360
+    "research-architect": {
+      "start": [720, 80],
+      "segments": [[800, 80, 880, 80, 960, 80]]
     },
-    "workflow-diagram": {
-      "x": 400,
-      "y": 0
+    "architect-plan": {
+      "start": [1200, 80],
+      "segments": [[1280, 80, 1360, 80, 1440, 80]]
     },
-    "help": {
-      "x": 400,
-      "y": 360
+    "plan-tracker": {
+      "start": [1680, 80],
+      "segments": [[1760, 80, 1840, 80, 1920, 80]]
     },
-    "skills-release": {
-      "x": 800,
-      "y": 360
+    "architect-tracker": {
+      "start": [1080, 160],
+      "segments": [
+        [1080, 250, 1120, 280, 1560, 280],
+        [2000, 280, 2040, 250, 2040, 160]
+      ]
+    },
+    "setup-tracker": {
+      "start": [120, 0],
+      "segments": [
+        [120, -90, 150, -120, 1080, -120],
+        [2010, -120, 2040, -90, 2040, 0]
+      ]
     }
   },
-  "edges": {},
   "regions": [
-    {
-      "lane": "configuration",
-      "x": -24,
-      "y": -52,
-      "width": 288,
-      "height": 236
-    },
-    {
-      "lane": "coordination",
-      "x": -24,
-      "y": 308,
-      "width": 288,
-      "height": 236
-    },
-    {
-      "lane": "documentation",
-      "x": 376,
-      "y": -52,
-      "width": 288,
-      "height": 596
-    },
-    {
-      "lane": "independent",
-      "x": 776,
-      "y": 308,
-      "width": 288,
-      "height": 236
-    }
+    { "lane": "configuration", "x": -24, "y": -52, "width": 288, "height": 236 },
+    { "lane": "planning", "x": 456, "y": -52, "width": 1248, "height": 236 },
+    { "lane": "coordination", "x": 1896, "y": -52, "width": 288, "height": 236 },
+    { "lane": "documentation", "x": 456, "y": 388, "width": 768, "height": 236 },
+    { "lane": "independent", "x": 1416, "y": 388, "width": 288, "height": 236 }
   ]
 }
