@@ -3,11 +3,11 @@
 ## Contents
 - Statuses
 - Reading rules
-- list, show, next, create
+- list, show, next, create, edit
 - milestone: ensure, list, show
 - assign, bare and explicit forms
 - move, to an open or a terminal status, then verifying a move
-- comment, link
+- comment, link, unlink
 - Blockers and duplicate originals
 
 Use the `gh` CLI. Resolve `OWNER/REPO` once from the `origin` remote and pass `--repo` on every
@@ -143,7 +143,7 @@ For an empty frontier, report `held` and the `check` tickets left out. Look up e
 `open` for its holder, and walk `open` for cycles. An open blocker missing from `open` is in another
 repository: read it with the issue query.
 
-When `assign` refuses a frontier candidate, take the next one.
+When `assign` refuses a frontier candidate, report why. Which ticket to take instead is the caller's choice.
 
 ## create
 
@@ -166,6 +166,26 @@ gh issue view <n> --repo <owner/repo> --json body | jq --rawfile sent <file> -e 
 The first must show every blocker, no status label, and `milestone_ok: true`; with no milestone
 given, `milestone: null`. The second must print `true`. Compare exactly this way, never through a
 shell variable or `--jq .body`.
+
+## edit
+
+```
+gh issue view <n> --repo <owner/repo> --json number,title,body,state,stateReason,assignees,labels,milestone,blockedBy
+gh issue edit <n> --repo <owner/repo> [--title '<title>'] [--body-file <file>] [--milestone '<milestone>' | --remove-milestone]
+```
+
+Pass `--body-file` only when the edit gives a section, `## Blocked by` included. A title or
+milestone edit sends no body. With a section, write the body the read returned to a file, replace
+or add only the given sections, and pass that file. GitHub has no conditional write, so a body
+change someone makes between the read and the write is lost: run the write right after the read.
+Resolve a milestone with the ensure form's read first: exactly one, `open`. Apply a changed
+`## Blocked by` with the `unlink` and `link` commands below, one per edge that differs. A closed
+issue takes the edit and stays closed with its reason.
+
+Verify with the read again: the given title and milestone, or `milestone: null` for `none`; the
+blockers exactly the new set; `state`, `stateReason`, labels, and assignees as the first read found
+them. When a section was given, compare the body with `--rawfile` against the file you wrote, as
+`create` does. Otherwise the write sent no body, so there is nothing to compare.
 
 ## milestone
 
@@ -312,6 +332,19 @@ gh issue view <n> --repo <owner/repo> --json blockedBy --jq '[.blockedBy.nodes[]
 ```
 
 The blocker's number must be in the list.
+
+## unlink
+
+```
+gh issue view <n> --repo <owner/repo> --json blockedBy --jq '[.blockedBy.nodes[] | {number, url}]'
+gh api repos/<blocker owner>/<blocker repo>/issues/<blocker number> --jq .id
+gh api --method DELETE repos/<owner>/<repo>/issues/<n>/dependencies/blocked_by/<that id>
+gh issue view <n> --repo <owner/repo> --json blockedBy --jq '[.blockedBy.nodes[] | {number, url}]'
+```
+
+The first read must list the blocker; its `url` names the blocker's repository. Otherwise write
+nothing: the DELETE returns `200 OK` for an edge that does not exist, and so does
+`gh issue edit --remove-blocked-by`. The last read must lack the blocker and keep every other one.
 
 ## Blockers and duplicate originals
 

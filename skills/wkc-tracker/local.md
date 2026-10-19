@@ -1,5 +1,13 @@
 # Backend: local markdown
 
+## Contents
+- File shape
+- Identity
+- Ids and filenames
+- Missing fields
+- Per verb
+- Verifying a write
+
 One file per ticket under `issues_dir`, named `NNN-slug.md`. One session at a time.
 
 ## File shape
@@ -33,7 +41,8 @@ The frontmatter is the block between the first `---` line and the next one. Neve
 after it as YAML.
 
 `blocked_by` is the only dependency list any verb reads. `create` writes a `## Blocked by` section,
-and `link` updates it when the file has one. Never add one to a body a person wrote.
+and `link` and `unlink` update it when the file has one. Never add one to a body a person wrote,
+unless `edit` was given one.
 
 Single-quote every string value, doubling any `'` inside it. Nothing else inside single quotes is
 special: write backslashes and Unicode as they are, never escaped. Titles are one line.
@@ -73,6 +82,8 @@ Terminal statuses are `done`, `cancel`, and `duplicate`.
 | `milestone <name>` | Write nothing: a milestone exists once a ticket carries it. Report the tickets that already carry it, or that `create` starts it |
 | `milestone list` | The distinct non-empty `milestone` values across every file, terminal tickets included, each with its ticket count. There is no milestone object, so no id, no state, and no empty milestone: one exists only while a ticket carries it |
 | `milestone show` | The files whose `milestone` matches exactly, counted by `status`, terminal ones included |
+| `edit` | Set `title`, `milestone` (`''` for `none`, checked as `create` does), and `blocked_by` as given, after the `link` walk on each added id. Replace each given section over the span SKILL.md's `edit` defines, `###` subsections included; add a missing one before `## Comments`. Refuse a `## Comments` section: no verb edits a comment. Leave every other byte alone, in one write |
+| `unlink` | Require the id in `blocked_by`, or write nothing and say so. Remove it there, and from `## Blocked by` when that lists it |
 | `link` | Refuse a self-link. Walk the blocker's `blocked_by` through files that are not `done` or `cancel`, and from a `duplicate` to its `duplicate_of`; reaching the blocked id is a cycle, so refuse and name the path. Otherwise add the id |
 
 A `blocked_by` id is met when its file is `done`, or `duplicate` with a `duplicate_of` chain that
@@ -90,7 +101,9 @@ Re-read the file and parse its frontmatter with a YAML parser.
 | Verb | The parse must show |
 |---|---|
 | `create` | the new id, `status: 'backlog'`, every blocker in `blocked_by`, and `milestone` exactly as given, or empty |
+| `edit` | every given field and section as given; every other field, section, and comment unchanged |
 | `link` | the blocker in `blocked_by`, and the blocker's own `blocked_by` unchanged |
+| `unlink` | the id gone from `blocked_by`, and every other id still there |
 | `assign` | `assignee` exactly as asked, or empty; on the bare form, `in-progress` |
 | `comment` | the body under `## Comments` |
 | `move` | the target `status`; an empty `assignee` after `backlog` or `ready` |
