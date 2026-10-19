@@ -133,6 +133,9 @@ Cases 17 to 20 use a fixture where M1's tickets are written by hand and M2 **Dep
     and whose **Open unknowns** holds one unknown. Invoke with no arguments.
     PASS: the ticket that sets up the project has a criterion that runs that test command against a real test; no
     criterion is a manual check for something a command could check; the spike names a timebox.
+    Then remove `test_command` from the config and the test command from the SPEC, for a project with no tests.
+    PASS: the setup ticket still has a criterion that shows its tooling working, and no ticket adds a test framework
+    the SPEC does not call for.
 
 ## Dated report: 2026-10-17
 
@@ -205,6 +208,6 @@ Ticket state was scored with PyYAML from the files.
 
 ### Wording change, 2026-10-18
 
-Added from the source cross-check: prefer checks a command can run, setup tickets proven by a passing test, and spike timeboxes. Static checks only: frontmatter and `agents/openai.yaml` unchanged,
+Added from the source cross-check: prefer checks a command can run, setup tickets shown working (including with no `test_command`), and spike timeboxes. Static checks only: frontmatter and `agents/openai.yaml` unchanged,
 no em dash in the changed lines, and the outline additions are comments or optional lines. Case 21 is new and
 SKIP: no AI sessions were authorized for this change. Earlier cases keep their evidence; their checks did not change.

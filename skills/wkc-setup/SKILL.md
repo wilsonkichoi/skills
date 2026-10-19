@@ -102,7 +102,7 @@ or `CLAUDE.md` for a deliberately Claude-Code-only project. A project with a con
 point `context_file` at the file every harness ultimately reaches, and never invert that.
 
 **Section D: Test command.** Confirm the command inferred in step 1, or ask for it. It is what
-later skills run before handing work back.
+later skills run before handing work back. A project with no tests leaves `test_command` out.
 
 ## 3. Scaffold
 

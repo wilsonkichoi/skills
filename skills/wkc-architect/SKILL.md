@@ -137,6 +137,6 @@ and **Changes** entries keep the approval.
 ## 6. Report
 
 Say what changed, which ADRs were written, which decisions and unknowns are still open, any
-tickets the change affects, and the status line as it now stands. When the SPEC's test command
-differs from `test_command` in the config, say so; the user updates the config. When the SPEC is
+tickets the change affects, and the status line as it now stands. When the SPEC names a test
+command that `test_command` in the config lacks or contradicts, say so; the user updates the config. When the SPEC is
 approved, the next step is `wkc-plan`.

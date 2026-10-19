@@ -99,8 +99,8 @@ Write each new ticket in the shape `wkc-tracker` uses (**What to build**, **Acce
   response, a file, or a named manual check. Prefer what a test or command can check; keep manual
   checks for what a person must judge. Broad criteria, such as validation or error handling, list
   their cases.
-- A ticket that sets up the project or its tooling is done when the test command runs a real test
-  against it and passes, not when the files exist.
+- A ticket that sets up the project or its tooling is done when that tooling is shown working, such
+  as its test runner passing a real test, not when the files exist.
 - **Notes** copy the SPEC excerpt the work needs, such as a contract's fields and error responses,
   with the section it came from, so a fresh session does not have to go looking.
 - A spike for an unknown names the question, a timebox, the evidence that settles it, and where
