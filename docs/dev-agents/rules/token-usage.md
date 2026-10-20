@@ -3,22 +3,20 @@
 ## Default
 
 Use the current session for the requested work.
-Do not launch additional AI harness sessions for testing without explicit user authorization.
+Additional AI test sessions in the current harness run within the standing limit below, without asking.
 Do not treat a validation requirement as authorization for an unrestricted matrix of AI sessions.
 
 These controls reduce avoidable usage; they do not make model work consume zero tokens.
 
 ## Bound additional sessions
 
-Before an authorized run, agree on the harness, test cases, maximum session count, and available token or cost limits.
-State when the harness cannot enforce a token limit.
-Use a session limit in that case, without describing it as a token cap.
-Count pilot runs, retries, and failed starts against the session limit.
-Include any authorized test subagents in the budget; do not bypass limits through delegation.
-Do not exceed the agreed limits without further authorization.
-Do not change models or reasoning settings without explicit user authorization.
+AI test sessions in the current harness may run without asking, within a standing limit of 6 sessions per change.
+Count pilots, retries, failed starts, and test subagents against it; do not bypass it through delegation.
+Choose each session's model and reasoning effort to fit the cases it runs, and record them in the report.
+Ask before exceeding the limit or launching another harness.
+The limit counts sessions, not tokens. Also set a per-session cost cap where the harness has one.
 
-Run one pilot before starting multiple cases.
+Run one pilot before a batch.
 Inspect its usage from existing local logs when usage data is available.
 Do not invoke another model to calculate usage.
 If usage is unavailable, report that limitation before expanding the run.
@@ -52,5 +50,5 @@ Do not start a new AI session for a check that a direct command can perform.
 Check authentication, fixture paths, permissions, and required tools without model calls before starting AI tests.
 Stop the test runner at the first quota, authentication, or setup failure.
 Do not continue queued AI sessions after that failure.
-Fix the known cause before retrying, and keep retries within the agreed limits.
+Do not retry automatically. Fix the known cause first, and keep retries within the standing limit.
 Record the failure and any unavailable checks instead of silently restarting the matrix.

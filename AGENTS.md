@@ -196,8 +196,8 @@ Reuse evidence only when the relevant instructions, fixture, and tool or harness
 Unavailable required checks within the selected scope are SKIP, never PASS. Cases outside that scope are not new SKIPs.
 Identify focused subchecks explicitly; a passing subcheck is not a full-case PASS.
 Do not claim complete compatibility from focused checks or count direct checks as model behavior.
-New AI sessions require explicit authorization and an agreed budget under [Token usage](docs/dev-agents/rules/token-usage.md).
-Validation requirements do not authorize those sessions or cross-harness launches.
+New AI sessions run within the standing session limit in [Token usage](docs/dev-agents/rules/token-usage.md).
+Validation requirements do not authorize sessions past that limit or cross-harness launches.
 
 Prepare only fixtures needed by selected cases. Use local or controlled HTTP fixtures for mechanical checks.
 Use real service fixtures when testing service integration; reuse suitable existing fixtures before creating new ones.
@@ -242,7 +242,7 @@ and the order.
    `skills/wkc-setup/config-template.md` and the `wkc-setup` interview in the same pull request. No skill
    reads a field `wkc-setup` never writes.
 6. **Validate** under [Validation](#validation): establish baseline coverage with the skill's
-   runbook at `validation/wkc-<name>.md`, including installed invocation on each supported harness where authorized and available.
+   runbook at `validation/wkc-<name>.md`, including installed invocation on each supported harness where available.
    Run installer and filesystem checks directly in throwaway projects. A runbook is a
    numbered list of cases, each with an independent check that decides PASS or FAIL, ending in a
    report. A case that could not run is SKIP and never PASS: an untested claim recorded as a pass is

@@ -4,7 +4,7 @@ Follow [Validation](../AGENTS.md#validation): select affected cases, backends, a
 This is a case catalog, not a full test sequence for each change. Use direct checks first and reuse unchanged evidence.
 Read the relevant [GitHub](#a-github-backend), [local](#b-local-backend), [Linear](#c-linear-backend), or [harness](#d-harness-parity) cases.
 Open only relevant sections of the [run log](#run-log); it is historical evidence, not routine task context.
-Use the prefix for the selected harness below. Additional AI sessions require explicit authorization and an agreed budget.
+Use the prefix for the selected harness below. Additional AI sessions run within the standing limit in [Token usage](../docs/dev-agents/rules/token-usage.md).
 
 | Harness | Prefix | Example |
 |---|---|---|
