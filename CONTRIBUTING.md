@@ -19,7 +19,7 @@ and open a pull request against `main`:
 gh pr create --base main --fill
 ```
 
-Merging is a human decision. An agent prepares the branch and the pull request and stops there.
+Merging is the human's call. An agent merges only when the human asked for it, directly or in the recorded limits of an autonomous run. Otherwise it prepares the branch and the pull request and stops there.
 
 ## Before you commit
 
