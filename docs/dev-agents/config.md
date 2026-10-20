@@ -21,7 +21,7 @@ test suite. Validation is manual, through the runbooks in `validation/`.
 Issues live in GitHub Issues on `wilsonkichoi/skills`, the `origin` remote.
 
 `AGENTS.md` owns the rest: branch naming, the pull request workflow, versioning, the pre-commit
-checklist, and the rule that only a human merges to `main`.
+checklist, and the rule for when an agent may merge to `main`.
 
 ## Rules
 

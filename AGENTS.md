@@ -213,8 +213,9 @@ Never commit or push directly to `main`, on any harness, even with admin rights.
 2. Commit on the branch, push it, open a pull request against `main`.
 3. Keep the branch current: merge or rebase `origin/main` in whenever GitHub reports it out of date.
 
-Merging is a human decision. An AI agent may prepare the branch and the pull request, but must not
-merge to `main` unless the human explicitly asks. GitHub enforces the pull request step: a direct
+Merging is the human's call. An AI agent merges to `main` only when the human asked for it, directly
+in the task or in the recorded limits of an autonomous run the human started. Otherwise it prepares
+the branch and the pull request and stops there. GitHub enforces the pull request step: a direct
 push to `main` is rejected with `GH013`, for the owner too. `CONTRIBUTING.md` records the rulesets.
 
 A merged branch is not a dead branch. GitHub does not delete it on merge, on purpose, because
