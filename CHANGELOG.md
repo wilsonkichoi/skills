@@ -2,6 +2,12 @@
 
 Newest first. Each version is a `## {version} ({ISO 8601 timestamp with local offset})` heading followed by a bullet list of changes.
 
+## 0.0.26 (2026-10-19T19:38:29-07:00)
+
+- `wkc-skills-release` becomes a thin entry point. The release rules move into `tools/release.mjs`, run by `make release`, which prints the plan and writes nothing, and `make release TAG=vX.Y.Z PUBLISH=<full sha>`, which publishes exactly that target. The skill runs the plan, asks, and runs the printed command. The script runs from the release checkout, so the installed-copy bootstrap is gone. Regenerated notes match every published release from `v0.0.13` to `v0.0.22`.
+- Add `make worktree BRANCH=<type>/<slug>`, which starts a branch from `origin/main` in `../<repo>-worktrees/` and copies the gitignored files listed in a new `.worktreeinclude`, the file Claude Code's own worktrees read; `make merge [PR=<n>]`, which squash-merges after checking the local branch matches the PR head; and `make cleanup BRANCH=<type>/<slug>`, which removes a merged branch's worktree, local branch, and remote branch. They live in `tools/branch.sh`.
+- `AGENTS.md` records that maintainer scripts start from actions repeated by hand and live in `tools/` behind a `Makefile` target, one readable file each. The release runbook points its cases at the script and records today's read-only checks against production. The repository diagram's release card links to the script instead of a removed section.
+
 ## 0.0.25 (2026-10-19T18:34:58-07:00)
 
 - `wkc-help` and the root README no longer tell a full uninstall to delete `docs/dev-agents/`. With the default paths that directory holds the project's PRD, SPEC, ROADMAP, ADRs, rules, local tickets, and workflow diagram. Uninstall now removes only `docs/dev-agents/config.md` and the reference line, and `wkc-help` deletes anything else only when asked, naming each path first.

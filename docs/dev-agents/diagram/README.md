@@ -114,6 +114,13 @@ The phone sheet scrolls independently; commands below the fold remain reachable.
 
 ## Implementation verification
 
+### Release links, 2026-10-19
+
+The release rules moved from [skills/wkc-skills-release/SKILL.md](../../../skills/wkc-skills-release/SKILL.md) into
+[tools/release.mjs](../../../tools/release.mjs), so the card's `#5-publish-and-verify` link no longer had a target.
+That link now names the release script, and the README link is labeled "Install and recovery" because its bootstrap section is gone.
+Only those two links and the generated HTML changed. Check/build passed without warnings. No browser checks were rerun.
+
 ### Tracker edit and unlink, 2026-10-19
 
 Sources were read at repository commit `446fc6f` (version 0.0.24). All eight definitions were readable. Generator **0.0.15**.

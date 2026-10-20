@@ -45,13 +45,17 @@ source tree, no per-harness variants.
 
 ### Collection releases
 
-`wkc-skills-release` publishes this collection only. Its one repository identity field lives in its
-`SKILL.md`; adopting projects keep their existing release and deployment processes. There is no
-generic release config because setup config belongs to adopting projects, not collection publication.
+`wkc-skills-release` publishes this collection only; adopting projects keep their existing release
+and deployment processes. The release rules are code in [`tools/release.mjs`](./tools/release.mjs),
+run by `make release`, and its `REPO` constant is the one repository identity. The skill is a thin
+entry point: it runs the plan, asks for authorization, and runs the publish command the plan printed.
+There is no generic release config because setup config belongs to adopting projects, not collection
+publication.
 The collection uses one `VERSION` and immutable tags for complete snapshots. Per-skill version stamps
 would create competing version records and cannot improve a pin that already selects the entire tree.
-No release hooks, helper scripts, build system, or per-harness copies are needed.
-Runtime publication rules live in [`skills/wkc-skills-release/SKILL.md`](./skills/wkc-skills-release/SKILL.md).
+The script runs from the release checkout's own `tools/`, so the code that publishes `main` is
+`main`'s code, with no installed copy to bootstrap or verify. No release hooks, build system, or
+per-harness copies are needed.
 
 `metadata` normally maps strings to strings under the Agent Skills specification. The sole exception
 is `wkc-skills-release`'s boolean `metadata.internal: true`, because the `skills` installer checks
@@ -123,6 +127,10 @@ No scripts unless a skill genuinely cannot be written as prose. Script sprawl an
 around it are the main reason the previous toolkit became unmaintainable.
 `wkc-workflow-diagram` is the one recorded exception. Its reason and maintainer build live in
 [`tools/workflow-diagram/README.md`](./tools/workflow-diagram/README.md), outside the installed skill.
+Maintainer scripts are a separate case. Each one starts from an action repeated by hand, never from a
+guess, and lives in `tools/` behind a `Makefile` target. Keep each one a single readable file whose
+structure follows the process it replaces, so it can be checked against that process and fixed in
+one place. A skill may call one only when the skill runs in this repository, as `wkc-skills-release` does.
 Renderer changes must preserve visible keyboard focus when closing details after node navigation.
 Details open at half the desktop canvas width with region accents and a darkened backdrop. Selection only centers the card in available space and preserves zoom.
 Closing slides details away and keeps the current card position and zoom. Region boxes group cards from the same lane.
@@ -220,6 +228,11 @@ push to `main` is rejected with `GH013`, for the owner too. `CONTRIBUTING.md` re
 A merged branch is not a dead branch. GitHub does not delete it on merge, on purpose, because
 merging is sometimes what triggers the check you are waiting on. Delete it once the work is
 verified, not as part of merging.
+
+The Makefile scripts these steps: `make worktree BRANCH=<type>/<slug>` starts a branch in its own
+worktree with the gitignored files `.worktreeinclude` lists, `make merge [PR=<n>]` squash-merges,
+and `make cleanup BRANCH=<type>/<slug>` removes a merged branch's worktree and branches. `make
+merge` is still the human's decision.
 
 ## Porting a skill from agent-toolkit
 

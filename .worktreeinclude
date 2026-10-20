@@ -1,0 +1,8 @@
+# Gitignored files copied into each new worktree, by `make worktree` and by Claude Code's own
+# worktrees. Gitignore syntax; a pattern copies only files that are also gitignored.
+.claude/settings.local.json
+.claude/skills/
+.agents/skills/
+.kiro/
+skills-lock.json
+.local/

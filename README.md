@@ -46,8 +46,8 @@ Claude Code, Codex, Kiro CLI, and other agents. Tags come from the release proce
 
 The maintainer skill `wkc-skills-release` is hidden from ordinary discovery and bulk installation
 through boolean `metadata.internal: true`. Public discovery excludes internal skills; the roster identifies all shipped skills.
-Install it explicitly by name when releasing this collection. See its
-[bootstrap and pin instructions](skills/wkc-skills-release/README.md).
+Install it explicitly by name when releasing this collection, or run `make release` without it. See its
+[README](skills/wkc-skills-release/README.md).
 Release checks include untracked files, and publication pushes only the authorized tag regardless of Git configuration.
 
 ### Update

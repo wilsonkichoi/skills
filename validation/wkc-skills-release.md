@@ -36,10 +36,10 @@ rules `deletion`, `non_fast_forward`, and `update`, with creation allowed.
 Before publication cases, attempt both movement and deletion of a test tag and verify GitHub refuses both.
 Keep the fixture and evidence available for review; deleting a repository needs separate authorization.
 
-Install the candidate in the fixture. Change only the installed copy's labeled Repository identity field.
-Record the source commit and exact test-only diff; check every other installed file against the source.
-Test the unmodified skill separately for wrong-repository refusal.
-Never modify the production repository identity to make the unmodified-skill check pass.
+Copy `tools/release.mjs` outside the fixture checkout and change only its `REPO` constant.
+Record the source commit and exact test-only diff.
+Test the unmodified script separately for wrong-repository refusal.
+Never modify the production repository identity to make the unmodified-script check pass.
 
 Use sequential fixture commits with canonical `VERSION`, newest-first changelog entries, and known timestamps.
 Entries use the `## {version} ({timestamp})` heading with bullets; case 14 also covers the one-line format of `v0.0.17` and earlier.
@@ -50,6 +50,11 @@ Include an unrelated draft and prerelease. Use a disposable clone for local conf
 For each invocation, record remote refs, release fields, Latest, local status, and installed file hashes before and after.
 
 ## Cases
+
+The release rules run in `tools/release.mjs`. Cases 4, 5, and 7 to 17 are direct checks: run the fixture copy
+with `node <copy> [vX.Y.Z] [--publish <sha>]` from the fixture checkout, with no model session.
+Cases 2 and 6 test the thin skill in a harness: it runs the plan, asks, and runs the publish command the plan printed.
+Case 18 covers only the skill's own installation, since publication no longer depends on an installed copy. Case 20 no longer applies.
 
 1. **Discovery and package.** Compare ordinary discovery, explicit internal discovery, and source `SKILL.md` count.
    PASS: four public skills, five total shipped skills, explicit internal availability, and no template or fixture skill.
@@ -68,9 +73,9 @@ For each invocation, record remote refs, release fields, Latest, local status, a
    Apply fallback to the candidate only if a supported harness actually rejects the boolean.
    An unavailable harness cannot justify fallback. No per-harness variant is permitted.
 
-4. **Unmodified wrong repository.** Invoke the unmodified installed skill against the disposable repository.
+4. **Unmodified wrong repository.** Run the unmodified script in the disposable repository's checkout.
    PASS: it refuses the origin identity, creates no tag or release, and preserves checkout and installed files.
-   Test a fork URL and a different host too. The skill must not publish to its configured repository from the wrong checkout.
+   Test a fork URL and a different host too. The script must not publish to its configured repository from the wrong checkout.
 
 5. **Checkout and input gates.** Independently test dirty tracked files, untracked files, a feature branch, detached HEAD,
    local main ahead, local main behind, failed authentication, failed fetch, and inaccessible release data.
@@ -85,6 +90,7 @@ For each invocation, record remote refs, release fields, Latest, local status, a
    No tag or release exists until approval. Reply with a digit and verify the approved target is used.
    In a separate invocation, authorize the exact target in advance; PASS requires no redundant approval request.
    A changed target needs new authorization. Implementing or merging the skill does not authorize a collection release.
+   The publish command the skill runs must be the one the plan printed, with the same tag and full SHA.
 
 7. **New publication and literal notes.** Authorize fixture `v0.0.4` on synchronized main.
    PASS: a lightweight tag identifies that exact commit, title equals tag, and the stable release body contains rows `0.0.2` through `0.0.4`.
@@ -167,7 +173,7 @@ For each invocation, record remote refs, release fields, Latest, local status, a
 19. **Repository integration.** Re-read issue #12 and the pre-commit checklist.
     PASS: one patch bump, timestamped changelog, replaced roster row, `vX.Y.Z` terminology, documented boolean exception and fallback,
     updated discovery checks, pinned active installer commands, CONTRIBUTING links, and tracked design rationale.
-    No generic release config, scripts, hooks, build system, or per-skill version stamps were added.
+    No generic release config, hooks, build system, or per-skill version stamps were added; release rules live only in `tools/release.mjs`.
     The pull request describes rationale and the stale version assumption; it remains unmerged.
 
 20. **Collection bootstrap after merge [MANUAL].** After explicit merge authorization and merge, record the actual main commit.
@@ -471,3 +477,21 @@ Codex and Kiro CLI publication SKIP records that fact; it is not a failure.
 Direct check on `skills` 1.7.1 in a throwaway project: `INSTALL_INTERNAL_SKILLS=1 npx skills add '...#v0.0.14' -s '*' -a codex -y`
 recorded all five skills in the lock, including `wkc-skills-release`. The README documents this command.
 Plain `-s '*'` and `-s '*' wkc-skills-release` without the variable were not run.
+
+## Dated report: 2026-10-19, script port
+
+Scope: the release rules moved from `SKILL.md` into `tools/release.mjs`; the skill became a thin entry point.
+Source: branch `chore/make-branch-targets`. Tools: Node 24.11.1, git 2.54.0, gh 2.102.0.
+All checks ran the unmodified script read-only against production `wilsonkichoi/skills` from a clean worktree on `main` at `f37638b`.
+No tag or release was written: remote tags stayed at 12 and no local tag was added.
+
+| Case | Result | Evidence |
+|---|---|---|
+| 4 wrong repository, focused | PASS, direct | In `vercel-labs/skills`: stopped on origin `git@github.com:vercel-labs/skills.git`. Fork and other-host URLs not run. |
+| 5 gates, focused | PASS, direct | Stopped on an untracked file, a detached HEAD, a feature branch, `v0.0.025`, and `0.0.25`. Auth, fetch, and API failures not induced. |
+| 10 repeated publication | PASS, direct | `v0.0.13`, `v0.0.14`, `v0.0.17`, `v0.0.20`, and `v0.0.22` each reported unchanged: regenerated notes equal the published bodies, including the one-line format of `v0.0.14` and `v0.0.17`. |
+| 11 legacy release, focused | PASS, direct | `v0.0.3` to `v0.0.12`, published by hand, each stopped on a missing notes heading. |
+| 13 historical backfill | PASS, direct | Untagged `v0.0.24` with main at `0.0.25` stopped as backfill. |
+| 14 notes, focused | PASS, direct | The plan for `v0.0.25` used boundary `v0.0.22`, included untagged `0.0.23` and `0.0.24`, demoted headings to `###`, and chose `--latest`. |
+| Authorization input | PASS, direct | `--publish` with a wrong SHA, a short SHA, or no tag stopped before any write. |
+| 2, 6, 7 to 9, 12, 15 to 18 | SKIP | Publication and harness cases need a disposable GitHub fixture and new AI sessions, neither authorized for this change. |
