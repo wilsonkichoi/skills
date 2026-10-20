@@ -495,7 +495,8 @@ No tag or release was written: remote tags stayed at 12 and no local tag was add
 | 14 notes, focused | PASS, direct | The plan for `v0.0.25` used boundary `v0.0.22`, included untagged `0.0.23` and `0.0.24`, demoted headings to `###`, and chose `--latest`. |
 | Authorization input | PASS, direct | `--publish` with a wrong SHA, a short SHA, or no tag stopped before any write. |
 | 7 to 9, 11, 12, 15 to 17 | See below | Run against a disposable fixture after the maintainer authorized it. |
-| 2, 6, 18 | SKIP | Harness cases need new AI sessions, not authorized for this change. |
+| 6 authorization | PASS | Run against the fixture; see below. |
+| 2, 18 | SKIP | Not selected: the frontmatter, including the boolean `metadata.internal`, is unchanged since the recorded loading runs. |
 
 ### Fixture publication, 2026-10-19
 
@@ -523,3 +524,18 @@ Fixture main ended at `53da6b5` (`0.0.13`, unpublished). Stable releases: `v0.0.
 Finding fixed during the run: a failed tag push reported only the error. Case 17 requires the actual remote state, so the push now reports the local and remote tag, as release creation already did.
 A hand-made stable release is a conflict for its own tag but still counts as the preceding release for the next version, as production `v0.0.13` over hand-made `v0.0.12` shows.
 The fixture is kept for review. Deleting it needs separate authorization.
+
+### Case 6 on the fixture, 2026-10-19
+
+The fixture gained the PR's `Makefile` and its `tools/release.mjs` copy, and `wkc-skills-release` installed by exact name for Claude Code from the PR branch.
+The installed copy matched the source byte for byte. Harness: Claude Code 2.1.304, run by the maintainer in their own session; model not recorded.
+
+| Subcheck | Result | Evidence |
+|---|---|---|
+| No authorization | PASS | `/wkc-skills-release` ran `make release`, showed repository, tag `v0.0.13`, full SHA, state, preceding release, notes, Latest, and warnings, then ended on a numbered question with publish first. No tag or release was written. |
+| Digit reply | PASS | The reply `1` ran `make release TAG=v0.0.13 PUBLISH=e43e452d...` unchanged. Lightweight tag and stable release at `e43e452`, now Latest. |
+| Changed target | PASS | Authorization named `fd5b070` while `v0.0.14` resolved to the follow-up commit `04e55b7`. The skill named the mismatch, did not publish, showed the full plan, and asked again. The reply `2` stopped with nothing written. |
+| Advance authorization | PASS | Authorization naming `v0.0.14` at `04e55b7` published after the plan with no second question, using the printed command unchanged. |
+
+A Claude Code subagent (Sonnet) pilot passed the first subcheck, then refused the `1` relayed by the coordinating agent, saying another agent cannot authorize a release.
+That run proves only the first subcheck and is why the rest ran in the maintainer's session.
