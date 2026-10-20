@@ -494,4 +494,32 @@ No tag or release was written: remote tags stayed at 12 and no local tag was add
 | 13 historical backfill | PASS, direct | Untagged `v0.0.24` with main at `0.0.25` stopped as backfill. |
 | 14 notes, focused | PASS, direct | The plan for `v0.0.25` used boundary `v0.0.22`, included untagged `0.0.23` and `0.0.24`, demoted headings to `###`, and chose `--latest`. |
 | Authorization input | PASS, direct | `--publish` with a wrong SHA, a short SHA, or no tag stopped before any write. |
-| 2, 6, 7 to 9, 12, 15 to 18 | SKIP | Publication and harness cases need a disposable GitHub fixture and new AI sessions, neither authorized for this change. |
+| 7 to 9, 11, 12, 15 to 17 | See below | Run against a disposable fixture after the maintainer authorized it. |
+| 2, 6, 18 | SKIP | Harness cases need new AI sessions, not authorized for this change. |
+
+### Fixture publication, 2026-10-19
+
+Fixture: public `wilsonkichoi/skills-release-validation-20261019`, with the production `Immutable release tags` ruleset.
+Script: `tools/release.mjs` at `7706b45` plus the push-failure report below, copied outside the checkout with only `REPO` changed.
+All runs were direct `node <copy>` invocations, with no AI session. Raw logs are in `.local/runs/release/2026-10-19/`.
+The fixture holds 100 unrelated drafts and one unrelated prerelease, created after `v0.0.1`, so `v0.0.1` sits on page 2.
+Fixture main ended at `53da6b5` (`0.0.13`, unpublished). Stable releases: `v0.0.1`, `v0.0.4` to `v0.0.11`, and a hand-made `v0.0.12`.
+
+| Case | Result | Evidence |
+|---|---|---|
+| 12 immutable tags | PASS | Forced move and deletion of `v-ruleset-probe` returned `GH013`; the remote SHA stayed `7120269`. |
+| 4 wrong repository | PASS | The unmodified script stopped on the fixture origin, a fork URL, and a `gitlab.com` URL. |
+| 14 first release | PASS | `v0.0.1` used `## Changes (first release)` and `--latest`. |
+| 7 new publication | PASS | `v0.0.4`: lightweight tag at the planned commit, title equal to tag, rows `0.0.4` to `0.0.2` since `v0.0.1` (read from page 2), `--latest`. Command-looking text stayed literal and `/tmp/release-pwned` was never created. With `push.followTags=true`, a local annotated tag stayed off the remote; the only new remote ref was `refs/tags/v0.0.4`. |
+| 10 repeated publication | PASS | `v0.0.4` repeated as unchanged with the same release ID, before and after main and Latest advanced; `v0.0.6` repeated as unchanged. Remote refs unchanged. |
+| 9 main advances after tagging | PASS | `v0.0.5` tagged and pushed without a release, main advanced to `0.0.6`: `v0.0.5` resumed at its own commit with notes from that commit. Outside main ancestry and mismatched VERSION both stopped. |
+| 16 boundary survives recovery order | PASS | `v0.0.6` published since `v0.0.4` while `v0.0.5` had no release; after `v0.0.5` resumed, `v0.0.6` stayed a no-op with its `v0.0.4` boundary. |
+| 15 Latest preservation, focused | PASS | Resumed `v0.0.5` used `--latest=false`; Latest stayed `v0.0.6` with the same ID and timestamp. `v0.0.10` above `v0.0.9` became Latest. More than one page read on every run. |
+| 8 interrupted publication | PASS | Remote tag only (`v0.0.5`, local deleted): local tag recreated, release resumed. Local tag only below main's tip (`v0.0.7`): the plan warned, including the ancestry sentence, then pushed and published. Release creation failed after the push (`v0.0.8`, stand-in `gh`): reported remote tag, release count 0, and kept notes file; the rerun resumed. Release created but the response lost (`v0.0.9`): reported release count 1; the rerun was unchanged and the release list held one `v0.0.9`. |
+| 11 conflicts, focused | PASS | Local and remote SHAs differ, annotated local target tag, a target draft (plan and publish), a wrong title, and hand-written notes without the heading each stopped. The draft kept its ID and body. Releases were byte-identical before and after the refusal runs. |
+| 13 historical backfill | PASS | Untagged `v0.0.3` with main at `0.0.8` stopped. |
+| 17 revalidation and failures, focused | PASS | Main advanced after the plan, and local main behind origin, both stopped before any write. A hidden nested untracked sentinel with `status.showUntrackedFiles=no` stopped the run and was preserved. A failed tag push (`v0.0.11`, stand-in `git`) reported the local and remote tag state; the rerun pushed and published. Concurrent writes between a read and its write were not induced. |
+
+Finding fixed during the run: a failed tag push reported only the error. Case 17 requires the actual remote state, so the push now reports the local and remote tag, as release creation already did.
+A hand-made stable release is a conflict for its own tag but still counts as the preceding release for the next version, as production `v0.0.13` over hand-made `v0.0.12` shows.
+The fixture is kept for review. Deleting it needs separate authorization.

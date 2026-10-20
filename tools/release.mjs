@@ -276,7 +276,13 @@ function publish(plan) {
   }
   if (!plan.remote) {
     if (recheck().release) return report(plan, "unchanged: another publisher finished it");
-    git("push", "--quiet", "--no-follow-tags", "origin", `refs/tags/${plan.tag}:refs/tags/${plan.tag}`);
+    try {
+      git("push", "--quiet", "--no-follow-tags", "origin", `refs/tags/${plan.tag}:refs/tags/${plan.tag}`);
+    } catch (error) {
+      console.error(`local tag ${plan.tag}: ${plan.target}`);
+      console.error(`remote tag ${plan.tag}: ${remoteTag(plan.tag) ?? "missing"}`);
+      throw error;
+    }
     if (remoteTag(plan.tag) !== plan.target) stop(`remote ${plan.tag} does not point at ${plan.target} after the push`);
     console.log(`pushed tag ${plan.tag}`);
   }
