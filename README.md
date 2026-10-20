@@ -157,8 +157,10 @@ npx skills remove wkc-skills-release -a claude-code -a codex -a kiro-cli
 ```
 
 The other forms are documented under
-[`skills remove`](https://github.com/vercel-labs/skills#skills-remove). Then delete what `wkc-setup`
-wrote: `docs/dev-agents/` and the one reference line it added to your `AGENTS.md` or `CLAUDE.md`.
+[`skills remove`](https://github.com/vercel-labs/skills#skills-remove). Then delete what only the
+skills read: `docs/dev-agents/config.md` and the one reference line `wkc-setup` added to your
+`AGENTS.md` or `CLAUDE.md`. Keep the rest of `docs/dev-agents/` unless you mean to discard it. With
+the default paths it holds your PRD, SPEC, ROADMAP, ADRs, rules, local tickets, and workflow diagram.
 
 Do not run `npx skills remove --all`, and do not leave `-a` off, inside a repository that keeps its
 own skills in a top-level `skills/` directory. OpenClaw's project path is a bare `skills/`, so a

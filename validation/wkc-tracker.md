@@ -929,9 +929,11 @@ assignment race, which needs two identities and is marked in the case list.
 
 **C1 a fresh team is missing In Review.** Run `$wkc-setup` against a newly created Linear team.
 Check: `list_issue_statuses` returns six statuses, no In Review.
-Expect a stop naming In Review and the `started` category, and **no** Linear fields in the config.
+Expect a question in Section A naming In Review and the `started` category, before Section B is
+asked, and **no** Linear fields in the config. A run that reaches Section B, C, or D first fails.
 This is the ordinary first run, not an edge case: Linear's default template does not include it.
-Add In Review in team settings, re-run, and expect `wkc-setup` to complete with no mapping questions.
+Add In Review in team settings, reply, and expect `wkc-setup` to read the statuses again, go on to
+Section B, and complete with no mapping questions.
 
 **C2 [MANUAL] a missing status is a stop.** Rename or delete the team's `In Review`, then re-run
 `$wkc-setup`.

@@ -2,6 +2,12 @@
 
 Newest first. Each version is a `## {version} ({ISO 8601 timestamp with local offset})` heading followed by a bullet list of changes.
 
+## 0.0.25 (2026-10-19T18:34:58-07:00)
+
+- `wkc-help` and the root README no longer tell a full uninstall to delete `docs/dev-agents/`. With the default paths that directory holds the project's PRD, SPEC, ROADMAP, ADRs, rules, local tickets, and workflow diagram. Uninstall now removes only `docs/dev-agents/config.md` and the reference line, and `wkc-help` deletes anything else only when asked, naming each path first.
+- `wkc-setup` checks the Linear team's seven statuses in Section A, with the other backend prerequisites, instead of in step 5 after the rest of the interview. A missing status, usually In Review, is now a question before Section B, and setup reads the statuses again on the reply.
+- Add `wkc-help` case 7 for an uninstall that keeps project work, and tighten tracker case C1 so the missing-status question must come before Section B.
+
 ## 0.0.24 (2026-10-19T12:20:54-07:00)
 
 - `wkc-tracker` gains `edit <id> <changes>`, which changes a ticket's title, named body sections, `## Blocked by`, or milestone and nothing else. A changed `## Blocked by` adds and removes exactly the edges that differ, with the `link` cycle walk over the edges as they will stand; a cycle refuses the whole edit. A milestone follows `create`'s rule, and `milestone none` clears it, except on Linear, whose MCP tools cannot clear one, so it stops there. `edit` works on a terminal ticket and never changes status, assignees, or comments. A section runs to the next `# ` or `## ` heading outside a fenced code block, so its `###` subsections are replaced with it, and on GitHub only an edit that gives a section sends the body, so a title or milestone edit cannot overwrite someone else's body change.
