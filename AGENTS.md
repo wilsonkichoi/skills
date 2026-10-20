@@ -232,7 +232,7 @@ verified, not as part of merging.
 The Makefile scripts these steps: `make worktree BRANCH=<type>/<slug>` starts a branch in its own
 worktree with the gitignored files `.worktreeinclude` lists, `make merge [PR=<n>]` squash-merges,
 and `make cleanup BRANCH=<type>/<slug>` removes a merged branch's worktree and branches. `make
-merge` is still the human's decision.
+merge` follows the merge rule above: run it only when the human asked for the merge.
 
 ## Porting a skill from agent-toolkit
 
