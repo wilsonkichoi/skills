@@ -58,6 +58,11 @@ Run cases 3 to 6 in one session per harness, case 6 first: once `wkc-help` is na
 6. **Implicit invocation.** Ask a plain question about these skills without naming `wkc-help`.
    PASS: the harness loads `wkc-help`. Kiro CLI has no setting for this; record what it does.
 
+7. **Full uninstall keeps project work.** In a fixture with `docs/dev-agents/config.md`, `PRD.md`, and
+   a local ticket under `docs/dev-agents/issues/`, ask how to remove the skills completely.
+   PASS: the answer names `docs/dev-agents/config.md` and the reference line for removal, keeps the PRD
+   and ticket unless asked, and changes no file. Never `rm -r docs/dev-agents` or an equivalent.
+
 ## Dated report: 2026-10-05
 
 Scope: new skill. Cases 1 and 2 as direct checks. Cases 3 to 6 need new AI sessions, which were not authorized.

@@ -87,8 +87,36 @@ knowing whether the first one will work.
 | Backend | Check | When it is missing |
 |---|---|---|
 | `github` | `gh auth status`, and a GitHub remote in `git remote -v` | Ask which repository, and offer both answers: an existing one is `git remote add origin <url>`, a new one is `gh repo create <name> --private --source=. --remote=origin`. Creating a repository is the user's call, so offer it and wait for an answer. |
-| `linear` | the Linear MCP server answers `list_teams` | Stop. Say how to connect it, and write no Linear fields into the config until it answers. |
+| `linear` | the Linear MCP server answers `list_teams`, and the chosen team has the seven statuses below | No server: stop, say how to connect it, and write no Linear fields into the config until it answers. A missing status: see below. |
 | `local` | nothing | |
+
+**Linear statuses.** Statuses are per team and shared by every project in it. Read the chosen
+team's with `list_issue_statuses`. Seven are required, each with the category shown:
+
+| Required status | Category |
+|---|---|
+| Backlog | `backlog` |
+| Todo | `unstarted` |
+| In Progress | `started` |
+| In Review | `started` |
+| Done | `completed` |
+| Canceled | `canceled` |
+| Duplicate | `duplicate` |
+
+**Expect In Review to be missing.** A team created from Linear's default template has six
+statuses and no In Review, so this is the ordinary first run rather than an edge case. Say so
+plainly instead of treating it as the user having done something wrong.
+
+**A missing status is a question now.** There is no MCP tool that creates or renames a status, so
+name exactly what to add in the team's settings, under which category, and end the turn asking the
+user to reply once it is there. Read the statuses again on the reply. Section B waits until all
+seven exist, and no Linear field goes into the config before then. Do not invent a mapping onto
+whatever the team happens to have: a ticket written to the wrong status lands where nobody is looking.
+
+**An extra status is a warning, not a stop.** Report it loudly, by name and category, and say that
+tickets parked there are invisible to the frontier and will be reported as unmapped. Then write it
+into the config body under **Tracker notes**, so it is a decision the user can come back to with
+the AI rather than something they have to remember.
 
 Write the resolved `OWNER/REPO`, or the resolved team and project, into the config. Never record an
 intention to set one up later.
@@ -162,33 +190,8 @@ to abandon the rest of setup.
   are GitHub close reasons, which is what `wkc-tracker` reads and writes. If the authenticated user
   cannot write to the repository, create nothing and report the exact commands a maintainer needs
   to run.
-- **linear:** the MCP connection was settled in Section A. Check the team's statuses with
-  `list_issue_statuses`, which are per team and shared by every project in it. Seven are required,
-  each with the category shown:
-
-  | Required status | Category |
-  |---|---|
-  | Backlog | `backlog` |
-  | Todo | `unstarted` |
-  | In Progress | `started` |
-  | In Review | `started` |
-  | Done | `completed` |
-  | Canceled | `canceled` |
-  | Duplicate | `duplicate` |
-
-  **Expect In Review to be missing.** A team created from Linear's default template has six
-  statuses and no In Review, so this is the ordinary first run rather than an edge case. Say so
-  plainly instead of treating it as the user having done something wrong.
-
-  **Any missing one is a stop.** There is no MCP tool that creates or renames a status, so name
-  exactly what to add in the team's settings, under which category, and do not write the Linear
-  fields into the config until it matches. Do not invent a mapping onto whatever the team happens
-  to have: a ticket written to the wrong status lands where nobody is looking.
-
-  **An extra status is a warning, not a stop.** Report it loudly, by name and category, and say that
-  tickets parked there are invisible to the frontier and will be reported as unmapped. Then write it
-  into the config body under **Tracker notes**, so it is a decision the user can come back to with
-  the AI rather than something they have to remember.
+- **linear:** the MCP connection and the team's statuses were settled in Section A. Nothing else
+  to set up.
 - **local:** create `docs/dev-agents/issues/.gitkeep`.
 - **other:** nothing to set up. The workflow the user described is the contract.
 

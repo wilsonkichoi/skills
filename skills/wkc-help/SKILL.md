@@ -71,8 +71,12 @@ npx skills remove wkc-setup wkc-tracker -a claude-code -a codex -a kiro-cli
 
 Always name the skills and the harnesses. Never run `remove --all`, or `remove` without `-a`, in a
 repository with its own top-level `skills/` directory: the installer treats a bare `skills/` as
-OpenClaw's project path and deletes it. A full uninstall also deletes `docs/dev-agents/`, which
-`wkc-setup` wrote, and its reference line in `AGENTS.md` or `CLAUDE.md`.
+OpenClaw's project path and deletes it.
+
+A full uninstall can also remove what `wkc-setup` added: `docs/dev-agents/config.md` and its
+reference line in `AGENTS.md` or `CLAUDE.md`. The rest of `docs/dev-agents/` is the project's own
+work, such as the PRD, SPEC, ROADMAP, ADRs, rules, local tickets, and the workflow diagram, and the
+installer touches none of it. Delete any of it only when the person asks, naming each path first.
 
 ## 5. Running commands
 
