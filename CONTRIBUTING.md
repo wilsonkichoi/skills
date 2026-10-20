@@ -108,14 +108,13 @@ Two plain repository settings, which live in GitHub's Settings page rather than 
 ## Releasing
 
 A version becomes a release when a lightweight `vX.Y.Z` tag and GitHub Release identify its merged commit.
-After the pull request lands, use the manually invoked
-[`wkc-skills-release`](./skills/wkc-skills-release/SKILL.md) skill on clean, synchronized `main`.
-It prepares the exact commit, all changelog entries since the preceding stable release, and the Latest decision.
-Publication requires explicit authorization for that concrete target. A request to implement or merge does not authorize publication.
+After the pull request lands, run `make release` on clean, synchronized `main`, or invoke the
+[`wkc-skills-release`](./skills/wkc-skills-release/SKILL.md) skill, which runs the same commands.
+It prints the exact commit, all changelog entries since the preceding stable release, and the Latest decision, and writes nothing.
+It ends with `make release TAG=vX.Y.Z PUBLISH=<full sha>`, which publishes exactly that target.
+A request to implement or merge does not authorize publication.
 
-Follow the skill's [bootstrap instructions](./skills/wkc-skills-release/README.md) for the first installation.
-Record main's SHA, install explicitly by name with `npx skills`, and compare all installed files against that commit.
-After publication, reinstall from the immutable tag and verify the installed files against the tag's SHA.
+The release rules live in [`tools/release.mjs`](./tools/release.mjs) and run from the checkout being released.
 The full Git URL with a quoted `#vX.Y.Z` pins installation; `owner/repo@vX.Y.Z` selects a skill name instead.
 
 The tag ruleset blocks moving or deleting a pushed tag. Matching publication state supports recovery;

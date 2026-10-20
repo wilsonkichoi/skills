@@ -1,8 +1,9 @@
 # wkc-skills-release
 
 This is the collection maintainer's release skill. Adopting projects keep their own release and deployment processes.
-The skill releases the repository identified in `SKILL.md`, without reading a dev config or invoking another skill.
-It publishes already merged work and requires explicit authorization for the concrete release target.
+The release rules live in `tools/release.mjs` in the collection repository, behind `make release`.
+The skill runs the plan, asks for authorization, and runs the publish command the plan printed.
+A maintainer can run the same two commands without the skill.
 
 ## Install explicitly
 
@@ -23,46 +24,33 @@ INSTALL_INTERNAL_SKILLS=1 npx skills add 'https://github.com/wilsonkichoi/skills
 The variable comes from the installer's source, not its `--help`, so a later version can drop it.
 Without it, `-s '*'` leaves this skill out. Verified on `skills` 1.7.1.
 
-Invoke `wkc-skills-release` explicitly. An optional exact tag resumes publication for that version. Omission selects the version on synchronized main.
-Use a clean main checkout of the collection, with Git and authenticated GitHub CLI available.
-Cleanliness checks explicitly include untracked files even when `status.showUntrackedFiles=no`.
-Tag pushes use `--no-follow-tags`, so `push.followTags=true` cannot publish unrelated annotated tags.
+## Running a release
 
-## Bootstrap after merge
-
-The first published version containing this skill cannot supply its own bootstrap installation.
-Resolve the current main SHA from origin, record it, and use the unpinned installation command above.
-Use a separate consumer directory if necessary, so installation does not dirty the release checkout.
-
-Compare the complete installed directory against `skills/wkc-skills-release/` at the recorded commit.
-Use a Git archive of that commit and a recursive diff; check all files, not only `SKILL.md`.
-If main advanced during installation, stop and resolve a new SHA before repeating installation and verification.
-Do not invoke an installed copy whose source has not been verified.
-
-Prepare the concrete tag, SHA, notes, and Latest decision through the installed skill.
-Publish only through an explicitly authorized invocation for that target.
-After publication, reinstall from the immutable tag, replacing `vX.Y.Z` with the verified tag:
+From a clean `main` checkout of the collection that matches `origin/main`:
 
 ```sh
-npx skills add 'https://github.com/wilsonkichoi/skills.git#vX.Y.Z' --skill wkc-skills-release -a claude-code -a codex -a kiro-cli -y
+make release
 ```
 
-Verify the remote tag's SHA and compare every installed file against the tagged skill directory.
-Record the tag, SHA, exact installer command, file comparison, and each harness's resolved installation path.
-An installer success message or lock entry alone does not establish the pin.
+It prints the tag, commit, preceding release, notes, and Latest decision, and writes nothing.
+It ends with the exact publish command, which names the tag and the full commit SHA:
+
+```sh
+make release TAG=vX.Y.Z PUBLISH=<full sha>
+```
+
+The script runs from the release checkout's own `tools/`, so the code that publishes `main` is `main`'s code.
 
 ## Recovery
 
 Matching local and remote lightweight tags resume at the same commit, even after main advances.
-A missing remote tag can be pushed from a verified local tag. A missing local tag can be recreated from a verified remote tag.
+A missing remote tag is pushed from a verified local tag. A missing local tag is recreated from a verified remote tag.
 A matching stable release is unchanged. Conflicts stop without moving tags or editing releases.
-Matching requires the skill's notes heading and complete deterministic body.
-Earlier manually published releases without that heading are conflicts, even when their tags and versions are correct.
-A target draft or prerelease is also a conflict; the skill never publishes beside it or replaces it.
+Matching requires the notes heading and the complete deterministic body.
+Releases published by hand before this process, `v0.0.3` to `v0.0.12`, have no notes heading and are conflicts.
+A target draft or prerelease is also a conflict; the script never publishes beside it or replaces it.
 A pushed mistake needs a new patch version through the normal pull request process.
-For an older local-only tag, the approval screen flags that the commit was never remotely published and differs from main's tip.
 
 Notes come from the target commit's changelog and cover every version since the preceding published stable release.
-The notes heading records that boundary, so later publication of an older tagged version preserves a correct release's no-op behavior.
-An older interrupted release uses `--latest=false` when a higher stable release exists.
-The skill verifies that publication preserves the previous Latest release in that case.
+The notes heading records that boundary, so later publication of an older tagged version keeps a correct release a no-op.
+An older interrupted release uses `--latest=false` when a higher stable release exists, and keeps the previous Latest.

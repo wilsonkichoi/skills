@@ -281,12 +281,12 @@
             "href": "skills/wkc-skills-release/SKILL.md"
           },
           {
-            "label": "Bootstrap and pin instructions",
+            "label": "Install and recovery",
             "href": "skills/wkc-skills-release/README.md"
           },
           {
-            "label": "Publication and verification",
-            "href": "skills/wkc-skills-release/SKILL.md#5-publish-and-verify"
+            "label": "Release script",
+            "href": "tools/release.mjs"
           }
         ]
       },
