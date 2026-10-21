@@ -9,23 +9,23 @@ was approved. Every milestone needs the PRD, SPEC, ADRs, and this ROADMAP merged
 Validation for every milestone runs on Claude Code; Codex and Kiro cases are SKIP (PRD Constraints).
 Fixtures that write tickets or PRs use a throwaway GitHub repository, never this one.
 
-## M1: Ticket to done by hand
-Outcome: A person runs `wkc-implement <id>` on a `ready` ticket and gets an open PR with the acceptance checks run and the ticket at `in-review`. After they merge it, a rerun runs the ticket's `## After merge` steps and moves it to `done`.
-Scope: PRD goal 1 (the implement half). SPEC Lifecycle with follow-up PRs, PR body, ticket comments from `wkc-implement`, Linear, the `Discovered:` comment, Invocation for `wkc-implement`; ADR-001. Delivers what issue #15 asks for. Until M3, the report lists discovered items instead of calling `wkc-plan`.
-Depends on: the planning documents merged to `main`.
-Exit check: the `wkc-implement` runbook passes on Claude Code, and this milestone's second ticket is itself taken from `ready` to `done` by `wkc-implement`, with each status confirmed by `gh issue view`.
+## M1: Plans follow changes
+Outcome: A person gives `wkc-plan` a bug, a request, or a `Discovered:` comment, and gets tickets drafted from the SPEC's ticket templates, approved, and published. They can ask it to refine, split, re-block, or cancel existing tickets with the same draft and approval.
+Scope: PRD goal 2. SPEC changes to `wkc-plan` (one change at a time, the edit rule, the Ticket templates with `## Why` and `## After merge`, the split rule), Discovered work as `wkc-plan` receives it, Invocation for `wkc-plan`; ADR-002.
+Depends on: the planning documents merged to `main`. Built by hand, because `wkc-implement` and `wkc-code-review` do not exist yet.
+Exit check: on a local-tracker fixture, `wkc-plan` turns one bug into one `backlog` ticket in the work-ticket template, `## Why` included; turns a fixture `Discovered:` comment into a `backlog` ticket, and links a discovered blocker to the ticket it blocks; splits a ticket so its dependents move to the children before the parent is canceled; and writes `## After merge` for a ticket with a release step. Ticket files are checked with a YAML parser, not from the report.
 
-## M2: Independent review with fixes
+## M2: Ticket to done by hand
+Outcome: A person runs `wkc-implement <id>` on a `ready` ticket and gets an open PR with the acceptance checks run and the ticket at `in-review`. After they merge it, a rerun runs the ticket's `## After merge` steps and moves it to `done`. Work it finds out of scope goes to `wkc-plan`.
+Scope: PRD goal 1 (the implement half). SPEC Lifecycle with follow-up PRs, PR body, ticket comments from `wkc-implement`, Linear, Discovered work with the hand-off to `wkc-plan`, Invocation for `wkc-implement`; ADR-001. Delivers what issue #15 asks for.
+Depends on: M1, because `wkc-implement` hands discovered work to `wkc-plan` and reads tickets in M1's templates.
+Exit check: the `wkc-implement` runbook passes on Claude Code; on a local-tracker fixture, a `Discovered:` item reaches `wkc-plan` at handoff without a person typing it; and this milestone's second ticket is itself taken from `ready` to `done` by `wkc-implement`, with each status confirmed by `gh issue view`.
+
+## M3: Independent review with fixes
 Outcome: A person runs `wkc-code-review` in a fresh session on a PR from `wkc-implement`. It posts a verdict, fixes its blocking findings, and a further fresh round approves the fixed head or stops at `max_fix_attempts`.
-Scope: PRD goal 1 (the review half). SPEC Review verdict and fix commit, `max_fix_attempts` config field, Invocation for `wkc-code-review`; ADR-003.
-Depends on: M1.
+Scope: PRD goal 1 (the review half). SPEC Review verdict and fix commit, `max_fix_attempts` config field, Discovered work with the hand-off to `wkc-plan`, Invocation for `wkc-code-review`; ADR-003.
+Depends on: M2, because it reviews PRs from `wkc-implement`; M1, for the hand-off.
 Exit check: in a throwaway repository, a PR with a planted defect gets a `fixed` verdict, then an `approve` from a second fresh session naming the new head; a defect that comes back after its fix gets `stopped`. The PRs for this milestone are opened by `wkc-implement`.
-
-## M3: Plans follow changes
-Outcome: A person gives `wkc-plan` a bug, a request, or a `Discovered:` comment, and gets tickets drafted, approved, and published. They can ask it to refine, split, re-block, or cancel existing tickets with the same draft and approval.
-Scope: PRD goal 2. SPEC changes to `wkc-plan` (one change at a time, the edit rule, the Ticket templates with `## After merge`, the split rule), Discovered work including the hand-off from `wkc-implement` and `wkc-code-review` to `wkc-plan`, Invocation for `wkc-plan`; ADR-002.
-Depends on: M1, because the exit check uses real `wkc-implement` comments. Ordered after M2 so it is built through `wkc-implement` and reviewed by `wkc-code-review`. Until it ships, a discovered blocker is linked by hand with `wkc-tracker link`.
-Exit check: on a local-tracker fixture, `wkc-plan` turns one bug into one `backlog` ticket; `wkc-implement` hands a `Discovered:` item to `wkc-plan` at handoff without a person typing it, and it becomes a `backlog` ticket on approval; `wkc-plan` links a discovered blocker to the ticket it blocks; splits a ticket so its dependents move to the children before the parent is canceled; and writes `## After merge` for a ticket with a release step. Ticket files are checked with a YAML parser, not from the report.
 
 ## M4: Unattended runs
 Outcome: A person runs `wkc-yolo` on a ticket, a wave, or a milestone, answers one round of questions, and the run finishes without asking anything more. It merges where `merge_gate` allows and stops at each merge where it does not.
@@ -41,6 +41,7 @@ Exit check: this milestone's tickets reach `done` through one `wkc-yolo` run on 
 
 ## Changes
 
+- 2026-10-21: `wkc-plan` change handling and the ticket templates move first (M1), ahead of `wkc-implement` (M2) and `wkc-code-review` (M3), because both now hand discovered work to `wkc-plan` and every ticket after M1 uses its templates. M1's exit check uses a fixture `Discovered:` comment. Replaced the order M1 implement, M2 review, M3 plan, and the "until M3" interim rules.
 - 2026-10-20: SPEC templates. M2 adds the fix commit template; M3 adds the ticket templates.
 - 2026-10-20: SPEC maintainer decisions. M1 adds follow-up PRs and the `wkc-implement` comment templates; M3 adds the hand-off of discovered work from `wkc-implement` and `wkc-code-review` to `wkc-plan`, replacing a person running `wkc-plan` on the comment.
 - 2026-10-20: Review findings. M4's exit check adds a resumed run and names its session-approval need; M5 is delivered by a `wkc-yolo` run as PRD outcome 2 and depends on M4; M5 no longer requires a rule from a real retro.

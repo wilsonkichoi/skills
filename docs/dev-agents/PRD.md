@@ -136,9 +136,9 @@ Ranked. Ranking is importance, not delivery order; the ROADMAP sets the order.
 
 ## Open questions
 
-1. **Delivery order.** Settled 2026-10-20: the ROADMAP ships `wkc-implement` and `wkc-code-review`
-   first (M1, M2), because every later change then goes through them. The earlier port plan had
-   ordered backlog first.
+1. **Delivery order.** Settled 2026-10-21: the ROADMAP ships `wkc-plan` change handling first (M1),
+   then `wkc-implement` (M2) and `wkc-code-review` (M3), because both hand discovered work to
+   `wkc-plan` and every later ticket uses its templates.
 2. **Where outcome 2 runs.** Settled 2026-10-20: the ROADMAP's M5 in this repository is delivered
    by a `wkc-yolo` run.
 
@@ -169,6 +169,8 @@ open there: a first real check of the Linear integration.
 
 ## Changes
 
+- 2026-10-21: Open question 1 settled again: `wkc-plan` change handling ships first. Replaced
+  "`wkc-implement` and `wkc-code-review` first". No goal changed.
 - 2026-10-20: Evidence cites tracked sources; the untracked planning notes are archived. Open
   question 1 is settled by the ROADMAP. No goal changed.
 - 2026-10-20: Maintainer review. `SKILL.md` length is a target, not a limit; marketplace and CI
