@@ -58,7 +58,9 @@ rerun makes `wkc-implement` hard to follow.
 
 ## Consequences
 
-- Every ticket `wkc-plan` writes must state its post-merge steps, or have none.
+- Every ticket `wkc-backlog` writes must state its post-merge steps, or have none. (This named
+  `wkc-plan` until [ADR-004](./ADR-004-backlog-separate-from-plan.md) moved ticket writing to
+  `wkc-backlog`.)
 - A merged ticket stays `in-review` until someone reruns `wkc-implement`. `wkc-tracker list in-review`
   shows them.
 - Publishing and deploying keep their own authorization; an implementation request does not grant it.

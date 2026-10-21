@@ -184,7 +184,7 @@ Cases 16 to 19 use a fixture where M1's tickets are written by hand and M2 **Dep
     No `cat`, `grep`, or edit of `issues_dir` outside a verb. New, from the S10 observation.
 
 28. **Stale ticket before publishing.** After a draft that changes an existing ticket, change that ticket by hand
-    before answering: its status, holder, a section, or an edge. Then answer `1`.
+    before answering: its title, milestone, status, holder, a section, or an edge. Then answer `1`.
     PASS: `cksum` of `issues_dir` after the answer equals `cksum` after the hand change; the reply names the
     difference and ends on a numbered question. New, from a review of the combined skill on 2026-10-21.
 
@@ -239,3 +239,7 @@ this change, same harness, model, and effort, on the hand-written-tickets fixtur
 |---|---|---|---|
 | B4 | 28 | PASS | Asked to retitle `ready` 004. After the draft and before the answer, 004 was set by hand to `in-progress` held by Bob Dev. After `1`: no write (`cksum` equal to the hand-edited state); the reply tabled status and holder as changed and asked again, with publishing anyway as an option. |
 | B4 | reading for a change | FAIL, then reworded | The draft said "I did not read the PRD or SPEC, because a change needs neither", reading the approval sentence ("a change needs neither") as a reading rule. The sentence now says a change needs neither approved but is still read against them. Checked statically only (`wc -l` 240, templates `diff` clean); no session left to validate it. |
+
+A second review found that the re-read compared status, holder, sections, and edges, but not the title or milestone,
+which `edit` also changes. The re-read and the refinement bullet now name both. Checked statically only; B4's PASS
+covers a status and holder change, not a title or milestone change. No session left to validate it.

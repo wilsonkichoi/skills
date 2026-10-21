@@ -70,7 +70,8 @@ Its new tickets, split children included, stay at `backlog` whatever the parent'
 - A comment `Discovered: <what>. Out of scope because <why>. Blocks this ticket: yes | no.`, read
   with `show` on the ticket that carries it: a new ticket for the work. With `yes`, the carrier is
   **Blocked by** it and keeps its status and holder.
-- A refinement or re-block: the changed sections or edges of each ticket, before and after.
+- A refinement or re-block: the changed title, milestone, sections, or edges of each ticket, before
+  and after.
 - A split: children by the split rule below. Each open ticket blocked by the parent is blocked by
   the children it needs instead, then the parent moves to `cancel`.
 - A cancel: the ticket to move to `cancel`, and each open ticket that would be left with a `cancel`
@@ -210,9 +211,9 @@ Publish only on approval in this conversation. The diagram is for review, not a 
 
 ## 5. Publish
 
-Before the first write, `show` each existing ticket the draft changes. If its status, holder,
-sections, or edges differ from the draft's before, write nothing, and show the difference and a
-new question. Then run the tracker writes in this order and stop at the first failure; they are
+Before the first write, `show` each existing ticket the draft changes. If its title, milestone,
+status, holder, sections, or edges differ from the draft's before, write nothing, and show the
+difference and a new question. Then run the tracker writes in this order and stop at the first failure; they are
 hard to take back:
 
 1. `wkc-tracker milestone <name>` for each milestone the new tickets need. If that fails, stop.
