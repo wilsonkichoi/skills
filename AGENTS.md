@@ -99,7 +99,7 @@ Manual invocation is the default. A manually invoked skill keeps these settings:
 - claude code: `SKILL.md` frontmatter `disable-model-invocation: true`
 - codex cli: `agents/openai.yaml` -> `policy: allow_implicit_invocation: false`
 
-A skill may explicitly opt into model invocation, one skill at a time. `wkc-tracker` and `wkc-help` do. Authors
+A skill may explicitly opt into model invocation, one skill at a time. `wkc-tracker`, `wkc-help`, and `wkc-plan` do. Authors
 must declare the intended callers in the skill body: people, models, or named skills. Enable
 supported invocation settings for each harness when models are intended callers:
 
