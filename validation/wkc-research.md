@@ -90,3 +90,19 @@ Claude Code's reported cost for all ten turns was $0.89.
 Added from the source cross-check: push back once on a vague answer, who the product is not for, and ranked goals. Static checks only: frontmatter and `agents/openai.yaml` unchanged,
 no em dash in the changed lines, and the outline additions are comments or optional lines. Case 10 is new and
 SKIP: no AI sessions were authorized for this change. Earlier cases keep their evidence; their checks did not change.
+
+### Kiro CLI run, 2026-10-21
+
+Scope: Kiro harness coverage for cases 3, 5, and 8. Candidate `f70b626` (0.0.26; `skills/` unchanged at `3ddad89`),
+installed with `skills` 1.7.4. Kiro CLI 2.33.0, `claude-sonnet-5.5`, non-interactive with `--resume` per turn, one
+session, 3 turns, about 8% of a 1M context; Kiro records no token or credit counts locally. Fixture: `local` tracker
+config, `AGENTS.md`, and two `research/` notes that disagree on reminder lead time (24 against 48 hours) for a
+clinic SMS reminder service, committed before the run.
+
+| Case | Result | Evidence |
+|---|---|---|
+| 3, research supplied | PASS | Every claim links one of the two notes; both lead times appear, with the conflict as open question 1; no other source is cited; no missing-appointment figure was invented. |
+| 5, ask, then stop | PASS, other trigger | The open point was the lead time, not the non-goals. The turn ended on three numbered options with a recommendation, and it asked nothing the notes settle. |
+| 8, approval | PASS | `Status: draft` after the first turn; after "Approve.", `Status: approved (2026-10-21)`, the run date, with the lead-time decision in **Changes**. `git status` showed only the PRD. |
+
+Not run on Kiro: cases 4, 6, 7, 9, and 10.

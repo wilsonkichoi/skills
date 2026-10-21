@@ -90,6 +90,14 @@ project's install. In Codex, that is the entry whose path is under the scratch d
 `.agents/skills/`. A run that fired any other skill is void, not scored: record it as a deviation,
 and start again in a fresh directory.
 
+**Kiro CLI unattended.** From a Kiro session, one test session is
+`kiro-cli chat --no-interactive --model <model> --trust-all-tools "/wkc-tracker <verb> <args>"`,
+and each later turn adds `--resume` in the same directory, which also answers `wkc-setup` with a digit.
+Kiro 2.33.0 passes the text after the skill name to the model without `$ARGUMENTS`. `--trust-tools=shell`
+did not allow shell commands in non-interactive mode, so use `--trust-all-tools`, only in a scratch directory.
+The session JSON under `~/.kiro/sessions/cli/` records turns and context percentage, not tokens or credits.
+A transcript shows what a question carried and whether a digit was taken; D3 and D6 still need a person.
+
 For an unattended leg whose driver cannot type `$wkc-setup` itself, delete that one line from the
 **installed** `wkc-setup/SKILL.md` and restart the harness. Then say so in the report as a
 deviation, and say from which case onward, because the file under test now differs from the commit
@@ -106,7 +114,9 @@ Both directories have to have been created by the installer, since nothing here 
 
 **S3 one skill per name.** Check:
 `npx skills add 'https://github.com/wilsonkichoi/skills.git#<review-ref>' -l`.
-Expect exactly the three public skills: `wkc-setup`, `wkc-tracker`, and `wkc-workflow-diagram`.
+Expect exactly the public skills: every `skills/*/SKILL.md` in the ref except those with boolean
+`metadata.internal: true`, each once. At 0.0.26 that is seven: `wkc-architect`, `wkc-help`, `wkc-plan`,
+`wkc-research`, `wkc-setup`, `wkc-tracker`, and `wkc-workflow-diagram`.
 The source also ships internal `wkc-skills-release`; list and install it explicitly by name, separately from the public count.
 The old names, planned
 skills, `wkc-skill-name`, and anything from `validation/` must not appear.
@@ -1470,6 +1480,60 @@ here.
 Versions 0.0.9 to 0.0.41 below were development steps on the `feat/tracker` branch. They shipped
 together as 0.0.8, so an entry's version names a branch state, and its skill ref names the exact
 commit it tested.
+
+### 2026-10-21T11:15:00-07:00 Focused 0.0.26 run, Kiro CLI non-interactive, GitHub and Linear
+
+Scope: harness coverage on Kiro for the verbs added since its last run (milestone, edit, unlink) and
+the core create, link, next, move, assign, comment, and show paths, plus `wkc-setup` on both backends.
+Skill ref `f70b626` (0.0.26), a clean `git archive` installed with `skills` 1.7.4 and all three `-a`;
+`skills/` is unchanged at `3ddad89`. Kiro CLI 2.33.0, `claude-sonnet-5.5`, driven as in
+[Kiro CLI unattended](#setup-once-per-backend), one session per backend: `638748cc` (GitHub, 34 turns,
+26.6% of a 1M context) and `72e02e70` (Linear, 37 turns, 28.6%). Kiro records no token or credit
+counts locally. Fixtures: `wilsonkichoi/linear-related-to-check` #8 to #11 and milestone 1; Linear
+project `kiro-compat-20261021` (P-DEV-4) in team DEV, milestone KM1, DEV-36 to DEV-39. Every verdict
+below is from `gh` or the Linear MCP read after the turn, not from the reply.
+
+| Case | Verdict | Independent evidence |
+|---|---|---|
+| S3 | PASS, direct | 7 public skills listed, 8 shipped `SKILL.md`; each `.kiro/skills/wkc-*` link resolves to files identical to the candidate by `diff -r`. |
+| S4 | PASS | `list`, then `create Probe`, with no config: the `find -newer` check printed nothing; the repository had 0 issues before and after. |
+| A3 | PASS | `git remote -v` identical before and after; the config body names `wilsonkichoi/linear-related-to-check`. |
+| D4 Kiro | PASS, transcript | Sections A to D each asked alone, numbered, recommended first, "A digit is enough"; each bare `1` was taken. |
+| A4 | PASS | `backlog`, `in-progress`, `in-review`, `ready` present; no `done` or `cancel`. |
+| A5 | PASS | #8: `jq --rawfile ... -e '.body == $sent'` printed `true`, exit 0; no labels. |
+| A6 | PASS | #9 `blockedBy` `[8]`. |
+| A8 | PASS | #10 body has `## Related` with `- #8`; `blockedBy` `[]`. |
+| A9, A10 | PASS | Frontier #8 with #9 held by #8; after `move 8 done`, #9. |
+| A15 | PASS | #8 `CLOSED`, `COMPLETED`, no labels. |
+| A31 | PASS | `link 9 blocked-by 10` refused naming #9 → #10 → #11 → #9; `link 10 blocked-by 10` refused as a self-link; blockers stayed #9 `[8]`, #10 `[11]`, #11 `[9]`. |
+| A33 | PASS | `Kiro M1: it's here` created as milestone 1, open; the rerun reported it exists with the count unchanged; after a `gh api` PATCH to closed, a stop that leaves reopening to a person, still `closed`. #11 created in it while open names it. |
+| A37 | PASS, partial | The exact title with a colon and an apostrophe landed (#11); `kiro m1` stopped with 4 issues before and after. The closed-milestone and prefix steps did not run. |
+| A39 | PASS, reduced fixture | #9: new title, `## Notes` added, the other sections byte for byte, blockers `[8]`, label `ready`, no milestone. The fixture had no topic label, assignee, or milestone. |
+| A41 | PASS, first half | #11's blockers went from `[9]` to exactly `[8]`; #9 and #10 kept theirs. The cycle half did not run. |
+| A42, A43 | PASS | `unlink 10 blocked-by 11` left #10 `[]` and #11 `[8]`; the repeat said the edge does not exist and #10 stayed `[]`. |
+| A20, A29 | PASS | `assign 9`: `in-progress`, assignee `wilsonkichoi`; `move 9 ready`: `ready`, no assignees. |
+| A22 | PASS | #9 has exactly one comment, `runbook note from kiro`. |
+| A30 | PASS | `show 10` reported the ticket with no comments. |
+| Linear setup, D4 Kiro | PASS | `list_issue_statuses` read in Section A, all seven present; the throwaway project offered first; config has `linear_team: "DEV"` and `linear_project: "kiro-compat-20261021"`; digits taken. |
+| C26 | PASS | `KM1` created through `save_milestone`; `list_milestones` shows exactly one; the rerun reported it exists and the list was unchanged. |
+| C29 | PASS | `create` in `KM9` stopped naming KM1, project issue count unchanged; in `KM1`, DEV-36 has the project and `projectMilestone` KM1. |
+| C24, C8 | PASS | DEV-37 `relations.blockedBy` is DEV-36. |
+| C7 | PASS | Frontier DEV-36 with DEV-37 held, blocker statuses read by `get_issue`; after `move DEV-36 done`, DEV-37. |
+| C21 | PASS | With DEV-39 ← DEV-38 and DEV-37 ← DEV-39, `link DEV-38 blocked-by DEV-37` refused naming the path, and the self-link refused; DEV-38 `blockedBy` `[]`. |
+| C30, C35 | PASS, reduced fixture | DEV-39, after a hand edit that added `### Constraints` and a fenced `## Not a heading` under `## Notes`: new title, Notes exactly one line, subsection and fence gone, What to build and Related unchanged, status and relations unchanged. No milestone or assignee in the fixture. |
+| C32 | PASS | `edit DEV-37 milestone none` stopped; `projectMilestone` still KM1. |
+| C33 | PASS | DEV-37 `blockedBy` went to exactly DEV-36; the repeat said the edge does not exist and made no `save_issue` call. |
+| C13, C15 | PASS | `assign DEV-37`: one `save_issue`, In Progress, assignee the session user; `move DEV-37 ready`: Todo, no assignee. |
+| C11, C19 | PASS | One comment with the exact body; `show DEV-38` reported no comments. |
+| C6 | PASS, one of three runs | New inputs: `in-progrss` to In Progress, `in recess` and `dime` with no `save_issue` and the seven listed, `binned` to Canceled. The case needs three runs. |
+| D3, D6 Kiro | SKIP | Need a person watching the menu and the harness state. |
+
+PASS 38 (6 of them partial, on a reduced fixture, or one run of three), FAIL 0, SKIP 2 for the
+selected cases. Outside the pass rules: both
+`wkc-setup` runs put a "Next step" line after the commit offer (F7), the Linear setup report described
+a context-file oddity that was Kiro's own reload (F8), and the closed-milestone stop listed its choices
+unnumbered. On GitHub the model wrote its body files and the `next` program to `/tmp`; `github.md`
+names no location.
 
 ### 2026-10-19T13:45:30-07:00 Direct checks after the 96fa6cb review, 0.0.24, Claude Code
 
@@ -4340,6 +4404,20 @@ Cases the run strengthened rather than merely passed:
 ## Findings
 
 Numbered, newest run first. A finding is a defect in a skill file unless it says otherwise.
+
+**F7. `wkc-setup`: the commit offer is not the last thing in its turn. (D6, low severity.)**
+Both Kiro runs of 2026-10-21 asked "commit these files?" and then printed "Next step: run
+`wkc-tracker list`" below it. Step 6 of `SKILL.md` causes it: it offers the commit, then says to
+summarize, then names the next step, so a model that follows it in order ends the turn on prose, not
+on the question that section 2 says must come last. The Linear run also asked "Reply `yes` or `no`"
+with no numbers. Fix: summarize first, then end on the numbered commit offer.
+
+**F8. Kiro CLI loads a context file the moment `wkc-setup` writes it. (Harness behavior, not a skill defect.)**
+In the Linear run, `wkc-setup` created `AGENTS.md` and then reported that "the session context listed
+an `AGENTS.md` ... but it wasn't on disk", and that it had written one with the same content. Kiro's
+default agent includes `AGENTS.md` as a resource and picked up the new file mid-turn, so the model
+saw its own write as earlier context. The file on disk was correct. A reader of the report could
+believe a file was overwritten. No change unless it recurs.
 
 **F1. `github.md`: `list <status> <milestone>` cannot stop on an unknown milestone. (A23, real defect.)**
 `gh issue list --milestone no-such-milestone` exits 0 with `[]` on stdout and nothing on stderr,

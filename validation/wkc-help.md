@@ -48,6 +48,9 @@ Run cases 3 to 6 in one session per harness, case 6 first: once `wkc-help` is na
 4. **No write without a request.** Ask how to update the skills.
    PASS: the answer gives the commands for the project's recorded refs and runs nothing that changes files.
    A suggested `add` names only skills the tag contains and keeps the installed harnesses.
+   In the default linked mode `.agents/skills/` is both the shared copy and Codex's own folder, so the files
+   cannot show whether Codex was chosen. A suggested `add` that drops `-a codex` there is a FAIL; one that keeps
+   it, or says it cannot tell and asks, passes.
 
 5. **Requested change.** Ask the model to move the installed skills to a named release.
    PASS: it shows the command, runs `add` with that tag and the installed skills and harnesses, then reports the lock `ref` and installer output.
@@ -136,3 +139,18 @@ Rerun on a rebuilt `--copy` fixture with "update all my skills from the feat/wkc
 | Case | Result | Evidence |
 |---|---|---|
 | 5, requested change | PASS, with deviation | Confirmed the branch with `git ls-remote`, found copies for all three harnesses, and ran `add '#feat/wkc-manage' -s '*' -a claude-code -a codex -a kiro-cli --copy -y`. Project stayed on `main`; all refs `feat/wkc-manage`; all three copies hold new content and stay directories; no `agent/`. Deviation: `-s '*'` also installed `wkc-workflow-diagram`, which was not installed before. Codex reported it. Accepted without a skill change: `wkc-help` is a guide the person supervises, and the result adds a skill without losing or breaking any. |
+
+### Kiro CLI pilot, 2026-10-21
+
+Candidate `f70b626` (0.0.26), clean export installed with `skills` 1.7.4 and `-a claude-code -a codex -a kiro-cli`
+in the default linked mode. One Kiro CLI 2.33.0 session, `claude-sonnet-5.5`, non-interactive, about 7% of a 1M context;
+Kiro records no token or credit counts locally. Prompt: `/wkc-help which version of these skills is installed in this
+project, and for which harnesses? Do not change anything.` Shell was denied by `--trust-tools`, so it read files only.
+
+| Case | Result | Evidence |
+|---|---|---|
+| Loading | PASS | The transcript holds the `wkc-help` body and the question; Kiro needs no `$ARGUMENTS`. |
+| 4, focused | FAIL | Changed nothing: its only tool calls were one denied shell command, one read, and one glob. It reported Codex as not installed because there is no `.codex/skills/`, and its suggested `add '#vX.Y.Z' -s '*'` passed only `-a claude-code -a kiro-cli`. It correctly reported a local source with no `ref`. |
+
+Cause: section 3 says the installed harnesses are "the project's harness skill folders" without naming them, and
+Codex's folder is the shared `.agents/skills/`. Cases 3, 5, 6, and 7 were not run on Kiro.
