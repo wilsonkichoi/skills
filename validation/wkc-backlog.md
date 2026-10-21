@@ -182,3 +182,44 @@ Cases 16 to 19 use a fixture where M1's tickets are written by hand and M2 **Dep
     PASS: the transcript shows the `wkc-tracker` instructions loaded before the first ticket read, and every read or
     write of a ticket file is a `wkc-tracker` verb carried out as its backend file says, with its verification read.
     No `cat`, `grep`, or edit of `issues_dir` outside a verb. New, from the S10 observation.
+
+## Dated report: 2026-10-21
+
+Scope: new skill, split from `wkc-plan` (ADR-004). Selected: cases 1 to 3 as direct checks; 4, 5, 7, 9, 21, 22, 23, 26,
+and 27 in Claude Code. The other cases were not run on `wkc-backlog`. Their instructions moved from `wkc-plan` unchanged
+or with wording restored, but the `wkc-plan` runs that covered them are not evidence for this skill. Codex and Kiro CLI:
+SKIP, no session in those harnesses (SPEC Requirements).
+
+Direct checks on `e97e7ce` and a `git archive` of it, `skills` 1.7.4:
+
+| Case | Result | Evidence |
+|---|---|---|
+| 1, package and discovery | PASS, direct | PyYAML parses the frontmatter and `agents/openai.yaml`: `disable-model-invocation: false`, `allow_implicit_invocation: true`, five fields in order, callers named, `wc -l` 237, description on one line. Discovery lists 8 public of 9 shipped `SKILL.md`, `wkc-backlog` among them. Installed with three agents; `.claude/skills/` and `.kiro/skills/` link to `.agents/skills/wkc-backlog`, identical to source by `diff -r`. |
+| 2, document ownership | PASS, direct | The verbs it names (`list`, `show`, `milestone`, `create`, `edit`, `link`, `unlink`, `move`) are in the `wkc-tracker` verb table. `wkc-plan` contains no `## What to build`, `create`, `link`, `edit`, `move`, `Edge order`, or `needs authorization`; of the skills, only `wkc-backlog` carries the templates (the tracker keeps its own loose shape). |
+| 3, ticket templates | PASS, direct | The three extracted blocks equal SPEC Contracts › Ticket. Titles, the `(needs authorization)` rule, the before-merge versus after-merge rule, and the split rule are present. |
+
+### Claude Code run, 2026-10-21
+
+Four sessions of the six allowed, one at a time, as Claude Code `general-purpose` subagents on Sonnet (`sonnet`, effort
+`medium`). Each read the installed `SKILL.md` from its fixture and did not use the `Skill` tool, so harness loading is
+untested. Each started from a fresh copy of a committed `notes` CLI fixture with a `local` tracker and `e97e7ce`
+installed. Answers were given after each question, as follow-up messages; unlike S2 in the `wkc-plan` runbook, no session
+refused them, so every publication here followed a real pause. `cksum` of `issues_dir` was taken before each answer.
+Ticket state was scored with PyYAML and `git diff` on the files. About 45k to 69k subagent tokens per turn, 15 turns.
+
+| Session | Case | Result | Evidence |
+|---|---|---|---|
+| B1, pilot | 4 | PASS | Draft for M1 only; four options. After `1`: 002 to 006 in M1, new blockers with lower ids, edges as drafted. 006 has `## Why` citing PRD goal 3 and SPEC Deployment and `## After merge` with `make release VERSION=0.1.0 ... (needs authorization)`; 003 is the only `Spike:`; no test-only ticket; 002 to 006 `ready`; PRD, SPEC, ROADMAP unchanged. |
+| B1 | 5 (no answer) | PASS | `issues_dir` unchanged while the question was open. |
+| B1 | 7 | PASS | Hand-written 001 reused, not redrafted; it gained the M1 milestone and a blocker, both shown in the draft, and stayed at `backlog` as the draft said. No two tickets cover one outcome. |
+| B1 | 9, `notes list` | PASS, this sample | 005 `cli: notes list` criteria: oldest first, first line only, no notes prints nothing. No invalid-file criterion; the invalid-file error sits only on `notes add`. |
+| B2 | 21 | PASS | Three change options; nothing written before `1`; after it, one new file 006 at `backlog` with What to build, Why, Acceptance criteria, Notes; `git diff` shows no other ticket changed. |
+| B2 | 22 | PASS | Draft named Alice Dev as the holder. After `1`: 007 at `backlog`; 002 `blocked_by` `['001']` to `['001', '007']` and `- 007` under `## Blocked by`; its `status`, `assignee`, and comment unchanged. |
+| B3 | 26 (reversal with a `done` blocker) | PASS, with an observation | Same request as S10. The draft did not call the start a cycle (S10 did). Its edge order keeps 002 and 004 each with an unmet blocker after every write; files end at 002 `['004']`, 004 `['003']`, statuses unchanged. The session issued the two writes to 004 as a parallel pair, twice, and said they touched separate files, which is false. Each was an exact-match `sed`, so a write run out of order did nothing, and no order left 004 with only met blockers. The 002 writes ran in order. |
+| B3 | 23 | PASS, same observation | Splitting 004 (dependent 002): the SPEC gives the Exporter no layout, so the draft added `Decision: export Markdown layout` (005) blocking both children instead of inventing one. After `1`: 006 and 007 at `backlog`, no assignee; 002 `['006', '007']`; 004 `cancel` as the last write. The two `link` writes on 002 were again a parallel pair repeated with exact-match `sed`. |
+| P1 | handoff from `wkc-plan` | PASS | After `wkc-plan` option 1, the session read `wkc-backlog/SKILL.md`, did not reread the PRD or SPEC, and stopped on four options with `issues_dir` empty. Detail in `wkc-plan.md` case 30. |
+| P1 | 9, `notes list` | PASS, this sample | T5 `cli: notes list` asserts no invalid-file behaviour. It also turned the unstated first id into a decision ticket. |
+| B1 to B3 | 27 | PASS, with observations | Each loaded the tracker `SKILL.md` and `local.md` before its first ticket read and verified its writes by reading the files back. B1 and B2 parsed with PyYAML; B3 said `yaml` was missing and checked with `grep` (the independent parse passed). |
+
+The `notes list` regression passed in both samples here (B1, P1); under `wkc-plan` it failed in S2 and S10 and passed in
+S8 and S9. Two passes on the moved, unchanged sentence are not evidence that the failure is gone.

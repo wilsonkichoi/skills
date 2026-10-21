@@ -90,6 +90,33 @@ ticket parts moved, the ROADMAP parts stay above. Case 28 is in both runbooks.
 | 22 | wkc-backlog 3, ticket templates |
 | 24 to 28 | wkc-backlog 21 to 25 |
 
+## Dated report: 2026-10-21, after the split
+
+Scope: `wkc-plan` reduced to the ROADMAP (ADR-004). Selected: cases 1 and 2 as direct checks; 3, 29, and 30 in one
+Claude Code session. Cases 4, 9, 10, 16, and 28 were not rerun: their ROADMAP paths kept `main`'s text, but the routing
+and approval options around them changed, so the 2026-10-17 and 2026-10-18 evidence covers the old text only. Codex and
+Kiro CLI: SKIP.
+
+| Case | Result | Evidence |
+|---|---|---|
+| 1, package and discovery | PASS, direct | `e97e7ce`, `skills` 1.7.4. PyYAML: `disable-model-invocation: true`, `allow_implicit_invocation: false`, five fields in order, callers people, `wc -l` 114. Listed in discovery; installed copy identical to source by `diff -r`, linked from `.claude/skills/` and `.kiro/skills/`. |
+| 2, document ownership | PASS, direct | The only tracker verbs named are `list`, `show`, and `milestone` in its `list` and `show` forms, all reads. No ticket template, graph rule, or publish step. `wkc-architect` still names `wkc-plan` next; the README roster names `wkc-plan` for the ROADMAP and `wkc-backlog` for tickets. |
+
+Session P1: a Claude Code `general-purpose` subagent on Sonnet (`sonnet`, effort `medium`), the fourth of four
+sessions for this change (the others are in `wkc-backlog.md`). Fixture: the `notes` PRD and SPEC, approved, with no
+ROADMAP and an empty `local` tracker, `e97e7ce` installed. Three requests in sequence, each answered after its question.
+About 45k, 57k, and 64k subagent tokens.
+
+| Case | Result | Evidence |
+|---|---|---|
+| 29, ticket work is routed | PASS | `/wkc-plan Bug: notes list prints newest first` was named `wkc-backlog`'s work with an offer to run it; `git status` clean and `issues_dir` empty. |
+| 3, no ROADMAP yet | PASS | ROADMAP at `Status: draft`, three milestones each with an outcome, scope naming PRD goals and SPEC sections, and an exit check; no progress fields; no ticket drafted; three options, option 1 naming M1 for `wkc-backlog`. `git status` shows only the ROADMAP. |
+| 30, handoff | PASS | After `1`: `Status: approved (2026-10-21)`, then `wkc-backlog/SKILL.md` read in the same session and a draft for `M1: Add and list notes` ending on its own four options; `issues_dir` still empty. The ROADMAP approval published nothing. |
+| 27-style tracker access | PASS, with an observation | No ticket file was read or written. The session read `local.md` for the tracker, and an `ls -R docs/dev-agents` in the same command listed the empty `issues_dir` before the tracker `SKILL.md` printed. |
+
+Observation: its report said `wkc-backlog` would make the PyPI-name unknown a decision ticket; `wkc-backlog` makes it a
+spike when evidence can settle it. `wkc-plan` correctly named it under M3's **Depends on** for `wkc-architect`.
+
 ## History before the split
 
 The reports below tested `wkc-plan` while it also wrote tickets (0.0.27 and earlier). They are kept as history.
