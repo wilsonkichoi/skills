@@ -188,8 +188,9 @@ directory has to clear the same check before it is added.
 
 - No em-dash. Use a comma, a period, a colon, or parentheses.
 - Write the way you would explain it to the person sitting next to you.
-- Keep skills short. A `SKILL.md` past roughly 150 lines is usually carrying policy that belongs
-  to the project, not to the skill.
+- Keep skills short. Aim for a `SKILL.md` under 150 lines, and try to keep it under 250 so a person
+  can read it. Neither is a hard limit; the Agent Skills specification's limit is 500. Past 150,
+  check whether the skill carries policy that belongs to the project, not to the skill.
 
 ## Validation
 
@@ -248,7 +249,8 @@ and the order.
    A ported script needs a written reason.
 3. **Rewrite, do not copy.** Cut agent-toolkit-specific policy on sight: fork contributions,
    canonical-repository permission boundaries, version migration sections, tuning knobs like
-   `work_in_progress_limit` and `max_fix_attempts`. Something re-earns its place only when its
+   `work_in_progress_limit`. `max_fix_attempts` is the exception, kept as a config field by
+   [ADR-003](docs/dev-agents/adr/ADR-003-review-and-fix-rounds.md). Something re-earns its place only when its
    absence breaks the skill.
 4. **Apply the conventions above**: the [Skill template](#skill-template), every invocation setting,
    `agents/openai.yaml`.

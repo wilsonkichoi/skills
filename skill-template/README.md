@@ -87,9 +87,9 @@ skills read alike; a skill with a reason can depart from those guidelines.
 - The doc block opens the body, one short line per item, in the order the template shows it. A
   reader should know what the skill needs and what it leaves behind before reading any step.
 - Numbered `## N.` sections in run order, one job each, ending in a step that reports back.
-- Around 150 lines, where the spec allows 500. Read it as a smell test, not a limit: past that, a
-  skill is usually carrying project policy rather than instructions, and the fix is moving the policy
-  out rather than compressing the prose.
+- Under 150 lines where possible, and under 250 so a person can read it, where the spec allows 500.
+  Read both as smell tests, not limits: past 150, a skill is usually carrying project policy rather
+  than instructions, and the fix is moving the policy out rather than compressing the prose.
 - A plain sibling `.md` next to `SKILL.md` is the default for supporting material.
 - `scripts/`, `references/`, `assets/` are optional. Add when it is useful and easy to maintain.
 

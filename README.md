@@ -95,18 +95,18 @@ validated before the next starts. See [AGENTS.md](./AGENTS.md) for how a skill i
 | [`wkc-help`](./skills/wkc-help/SKILL.md) | Answer questions about these skills, and install, pin, update, or remove them | shipped |
 | [`wkc-research`](./skills/wkc-research/SKILL.md) | Turn research and an interview into the product requirements document (`PRD.md`) | shipped |
 | [`wkc-architect`](./skills/wkc-architect/SKILL.md) | Turn approved product intent and the existing code into the technical specification (`SPEC.md`) and ADRs | shipped |
-| [`wkc-plan`](./skills/wkc-plan/SKILL.md) | Turn an approved spec into ordered milestones (`ROADMAP.md`), then tickets with dependencies for one milestone | shipped |
-| `wkc-backlog` | Take a new request or change between planning runs: judge whether it touches only tickets, the SPEC, or the PRD, send document changes to `wkc-architect` or `wkc-research`, then create, edit, split, re-order, or close tickets through `wkc-tracker` | planned |
-| `wkc-implement` | Take a ticket to a pull request: branch, build, stay current with `main`, resolve conflicts, and run the ticket's acceptance checks | planned |
-| `wkc-code-review` | Review a pull request against its ticket and acceptance criteria, in a context separate from the one that wrote it | planned |
+| [`wkc-plan`](./skills/wkc-plan/SKILL.md) | Turn an approved spec into ordered milestones (`ROADMAP.md`), then tickets with dependencies for one milestone. Planned: also take one change between planning runs (a request, a bug, or work discovered during a ticket), and refine, split, re-block, or cancel existing tickets | shipped |
+| `wkc-implement` | Take a ticket to a pull request: branch, build, stay current with `main`, resolve conflicts, and run the ticket's acceptance checks. Rerun after the merge to run the ticket's post-merge steps and move it to `done` | planned |
+| `wkc-code-review` | Review a pull request against its ticket and acceptance criteria, in a context separate from the one that wrote it, and fix the blocking findings it raised; each fix is reviewed again in a fresh context | planned |
 | [`wkc-skills-release`](./skills/wkc-skills-release/SKILL.md) | Publish this collection's tags and GitHub Releases | shipped, internal |
-| `wkc-yolo` | Check the milestone is ready and agree run limits before starting, then run it unattended: take tickets from `wkc-tracker next`, run `wkc-implement` and `wkc-code-review` on each, decide what the code reveals from the PRD, SPEC, ROADMAP, and milestone goal, record each decision, and stop when the milestone's exit check passes or an agreed limit is reached | planned |
+| `wkc-yolo` | Ask everything up front for a ticket, a wave, or a milestone (readiness, merge gate, permissions), then run it unattended: run `wkc-implement` and `wkc-code-review` on each ticket, merge where the project's `merge_gate` allows it, decide what the code reveals from the PRD, SPEC, ROADMAP, and milestone goal, record each decision, and stop when the scope is finished or an agreed limit is reached. The SPEC's run contract says how it selects, parallelizes, and resumes work | planned |
+| `wkc-retro` | Review a finished ticket, milestone, or run, and propose rule files for `rules_dir` from what worked and what did not; writes them only on approval | planned |
 
-`wkc-create-ticket`, `wkc-verify`, and `wkc-git-fu` were folded into the rows above. One request
-becoming tickets is `wkc-backlog`'s intake. Running the acceptance checks belongs to the skill that
+`wkc-create-ticket`, `wkc-verify`, `wkc-git-fu`, and `wkc-backlog` were folded into the rows above.
+One request becoming tickets, and changing existing tickets, belong to `wkc-plan`. Running the acceptance checks belongs to the skill that
 writes the code, and judging them belongs to the review. Branch and conflict work is part of taking
-a ticket to a pull request. `wkc-yolo` comes last because it only composes skills that already
-work by hand. It keeps its state in the tracker and git, not in one session, so a run can stop and
+a ticket to a pull request. `wkc-yolo` follows the implementation, review, and planning skills it
+composes, because it only runs skills that already work by hand. It keeps its state in the tracker and git, not in one session, so a run can stop and
 resume. Once the run starts, it asks nothing; the decisions it records are what a person reviews
 afterwards.
 
