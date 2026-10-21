@@ -11,22 +11,23 @@ one file cannot carry it. Skills share state only through files in the project
 
 This SPEC was written from the draft [PRD](./PRD.md) at the maintainer's request (2026-10-20),
 before the PRD was approved. It covers the shipped skills only where the remaining work changes
-them. The remaining work is `wkc-implement`, `wkc-code-review`, `wkc-yolo`, `wkc-retro`, change
-handling in `wkc-plan`, and two config fields.
+them. The remaining work is `wkc-implement`, `wkc-code-review`, `wkc-yolo`, `wkc-retro`,
+`wkc-backlog` (ticket planning, split out of `wkc-plan`), and two config fields.
 
 ```mermaid
 graph LR
   R[wkc-research] -->|PRD| A[wkc-architect]
   A -->|SPEC, ADRs| P[wkc-plan]
-  P -->|tickets| T[(wkc-tracker)]
+  P -->|approved milestone| B[wkc-backlog]
+  B -->|tickets| T[(wkc-tracker)]
   T -->|ready ticket| I[wkc-implement]
   I -->|PR, in-review| C[wkc-code-review]
   C -->|fixed: next round| C
   C -->|approve| M{merge gate}
   M -->|merged| I2[wkc-implement rerun]
   I2 -->|After merge steps, done| T
-  I -.->|discovered work| P
-  C -.->|discovered work| P
+  I -.->|discovered work| B
+  C -.->|discovered work| B
   I2 -.->|optional| X[wkc-retro]
   Y[wkc-yolo] -.->|runs one milestone of| I
 ```
@@ -39,7 +40,8 @@ graph LR
 | `wkc-tracker` | shipped, unchanged | Ticket state mechanics on three backends | verb and args | config |
 | `wkc-research` | shipped | PRD | free text | none |
 | `wkc-architect` | shipped | SPEC and ADRs | free text | PRD |
-| `wkc-plan` | shipped, changes | ROADMAP; tickets for one milestone; and now one change at a time (ADR-002) | milestone, or a change | PRD, SPEC, `wkc-tracker` |
+| `wkc-plan` | shipped, changes | ROADMAP only; hands an approved milestone to `wkc-backlog` (ADR-004) | a ROADMAP change, or none | PRD, SPEC, `wkc-tracker` reads |
+| `wkc-backlog` | new, from `wkc-plan` | Tickets for one milestone, or one change at a time (ADR-004) | milestone, or a change | PRD, SPEC, ROADMAP, `wkc-tracker` |
 | `wkc-implement` | new | One ticket from `ready` to PR, and after merge to `done` (ADR-001) | ticket id, or none | `wkc-tracker`, `git`, `gh`, `test_command` |
 | `wkc-code-review` | new | Review rounds on one PR: judge, fix blocking findings, record a verdict (ADR-003) | PR, ticket id, or none | `wkc-tracker`, `git`, `gh`, `max_fix_attempts` |
 | `wkc-yolo` | new | A ticket, a wave, or a milestone unattended, after one round of questions | ticket, `wave`, or milestone | the skills above, `merge_gate` |
@@ -54,19 +56,21 @@ section. `assign <id>` already claims a ticket and sets `in-progress` in one wri
 
 **Existing code that changes.**
 
-- `wkc-plan` stays one `SKILL.md`. It takes a milestone or one change: a request, a bug, or
+- `wkc-plan` keeps only the ROADMAP. It reads the tracker through `wkc-tracker`, writes no ticket,
+  and returns to manual invocation. Its ticket drafting, graph check, approval, and publishing move
+  to `wkc-backlog` (ADR-004).
+- `wkc-backlog` is one `SKILL.md`. It takes a milestone or one change: a request, a bug, or
   discovered work, or a refinement, split, re-block, or cancel of existing tickets. Both run the
-  same read, draft, graph check, approval, and publish steps. It grows from 211 lines to about 250:
-  past the 150-line aim, near the 250 lines a skill tries to stay under
-  ([AGENTS.md Prose](../../AGENTS.md#prose)), and within the spec's 500.
+  same read, draft, graph check, approval, and publish steps. It sits near 240 lines: past the
+  150-line aim, under the 250 lines a skill tries to stay under ([AGENTS.md Prose](../../AGENTS.md#prose)).
   Supporting files were rejected because a model reading through a second reference skips
-  instructions, which the maintainer has observed (ADR-002).
-- Today's rule "never change a reused ticket" becomes: **an existing ticket changes only as shown in
-  the approved draft**, and the draft names the holder of any `in-progress` or `in-review` ticket it
-  changes. A split creates the children and moves dependents' edges to them before the parent is
-  canceled. A cancel names each ticket left with a `cancel` blocker. An `in-progress` or
-  `in-review` parent's status is never copied to children.
-- `wkc-plan` gains the `## After merge` section and the split rule below.
+  instructions, which the maintainer has observed (ADR-002, ADR-004).
+- `wkc-plan`'s old rule "never change a reused ticket" becomes, in `wkc-backlog`: **an existing
+  ticket changes only as shown in the approved draft**, and the draft names the holder of any
+  `in-progress` or `in-review` ticket it changes. A split creates the children and moves dependents'
+  edges to them before the parent is canceled. A cancel names each ticket left with a `cancel`
+  blocker. An `in-progress` or `in-review` parent's status is never copied to children.
+- `wkc-backlog` writes the `## After merge` section and follows the split rule below.
 - `wkc-setup`'s Linear notes say the Linear GitHub integration is not needed, and that if a team has
   it, its PR automations may move tickets on their own.
 - `wkc-setup` Section D gains the two fields, and `config-template.md` lists them.
@@ -95,7 +99,7 @@ procedures stay in the config's free-text **Conventions**, and `## After merge` 
 
 ### Ticket
 
-Written by `wkc-plan`, read by `wkc-implement`, `wkc-code-review`, and `wkc-yolo`. It is the
+Written by `wkc-backlog`, read by `wkc-implement`, `wkc-code-review`, and `wkc-yolo`. It is the
 [wkc-tracker shape](../../skills/wkc-tracker/SKILL.md#5-ticket-shape) plus `## Why` and
 `## After merge`. Drop a section that would say nothing. A work ticket, titled `<area>: <outcome in a few words>`:
 
@@ -322,29 +326,30 @@ work outside their ticket's scope, they comment on their own ticket:
 Discovered: <what>. Out of scope because <why>. Blocks this ticket: yes | no.
 ```
 
-Then they hand the item to `wkc-plan` as a change. A blocker goes at once, because the build or
+Then they hand the item to `wkc-backlog` as a change. A blocker goes at once, because the build or
 review stops anyway. Other items go at the end of the session: after the handoff for
 `wkc-implement`, and after the verdict for `wkc-code-review`, so planning never shapes the review
-and the approval question is the session's last turn. In the manual loop, `wkc-plan` drafts and
+and the approval question is the session's last turn. In the manual loop, `wkc-backlog` drafts and
 asks for approval as usual. Under `wkc-yolo`, the skill returns the items to `wkc-yolo` instead,
-which calls `wkc-plan` for them one at a time, so parallel tickets never file the same work twice.
+which calls `wkc-backlog` for them one at a time, so parallel tickets never file the same work twice.
 The comment stays as the record `wkc-retro` reads. New tickets land at `backlog`. When the work blocks the current ticket,
-`wkc-plan` links it as a blocker, and the current ticket keeps its status and holder. It is not on
+`wkc-backlog` links it as a blocker, and the current ticket keeps its status and holder. It is not on
 the frontier, so its holder or `wkc-yolo` returns to it by id once the blocker is `done`.
 
 ### Invocation
 
-`wkc-implement`, `wkc-code-review`, and `wkc-plan` opt into model invocation (maintainer,
-2026-10-20): `disable-model-invocation: false` and `policy.allow_implicit_invocation: true`. Each
-body declares its callers: people, `wkc-yolo`, and a model acting on a person's request. A model
-runs one only when a person or `wkc-yolo` asked for that work. `wkc-implement` never starts
-`wkc-code-review` itself, because the review must not run in the context that wrote the code.
-`wkc-yolo`, `wkc-retro`, `wkc-research`, `wkc-architect`, and `wkc-setup` stay manual: a run that
+`wkc-implement`, `wkc-code-review`, and `wkc-backlog` opt into model invocation (maintainer,
+2026-10-20; `wkc-backlog` took `wkc-plan`'s place on 2026-10-21): `disable-model-invocation: false`
+and `policy.allow_implicit_invocation: true`. Each body declares its callers: people, `wkc-yolo`,
+and a model acting on a person's request, plus `wkc-plan` for `wkc-backlog`. A model runs one only
+when a person or `wkc-yolo` asked for that work. `wkc-implement` never starts `wkc-code-review`
+itself, because the review must not run in the context that wrote the code. `wkc-yolo`,
+`wkc-retro`, `wkc-research`, `wkc-architect`, `wkc-plan`, and `wkc-setup` stay manual: a run that
 can merge, and a write to rules or product documents, starts only when a person types it.
 
 ### Unattended calls
 
-When `wkc-yolo` calls `wkc-implement`, `wkc-code-review`, or `wkc-plan`, it says so in the call and
+When `wkc-yolo` calls `wkc-implement`, `wkc-code-review`, or `wkc-backlog`, it says so in the call and
 passes the run's limits. Under such a call, a skill never ends its turn on a question:
 
 - It decides from the ticket, PRD, SPEC, ROADMAP, and run limits, and records the decision as a
@@ -363,7 +368,7 @@ Parked (wkc-yolo): <question>
 Open because: <what the documents and limits leave undecided>
 Needs: <who must answer>
 ```
-- `wkc-plan` approval under a run publishes tickets at `backlog` only. In a milestone run,
+- `wkc-backlog` approval under a run publishes tickets at `backlog` only. In a milestone run,
   `wkc-yolo` moves one to `ready` only when the milestone's exit check needs it, and records that
   decision. In a ticket or wave run, it never adds tickets to the scope: a ticket that needs a new
   prerequisite is parked.
@@ -395,7 +400,7 @@ runs record their ticket ids and never grow; a milestone run takes each new wave
    run only when that run has stopped, as its report or its time limit shows. On GitHub and Linear, run them in
    parallel, at most 5 at once, each in its own worktree and subagent. On the local backend, run
    one at a time in the directory where the run started, because a branch's ticket files are invisible from `main`
-   until it merges ([local.md](../../skills/wkc-tracker/local.md)). Tickets `wkc-plan` named as a
+   until it merges ([local.md](../../skills/wkc-tracker/local.md)). Tickets `wkc-backlog` named as a
    coordination risk with each other run one at a time. For each: implement, review rounds in fresh
    subagent contexts, merge when the gate allows, rerun implement to finish. Merges run one at a
    time (see Failure handling). Read fresh tracker state before starting each ticket.
@@ -442,7 +447,7 @@ Input: a ticket, a milestone, or a finished run. Reads the tickets' comments (de
 work, verdicts), the PRs, the git log, and existing rule files. Proposes new or changed rule files
 in `rules_dir`, each with the rule, why (the evidence), and how to check it, following the shape of
 [simplicity.md](./rules/simplicity.md). Writes only on approval. Defects in skills or code become
-changes for `wkc-plan`, not rules. It never edits skills. `wkc-implement`'s finish report and
+changes for `wkc-backlog`, not rules. It never edits skills. `wkc-implement`'s finish report and
 `wkc-yolo`'s report mention it; nothing runs it automatically.
 
 ## Data
@@ -482,7 +487,7 @@ live in `rules_dir`. The one new file type is `wkc-yolo`'s run record, one per r
 
 - Each `SKILL.md` aims for under 150 lines and tries to stay under 250, so a person can read it
   ([AGENTS.md Prose](../../AGENTS.md#prose)). Neither is a hard limit; the Agent Skills
-  specification's limit is 500. `wkc-plan` is expected near 250 (ADR-002).
+  specification's limit is 500. `wkc-backlog` is expected near 240 (ADR-004).
 - At most 6 extra AI test sessions per change. Runbooks run on Claude Code; Codex and Kiro are SKIP.
 - Each port adds `validation/wkc-<name>.md` with a few simple cases, each with an independent check.
 - `wkc-yolo` performs no merge, publish, or deploy outside its recorded limits. Its runbook checks this.
@@ -495,7 +500,7 @@ From the PRD non-goals:
   later (2026-10-20); each needs its own written reason ([AGENTS.md Distribution](../../AGENTS.md#distribution)).
 - No per-harness copies or consumer build step.
 - No skill merges, publishes, or deploys on its own authority.
-- No `wkc-backlog`, `wkc-fix`, `wkc-qa`, `wkc-verify`, `wkc-git-fu`, or `wkc-create-ticket`.
+- No `wkc-fix`, `wkc-qa`, `wkc-verify`, `wkc-git-fu`, or `wkc-create-ticket`.
 - No status file beside the tracker, no priority, no separate ticket per step of one change.
 - No scripts in installed skills unless a concrete failure requires one. Branch setup is written as
   instructions.
@@ -522,7 +527,7 @@ the previous tag. Each port also updates the README roster, the repository map u
 | PRD goal | Delivered by |
 |---|---|
 | 1. Ticket from `ready` to `done` | `wkc-implement`, `wkc-code-review`; Lifecycle, PR body, Review verdict; ticket shape; ADR-001, ADR-003 |
-| 2. Plans follow changes | `wkc-plan` change handling; Discovered work; ADR-002 |
+| 2. Plans follow changes | `wkc-backlog`; `wkc-plan` for ROADMAP changes; Discovered work; ADR-004 |
 | 3. Unattended milestone | `wkc-yolo`; Unattended calls; `merge_gate` |
 | 4. Learnings become rules | `wkc-retro` |
 | 5. Small and readable | Requirements; Boundaries; one `SKILL.md` per skill |
@@ -530,25 +535,26 @@ the previous tag. Each port also updates the README roster, the repository map u
 ## Decisions
 
 - Ticket lifecycle and definition of done: [ADR-001](./adr/ADR-001-ticket-lifecycle.md).
-- `wkc-plan` absorbs `wkc-backlog`: [ADR-002](./adr/ADR-002-plan-absorbs-backlog.md).
+- `wkc-backlog` owns tickets and `wkc-plan` the ROADMAP: [ADR-004](./adr/ADR-004-backlog-separate-from-plan.md),
+  which supersedes [ADR-002](./adr/ADR-002-plan-absorbs-backlog.md).
 - The reviewer fixes its own findings in fresh-context rounds: [ADR-003](./adr/ADR-003-review-and-fix-rounds.md).
 - Merge outside a run is a person's, in GitHub or with `gh`. No merge skill.
 - PRs carry no status labels.
 - `wkc-tracker next` stays as is; `wkc-yolo` selects work as its run contract says (Contracts, wkc-yolo run).
 - `wkc-implement` checks for uncommitted documents before branching.
 - `wkc-retro` is manual and optional, and writes rules only on approval.
-- `wkc-plan` writes every ticket, for a milestone or one change, from one `SKILL.md`. No other skill
+- `wkc-backlog` writes every ticket, for a milestone or one change, from one `SKILL.md`. No other skill
   creates or edits tickets beyond its own ticket's state and comments.
 - An existing ticket changes only as shown in the approved draft.
 - `wkc-yolo` scope is a ticket, a wave, or a milestone; parallelism and stopping follow its run contract.
-- `wkc-implement`, `wkc-code-review`, and `wkc-plan` opt into model invocation; see Invocation.
+- `wkc-implement`, `wkc-code-review`, and `wkc-backlog` opt into model invocation; see Invocation.
 - Codex and Kiro support subagents (maintainer, 2026-10-20). Trouble starting one is filed as a bug.
 - On Linear, PRs link with `Related to <ID>` only.
 - `wkc-yolo`'s limits live in one record per run, `docs/dev-agents/runs/<milestone-slug>-<YYYYMMDDTHHMM>.md`,
   which git ignores through the folder's own `.gitignore`.
 - A post-merge gate that fails because of the ticket's change is fixed by a follow-up PR on the
   same ticket, never by a new ticket.
-- `wkc-implement` and `wkc-code-review` hand discovered work to `wkc-plan` themselves in the manual
+- `wkc-implement` and `wkc-code-review` hand discovered work to `wkc-backlog` themselves in the manual
   loop, and through `wkc-yolo` during a run.
 - Records have literal templates for writers and tolerant readers, with no validator. agent-toolkit's
   work-summary validator and its binding rules are the machinery this replaces.
@@ -556,14 +562,14 @@ the previous tag. Each port also updates the README roster, the repository map u
 
 ## Risks and dependencies
 
-- `wkc-plan` change handling and its ticket templates come first: `wkc-implement` and
-  `wkc-code-review` hand discovered work to it, and every later ticket uses its templates. It and
-  the first `wkc-implement` ticket are built by hand; later ports are built through `wkc-implement`.
+- `wkc-backlog` and its ticket templates come first: `wkc-implement` and `wkc-code-review` hand
+  discovered work to it, and every later ticket uses its templates. It and the first
+  `wkc-implement` ticket are built by hand; later ports are built through `wkc-implement`.
 - `wkc-code-review` depends on the PR body and the ticket shape.
-- `wkc-plan` change handling depends on the ticket shape and is the riskiest edit to a shipped
-  skill: it is already past the 150-line aim and will sit near 250, and a longer file has more
-  instructions to skip.
-- Parallel tickets can conflict at merge; coordination risks from `wkc-plan` and serialized merges
+- `wkc-backlog` depends on the ticket shape and carries the most instructions of any skill, past
+  the 150-line aim. One SPEC-boundary failure is known: a criterion copied from a neighbouring
+  command's contract (PR #41, S2 and S10). It is a regression case in its runbook, not a solved problem.
+- Parallel tickets can conflict at merge; coordination risks from `wkc-backlog` and serialized merges
   limit that. Every merge after the first in a wave costs one more review round.
 - `wkc-yolo` validation runs parallel subagents, which needs the maintainer's approval under
   [token usage](./rules/token-usage.md): test sessions run one at a time, at most 6 per change.
@@ -580,6 +586,12 @@ None.
 
 ## Changes
 
+- 2026-10-21: `wkc-backlog` is a new component that owns ticket drafting and every ticket write, for
+  a milestone or one change; `wkc-plan` keeps only the ROADMAP and returns to manual invocation
+  (maintainer, ADR-004, superseding ADR-002). Discovered work, Invocation, Unattended calls, the
+  `wkc-yolo` run, `wkc-retro`, Requirements, Boundaries, Coverage, Decisions, and Risks name
+  `wkc-backlog` where they named `wkc-plan` for tickets. Replaced "`wkc-plan` stays one `SKILL.md`"
+  and the "No `wkc-backlog`" boundary. Review: ROADMAP M1 to M3.
 - 2026-10-21: Open unknown 1 answered: on Linear, a PR linked only by `Related to <ID>` left its
   issue's status alone through open, a comment review, and merge, while a `Fixes` control moved.
   The Linear contract keeps `Related to`; the check and its gaps are under Contracts, Linear.

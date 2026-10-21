@@ -5,7 +5,8 @@
     "research": { "x": 480, "y": 0 },
     "architect": { "x": 960, "y": 0 },
     "plan": { "x": 1440, "y": 0 },
-    "tracker": { "x": 1920, "y": 0 },
+    "backlog": { "x": 1920, "y": 0 },
+    "tracker": { "x": 2400, "y": 0 },
     "workflow-diagram": { "x": 480, "y": 440 },
     "help": { "x": 960, "y": 440 },
     "skills-release": { "x": 1440, "y": 440 }
@@ -23,29 +24,40 @@
       "start": [1200, 80],
       "segments": [[1280, 80, 1360, 80, 1440, 80]]
     },
-    "plan-tracker": {
+    "plan-backlog": {
       "start": [1680, 80],
       "segments": [[1760, 80, 1840, 80, 1920, 80]]
+    },
+    "backlog-tracker": {
+      "start": [2160, 80],
+      "segments": [[2240, 80, 2320, 80, 2400, 80]]
+    },
+    "plan-tracker": {
+      "start": [1560, 160],
+      "segments": [
+        [1560, 210, 1600, 240, 2000, 240],
+        [2440, 240, 2480, 210, 2480, 160]
+      ]
     },
     "architect-tracker": {
       "start": [1080, 160],
       "segments": [
-        [1080, 250, 1120, 280, 1560, 280],
-        [2000, 280, 2040, 250, 2040, 160]
+        [1080, 250, 1120, 280, 1800, 280],
+        [2520, 280, 2560, 250, 2560, 160]
       ]
     },
     "setup-tracker": {
       "start": [120, 0],
       "segments": [
-        [120, -90, 150, -120, 1080, -120],
-        [2010, -120, 2040, -90, 2040, 0]
+        [120, -90, 150, -120, 1200, -120],
+        [2490, -120, 2520, -90, 2520, 0]
       ]
     }
   },
   "regions": [
     { "lane": "configuration", "x": -24, "y": -52, "width": 288, "height": 236 },
-    { "lane": "planning", "x": 456, "y": -52, "width": 1248, "height": 236 },
-    { "lane": "coordination", "x": 1896, "y": -52, "width": 288, "height": 236 },
+    { "lane": "planning", "x": 456, "y": -52, "width": 1728, "height": 236 },
+    { "lane": "coordination", "x": 2376, "y": -52, "width": 288, "height": 236 },
     { "lane": "documentation", "x": 456, "y": 388, "width": 768, "height": 236 },
     { "lane": "independent", "x": 1416, "y": 388, "width": 288, "height": 236 }
   ]

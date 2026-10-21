@@ -133,14 +133,14 @@ by 17, it says so and writes nothing. That check matters because GitHub and Line
 success for removing an edge that was never there.
 
 Neither `edit` nor `unlink` judges whether a change makes sense. The caller, whether that is you,
-`wkc-plan`, or an agent you gave the job, decides what the tickets should say and how they relate.
+`wkc-backlog`, or an agent you gave the job, decides what the tickets should say and how they relate.
 The tracker carries it out and keeps the graph valid.
 
 **`milestone`** makes sure a milestone exists before tickets go into it:
 `/wkc-tracker milestone "M2: Reply handling"`. It creates an open one when nothing has that name, and
 leaves an existing open one alone. It never renames, closes, or reopens a milestone: a closed one is
 reported, and reopening it is your call. In local markdown there is nothing to create, since a
-milestone exists as soon as a ticket carries it. `wkc-plan` uses it before creating a milestone's
+milestone exists as soon as a ticket carries it. `wkc-backlog` uses it before creating a milestone's
 tickets.
 
 `/wkc-tracker milestone list` and `/wkc-tracker milestone show "M2: Reply handling"` only read.

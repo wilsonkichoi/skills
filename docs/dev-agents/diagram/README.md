@@ -8,14 +8,14 @@ Narrow layouts keep the full-width bottom sheet.
 The default zoom is 70%, or smaller when needed to fit. Selection centers the card in available space at the current zoom.
 Closing slides the panel away without changing card positions or zoom.
 Tinted boxes group Configuration, Planning, Coordination, Documentation, and Independent cards. Purple, blue, green, amber, and gray distinguish those regions in both themes.
-The map contains all eight shipped definitions in this repository: `wkc-setup`, `wkc-research`, `wkc-architect`,
-`wkc-plan`, `wkc-tracker`, `wkc-workflow-diagram`, `wkc-help`, and internal `wkc-skills-release`.
+The map contains all nine shipped definitions in this repository: `wkc-setup`, `wkc-research`, `wkc-architect`,
+`wkc-plan`, `wkc-backlog`, `wkc-tracker`, `wkc-workflow-diagram`, `wkc-help`, and internal `wkc-skills-release`.
 Planned skills are excluded.
 Every card is a skill. External systems, outputs, and results appear in the owning skill's details.
 The four system cards and their six action arrows are removed at the user's direction.
 
 The map exists to show how the skills connect in a development workflow, so a person knows which one to run next.
-The main flow runs left to right in one row: setup, research, architect, plan, tracker.
+The main flow runs left to right in one row: setup, research, architect, plan, backlog, tracker.
 Documentation and Independent cards sit in a lower row, out of the main flow, at the user's direction.
 Card order (Previous/Next) and lane chip order follow the same flow.
 
@@ -43,7 +43,8 @@ The arrows do not claim automatic skill invocation. Help's installer operations 
 | wkc-skills-release | [skills/wkc-skills-release/SKILL.md](../../../skills/wkc-skills-release/SKILL.md) | Internal maintainer skill; clean synchronized main and authenticated GitHub access; merged collection publication without setup |
 | wkc-research | [skills/wkc-research/SKILL.md](../../../skills/wkc-research/SKILL.md) | Writes only the PRD at `prd_file`; approval status line; no tracker; callers are people |
 | wkc-architect | [skills/wkc-architect/SKILL.md](../../../skills/wkc-architect/SKILL.md) | Writes only the SPEC at `spec_file` and ADRs; `wkc-tracker list` when updating with a configured tracker; callers are people |
-| wkc-plan | [skills/wkc-plan/SKILL.md](../../../skills/wkc-plan/SKILL.md) | Writes the ROADMAP at `roadmap_file`; one milestone or one change; tickets from the SPEC templates; every ticket read and write through `wkc-tracker` verbs; callers are people, `wkc-yolo`, and a model acting on a person's request |
+| wkc-plan | [skills/wkc-plan/SKILL.md](../../../skills/wkc-plan/SKILL.md) | Writes only the ROADMAP at `roadmap_file`; reads milestones through `wkc-tracker`; option 1 of its approval hands a milestone to `wkc-backlog`; callers are people |
+| wkc-backlog | [skills/wkc-backlog/SKILL.md](../../../skills/wkc-backlog/SKILL.md) | One milestone or one change; tickets from the SPEC templates; every ticket read and write through `wkc-tracker` verbs; callers are people, `wkc-plan`, `wkc-yolo`, and a model acting on a person's request |
 
 | Edge | Kind | Source evidence |
 | --- | --- | --- |
@@ -51,7 +52,9 @@ The arrows do not claim automatic skill invocation. Help's installer operations 
 | setup → tracker: Tracker config | Handoff, solid | Setup's What it does: writes `docs/dev-agents/config.md`, "which `wkc-tracker` reads"; its report's next step is `wkc-tracker list`. Tracker section 1 stops and asks for `wkc-setup` when the config names no backend |
 | research → architect: Approved PRD | Handoff, dashed | Research's Output: "`wkc-architect` reads an approved PRD next"; section 5 names it as the next step. Architect section 1 requires an approved PRD or offers to proceed on stated intent |
 | architect → plan: Approved SPEC | Handoff, dashed | Architect's Output: "`wkc-plan` reads an approved SPEC next"; section 6 names it as the next step. Plan section 1 requires an approved SPEC or offers to plan from stated intent |
-| plan → tracker: Manages tickets | Call, solid | Plan's Dependencies name `wkc-tracker` for `list`, `show`, `milestone`, `create`, `edit`, `link`, `unlink`, and `move`; plan reaches tickets only through those verbs, and section 6 publishes through them |
+| plan → backlog: Approved milestone | Handoff, dashed | Plan section 3: option 1 approves the ROADMAP, then invokes `wkc-backlog` for the named milestone; its report names `wkc-backlog <milestone>` as the next step. Backlog section 1 needs an approved ROADMAP for a milestone, or offers to plan from stated intent |
+| backlog → tracker: Manages tickets | Call, solid | Backlog's Dependencies name `wkc-tracker` for `list`, `show`, `milestone`, `create`, `edit`, `link`, `unlink`, and `move`; backlog reaches tickets only through those verbs, and section 5 publishes through them |
+| plan → tracker: Reads milestones | Call, dashed | Plan's Dependencies name `wkc-tracker` for reads only; section 1 reads `milestone list` and `milestone show`, and plans without the tracker when it cannot run |
 | architect → tracker: Lists tickets | Call, dashed | Architect's Dependencies and section 4: on a contract change with a configured tracker, list open tickets through the `wkc-tracker` `list` verb |
 
 Setup and diagram file outputs are described in their own cards. Setup's label creation and tracker's GitHub Issues operations use
@@ -113,6 +116,15 @@ Desktop light overview and phone dark details screenshots were visually inspecte
 The phone sheet scrolls independently; commands below the fold remain reachable.
 
 ## Implementation verification
+
+### wkc-backlog split, 2026-10-21
+
+`wkc-backlog` takes over tickets from `wkc-plan` (ADR-004). New `backlog` card in Planning between plan and tracker; plan → backlog
+(Approved milestone, dashed) and backlog → tracker (Manages tickets, solid) are new; plan → tracker became Reads milestones, dashed, routed
+below the row. Tracker moved one column right; the Planning and Coordination regions and the architect → tracker and setup → tracker
+routes follow it. Node **v24.11.1**: check and build passed with no warnings. Chrome through Playwright loaded the HTML offline at
+1440 × 900 in light mode with no page errors, and the overview was inspected: no arrow crosses a card. The tracked screenshots were not
+regenerated and predate this layout.
 
 ### wkc-plan change handling, 2026-10-21
 

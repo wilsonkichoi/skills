@@ -76,7 +76,7 @@ and the old one's status becomes `superseded by ADR-NNN`.
 
 When a decision depends on what a service or library can do today, check its current
 documentation instead of relying on memory. An unknown that reading cannot settle becomes a spike
-for `wkc-plan`: name the question the spike must answer and the section it blocks. Do not write
+for `wkc-backlog`: name the question the spike must answer and the section it blocks. Do not write
 experimental code to answer it.
 
 ## 4. Write the SPEC

@@ -1,6 +1,6 @@
 # ADR-002: wkc-plan absorbs wkc-backlog
 
-Date: 2026-10-20. Status: accepted
+Date: 2026-10-20. Status: superseded by ADR-004
 
 ## Context
 

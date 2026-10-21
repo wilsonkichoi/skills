@@ -138,10 +138,10 @@
       "id": "plan",
       "label": "wkc-plan",
       "lane": "planning",
-      "summary": "Write the ROADMAP for an approved SPEC, then draft and publish one milestone's tickets, or one change to the tickets, through wkc-tracker.",
+      "summary": "Write or update the ROADMAP, the ordered milestones that deliver an approved SPEC.",
       "details": {
-        "body": "Orders milestones by dependency and risk, and drafts one milestone's tickets, or one change, from the SPEC's ticket templates with a checked dependency graph. Output: the ROADMAP at `roadmap_file`; after approval, tickets created, edited, linked, and moved only through wkc-tracker verbs.",
-        "when": "Use when a design needs milestones and tickets, or for one change: a request, a bug, discovered work, or a split, re-block, or cancel.",
+        "body": "Orders milestones by dependency and risk, each with an outcome and an exit check, and reads milestones through wkc-tracker. Output: the ROADMAP at `roadmap_file`, with no tickets; an approved milestone goes to wkc-backlog.",
+        "when": "Use when a design needs milestones, or when a change adds, moves, or drops milestone scope.",
         "commands": [
           {
             "label": "Codex",
@@ -158,8 +158,38 @@
             "href": "skills/wkc-plan/SKILL.md"
           },
           {
+            "label": "ROADMAP outline",
+            "href": "skills/wkc-plan/SKILL.md#2-write-the-roadmap"
+          }
+        ]
+      }
+    },
+    {
+      "id": "backlog",
+      "label": "wkc-backlog",
+      "lane": "planning",
+      "summary": "Draft one milestone's tickets, or one change to the tickets, and publish them through wkc-tracker.",
+      "details": {
+        "body": "Drafts tickets from the SPEC's ticket templates with a checked dependency graph, after reading the PRD, SPEC, ROADMAP, and existing tickets. Output: after approval, tickets created, edited, linked, and moved only through wkc-tracker verbs.",
+        "when": "Use when a milestone needs tickets, or for one change: a request, a bug, discovered work, or a split, re-block, or cancel.",
+        "commands": [
+          {
+            "label": "Codex",
+            "text": "$wkc-backlog"
+          },
+          {
+            "label": "Claude Code / Kiro CLI",
+            "text": "/wkc-backlog"
+          }
+        ],
+        "links": [
+          {
+            "label": "Read the wkc-backlog skill",
+            "href": "skills/wkc-backlog/SKILL.md"
+          },
+          {
             "label": "Publishing order",
-            "href": "skills/wkc-plan/SKILL.md#6-publish"
+            "href": "skills/wkc-backlog/SKILL.md#5-publish"
           }
         ]
       }
@@ -316,10 +346,24 @@
       "label": "Approved SPEC"
     },
     {
+      "id": "plan-backlog",
+      "from": "plan",
+      "to": "backlog",
+      "kind": "optional",
+      "label": "Approved milestone"
+    },
+    {
+      "id": "backlog-tracker",
+      "from": "backlog",
+      "to": "tracker",
+      "label": "Manages tickets"
+    },
+    {
       "id": "plan-tracker",
       "from": "plan",
       "to": "tracker",
-      "label": "Manages tickets"
+      "label": "Reads milestones",
+      "kind": "optional"
     },
     {
       "id": "architect-tracker",
