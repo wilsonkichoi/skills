@@ -295,3 +295,16 @@ After PR review, two `SKILL.md` changes, checked statically only because the six
 links before it unlinks, except a link that would close a cycle through a removed edge, which waits for that unlink
 (checked by hand on `A blocked-by B` reversed to `B blocked-by A`); and the SPEC-gap rule names stated assumptions.
 `wc -l` 249, templates still `diff` clean, no em dash. Neither change has model evidence.
+
+### Review-fix run, 2026-10-21
+
+The maintainer approved up to three sessions past the six for the two review fixes. Same harness, model, effort, and
+fixtures, with `68fea45` installed; approval given in the user's first message. Two sessions used, about 61k and 66k
+subagent tokens.
+
+| Session | Check | Result | Evidence |
+|---|---|---|---|
+| S7 | Re-block that reverses an edge (005 blocked by 004 becomes 004 blocked by 005) | PASS | Draft said the `unlink` must run first because linking first closes a cycle. The transcript shows two tool calls: 005 `['004']` to `[]`, then 004 `['002']` to `['002', '005']`. Files by PyYAML match; status and assignee unchanged. |
+| S8 | SPEC-gap rule on the S2 scenario; options; move to `ready` | Gap rule PASS; options PASS; publication not run | The draft filled no gap: a `Decision:` ticket holds the missing-file, `notes list` invalid-file, and first-id behaviour and blocks storage, and the `notes list` ticket asserts nothing the SPEC lacks. Four milestone options, option 1 naming the decision tickets that stay at `backlog`. A harness safety classifier stopped the session's first publish call; `issues_dir` holds only `.gitkeep` and `git status` is clean. It drafted the PyPI-name open unknown as a `Decision:` ticket, where S1 and S2 drafted a `Spike:`. |
+
+The move to `ready` after approval remains unrun on the current text.
