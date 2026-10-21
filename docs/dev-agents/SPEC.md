@@ -73,6 +73,11 @@ section. `assign <id>` already claims a ticket and sets `in-progress` in one wri
 
 ## Contracts
 
+Every record a skill writes has a literal template below, and the writer follows it exactly. Readers
+look for the facts they need, such as a PR URL or a head sha, and report a fact that is missing. No
+skill rejects a record over formatting, and no validator or script checks one. Each writing skill
+copies its own templates into its `SKILL.md`.
+
 ### Config fields
 
 Added to `docs/dev-agents/config.md` by `wkc-setup`, in the PR that first reads them:
@@ -121,38 +126,89 @@ change never become their own ticket.
 | Step | Actor | Status after | Record |
 |---|---|---|---|
 | Claim | `wkc-implement` via `assign <id>` | `in-progress` | assignee |
-| PR opened, checks run | `wkc-implement` | `in-review` | PR body; ticket comment with the PR URL |
+| PR opened, checks run | `wkc-implement` | `in-review` | PR body; handoff comment |
 | Review round | `wkc-code-review` | `in-review` | verdict comment |
 | Review stopped | `wkc-code-review` | `in-review` | verdict `stopped`; a person decides |
 | Merge | a person, or `wkc-yolo` when `merge_gate: agent` | `in-review` | merge commit |
-| Rerun, no post-merge gate | `wkc-implement` | `done` | ticket comment: merge commit, checks |
-| Rerun, with post-merge gates | `wkc-implement` | `in-progress`, then `done` | ticket comment per gate: the merge commit, the release or environment, the command, and the validation result |
-| Step blocked or failed | `wkc-implement` | `in-progress` | ticket comment naming what is left and who must act |
+| Rerun, no post-merge gate | `wkc-implement` | `done` | finish comment |
+| Rerun, with post-merge gates | `wkc-implement` | `in-progress`, then `done` | gate comment per gate |
+| Gate failed, cause in this ticket's change | `wkc-implement` | `in-progress`, then `in-review` | gate comment; follow-up PR |
+| Same gate fails again for the same cause | `wkc-implement` | `in-progress` | stops for a person; under `wkc-yolo`, parked |
+| Step needs authority or cannot run | `wkc-implement` | `in-progress` | ticket comment naming what is left and who must act |
+
+**Follow-up PR.** A merged PR cannot be reopened, so a defect a post-merge gate finds is fixed in a
+new PR on the same ticket. `wkc-implement` branches from the current `main`, fixes or reverts the
+change, opens a PR with the follow-up line in its body, and moves the ticket to `in-review`.
+Review rounds run as for any PR. After that merge, the rerun runs every post-merge gate again
+against the new merge commit; a release that shipped the bad build ships a new patch version. A
+failure whose cause is outside the ticket, such as another ticket's defect or broken infrastructure,
+is discovered work that blocks the ticket.
 
 Before branching, `wkc-implement` checks `git status` for uncommitted changes to `prd_file`,
 `spec_file`, `roadmap_file`, ADRs, and `issues_dir`. If it finds any, it stops and asks for them to
 be committed, or offers to work in the current checkout. A fresh worktree cannot see them:
 `make worktree` copies only gitignored files ([tools/branch.sh](../../tools/branch.sh)).
 
-`wkc-implement` picks its mode from the ticket and PR state, not an argument: no PR, or an open PR
-whose handoff is incomplete, build; an open PR with a complete handoff, report its review state; a
-merged PR, finish. A handoff is complete when the ticket is `in-review` and carries the PR-URL
-comment. On a ticket the caller already holds, build continues the existing branch and PR instead
+`wkc-implement` picks its mode from the ticket and its latest PR, not an argument: no PR, or an
+open PR whose handoff is incomplete, build; an open PR with a complete handoff, report its review
+state; a merged PR, finish. A handoff is complete when the ticket is `in-review` and carries a
+handoff comment naming that PR. On a ticket the caller already holds, build continues the existing branch and PR instead
 of claiming again, and finishes any missing handoff writes, each verified. A merged PR counts only when the
 host reports it `MERGED` with a merge commit; a queued or auto-merge PR is still open. With no argument, it first reports the caller's
 `in-review` tickets whose PRs merged, then offers `wkc-tracker next`.
 
 ### PR body
 
-Written by `wkc-implement`. Loose; no skill rejects a PR over formatting:
+Written by `wkc-implement`:
 
-- the ticket reference: `Refs #N` on GitHub, never `Closes`, `Fixes`, or `Resolves`; the Linear
-  identifier and URL; or the local ticket path;
-- what changed and why, in a few lines;
-- each acceptance criterion with the command run and its result, or why it could not run;
-- the `## After merge` steps still to come, if any.
+```markdown
+Refs #<N>
+Follow-up to <merged PR URL>: <gate> failed.   <!-- follow-up PRs only -->
+
+## What changed
+<What changed and why, in a few lines.>
+
+## Acceptance criteria
+- [x] <criterion>: `<command>` gave <result>.
+- [ ] <criterion>: not run, because <why>.
+
+## After merge
+- <step still to come>, or None.
+```
+
+The first line is the ticket reference: `Refs #N` on GitHub, never `Closes`, `Fixes`, or
+`Resolves`; `Related to <ID> <URL>` on Linear; or the ticket path on the local backend.
 
 PRs need a GitHub remote. Without one, `wkc-implement` stops at a pushed or local branch and says so.
+
+### Ticket comments from wkc-implement
+
+Handoff, posted when the PR is up and the ticket moves to `in-review`:
+
+```
+wkc-implement: in review
+PR: <URL>
+Head: <full sha>
+Checks: <passed> of <total> acceptance criteria passed. Details are in the PR body.
+```
+
+Gate, one per post-merge gate run:
+
+```
+wkc-implement gate: <step>
+Merge commit: <full sha>
+Release or environment: <tag, URL, or environment name, or none>
+Command: <command>
+Result: pass | fail | not run, <output summary or why>
+```
+
+Finish, posted on every rerun after a merge:
+
+```
+wkc-implement: done | waiting | follow-up
+Merged: <PR URL> at <merge commit sha>
+Gates: none | all passed | left: <steps, and who must act>
+```
 
 **Linear.** The skills do not need Linear's GitHub integration: `wkc-implement` writes every
 status through `wkc-tracker`, and without the integration nothing else moves a ticket. The PR body
@@ -192,15 +248,20 @@ is a defect, an unmet acceptance criterion, or a regression. Suggestions are nev
 
 ### Discovered work
 
-`wkc-implement` and `wkc-code-review` never create or edit other tickets. When they find work
-outside their ticket's scope, they comment on their own ticket:
+`wkc-implement` and `wkc-code-review` never create or edit other tickets themselves. When they find
+work outside their ticket's scope, they comment on their own ticket:
 
 ```
 Discovered: <what>. Out of scope because <why>. Blocks this ticket: yes | no.
 ```
 
-The work then goes to `wkc-plan` as a change: a person runs it in the manual loop, and `wkc-yolo`
-runs it during a run. New tickets land at `backlog`. When the work blocks the current ticket,
+Then they hand the item to `wkc-plan` as a change. A blocker goes at once, because the build or
+review stops anyway. Other items go at the end of the session: after the handoff for
+`wkc-implement`, and after the verdict for `wkc-code-review`, so planning never shapes the review
+and the approval question is the session's last turn. In the manual loop, `wkc-plan` drafts and
+asks for approval as usual. Under `wkc-yolo`, the skill returns the items to `wkc-yolo` instead,
+which calls `wkc-plan` for them one at a time, so parallel tickets never file the same work twice.
+The comment stays as the record `wkc-retro` reads. New tickets land at `backlog`. When the work blocks the current ticket,
 `wkc-plan` links it as a blocker, and the current ticket keeps its status and holder. It is not on
 the frontier, so its holder or `wkc-yolo` returns to it by id once the blocker is `done`.
 
@@ -254,7 +315,7 @@ runs record their ticket ids and never grow; a milestone run takes each new wave
    before anything else; adopted tickets get the same comment. A ticket may be adopted from another
    run only when that run has stopped, as its report or its time limit shows. On GitHub and Linear, run them in
    parallel, at most 5 at once, each in its own worktree and subagent. On the local backend, run
-   one at a time in the main checkout, because a branch's ticket files are invisible from `main`
+   one at a time in the directory where the run started, because a branch's ticket files are invisible from `main`
    until it merges ([local.md](../../skills/wkc-tracker/local.md)). Tickets `wkc-plan` named as a
    coordination risk with each other run one at a time. For each: implement, review rounds in fresh
    subagent contexts, merge when the gate allows, rerun implement to finish. Merges run one at a
@@ -272,11 +333,18 @@ budget is the most distinct tickets the run may admit: every ticket with this ru
 counts, a parked one or one later adopted by another run included, and resuming one costs nothing.
 The latest `Run:` comment on a ticket decides which run resumes it. The time budget runs from the
 record's start time. The tracker records the account, not the run, so the `Run:` comment is what
-ties a ticket to its run; a manual session that sees it knows a run holds the ticket. Each run writes its own
-record, `docs/dev-agents/runs/<milestone-slug>-<YYYYMMDDTHHMM>.md` in the main checkout, and never
-overwrites another run's. `wkc-yolo` passes the record's absolute path to every subagent, and a
-resumed run names the record it continues. It holds no ticket status, and `wkc-yolo` does not commit
-it; a project that wants the record kept commits it.
+ties a ticket to its run; a manual session that sees it knows a run holds the ticket.
+
+The record exists so that every agent in the run acts on the same authorization without asking:
+subagents in other contexts and worktrees read it, a resumed run keeps its limits, and the person
+reads afterwards what they authorized. A ticket or wave run has no single tracker object to hold
+it, and the local backend has no milestone comments, so it is a file. Each run writes its own
+record, `docs/dev-agents/runs/<milestone-slug>-<YYYYMMDDTHHMM>.md`, in the directory where the
+person started `wkc-yolo` (not in a ticket's worktree), and never overwrites another run's.
+Creating `docs/dev-agents/runs/` also writes `docs/dev-agents/runs/.gitignore` containing `*`, so
+records never appear in `git status` or land in a ticket's commit. A project that wants records
+kept removes that file. `wkc-yolo` passes the record's absolute path to every subagent, and a
+resumed run names the record it continues. It holds no ticket status.
 
 ```markdown
 # Run: <milestone>
@@ -397,7 +465,14 @@ the previous tag. Each port also updates the README roster, the repository map u
 - `wkc-implement`, `wkc-code-review`, and `wkc-plan` opt into model invocation; see Invocation.
 - Codex and Kiro support subagents (maintainer, 2026-10-20). Trouble starting one is filed as a bug.
 - On Linear, PRs link with `Related to <ID>` only.
-- `wkc-yolo`'s limits live in one record per run, `docs/dev-agents/runs/<milestone-slug>-<YYYYMMDDTHHMM>.md`.
+- `wkc-yolo`'s limits live in one record per run, `docs/dev-agents/runs/<milestone-slug>-<YYYYMMDDTHHMM>.md`,
+  which git ignores through the folder's own `.gitignore`.
+- A post-merge gate that fails because of the ticket's change is fixed by a follow-up PR on the
+  same ticket, never by a new ticket.
+- `wkc-implement` and `wkc-code-review` hand discovered work to `wkc-plan` themselves in the manual
+  loop, and through `wkc-yolo` during a run.
+- Records have literal templates for writers and tolerant readers, with no validator. agent-toolkit's
+  work-summary validator and its binding rules are the machinery this replaces.
 - Distribution, naming, versioning, and authoring rules stay as [AGENTS.md](../../AGENTS.md) records them.
 
 ## Risks and dependencies
@@ -428,6 +503,12 @@ the previous tag. Each port also updates the README roster, the repository map u
 
 ## Changes
 
+- 2026-10-20: Maintainer decisions. A failed post-merge gate gets a follow-up PR on the same ticket;
+  `wkc-implement` and `wkc-code-review` call `wkc-plan` for discovered work in the manual loop; the
+  run record folder ignores itself in git, and "main checkout" now says where the run started;
+  literal templates for the PR body and `wkc-implement`'s handoff, gate, and finish comments.
+  Replaced the loose PR body list, the "PR-URL comment", and "a person runs `wkc-plan`". Review:
+  ROADMAP M1 and M3.
 - 2026-10-20: Maintainer review. `SKILL.md` length is a target, under 150 and under 250 for
   readability, not a limit; marketplace and CI are later work, not permanent boundaries; evals and
   validation scripts are planned. Replaced "under 150, except `wkc-plan`" and "no CI in this

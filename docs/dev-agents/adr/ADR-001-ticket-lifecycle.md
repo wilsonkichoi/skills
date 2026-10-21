@@ -42,7 +42,12 @@ rerun makes `wkc-implement` hard to follow.
   to `in-review`. It stays `in-review` through review rounds. After merge, a rerun moves it to
   `done`, or to `in-progress` while its post-merge gates run and then to `done`. Each gate's
   evidence names the merge commit, the release or environment, and the validation result. A gate
-  that lacks authority, fails, or cannot run leaves it `in-progress` with a comment naming what is left.
+  that lacks authority or cannot run leaves it `in-progress` with a comment naming what is left.
+- **Failed gates.** A merged PR cannot be reopened. A gate that fails because of the ticket's
+  change gets a follow-up PR on the same ticket, from the current `main`, reviewed like any PR;
+  after it merges, every post-merge gate runs again (maintainer, 2026-10-20). A cause outside the
+  ticket is discovered work that blocks it. The same gate failing again for the same cause stops
+  for a person.
 - **References.** PRs never use closing keywords or Development associations. GitHub tickets use
   `Refs #N`.
 - **Labels.** PRs carry no status labels. The ticket's status is the state.
