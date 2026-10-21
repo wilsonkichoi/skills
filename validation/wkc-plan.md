@@ -308,3 +308,21 @@ subagent tokens.
 | S8 | SPEC-gap rule on the S2 scenario; options; move to `ready` | Gap rule PASS; options PASS; publication not run | The draft filled no gap: a `Decision:` ticket holds the missing-file, `notes list` invalid-file, and first-id behaviour and blocks storage, and the `notes list` ticket asserts nothing the SPEC lacks. Four milestone options, option 1 naming the decision tickets that stay at `backlog`. A harness safety classifier stopped the session's first publish call; `issues_dir` holds only `.gitkeep` and `git status` is clean. It drafted the PyPI-name open unknown as a `Decision:` ticket, where S1 and S2 drafted a `Spike:`. |
 
 The move to `ready` after approval remains unrun on the current text.
+
+### Second review fixes, 2026-10-21
+
+The second review found that the publish rule above could still expose a ticket during several reversals (A blocked by
+B and B blocked by C, reversed), and that S8 drafted a `Decision:` where the ticket asks for a `Spike:`. Two `SKILL.md`
+changes: the graph check derives an **Edge order** for existing tickets, in which no `link` or `unlink` leaves a cycle or
+leaves a ticket the approved graph blocks with no blocker, and publishing follows it; and an unresolved prerequisite is a
+spike when evidence can settle it, as for an **Open unknowns** entry, or a decision when only a person or `wkc-architect`
+can choose. `wc -l` 249, templates `diff` clean.
+
+One session, the third of the three approved, on a fixture with three `ready` M2 tickets (001 blocked by 002, 002
+blocked by 003) and no M1 tickets, two requests in sequence with option 1 given up front. About 88k subagent tokens.
+
+| Session | Check | Result | Evidence |
+|---|---|---|---|
+| S9, request A | Edge order on a double reversal | PASS | Draft gave the order unlink 001←002, link 002←001, unlink 002←003, link 003←002. The transcript's write commands run in that order (two calls repeated, same order). Files: 001 `[]`, 002 `['001']`, 003 `['002']`, all `ready` and unassigned. |
+| S9, request B | Spike for the open unknown; SPEC gaps; move to `ready` | PASS | 005 `Spike: is notes-cli free on PyPI?` with a timebox and PyPI evidence; the missing-file, first-id, and `notes list` error gaps went to decision 006, not into criteria. After the advance `1`, 004, 005, and 007 to 010 are `ready` with the approved blockers, 006 is `backlog`; PRD, SPEC, ROADMAP unchanged. |
+| S9, request B | Approval options | Observation | The question showed three options: dropping "Approve the ROADMAP" also dropped "publish nothing". S2 and S8 kept four on the same text. Not changed; no session left to validate a rewording. |

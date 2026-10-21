@@ -178,11 +178,12 @@ missing original leaves the work unresolved. A `cancel` ticket's work was droppe
 plan it here or name it as unresolved, and never link to, reuse, or reopen the canceled ticket.
 
 **Unresolved prerequisites** are work that no ticket delivers, such as a decision the SPEC has not
-made. Never invent an id. Prefer a real ticket and edge: a decision ticket or a spike, drafted now.
-Two tickets that share an undecided contract are both blocked by that one, never by each other.
-When the user would rather not add a ticket, record the gap in the dependent's **Notes** and keep
-it at `backlog`: a note is not an edge, and `wkc-tracker next` cannot see it. A person who moves it
-to `ready` puts it on the frontier anyway.
+made. Never invent an id. Prefer a real ticket and edge, drafted now: a spike when evidence can
+settle the question, as for an **Open unknowns** entry, or a decision ticket when only a person or
+`wkc-architect` can choose. Tickets sharing an undecided contract are blocked by that one ticket,
+not by each other. When the user would rather not add one, record the gap in the dependent's
+**Notes** and keep it at `backlog`: a note is not an edge, and `wkc-tracker next` cannot see it. A
+person who moves it to `ready` puts it on the frontier anyway.
 
 Check the graph as it will stand, existing edges included: every id resolves to a draft or a real
 ticket, no ticket blocks itself, and there is no cycle. Never publish a graph that fails. Derive:
@@ -191,6 +192,8 @@ ticket, no ticket blocks itself, and there is no cycle. Never publish a graph th
 - **Waves**, for two or more new tickets: wave 1 has no unmet blocker; each later wave's blockers
   sit in earlier waves. A possible schedule, never a promise of simultaneous work, time, or headcount.
 - **Coordination risks**: side-by-side tickets that edit one schema, migration, or config. No edge.
+- **Edge order** for existing tickets: no `link` or `unlink` may leave a cycle, or leave a ticket
+  the approved graph blocks with no blocker. If no order avoids both, name the ticket it exposes.
 
 ## 5. Approval
 
@@ -199,7 +202,7 @@ Show the ROADMAP or what changed in it, the milestone or change being planned, a
 - every new ticket in full, the reused tickets by id, and each existing ticket the draft changes,
   before and after. Name the holder of each `in-progress` or `in-review` ticket it changes, and
   each ticket a cancel or split leaves with a `cancel` blocker;
-- the edges as a table (ticket, blocked by), plus a Mermaid `graph LR` for review when it helps,
+- the edges as a table (ticket, blocked by), the edge order, a Mermaid `graph LR` when it helps,
   the waves, the first frontier, coordination risks, and unresolved prerequisites with what they hold;
 - what publishing will do: the milestone it creates, if any, N tickets at `backlog` with M edges,
   each existing ticket it edits, links, unlinks, or cancels, and the tickets it moves to `ready`.
@@ -226,9 +229,8 @@ Run the tracker writes in this order and stop at the first failure; they are har
 1. `wkc-tracker milestone <name>` for each milestone the new tickets need. If that fails, stop.
 2. `create` each new ticket in creation order, with its milestone, and its `## Blocked by` entries
    rewritten from draft ids to the tracker ids already returned.
-3. On existing tickets, `link` each new edge, then `unlink` each removed one, so no ticket reaches
-   the frontier early. A link that would close a cycle through a removed edge waits for that unlink.
-   `edit` each refined ticket. A `move <id> cancel` runs last, after the edges that replace it land.
+3. On existing tickets, `link` and `unlink` in the edge order, and `edit` each refined ticket. A
+   `move <id> cancel` runs last, after the edges that replace that ticket have landed.
 4. Read back: `list <milestone>` once for a milestone, and `show` each ticket a change touched.
    Every new ticket is there, at `backlog`, with exactly the approved blockers; every existing one
    shows exactly the drafted change, and its status and holder unless the draft changes them. A
@@ -236,14 +238,12 @@ Run the tracker writes in this order and stop at the first failure; they are har
 5. Only when all of that matched, `move <id> ready` for each ticket approved for `ready`. If
    publishing showed one is unsafe to start, leave it at `backlog` and ask.
 
-On a failure, report the ids created, their milestones, the edges and edits that landed, and what is
-missing. A rerun reads the milestone and `show`s each id the failed run reported, then creates only
-what is missing. Tickets an earlier run of this milestone left at `backlog` are part of this
-publication, not reused: check them like new ones, `link` any approved edge they lack before step 4,
-and option 1 moves them to `ready` too. Report, never remove, an edge that is not in the table.
+On a failure, report what landed and what is missing. A rerun reads the milestone and `show`s each
+reported id, then creates only what is missing. Tickets an earlier run left at `backlog` are part of
+this publication, not reused: check them like new ones, `link` any approved edge they lack before
+step 4, and option 1 moves them to `ready` too. Report, never remove, an edge not in the table.
 
 ## 7. Report
 
-Say what changed in the ROADMAP and its status line, the tickets created and changed with their ids
-or URLs and edges, which are `ready` and which stay at `backlog` and why, unresolved prerequisites,
-anything that failed, and what goes to `wkc-research` or `wkc-architect`.
+Report the ROADMAP change, tickets created or changed with ids or URLs and edges, which stay at
+`backlog` and why, unresolved prerequisites, failures, and work for `wkc-research` or `wkc-architect`.
