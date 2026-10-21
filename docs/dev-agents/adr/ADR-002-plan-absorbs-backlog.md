@@ -40,4 +40,4 @@ the same read, draft, graph check, approval, and publish steps. Document changes
 - Considered and rejected on 2026-10-20: `wkc-plan` handing every ticket to a revived `wkc-backlog`
   to create. Each planned milestone would cost a second skill load, a second read of the same
   documents, and a handoff, with nothing gained.
-- `.local/plan-wkc-backlog.md` and `.local/plan-wkc-create-ticket.md` become input for this change.
+- The maintainer's untracked drafts for `wkc-backlog` and `wkc-create-ticket` become input for this change.

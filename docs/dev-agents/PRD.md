@@ -9,7 +9,7 @@ the state of its tickets, and its conventions, and when it can take a ticket to 
 request without a person driving every step. The earlier toolkit, `agent-toolkit`, did this, but it
 became hard to maintain. It had per-harness plugin packaging and generated copies, a script
 collection, runtime contracts, rigid packet parsers, and tuning knobs
-([history](../../.local/history.md), [AGENTS.md Distribution](../../AGENTS.md#distribution)).
+([agent-toolkit](https://github.com/wilsonkichoi/agent-toolkit), [AGENTS.md Distribution](../../AGENTS.md#distribution)).
 Its replacement here was over-built once too: the first `wkc-manage` design grew to 335 lines across
 five runtime files before it was cut back ([simplicity rule](./rules/simplicity.md#why)).
 
@@ -25,7 +25,7 @@ session skipped the review status change, and the maintainer set it by hand.
 - **The maintainer** (decided 2026-10-20), first. They use the skills on their own projects and use
   them to build the rest of this collection.
 - **Adopting projects** that install the skills with `npx skills add`. Earlier examples were
-  `the_beautiful_game`, `sekai-kb`, and `lagunabeach-md` ([history](../../.local/history.md)). Some
+  `the_beautiful_game`, `sekai-kb`, and `lagunabeach-md` (maintainer). Some
   trust an agent to merge; others need a person's final approval for compliance (decided 2026-10-20).
 - **Agents** in Claude Code, Codex, and Kiro CLI, which read the skills
   ([README Install](../../README.md#install)).
@@ -74,7 +74,7 @@ Ranked. Ranking is importance, not delivery order; the ROADMAP sets the order.
    everything in one round before the run: scope, readiness, and the permissions it needs. Then it
    asks nothing (decided 2026-10-20). During the run it decides from the PRD, SPEC, ROADMAP, and
    milestone goal, records each decision, and stops at the exit check or a limit
-   ([plan.md Decisions](../../.local/plan.md#decisions)). Whether it may merge is a per-project
+   ([PR #30](https://github.com/wilsonkichoi/skills/pull/30)). Whether it may merge is a per-project
    setting (decided 2026-10-20).
 4. **What a project learns becomes rules.** An optional `wkc-retro` reviews a finished ticket,
    milestone, or run and proposes rule files for `rules_dir`, written only on approval (decided
@@ -95,7 +95,7 @@ Ranked. Ranking is importance, not delivery order; the ROADMAP sets the order.
 - No `wkc-backlog`, `wkc-fix`, `wkc-qa`, `wkc-verify`, `wkc-git-fu`, or `wkc-create-ticket` skill.
   `wkc-plan` handles changes between planning runs, and `wkc-code-review` fixes its own findings.
   PR #30 folded verify, git-fu, and create-ticket into the planned skills and left fix and QA off
-  the roster ([PR #30](https://github.com/wilsonkichoi/skills/pull/30), [plan.md](../../.local/plan.md)).
+  the roster ([PR #30](https://github.com/wilsonkichoi/skills/pull/30)).
 - No separate ticket per step of one change. Testing and validating a change belong to the ticket
   that makes it.
 - No ticket priority.
@@ -136,26 +136,23 @@ Ranked. Ranking is importance, not delivery order; the ROADMAP sets the order.
 
 ## Open questions
 
-1. **Delivery order.** [plan.md](../../.local/plan.md) ordered backlog first. With backlog folded into
-   `wkc-plan`, outcome 1 is served sooner if `wkc-implement` and `wkc-code-review` ship first, because
-   every later change then goes through them. The ROADMAP decides.
+1. **Delivery order.** Settled 2026-10-20: the ROADMAP ships `wkc-implement` and `wkc-code-review`
+   first (M1, M2), because every later change then goes through them. The earlier port plan had
+   ordered backlog first.
 2. **Where outcome 2 runs.** Settled 2026-10-20: the ROADMAP's M5 in this repository is delivered
    by a `wkc-yolo` run.
 
 ## Evidence
 
-The `.local/` files are ignored by git, so they exist only in the maintainer's checkout.
-
-- [`.local/plan.md`](../../.local/plan.md): port order, shared authoring contract, decisions table,
-  responsibility boundaries, delivery and validation steps per port.
-- [`.local/plan-wkc-*.md`](../../.local/): one draft per planned or folded skill. Drafts for
-  research, architect, and plan are history. Drafts for backlog, fix, QA, verify, git-fu, and
-  create-ticket are input for the planned skills only; their status lines say how.
-- [`.local/port-crosscheck.md`](../../.local/port-crosscheck.md): source-versus-port review of the
-  shipped lifecycle skills, with the commit-before-handoff gap.
-- [`.local/history.md`](../../.local/history.md): retained decisions and the earlier toolkit's lessons.
-- `.local/architecture.excalidraw`: the original workflow sketch. It names the roster, the ticket
-  statuses, and "following rigid rules or steps for ceremonial purpose is bad engineering".
+- The maintainer's planning notes, not tracked: a port plan, one draft per planned or folded
+  skill, a source-versus-port review of the shipped lifecycle skills, and a record of retained
+  decisions. This PRD, the [SPEC](./SPEC.md), and the [ADRs](./adr/) replace them, and they were
+  archived on 2026-10-20.
+- The maintainer's original workflow sketch, not tracked. It names the roster, the ticket statuses,
+  and "following rigid rules or steps for ceremonial purpose is bad engineering".
+- [agent-toolkit](https://github.com/wilsonkichoi/agent-toolkit): the earlier toolkit, with its
+  plugin packaging, scripts, and runtime contracts.
+- [PR #30](https://github.com/wilsonkichoi/skills/pull/30): the roster folds and the `wkc-yolo` scope.
 - [README](../../README.md), [AGENTS.md](../../AGENTS.md), [CHANGELOG](../../CHANGELOG.md), and
   [rules](./rules/): the shipped state and the conventions.
 - [Issue #15](https://github.com/wilsonkichoi/skills/issues/15): the `wkc-implement` lifecycle
@@ -172,6 +169,8 @@ open there: a first real check of the Linear integration.
 
 ## Changes
 
+- 2026-10-20: Evidence cites tracked sources; the untracked planning notes are archived. Open
+  question 1 is settled by the ROADMAP. No goal changed.
 - 2026-10-20: Maintainer review. `SKILL.md` length is a target, not a limit; marketplace and CI
   are later work, not "not for" or permanent non-goals. Replaced "near 100 lines" and "well under
   150". Review: SPEC Requirements and Boundaries.

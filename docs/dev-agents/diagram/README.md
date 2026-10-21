@@ -212,7 +212,7 @@ No browser checks were rerun. Existing release details screenshots retain the ea
 
 ### Workflow actions, 2026-10-07
 
-The user selected workflow actions instead of prerequisite arrows after inspection of `.local/architecture.excalidraw`.
+The user selected workflow actions instead of prerequisite arrows after inspection of the maintainer's untracked sketch, `.local/architecture.excalidraw`.
 That sketch supplies arrow meaning only. No planned skills or obsolete distribution details were copied.
 Sources remain at `5802c662ed9ab3d918e315e86b8eb939651c53db`; all definitions and config were readable.
 All five skill cards and their coordinates remain unchanged. The subtitle now states the arrow meaning.

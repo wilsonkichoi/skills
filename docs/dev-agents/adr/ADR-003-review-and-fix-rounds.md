@@ -7,7 +7,7 @@ Date: 2026-10-20. Status: accepted
 PR #30 dropped `wkc-fix`. Correcting review findings was left to the `wkc-implement` port, with a
 rerun on the same PR as the likely answer. The maintainer prefers the reviewer to fix what it found,
 because it already understands the finding (2026-10-20). The rule that a review must run in a
-context separate from the one that wrote the code still holds ([plan.md](../../../.local/plan.md#decisions)).
+context separate from the one that wrote the code still holds ([PR #30](https://github.com/wilsonkichoi/skills/pull/30)).
 
 ## Options
 
