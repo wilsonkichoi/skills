@@ -269,6 +269,13 @@ ticket terminal before its `## After merge` steps ran, and the tracker cannot re
 Linear, the PR body says `Related to <ID>`, and the branch name and PR title leave the ID out. The
 docs do not say what a branch-name link does on merge, which is why the ID stays out of it.
 
+Checked on 2026-10-21 in a sandbox team with the integration connected and the default team PR
+automations. A control PR with `Fixes <ID>` moved its issue to In Progress on open and to Done on
+squash merge. A PR with `Related to <ID> <URL>`, the ID kept out of its branch and title, linked to
+its issue and left it in Todo through open, a comment review, and squash merge. A draft PR linked
+the same way also left it alone. Not checked: a review request or approval, which needs a second
+GitHub account; an issue starting at In Review; and a branch name that contains the ID.
+
 ### Review verdict
 
 `wkc-code-review` posts one comment per round on the PR, or on the ticket when there is no PR:
@@ -569,12 +576,14 @@ the previous tag. Each port also updates the README roster, the repository map u
 
 ## Open unknowns
 
-1. **Linear with `Related to`.** Does a PR linked only by `Related to <ID>`, with the ID kept out of
-   the branch and title, leave the issue's status alone through open, review, and merge? The docs
-   say so but were not tested here. Check it the first time a Linear project runs the loop.
-   Blocks: Lifecycle, Linear only.
+None.
 
 ## Changes
+
+- 2026-10-21: Open unknown 1 answered: on Linear, a PR linked only by `Related to <ID>` left its
+  issue's status alone through open, a comment review, and merge, while a `Fixes` control moved.
+  The Linear contract keeps `Related to`; the check and its gaps are under Contracts, Linear.
+  Replaced open unknown 1. Review: none; ROADMAP M2 already builds against this contract.
 
 - 2026-10-21: Risks put `wkc-plan` change handling first, because `wkc-implement` and
   `wkc-code-review` now depend on it. Replaced "`wkc-implement` comes before everything else".
