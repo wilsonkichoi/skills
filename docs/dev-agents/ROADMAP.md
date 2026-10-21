@@ -1,6 +1,6 @@
 # wkc- skills ROADMAP
 
-Status: approved (2026-10-21)
+Status: draft
 
 Planned from the [SPEC](./SPEC.md), approved 2026-10-21. Every milestone needs the PRD, SPEC, ADRs, and this ROADMAP merged to `main` first:
 `wkc-implement` stops on uncommitted planning documents, and a fresh worktree cannot see them.
@@ -40,7 +40,7 @@ Exit check: this milestone's tickets reach `done` through one `wkc-yolo` run on 
 
 ## Changes
 
-- 2026-10-21: M1 delivers a new `wkc-backlog`, which owns tickets for a milestone and for one change, and narrows `wkc-plan` to the ROADMAP (ADR-004). M2 and M3 hand discovered work to `wkc-backlog`. Replaced `wkc-plan` as the ticket writer in M1 to M3 and ADR-002 in M1's scope. No milestone was added, removed, or reordered.
+- 2026-10-21: M1 delivers a new `wkc-backlog`, which owns tickets for a milestone and for one change, and narrows `wkc-plan` to the ROADMAP (ADR-004). M2 and M3 hand discovered work to `wkc-backlog`. Replaced `wkc-plan` as the ticket writer in M1 to M3 and ADR-002 in M1's scope. No milestone was added, removed, or reordered, but M1's outcome, scope, and exit check changed, so the ROADMAP is back to draft under `wkc-plan`'s approval rule.
 - 2026-10-21: The SPEC is approved, so the opening note cites it as approved. Replaced "Planned from the draft SPEC ... before the SPEC was approved". No milestone changed.
 - 2026-10-21: `wkc-plan` change handling and the ticket templates move first (M1), ahead of `wkc-implement` (M2) and `wkc-code-review` (M3), because both now hand discovered work to `wkc-plan` and every ticket after M1 uses its templates. M1's exit check uses a fixture `Discovered:` comment. Replaced the order M1 implement, M2 review, M3 plan, and the "until M3" interim rules.
 - 2026-10-20: SPEC templates. M2 adds the fix commit template; M3 adds the ticket templates.

@@ -101,8 +101,9 @@ Option 1 names the first milestone in order whose scope has no tickets yet; with
 
 The line under the title records approval: `Status: draft` until the user approves the ROADMAP,
 then `Status: approved (YYYY-MM-DD)` with that day's date. Write it only on approval in this
-conversation. Adding, removing, or reordering milestones sets an approved ROADMAP back to
-`Status: draft`.
+conversation. Changing a milestone's outcome, scope, dependencies, or exit check, or adding,
+removing, or reordering milestones, sets an approved ROADMAP back to `Status: draft`. Wording
+fixes and **Changes** entries keep the approval.
 
 On option 1, write the status line, then invoke the `wkc-backlog` skill for that milestone. It
 drafts the tickets and asks for its own approval before it publishes anything.

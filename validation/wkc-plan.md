@@ -75,6 +75,11 @@ the skill's report.
     loaded for the milestone option 1 named, and its draft ends on its own question; `cksum` of `issues_dir` is
     unchanged, because approving the ROADMAP publishes nothing.
 
+31. **A material milestone change.** On an approved ROADMAP with published tickets, ask to change one milestone's
+    exit check. Then, on a fresh copy, ask only to fix a typo in a milestone's outcome.
+    PASS: the exit check change resets the status to `Status: draft`, adds a dated **Changes** entry, changes no other
+    milestone by `git diff`, and changes no ticket file. The typo fix keeps `Status: approved (<date>)`.
+
 ## Moved cases
 
 Moved to [wkc-backlog.md](./wkc-backlog.md) on 2026-10-21, adapted to the new skill. Cases 3 and 16 were split: the

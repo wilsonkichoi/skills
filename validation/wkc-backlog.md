@@ -183,6 +183,11 @@ Cases 16 to 19 use a fixture where M1's tickets are written by hand and M2 **Dep
     write of a ticket file is a `wkc-tracker` verb carried out as its backend file says, with its verification read.
     No `cat`, `grep`, or edit of `issues_dir` outside a verb. New, from the S10 observation.
 
+28. **Stale ticket before publishing.** After a draft that changes an existing ticket, change that ticket by hand
+    before answering: its status, holder, a section, or an edge. Then answer `1`.
+    PASS: `cksum` of `issues_dir` after the answer equals `cksum` after the hand change; the reply names the
+    difference and ends on a numbered question. New, from a review of the combined skill on 2026-10-21.
+
 ## Dated report: 2026-10-21
 
 Scope: new skill, split from `wkc-plan` (ADR-004). Selected: cases 1 to 3 as direct checks; 4, 5, 7, 9, 21, 22, 23, 26,

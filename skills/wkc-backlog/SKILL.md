@@ -210,7 +210,10 @@ Publish only on approval in this conversation. The diagram is for review, not a 
 
 ## 5. Publish
 
-Run the tracker writes in this order and stop at the first failure; they are hard to take back:
+Before the first write, `show` each existing ticket the draft changes. If its status, holder,
+sections, or edges differ from the draft's before, write nothing, and show the difference and a
+new question. Then run the tracker writes in this order and stop at the first failure; they are
+hard to take back:
 
 1. `wkc-tracker milestone <name>` for each milestone the new tickets need. If that fails, stop.
 2. `create` each new ticket in creation order, with its milestone, and its `## Blocked by` entries
