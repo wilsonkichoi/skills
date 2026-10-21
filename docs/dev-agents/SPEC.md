@@ -93,17 +93,58 @@ tighten either field for itself (`human`, or a lower number) and never loosen it
 `test_command` (existing) is what `wkc-implement` runs. Release, deploy, and other project
 procedures stay in the config's free-text **Conventions**, and `## After merge` steps name them.
 
-### Ticket shape additions
+### Ticket
 
-Written by `wkc-plan`, read by `wkc-implement`, `wkc-code-review`, and `wkc-yolo`:
+Written by `wkc-plan`, read by `wkc-implement`, `wkc-code-review`, and `wkc-yolo`. It is the
+[wkc-tracker shape](../../skills/wkc-tracker/SKILL.md#5-ticket-shape) plus `## After merge`. Drop
+a section that would say nothing. A work ticket, titled `<area>: <outcome in a few words>`:
 
 ```markdown
+## What to build
+<One to three sentences on what exists when this is done.>
+
 ## Acceptance criteria
-- [ ] Checked before merge: a command and its expected output, a test, or a named manual check.
+- [ ] <What is checked before merge>: `<command>` gives <expected result>.
 - [ ] A person confirms <what>.          <!-- only when a person's sign-off is part of done -->
 
-## After merge                           <!-- optional; see "Post-merge gates" below -->
+## After merge                           <!-- only when the ticket has post-merge steps -->
 - [ ] <step>, using <command or Conventions entry>. Check: <expected result>. (needs authorization)
+
+## Blocked by
+- #<id>
+
+## Related
+- #<id>
+
+## Notes
+<SPEC section>: <the excerpt the work needs, copied in>.
+```
+
+A spike, titled `Spike: <question>`. Its code is thrown away, never shipped:
+
+```markdown
+## What to build
+Answer: <question>. Timebox: <limit>.
+
+## Acceptance criteria
+- [ ] The answer, with <the evidence that settles it>.
+- [ ] The answer is recorded in <SPEC section>, through `wkc-architect`.
+
+## Notes
+Blocks: <the tickets or SPEC section waiting on the answer>.
+```
+
+A decision ticket, titled `Decision: <question>`, stays at `backlog` and unassigned:
+
+```markdown
+## What to build
+Decide: <question>.
+
+## Acceptance criteria
+- [ ] The SPEC records the answer in <section>.
+
+## Notes
+Options: <each with its gains and costs>. Who decides: a person | `wkc-architect`.
 ```
 
 - Every step that publishes, deploys, or touches a shared environment ends with `(needs authorization)`.
@@ -228,10 +269,22 @@ docs do not say what a branch-name link does on merge, which is why the ID stays
 ```
 wkc-code-review round <n>: approve | fixed | stopped
 Reviewed: <full head sha>
+Fixed in: <full sha of the fix commit>     <!-- fixed rounds only -->
+Fixing rounds used: <k> of <max_fix_attempts>
 Independent: yes | no, <why>
-- fixed <file:line> <finding>, in <sha>
+- fixed <file:line> <finding>
 - open <file:line> <finding>
 - suggestion <file:line> <note>
+```
+
+A `fixed` round makes one commit, in the project's commit convention, or with `fix:` when it has
+none:
+
+```
+fix: <what the fixes change, in a few words>
+
+wkc-code-review round <n> on <PR URL>, reviewed <full head sha>.
+- <file:line> <finding>
 ```
 
 - `approve`: no blocking finding, no change made. It applies only to the reviewed sha.
@@ -281,9 +334,21 @@ When `wkc-yolo` calls `wkc-implement`, `wkc-code-review`, or `wkc-plan`, it says
 passes the run's limits. Under such a call, a skill never ends its turn on a question:
 
 - It decides from the ticket, PRD, SPEC, ROADMAP, and run limits, and records the decision as a
-  ticket comment starting `Decision (wkc-yolo):`, with the question, the choice, and its source.
-- A question it cannot decide that way parks the ticket: a comment starting `Parked (wkc-yolo):`
-  with the question, status unchanged, and `parked` returned to `wkc-yolo`.
+  ticket comment.
+- A question it cannot decide that way parks the ticket: a comment, status unchanged, and
+  `parked` returned to `wkc-yolo`.
+
+```
+Decision (wkc-yolo): <question>
+Choice: <what was chosen>
+Source: <PRD, SPEC, or ROADMAP section, the ticket, or the run limit>
+```
+
+```
+Parked (wkc-yolo): <question>
+Open because: <what the documents and limits leave undecided>
+Needs: <who must answer>
+```
 - `wkc-plan` approval under a run publishes tickets at `backlog` only. In a milestone run,
   `wkc-yolo` moves one to `ready` only when the milestone's exit check needs it, and records that
   decision. In a ticket or wave run, it never adds tickets to the scope: a ticket that needs a new
@@ -503,6 +568,10 @@ the previous tag. Each port also updates the README roster, the repository map u
 
 ## Changes
 
+- 2026-10-20: Literal templates for the work ticket, spike, and decision ticket from `wkc-plan`;
+  the review verdict gains `Fixed in` and `Fixing rounds used`, and a `fixed` round makes one fix
+  commit from a template; `Decision (wkc-yolo):` and `Parked (wkc-yolo):` comments get templates.
+  Replaced "Ticket shape additions" and the per-finding fix sha. Review: ROADMAP M2 and M3.
 - 2026-10-20: Maintainer decisions. A failed post-merge gate gets a follow-up PR on the same ticket;
   `wkc-implement` and `wkc-code-review` call `wkc-plan` for discovered work in the manual loop; the
   run record folder ignores itself in git, and "main checkout" now says where the run started;
