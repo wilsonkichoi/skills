@@ -43,7 +43,7 @@ The arrows do not claim automatic skill invocation. Help's installer operations 
 | wkc-skills-release | [skills/wkc-skills-release/SKILL.md](../../../skills/wkc-skills-release/SKILL.md) | Internal maintainer skill; clean synchronized main and authenticated GitHub access; merged collection publication without setup |
 | wkc-research | [skills/wkc-research/SKILL.md](../../../skills/wkc-research/SKILL.md) | Writes only the PRD at `prd_file`; approval status line; no tracker; callers are people |
 | wkc-architect | [skills/wkc-architect/SKILL.md](../../../skills/wkc-architect/SKILL.md) | Writes only the SPEC at `spec_file` and ADRs; `wkc-tracker list` when updating with a configured tracker; callers are people |
-| wkc-plan | [skills/wkc-plan/SKILL.md](../../../skills/wkc-plan/SKILL.md) | Writes the ROADMAP at `roadmap_file`; every ticket read and write through `wkc-tracker` verbs; callers are people |
+| wkc-plan | [skills/wkc-plan/SKILL.md](../../../skills/wkc-plan/SKILL.md) | Writes the ROADMAP at `roadmap_file`; one milestone or one change; tickets from the SPEC templates; every ticket read and write through `wkc-tracker` verbs; callers are people, `wkc-yolo`, and a model acting on a person's request |
 
 | Edge | Kind | Source evidence |
 | --- | --- | --- |
@@ -51,7 +51,7 @@ The arrows do not claim automatic skill invocation. Help's installer operations 
 | setup → tracker: Tracker config | Handoff, solid | Setup's What it does: writes `docs/dev-agents/config.md`, "which `wkc-tracker` reads"; its report's next step is `wkc-tracker list`. Tracker section 1 stops and asks for `wkc-setup` when the config names no backend |
 | research → architect: Approved PRD | Handoff, dashed | Research's Output: "`wkc-architect` reads an approved PRD next"; section 5 names it as the next step. Architect section 1 requires an approved PRD or offers to proceed on stated intent |
 | architect → plan: Approved SPEC | Handoff, dashed | Architect's Output: "`wkc-plan` reads an approved SPEC next"; section 6 names it as the next step. Plan section 1 requires an approved SPEC or offers to plan from stated intent |
-| plan → tracker: Manages tickets | Call, solid | Plan's Dependencies name `wkc-tracker` for `list`, `show`, `milestone`, `create`, `link`, and `move`; sections 1 and 6 reach tickets only through those verbs |
+| plan → tracker: Manages tickets | Call, solid | Plan's Dependencies name `wkc-tracker` for `list`, `show`, `milestone`, `create`, `edit`, `link`, `unlink`, and `move`; plan reaches tickets only through those verbs, and section 6 publishes through them |
 | architect → tracker: Lists tickets | Call, dashed | Architect's Dependencies and section 4: on a contract change with a configured tracker, list open tickets through the `wkc-tracker` `list` verb |
 
 Setup and diagram file outputs are described in their own cards. Setup's label creation and tracker's GitHub Issues operations use
@@ -113,6 +113,13 @@ Desktop light overview and phone dark details screenshots were visually inspecte
 The phone sheet scrolls independently; commands below the fold remain reachable.
 
 ## Implementation verification
+
+### wkc-plan change handling, 2026-10-21
+
+`wkc-plan` now takes one change as well as a milestone, writes tickets from the SPEC templates, and opts into model invocation.
+The `plan` card's summary, body, and when, the plan source row, and the plan → tracker evidence row (now naming `edit` and `unlink`) changed.
+No node, edge, lane, or layout changed. Node **v24.11.1**: check and build passed with no warnings after the card text was cut to the
+recommended word limits, and a repeat build was byte-identical. No browser checks were rerun; the screenshots predate this text.
 
 ### Release links, 2026-10-19
 

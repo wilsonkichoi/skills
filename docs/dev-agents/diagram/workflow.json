@@ -138,10 +138,10 @@
       "id": "plan",
       "label": "wkc-plan",
       "lane": "planning",
-      "summary": "Write the ROADMAP for an approved SPEC, then draft and publish one milestone's tickets through wkc-tracker.",
+      "summary": "Write the ROADMAP for an approved SPEC, then draft and publish one milestone's tickets, or one change to the tickets, through wkc-tracker.",
       "details": {
-        "body": "Orders milestones by dependency and risk, then drafts tickets with a checked dependency graph and waves. Output: the ROADMAP at `roadmap_file`; after approval, tickets created, linked, and moved to `ready` only through wkc-tracker verbs.",
-        "when": "Use when an approved design needs milestones and tickets, or when the next milestone needs tickets.",
+        "body": "Orders milestones by dependency and risk, and drafts one milestone's tickets, or one change, from the SPEC's ticket templates with a checked dependency graph. Output: the ROADMAP at `roadmap_file`; after approval, tickets created, edited, linked, and moved only through wkc-tracker verbs.",
+        "when": "Use when a design needs milestones and tickets, or for one change: a request, a bug, discovered work, or a split, re-block, or cancel.",
         "commands": [
           {
             "label": "Codex",
