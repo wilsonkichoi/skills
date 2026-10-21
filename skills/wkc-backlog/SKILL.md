@@ -39,10 +39,10 @@ For a change, `show` each ticket it names; `list` shows what each one blocks. If
 cannot run, say why, and draft without publishing.
 
 The SPEC and the ROADMAP are approved only when the line under each title reads `Status: approved
-(YYYY-MM-DD)`. Planning a milestone needs both, and the milestone in the ROADMAP; a change needs
-neither. With one missing or draft, stop and ask: recommend `wkc-architect` for the SPEC or
-`wkc-plan` for the ROADMAP first, and offer to plan from intent the user states here, unless they
-already said to go ahead. Never offer to approve the PRD, SPEC, or ROADMAP.
+(YYYY-MM-DD)`. Planning a milestone needs both approved, and the milestone in the ROADMAP. A
+change needs neither approved, but is still read against them. For a milestone with one missing or
+draft, stop and ask: recommend `wkc-architect` for the SPEC or `wkc-plan` for the ROADMAP
+first, and offer to plan from intent the user states here, unless they already said to go ahead. Never offer to approve the PRD, SPEC, or ROADMAP.
 
 Classify a change against those documents before drafting it:
 

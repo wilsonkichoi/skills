@@ -122,6 +122,17 @@ About 45k, 57k, and 64k subagent tokens.
 Observation: its report said `wkc-backlog` would make the PyPI-name unknown a decision ticket; `wkc-backlog` makes it a
 spike when evidence can settle it. `wkc-plan` correctly named it under M3's **Depends on** for `wkc-architect`.
 
+### Review fixes, 2026-10-21
+
+`ceb0e3f` resets approval when a milestone's outcome, scope, dependencies, or exit check changes, and keeps it for
+wording fixes. One session, the fifth of six for this change, on the hand-written-tickets fixture with an approved
+ROADMAP and a typo planted in M1's outcome. About 55k and 57k subagent tokens.
+
+| Session | Case | Result | Evidence |
+|---|---|---|---|
+| P2 | 31 | PASS | Typo fix: one word changed and a Changes entry added; `Status: approved (2026-10-03)` kept; no ticket file changed. Exit check change on M2: `Status: draft`, the M2 exit check and a Changes entry are the only other lines in `git diff`, no ticket file changed, and the reply named 004 and 005 as possible work for `wkc-backlog` (case 10's new check). My second message answered `1` and gave the new request together; the session applied the change and did not rewrite the approval line, a fair reading of an ambiguous message. |
+| P2 | tracker access | Observation | It loaded the tracker `SKILL.md` and `local.md`, then read the ticket frontmatter as `local.md` describes, but its reply said it read the files "instead of running `wkc-tracker milestone show`". |
+
 ## History before the split
 
 The reports below tested `wkc-plan` while it also wrote tickets (0.0.27 and earlier). They are kept as history.

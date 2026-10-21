@@ -228,3 +228,14 @@ Ticket state was scored with PyYAML and `git diff` on the files. About 45k to 69
 
 The `notes list` regression passed in both samples here (B1, P1); under `wkc-plan` it failed in S2 and S10 and passed in
 S8 and S9. Two passes on the moved, unchanged sentence are not evidence that the failure is gone.
+
+### Review fixes, 2026-10-21
+
+After a review of the combined skill, `ceb0e3f` adds a re-read before the first write: each existing ticket the draft
+changes is shown again, and a difference stops the publish with a new question. One session, the sixth of six for
+this change, same harness, model, and effort, on the hand-written-tickets fixture. About 58k and 59k subagent tokens.
+
+| Session | Case | Result | Evidence |
+|---|---|---|---|
+| B4 | 28 | PASS | Asked to retitle `ready` 004. After the draft and before the answer, 004 was set by hand to `in-progress` held by Bob Dev. After `1`: no write (`cksum` equal to the hand-edited state); the reply tabled status and holder as changed and asked again, with publishing anyway as an option. |
+| B4 | reading for a change | FAIL, then reworded | The draft said "I did not read the PRD or SPEC, because a change needs neither", reading the approval sentence ("a change needs neither") as a reading rule. The sentence now says a change needs neither approved but is still read against them. Checked statically only (`wc -l` 240, templates `diff` clean); no session left to validate it. |
