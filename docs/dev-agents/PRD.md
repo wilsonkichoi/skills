@@ -1,6 +1,6 @@
 # wkc- skills PRD
 
-Status: approved (2026-10-21)
+Status: draft
 
 ## Problem
 
@@ -44,8 +44,9 @@ Not for:
 Decided by the maintainer on 2026-10-20:
 
 1. **The manual loop works on this repository.** The remaining work is planned and built with the
-   shipped skills: this PRD, then a SPEC from `wkc-architect`, a ROADMAP and tickets from `wkc-plan`,
-   pull requests from `wkc-implement`, and reviews from `wkc-code-review`. A person merges.
+   shipped skills: this PRD, then a SPEC from `wkc-architect`, a ROADMAP from `wkc-plan`, tickets
+   from `wkc-backlog`, pull requests from `wkc-implement`, and reviews from `wkc-code-review`. A
+   person merges.
 2. **One milestone runs unattended.** `wkc-yolo` takes a milestone of a real project from the tracker
    frontier to its exit check. It uses only `wkc-` skills. It merges on its own where the project
    allows that, and stops for a person's merge where the project requires one. A person reviews the
@@ -66,10 +67,12 @@ Ranked. Ranking is importance, not delivery order; the ROADMAP sets the order.
    steps and moves it to `done`. Each ticket carries its own definition of done, because done
    differs by ticket: review and tests only, plus integration tests, or plus release, deployment,
    and testing the release (decided 2026-10-20).
-2. **Plans follow changes between planning runs.** `wkc-plan` also takes a single request or a
-   piece of discovered work: it judges whether it touches tickets, the ROADMAP, the SPEC, or the
-   PRD, sends document changes to `wkc-research` or `wkc-architect`, and creates, edits, splits, or
-   cancels tickets through `wkc-tracker` (decided 2026-10-20; replaces the planned `wkc-backlog`).
+2. **Plans follow changes between planning runs.** `wkc-backlog` turns a ROADMAP milestone into
+   tickets, and also takes a single request or a piece of discovered work: it judges whether it
+   touches tickets, the ROADMAP, the SPEC, or the PRD, sends ROADMAP changes to `wkc-plan` and
+   document changes to `wkc-research` or `wkc-architect`, and creates, edits, splits, or cancels
+   tickets through `wkc-tracker`. `wkc-plan` keeps the ROADMAP (decided 2026-10-21; replaces
+   `wkc-plan` absorbing `wkc-backlog`, [ADR-004](./adr/ADR-004-backlog-separate-from-plan.md)).
 3. **A ticket, a wave, or a milestone runs without a person at each step.** `wkc-yolo` asks
    everything in one round before the run: scope, readiness, and the permissions it needs. Then it
    asks nothing (decided 2026-10-20). During the run it decides from the PRD, SPEC, ROADMAP, and
@@ -92,8 +95,8 @@ Ranked. Ranking is importance, not delivery order; the ROADMAP sets the order.
 - No skill merges, releases, or deploys on its own authority. `wkc-yolo` merges only where the
   project allows agent merges. A post-merge step that publishes or deploys runs only when a person
   or the run's limits authorized it.
-- No `wkc-backlog`, `wkc-fix`, `wkc-qa`, `wkc-verify`, `wkc-git-fu`, or `wkc-create-ticket` skill.
-  `wkc-plan` handles changes between planning runs, and `wkc-code-review` fixes its own findings.
+- No `wkc-fix`, `wkc-qa`, `wkc-verify`, `wkc-git-fu`, or `wkc-create-ticket` skill.
+  `wkc-backlog` handles changes between planning runs, and `wkc-code-review` fixes its own findings.
   PR #30 folded verify, git-fu, and create-ticket into the planned skills and left fix and QA off
   the roster ([PR #30](https://github.com/wilsonkichoi/skills/pull/30)).
 - No separate ticket per step of one change. Testing and validating a change belong to the ticket
@@ -114,9 +117,10 @@ Ranked. Ranking is importance, not delivery order; the ROADMAP sets the order.
   harness ([token usage](./rules/token-usage.md), [AI harness testing](./rules/ai-harness-testing.md)).
 - **Authoring:** `wkc-` identifiers, the five opening fields, manual invocation by default, and a
   `SKILL.md` ideally under 150 lines and under 250 for a person reading it. Neither is a hard
-  limit; the Agent Skills specification allows 500 (decided 2026-10-20). `wkc-plan` sits near 250
-  in one file, because a model skips instructions behind a second reference
-  ([AGENTS.md Skills](../../AGENTS.md#skills), [ADR-002](./adr/ADR-002-plan-absorbs-backlog.md)).
+  limit; the Agent Skills specification allows 500 (decided 2026-10-20). A skill has no
+  supporting files for its main path, because a model skips instructions behind a second
+  reference; a skill that outgrows one file splits by responsibility
+  ([AGENTS.md Skills](../../AGENTS.md#skills), [ADR-004](./adr/ADR-004-backlog-separate-from-plan.md)).
 - **Tracker backends:** GitHub Issues, Linear, and local markdown, all through `wkc-tracker`.
 - **Compliance:** a project must be able to require a person's merge, and no run may override that.
 - **Delivery:** one port per pull request, validated before the next starts. One patch version per
@@ -136,9 +140,9 @@ Ranked. Ranking is importance, not delivery order; the ROADMAP sets the order.
 
 ## Open questions
 
-1. **Delivery order.** Settled 2026-10-21: the ROADMAP ships `wkc-plan` change handling first (M1),
+1. **Delivery order.** Settled 2026-10-21: the ROADMAP ships `wkc-backlog` change handling first (M1),
    then `wkc-implement` (M2) and `wkc-code-review` (M3), because both hand discovered work to
-   `wkc-plan` and every later ticket uses its templates.
+   `wkc-backlog` and every later ticket uses its templates.
 2. **Where outcome 2 runs.** Settled 2026-10-20: the ROADMAP's M5 in this repository is delivered
    by a `wkc-yolo` run.
 
@@ -169,6 +173,11 @@ open there: a first real check of the Linear integration.
 
 ## Changes
 
+- 2026-10-21: Goal 2 moves to a new `wkc-backlog`, which owns tickets for a milestone and for one
+  change; `wkc-plan` keeps the ROADMAP (maintainer, ADR-004). Outcome 1, open question 1, the
+  `wkc-backlog` non-goal, and the authoring constraint follow. Replaced "`wkc-plan` also takes a
+  single request" and the "No `wkc-backlog`" non-goal. Review: the SPEC components, Discovered
+  work, and Invocation; ROADMAP M1 to M3.
 - 2026-10-21: Open question 1 settled again: `wkc-plan` change handling ships first. Replaced
   "`wkc-implement` and `wkc-code-review` first". No goal changed.
 - 2026-10-20: Evidence cites tracked sources; the untracked planning notes are archived. Open

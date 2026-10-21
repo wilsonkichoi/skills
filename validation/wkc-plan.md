@@ -5,6 +5,10 @@ This is a case catalog, not a full test sequence for each change.
 Record PASS, FAIL, or SKIP for selected cases. Keep direct checks separate from harness behavior.
 Keep raw logs and fixtures outside tracked files.
 
+Since 0.0.28, `wkc-plan` writes only the ROADMAP, and tickets belong to `wkc-backlog`
+([ADR-004](../docs/dev-agents/adr/ADR-004-backlog-separate-from-plan.md)). Ticket cases moved to
+[wkc-backlog.md](./wkc-backlog.md). The cases kept here keep their numbers, so the dated reports below still match.
+
 ## Preparation
 
 Export a clean candidate tree, because local installation copies ignored files too, then list and install it
@@ -12,64 +16,40 @@ into a throwaway Git project. Record the installer version from `npx skills --ve
 
 ```sh
 npx skills add "<clean-candidate>" -l
-npx skills add "<clean-candidate>" -s wkc-plan -s wkc-tracker -a claude-code -a codex -a kiro-cli -y
+npx skills add "<clean-candidate>" -s wkc-plan -s wkc-backlog -s wkc-tracker -a claude-code -a codex -a kiro-cli -y
 ```
 
-For cases 3 to 10 and 23 to 28, the fixture project has `docs/dev-agents/config.md` with `issue_tracker: local`, `issues_dir`,
-`prd_file`, `spec_file`, and `roadmap_file` set, an approved PRD, and an approved SPEC (`Status: approved (<date>)`)
-for a small service with at least three components, one contract with fields and error responses, and one entry
-under **Open unknowns**. Commit the fixture so `git status` shows every change. Score ticket state by parsing the
-frontmatter of the files in `issues_dir` with a YAML parser, never from the skill's report.
+The fixture project has `docs/dev-agents/config.md` with `issue_tracker: local`, `issues_dir`, `prd_file`, `spec_file`,
+and `roadmap_file` set, an approved PRD, and an approved SPEC (`Status: approved (<date>)`) for a small service with
+at least three components and one entry under **Open unknowns**. Commit the fixture so `git status` shows every
+change. Score ticket state by parsing the frontmatter of the files in `issues_dir` with a YAML parser, never from
+the skill's report.
 
 ## Cases
 
 1. **Package and discovery.** Parse the frontmatter and `agents/openai.yaml`. List and install the candidate.
-   PASS: valid YAML, matching names, model invocation on both settings (`disable-model-invocation: false`,
-   `policy.allow_implicit_invocation: true`), callers named as people, `wkc-yolo`, and a model acting on a person's
-   request, `wc -l` of `SKILL.md` under 250, five opening fields in order,
-   `wkc-plan` in public discovery, installed copy identical to the source, and each harness links to it.
+   PASS: valid YAML, matching names, manual invocation on both settings (`disable-model-invocation: true`,
+   `policy.allow_implicit_invocation: false`), callers named as people, `wc -l` of `SKILL.md` under 150, five
+   opening fields in order, `wkc-plan` in public discovery, installed copy identical to the source, and each
+   harness links to it.
 
-2. **Document ownership is consistent.** Read `wkc-plan`, `wkc-architect`, `wkc-tracker`, `wkc-setup`, and the root `README.md`.
-   PASS: plan writes `roadmap_file` and reaches tickets only through `wkc-tracker` verbs that exist in its verb table;
-   it never writes the PRD, SPEC, code, or config; architect names plan as its next step; the README names plan as
-   the ROADMAP's writer; the ROADMAP outline carries no status, checkbox, assignee, or ticket list per milestone.
+2. **Document ownership is consistent.** Read `wkc-plan`, `wkc-backlog`, `wkc-architect`, `wkc-tracker`, and the root `README.md`.
+   PASS: plan writes only `roadmap_file`; every tracker verb it names is a read in the `wkc-tracker` verb table;
+   it carries no ticket template, graph rule, or publish step (`grep` for `## What to build`, `create`, `link`,
+   `Edge order`); it never writes the PRD, SPEC, code, or config; architect names plan as its next step; the README
+   names plan as the ROADMAP's writer and `wkc-backlog` as the tickets' writer; the ROADMAP outline carries no
+   status, checkbox, assignee, or ticket list per milestone.
 
 3. **No ROADMAP yet.** Invoke with no arguments.
    PASS: the ROADMAP lands at `roadmap_file` with `Status: draft`, every milestone has an outcome and an exit check
-   and traces to PRD goals or SPEC sections, and no milestone carries progress. Only the first milestone gets a
-   ticket draft, with criteria someone else can check and the contract excerpt copied into **Notes**. The turn ends
-   on a numbered question with publishing first. `cksum` of `issues_dir` is unchanged, and `git status` shows only
-   the ROADMAP.
+   and traces to PRD goals or SPEC sections, and no milestone carries progress. No ticket is drafted. The turn
+   ends on a numbered question whose option 1 approves and names the first milestone for `wkc-backlog`. `cksum` of
+   `issues_dir` is unchanged, and `git status` shows only the ROADMAP.
 
 4. **No approved SPEC.** Set the SPEC to `Status: draft`, then remove it.
    PASS: in both runs the turn ends on a numbered question that recommends `wkc-architect` first and offers to go on
    from stated intent; no ROADMAP or ticket is written; the reply never offers to approve the SPEC itself; and
    `git diff` shows the SPEC and PRD unchanged.
-
-5. **Publication.** Continue case 3 and answer `1`.
-   PASS: one ticket file per drafted ticket, each with the milestone named as the ROADMAP heading, created so every
-   new blocker has a lower id than the tickets it blocks, all at `ready`. Every `blocked_by` holds real ids in the right direction and matches the draft, with no edge
-   that only encodes priority. `wkc-tracker next`, read independently from the files, excludes every ticket with an
-   open blocker. The ROADMAP reads `Status: approved (YYYY-MM-DD)` with the run date, and the PRD and SPEC are unchanged.
-   The transcript shows the `wkc-tracker` skill invoked before the first ticket file is written.
-
-6. **Existing work.** Before invoking, hand-write one ticket in `issues_dir` that covers part of the first milestone
-   under a different title.
-   PASS: the draft names that ticket as existing work instead of drafting the same scope again, and after publishing
-   no two tickets cover the same outcome.
-
-7. **Spec gap and unknown.** Remove a contract detail the first milestone needs, such as a table's columns or an
-   endpoint's error responses, leaving a note that it is undecided.
-   PASS: the draft does not invent the missing detail; the report names the gap as work for `wkc-architect`.
-   A ticket for the **Open unknowns** entry is a spike that names its question, the evidence that settles it, and
-   where the answer goes, and its criteria do not ask for production code.
-
-8. **Interrupted publication and rerun.** Publish a milestone, then delete the last created ticket file and set the
-   others back to `backlog`, as a run that stopped before its `move` step would leave them. Invoke again for that milestone.
-   PASS: the rerun reads the milestone first, creates only the missing ticket, checks each ticket's milestone,
-   status, and edges, and no title or outcome appears twice. Repeat with one approved edge removed from a surviving
-   ticket's `blocked_by`: the rerun restores it with `link` before checking. After `1`, the tickets the interrupted run left at
-   `backlog` are at `ready` with the new one, except decision tickets and ones the draft said stay at `backlog`.
 
 9. **Custom paths.** Set `roadmap_file` to a non-default path and add authored body text to the config and context file.
    PASS: the ROADMAP lands at the configured path, no `docs/dev-agents/ROADMAP.md` appears, and `git diff` shows the
@@ -77,107 +57,45 @@ frontmatter of the files in `issues_dir` with a YAML parser, never from the skil
 
 10. **Update.** On an approved ROADMAP with published tickets, ask to split one later milestone in two.
     PASS: only the affected milestones change by `git diff`, the status resets to `Status: draft`, a dated **Changes**
-    entry names what it replaced, a milestone that already has tickets keeps its name, and no ticket file changes
-    before approval.
+    entry names what it replaced, a milestone that already has tickets keeps its name, tickets that the change
+    moves out of a milestone are named as work for `wkc-backlog`, and no ticket file changes.
 
-11. **Graph and waves.** Continue case 3 before answering, or use any draft with at least four tickets.
-    PASS: the draft shows an edge table and the waves, plus a Mermaid diagram or a stated reason for none.
-    Checked by hand against the edge table: every id resolves, there is no self-edge or cycle, no edge is implied by
-    two others, wave 1 holds every ticket with no blocker (at least two when the milestone has independent work),
-    every ticket's blockers sit in earlier waves, and the creation order is topological. The reply does not promise
-    simultaneous work, durations, or a number of agents, and does not call creation order the build order.
-
-12. **An invalid graph is not published.** After a draft, ask for an edge that closes a cycle, such as making an
-    early ticket blocked by one that already depends on it.
-    PASS: the reply names the cycle as a path and keeps the turn on a question; `cksum` of `issues_dir` is unchanged.
-    Repeat with an edge to an id that is neither a draft nor a real ticket: it is named as unknown, not dropped.
-
-13. **Cross-milestone blocker that exists.** On a fixture where M1 is published, invoke for M2.
-    PASS: an M2 ticket that builds on M1 work lists that M1 ticket's real id under **Blocked by**, the id resolves by
-    a direct read, and the ROADMAP's **Depends on** for M2 is unchanged. After publishing, the M2 ticket's
-    `blocked_by` holds the M1 id.
-
-14. **Cross-milestone blocker that has no ticket.** Approve the ROADMAP with option 4, so M1 has no tickets, then
-    invoke for M2.
-    PASS: the draft names the missing M1 work as an unresolved prerequisite, no **Blocked by** entry holds an invented
-    id, option 1 says which tickets stay at `backlog` and why, and nothing is written to `issues_dir` before an answer.
-
-15. **Coordination risk.** Use a milestone with two independent tickets that both change the `appointments` table.
-    PASS: the draft names the shared table as a coordination risk, and neither ticket blocks the other for that reason
-    alone.
-
-16. **No answer, no writes.** After a draft, answer `3` with a change, then answer `4`.
-    PASS: `cksum` of `issues_dir` is unchanged after both turns, and only option 4 changes the ROADMAP's status line.
-
-Cases 17 to 20 use a fixture where M1's tickets are written by hand and M2 **Depends on** M1.
-
-17. **An earlier milestone with only done tickets.** Every M1 ticket is `done`. Invoke for M2.
-    PASS: the transcript shows `milestone show M1` and `list done M1`, or reads that cover them; the reply never
-    calls M1 empty or unplanned; no M2 draft repeats M1's delivered work; and no M2 ticket is blocked by a `done`
-    ticket.
-
-18. **Canceled and duplicate tickets in an earlier milestone.** M1 holds a `cancel` ticket for work M2 needs, a
-    `duplicate` whose original is an open M1 ticket, and a `duplicate` whose original is `done`. Invoke for M2.
-    PASS: the canceled work is planned again in M2 or named as unresolved, and no **Blocked by** names the canceled
-    ticket; M2 work that needs the first duplicate's scope is blocked by its open original, never the duplicate;
-    the second needs no edge. The canceled ticket's file is unchanged.
-
-19. **An unresolved prerequisite with no ticket.** The SPEC leaves a decision open that one M2 ticket needs. When
-    the draft offers a decision or spike ticket, answer `3` and decline it, then answer `1`.
-    PASS: after publishing, that ticket is at `backlog` with the gap in its **Notes**, every other ticket is `ready`,
-    no `blocked_by` holds an invented id, and the report says a person moving it to `ready` puts it on the frontier.
-
-20. **A shared undecided contract.** Two M2 tickets share a contract whose fields the SPEC has not settled.
-    PASS: the draft has one decision or spike ticket that blocks both, neither blocks the other, and after `1` the
-    decision ticket is at `backlog`.
-
-21. **Setup ticket and criteria.** Use a greenfield SPEC whose **Development environment** names a test command
-    and whose **Open unknowns** holds one unknown. Invoke with no arguments.
-    PASS: the ticket that sets up the project has a criterion that runs that test command against a real test; no
-    criterion is a manual check for something a command could check; the spike names a timebox.
-    Then remove `test_command` from the config and the test command from the SPEC, for a project with no tests.
-    PASS: the setup ticket still has a criterion that shows its tooling working, and no ticket adds a test framework
-    the SPEC does not call for.
-
-Cases 23 to 28 use a `local` fixture whose SPEC names a release step (`make release`, also in the config's
-**Conventions**) and one open unknown. Cases 24 to 28 add hand-written tickets: a `done` storage ticket; an
-`in-progress` CLI ticket held by a named person, blocked by it and carrying a `Discovered: ... Blocks this ticket: yes.`
-comment; a `ready` release ticket and a `ready` export ticket, both blocked by the CLI ticket; and a `backlog` ticket
-blocked by the export ticket. Each session starts from a fresh copy of the committed fixture.
-
-22. **Ticket templates.** Direct check. Extract each ```` ```markdown ```` block after "A work ticket, titled" from
-    `SKILL.md` and from SPEC Contracts › Ticket.
-    PASS: `diff` of each pair gives no output; `SKILL.md` carries the three titles, the `(needs authorization)` rule,
-    the before-merge versus after-merge test rule, and the split rule.
-
-23. **Milestone tickets follow the templates.** Invoke for M1 with an approved, unchanged ROADMAP, then answer `1`.
-    PASS: the question shows the four milestone options without "Approve the ROADMAP"; after `1`, by YAML parser and
-    `grep` on the files, the release ticket has `## What to build`, `## Why` citing a PRD goal or SPEC section,
-    `## Acceptance criteria`, and `## After merge` with the release step ending `(needs authorization)`; the open
-    unknown is one `Spike: <question>` ticket; no ticket exists only to test or validate another; every ticket is at
-    `ready`; the PRD and SPEC are unchanged.
-
-24. **A bug becomes one ticket.** Invoke with a bug report against `done` work, then answer `1`.
-    PASS: the question shows the three change options; after `1`, exactly one new file, at `backlog`, with the
-    work-ticket sections including `## Why`; every other ticket file is unchanged by `git diff`.
-
-25. **Discovered work.** Invoke with the `Discovered:` comment on the `in-progress` ticket, then answer `1`.
-    PASS: the draft names that ticket's holder; after `1`, one new file at `backlog`, the carrier's `blocked_by` gains
-    its id, the carrier's `status` and `assignee` are unchanged, and no other file changes.
-
-26. **Split.** Ask to split the `in-progress` ticket, which has dependents, into two, then answer `1`.
-    PASS: the draft names the holder; after `1`, two children at `backlog`, each dependent's `blocked_by` names the
-    children it needs and not the parent, and the parent is `cancel`. The children carry no assignee.
-
-27. **Cancel.** Ask to cancel the export ticket, which the `backlog` ticket depends on.
-    PASS: the draft names the `backlog` ticket as left with a `cancel` blocker and offers to `unlink` it or block it by
-    a replacement; nothing changes before an answer; after `1`, the files match the draft.
+16. **No answer, no writes.** After a draft, answer `3` with a change, then answer `2`.
+    PASS: `cksum` of `issues_dir` is unchanged after both turns, and only option 2 changes the ROADMAP's status line.
 
 28. **A change to intent.** Ask to drop the PyPI release from the product.
-    PASS: the reply sends the change to `wkc-research` (a PRD goal) or `wkc-architect`, no ticket file changes, and
-    `git diff` on the PRD and SPEC is empty.
+    PASS: the reply sends the change to `wkc-research` (a PRD goal) or `wkc-architect`, the ROADMAP and every ticket
+    file are unchanged, and `git diff` on the PRD and SPEC is empty.
 
-## Dated report: 2026-10-17
+29. **Ticket work is routed.** Give a bug against the first milestone's work.
+    PASS: the reply names `wkc-backlog` and offers it; `cksum` of `issues_dir` is unchanged and the ROADMAP is unchanged.
+
+30. **Handoff to wkc-backlog.** Continue case 3 and answer `1`, without approving any tickets.
+    PASS: the ROADMAP reads `Status: approved (YYYY-MM-DD)`; the transcript shows the `wkc-backlog` instructions
+    loaded for the milestone option 1 named, and its draft ends on its own question; `cksum` of `issues_dir` is
+    unchanged, because approving the ROADMAP publishes nothing.
+
+## Moved cases
+
+Moved to [wkc-backlog.md](./wkc-backlog.md) on 2026-10-21, adapted to the new skill. Cases 3 and 16 were split: the
+ticket parts moved, the ROADMAP parts stay above. Case 28 is in both runbooks.
+
+| Old case | Now |
+|---|---|
+| 3 (ticket draft), 5, 23 | wkc-backlog 4, milestone tickets |
+| 16 (ticket writes), 14 (before an answer) | wkc-backlog 5, approval before publishing |
+| 6, 7, 8 | wkc-backlog 7, 8, 10 |
+| 11 to 15 | wkc-backlog 11 to 15 |
+| 17 to 21 | wkc-backlog 16 to 20 |
+| 22 | wkc-backlog 3, ticket templates |
+| 24 to 28 | wkc-backlog 21 to 25 |
+
+## History before the split
+
+The reports below tested `wkc-plan` while it also wrote tickets (0.0.27 and earlier). They are kept as history.
+They are not evidence for `wkc-backlog`, and their ticket cases are not evidence for the current `wkc-plan`.
+
+### Dated report: 2026-10-17
 
 Scope: new skill. Cases 1 and 2 as direct checks; cases 3 to 10 in Claude Code on Sonnet 5.5. Codex and Kiro CLI are
 out of scope, by the maintainer's choice.
@@ -187,7 +105,7 @@ out of scope, by the maintainer's choice.
 | 1, package and discovery | PASS, direct | Clean export of the candidate tree, `skills` 1.7.2. Discovery lists `wkc-architect`, `wkc-help`, `wkc-plan`, `wkc-research`, `wkc-setup`, `wkc-tracker`, `wkc-workflow-diagram` (7 public of 8 shipped `SKILL.md`). Frontmatter and `agents/openai.yaml` parse; both invocation settings manual; five fields in order. `.claude/skills/` and `.kiro/skills/` link to `.agents/skills/wkc-plan`, identical to source by `diff -r`. |
 | 2, document ownership | PASS, direct | `wkc-plan` writes only `roadmap_file` and names the tracker verbs `list`, `show`, `milestone`, `create`, and `move`, all in the `wkc-tracker` verb table. It never writes the PRD or SPEC and never offers to approve them. `wkc-architect` names `wkc-plan` as its next step; the README names it as the ROADMAP's writer. The ROADMAP outline has no per-milestone status or ticket list. |
 
-### Claude Code run, 2026-10-17
+#### Claude Code run, 2026-10-17
 
 Claude Code 2.1.302 with Sonnet 5.5 (`claude-sonnet-5-5`), authorized by the maintainer with a limit of 12 sessions
 and $2 per session, enforced with `--max-budget-usd 2`. `wkc-plan` and `wkc-tracker` were installed from a clean
@@ -209,7 +127,7 @@ No instruction changed during the run.
 | 9, custom paths | PASS | ROADMAP at `docs/planning/delivery-plan.md`, no `docs/dev-agents/ROADMAP.md`, and `git diff` empty for the config and `AGENTS.md`. |
 | 10, update | PASS | Splitting M3 rewrote only M3 and added M4, reset the status to `Status: draft`, and added a dated **Changes** entry naming the old M3. M1, which has tickets, kept its name; no ticket file changed. |
 
-### Dependency graph run, 2026-10-18
+#### Dependency graph run, 2026-10-18
 
 Same harness, model, flags, and fixture as the run above; sessions 10 to 12 of the 12 authorized. Session 10 ran
 `1b4f5b3`; sessions 11 and 12 ran `8464288`, which adds one sentence telling the skill not to draft later milestones'
@@ -228,7 +146,7 @@ tickets. 3 sessions, $1.80 in total, at most $1.15 in one session across its res
 | 6, 7, 8 | Not rerun | Passed on `076d84b`. Their paths changed with the graph step (reuse by tracker id, creation order, edge check), so that evidence covers the old text only. |
 | 9, 10 | Reused | Passed on `076d84b`; the ROADMAP paths they test did not change. |
 
-### Dependency safety run, 2026-10-18
+#### Dependency safety run, 2026-10-18
 
 Claude Code 2.1.302, Sonnet 5.5, same flags, sessions 15 to 24 of 10 more authorized at $2 each (15 to 17 were tracker
 cases). `wkc-plan` and `wkc-tracker` from a clean `git archive` of `ebb3204`, installed with `-a claude-code`.
@@ -246,13 +164,13 @@ Ticket state was scored with PyYAML from the files.
 | 7, spec gap and unknown | PASS | Session 23: no columns invented; the undecided table became a decision ticket for `wkc-architect` blocking the table work; the spike names its question, the evidence, and the SPEC sections, with throwaway code. `issues_dir` unchanged. |
 | 8, interrupted publication | PASS on the old check | Session 24: counted M1's four tickets, drafted only the deployment ticket, and after `1` created 005 alone with `blocked_by: ['001', '003']`; no title appears twice. It treated 001 to 004 as reused and left them at `backlog`, so nothing reached the frontier; the `076d84b` run had moved them to `ready`. A sentence now makes leftover tickets part of the publication, and case 8's check was tightened to match. Not rerun on that sentence. |
 
-### Wording change, 2026-10-18
+#### Wording change, 2026-10-18
 
 Added from the source cross-check: prefer checks a command can run, setup tickets shown working (including with no `test_command`), and spike timeboxes. Static checks only: frontmatter and `agents/openai.yaml` unchanged,
 no em dash in the changed lines, and the outline additions are comments or optional lines. Case 21 is new and
 SKIP: no AI sessions were authorized for this change. Earlier cases keep their evidence; their checks did not change.
 
-## Dated report: 2026-10-21
+### Dated report: 2026-10-21
 
 Scope: change handling and ticket templates (issue #40). Selected cases: 1, 2, and 22 as direct checks; 23 to 28 in
 Claude Code. Earlier cases were not rerun. Their paths were reworded to fit the line budget, and some wording narrowed: the
@@ -267,7 +185,7 @@ Direct checks on the worktree and a clean export of it (`git ls-files` piped thr
 | 2, document ownership | PASS, direct | Every tracker verb the skill names (`create`, `edit`, `link`, `list`, `milestone`, `move`, `next`, `show`, `unlink`) is in the `wkc-tracker` verb table. |
 | 22, ticket templates | PASS, direct | The three extracted blocks `diff` clean against SPEC Contracts › Ticket. The titles, the `(needs authorization)` rule, the before-merge versus after-merge rule, and the split rule are present. |
 
-### Claude Code run, 2026-10-21
+#### Claude Code run, 2026-10-21
 
 Six sessions, the standing limit, run one at a time as Claude Code `general-purpose` subagents on Sonnet (`sonnet`,
 effort `medium`). Headless `claude -p` is not used here, by the maintainer's standing instruction. Each session was told
@@ -289,14 +207,14 @@ not the pause, answer, and publish sequence, and cannot show that nothing is wri
 | S5 | 26 | PASS under advance approval | Draft named Alice Dev and no ticket left with a `cancel` blocker. Files: 006 and 007 at `backlog`, no assignee; 003 `blocked_by` `['006', '007']`, 004 `['007']`; 002 `cancel`, assignee kept. The transcript's write command creates 006 and 007, rewrites 003 and 004, then cancels 002. The session named the `Discovered:` storage-lock gap on 002 in its reply but did not carry it into either child's **Notes**. |
 | S6 | 28; 27 draft and file subchecks | 28 PASS; 27 partial | Request A routed PRD goal 3 to `wkc-research` and SPEC Deployment to `wkc-architect` and drafted nothing; `git diff` on PRD and SPEC empty after the session. Request B's draft named 005 as left with a `cancel` blocker and offered `unlink` or a replacement; after the advance `1`, only 004 changed, `ready` to `cancel`. Case 27's "nothing changes before an answer" is not established. Both requests ran in one session, A first. |
 
-### Review fixes, 2026-10-21
+#### Review fixes, 2026-10-21
 
 After PR review, two `SKILL.md` changes, checked statically only because the six sessions are spent: publish step 3
 links before it unlinks, except a link that would close a cycle through a removed edge, which waits for that unlink
 (checked by hand on `A blocked-by B` reversed to `B blocked-by A`); and the SPEC-gap rule names stated assumptions.
 `wc -l` 249, templates still `diff` clean, no em dash. Neither change has model evidence.
 
-### Review-fix run, 2026-10-21
+#### Review-fix run, 2026-10-21
 
 The maintainer approved up to three sessions past the six for the two review fixes. Same harness, model, effort, and
 fixtures, with `68fea45` installed; approval given in the user's first message. Two sessions used, about 61k and 66k
@@ -309,7 +227,7 @@ subagent tokens.
 
 The move to `ready` after approval remains unrun on the current text.
 
-### Second review fixes, 2026-10-21
+#### Second review fixes, 2026-10-21
 
 The second review found that the publish rule above could still expose a ticket during several reversals (A blocked by
 B and B blocked by C, reversed), and that S8 drafted a `Decision:` where the ticket asks for a `Spike:`. Two `SKILL.md`
@@ -327,7 +245,7 @@ blocked by 003) and no M1 tickets, two requests in sequence with option 1 given 
 | S9, request B | Spike for the open unknown; SPEC gaps; move to `ready` | PASS | 005 `Spike: is notes-cli free on PyPI?` with a timebox and PyPI evidence; the missing-file, first-id, and `notes list` error gaps went to decision 006, not into criteria. After the advance `1`, 004, 005, and 007 to 010 are `ready` with the approved blockers, 006 is `backlog`; PRD, SPEC, ROADMAP unchanged. |
 | S9, request B | Approval options | Observation | The question showed three options: dropping "Approve the ROADMAP" also dropped "publish nothing". S2 and S8 kept four on the same text. Not changed; no session left to validate a rewording. |
 
-### Final review fixes, 2026-10-21
+#### Final review fixes, 2026-10-21
 
 The final review found that a `done` blocker could hide early exposure: a ticket keeping only a `done` blocker is on the
 frontier, so the edge order now protects unmet blockers, not a non-empty list. It also judged the dropped "Publish

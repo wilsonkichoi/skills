@@ -1,0 +1,5 @@
+interface:
+  display_name: "wkc-backlog"
+  short_description: "Draft one milestone's tickets, or one change to the ticket graph, from the approved PRD, SPEC, and ROADMAP, then publish through wkc-tracker once the user approves"
+policy:
+  allow_implicit_invocation: true

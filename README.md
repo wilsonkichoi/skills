@@ -6,8 +6,8 @@ framework. Manual invocation is the default. `wkc-setup`, `wkc-workflow-diagram`
 require explicit invocation on Claude Code and Codex; Kiro has no documented setting to suppress automatic activation.
 `wkc-tracker` opts into model invocation, so a model or another skill can read and
 change ticket state without a typed command. `wkc-help` does too, so a plain question about these
-skills or their installation reaches it. `wkc-plan` does too, so a model can hand it a change when a
-person or `wkc-yolo` asked for that work.
+skills or their installation reaches it. `wkc-backlog` does too, so a model can hand it a change when
+a person or `wkc-yolo` asked for that work.
 
 All skill identifiers use `wkc-` to distinguish this repository's skills from similarly named skills.
 Version 0.0.9 makes the breaking rename from `setup` and `tracker` to `wkc-setup` and `wkc-tracker`,
@@ -96,15 +96,16 @@ validated before the next starts. See [AGENTS.md](./AGENTS.md) for how a skill i
 | [`wkc-help`](./skills/wkc-help/SKILL.md) | Answer questions about these skills, and install, pin, update, or remove them | shipped |
 | [`wkc-research`](./skills/wkc-research/SKILL.md) | Turn research and an interview into the product requirements document (`PRD.md`) | shipped |
 | [`wkc-architect`](./skills/wkc-architect/SKILL.md) | Turn approved product intent and the existing code into the technical specification (`SPEC.md`) and ADRs | shipped |
-| [`wkc-plan`](./skills/wkc-plan/SKILL.md) | Turn an approved spec into ordered milestones (`ROADMAP.md`), then tickets with dependencies for one milestone. Also take one change between planning runs (a request, a bug, or work discovered during a ticket), and refine, split, re-block, or cancel existing tickets. Writes every ticket from the SPEC's work-ticket, spike, and decision templates | shipped |
+| [`wkc-plan`](./skills/wkc-plan/SKILL.md) | Turn an approved spec into ordered milestones (`ROADMAP.md`), each with an outcome and an exit check, then hand an approved milestone to `wkc-backlog`. Writes no tickets | shipped |
+| [`wkc-backlog`](./skills/wkc-backlog/SKILL.md) | Turn one ROADMAP milestone into tickets with dependencies, or take one change between planning runs (a request, a bug, or work discovered during a ticket), and refine, split, re-block, or cancel existing tickets. Writes every ticket from the SPEC's work-ticket, spike, and decision templates, through `wkc-tracker` | shipped |
 | `wkc-implement` | Take a ticket to a pull request: branch, build, stay current with `main`, resolve conflicts, and run the ticket's acceptance checks. Rerun after the merge to run the ticket's post-merge steps and move it to `done` | planned |
 | `wkc-code-review` | Review a pull request against its ticket and acceptance criteria, in a context separate from the one that wrote it, and fix the blocking findings it raised; each fix is reviewed again in a fresh context | planned |
 | [`wkc-skills-release`](./skills/wkc-skills-release/SKILL.md) | Publish this collection's tags and GitHub Releases | shipped, internal |
 | `wkc-yolo` | Ask everything up front for a ticket, a wave, or a milestone (readiness, merge gate, permissions), then run it unattended: run `wkc-implement` and `wkc-code-review` on each ticket, merge where the project's `merge_gate` allows it, decide what the code reveals from the PRD, SPEC, ROADMAP, and milestone goal, record each decision, and stop when the scope is finished or an agreed limit is reached. The SPEC's run contract says how it selects, parallelizes, and resumes work | planned |
 | `wkc-retro` | Review a finished ticket, milestone, or run, and propose rule files for `rules_dir` from what worked and what did not; writes them only on approval | planned |
 
-`wkc-create-ticket`, `wkc-verify`, `wkc-git-fu`, and `wkc-backlog` were folded into the rows above.
-One request becoming tickets, and changing existing tickets, belong to `wkc-plan`. Running the acceptance checks belongs to the skill that
+`wkc-create-ticket`, `wkc-verify`, and `wkc-git-fu` were folded into the rows above.
+A milestone or one request becoming tickets, and changing existing tickets, belong to `wkc-backlog`. Running the acceptance checks belongs to the skill that
 writes the code, and judging them belongs to the review. Branch and conflict work is part of taking
 a ticket to a pull request. `wkc-yolo` follows the implementation, review, and planning skills it
 composes, because it only runs skills that already work by hand. It keeps its state in the tracker and git, not in one session, so a run can stop and
@@ -148,7 +149,7 @@ and `wkc-plan` rather than by `wkc-setup`.
 Name the skills and the agents you installed to:
 
 ```
-npx skills remove wkc-setup wkc-tracker wkc-workflow-diagram wkc-help wkc-research wkc-architect wkc-plan -a claude-code -a codex -a kiro-cli
+npx skills remove wkc-setup wkc-tracker wkc-workflow-diagram wkc-help wkc-research wkc-architect wkc-plan wkc-backlog -a claude-code -a codex -a kiro-cli
 ```
 
 If you explicitly installed the internal release skill, remove it separately:
