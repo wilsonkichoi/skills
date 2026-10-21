@@ -30,8 +30,8 @@ It was replaced by `wkc-help`, which explains those commands and runs them on re
 
 ## Size check
 
-Keep a `SKILL.md` near 100 lines and well under the 150-line limit in [AGENTS.md](../../../AGENTS.md#prose).
-When a draft grows past that, cut machinery first, then wording.
+Aim for a `SKILL.md` under 150 lines, and try to keep it under 250, as [AGENTS.md](../../../AGENTS.md#prose) says.
+When a draft grows past 150, cut machinery first, then wording.
 Ask whether a senior engineer would call the design overcomplicated. If yes, simplify it before review.
 
 ## Validation

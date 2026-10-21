@@ -188,8 +188,9 @@ directory has to clear the same check before it is added.
 
 - No em-dash. Use a comma, a period, a colon, or parentheses.
 - Write the way you would explain it to the person sitting next to you.
-- Keep skills short. A `SKILL.md` past roughly 150 lines is usually carrying policy that belongs
-  to the project, not to the skill.
+- Keep skills short. Aim for a `SKILL.md` under 150 lines, and try to keep it under 250 so a person
+  can read it. Neither is a hard limit; the Agent Skills specification's limit is 500. Past 150,
+  check whether the skill carries policy that belongs to the project, not to the skill.
 
 ## Validation
 

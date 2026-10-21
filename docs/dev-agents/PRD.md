@@ -32,8 +32,8 @@ session skipped the review status change, and the maintainer set it by hand.
 
 Not for:
 
-- Teams that want a framework, a plugin marketplace, or a build step. One shared skill tree replaced
-  those on purpose ([AGENTS.md Distribution](../../AGENTS.md#distribution)).
+- Teams that want a framework or a consumer build step. One shared skill tree replaced those on
+  purpose ([AGENTS.md Distribution](../../AGENTS.md#distribution)).
 - Anyone who wants merges, releases, or deploys with no gate they control. Merging is the human's
   call unless a run they started records otherwise ([AGENTS.md Git workflow](../../AGENTS.md#git-workflow)).
 - Teams that need ticket priority or a scheduling engine. `wkc-tracker next` returns every eligible
@@ -79,13 +79,16 @@ Ranked. Ranking is importance, not delivery order; the ROADMAP sets the order.
 4. **What a project learns becomes rules.** An optional `wkc-retro` reviews a finished ticket,
    milestone, or run and proposes rule files for `rules_dir`, written only on approval (decided
    2026-10-20).
-5. **The collection stays small and readable.** Each skill is one `SKILL.md` near 100 lines, with no
+5. **The collection stays small and readable.** Each skill is one `SKILL.md`, ideally under 150
+   lines and under 250 so a person can read it, with no
    scripts, agent definitions, or packaging unless a concrete failure requires them
    ([simplicity rule](./rules/simplicity.md)).
 
 ## Non-goals
 
-- No plugin packaging, marketplace file, per-harness copies, or consumer build step.
+- No marketplace, plugin packaging, or CI in this work. The maintainer plans a marketplace and CI
+  later (decided 2026-10-20).
+- No per-harness copies or consumer build step.
 - No skill merges, releases, or deploys on its own authority. `wkc-yolo` merges only where the
   project allows agent merges. A post-merge step that publishes or deploys runs only when a person
   or the run's limits authorized it.
@@ -110,9 +113,10 @@ Ranked. Ranking is importance, not delivery order; the ROADMAP sets the order.
 - **AI session budget:** at most 6 extra AI test sessions per change. No harness launches another
   harness ([token usage](./rules/token-usage.md), [AI harness testing](./rules/ai-harness-testing.md)).
 - **Authoring:** `wkc-` identifiers, the five opening fields, manual invocation by default, and a
-  `SKILL.md` well under 150 lines, except `wkc-plan` at about 250 lines in one file, because a
-  model skips instructions behind a second reference ([AGENTS.md Skills](../../AGENTS.md#skills),
-  [ADR-002](./adr/ADR-002-plan-absorbs-backlog.md)).
+  `SKILL.md` ideally under 150 lines and under 250 for a person reading it. Neither is a hard
+  limit; the Agent Skills specification allows 500 (decided 2026-10-20). `wkc-plan` sits near 250
+  in one file, because a model skips instructions behind a second reference
+  ([AGENTS.md Skills](../../AGENTS.md#skills), [ADR-002](./adr/ADR-002-plan-absorbs-backlog.md)).
 - **Tracker backends:** GitHub Issues, Linear, and local markdown, all through `wkc-tracker`.
 - **Compliance:** a project must be able to require a person's merge, and no run may override that.
 - **Delivery:** one port per pull request, validated before the next starts. One patch version per
@@ -168,6 +172,9 @@ open there: a first real check of the Linear integration.
 
 ## Changes
 
+- 2026-10-20: Maintainer review. `SKILL.md` length is a target, not a limit; marketplace and CI
+  are later work, not "not for" or permanent non-goals. Replaced "near 100 lines" and "well under
+  150". Review: SPEC Requirements and Boundaries.
 - 2026-10-20: Review findings. The authoring constraint names the `wkc-plan` size exception;
   open question 2 is settled by the ROADMAP's M5. No goal changed.
 - 2026-10-20: Goal 3 widened from a milestone to a ticket, wave, or milestone, with every question

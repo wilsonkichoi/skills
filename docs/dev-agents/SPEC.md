@@ -56,8 +56,9 @@ section. `assign <id>` already claims a ticket and sets `in-progress` in one wri
 
 - `wkc-plan` stays one `SKILL.md`. It takes a milestone or one change: a request, a bug, or
   discovered work, or a refinement, split, re-block, or cancel of existing tickets. Both run the
-  same read, draft, graph check, approval, and publish steps. It grows from 211 lines to about 250,
-  past the 150-line guide ([AGENTS.md Prose](../../AGENTS.md#prose)) and within the spec's 500.
+  same read, draft, graph check, approval, and publish steps. It grows from 211 lines to about 250:
+  past the 150-line aim, near the 250 lines a skill tries to stay under
+  ([AGENTS.md Prose](../../AGENTS.md#prose)), and within the spec's 500.
   Supporting files were rejected because a model reading through a second reference skips
   instructions, which the maintainer has observed (ADR-002).
 - Today's rule "never change a reused ticket" becomes: **an existing ticket changes only as shown in
@@ -332,7 +333,9 @@ live in `rules_dir`. The one new file type is `wkc-yolo`'s run record, one per r
 
 ## Requirements
 
-- Each `SKILL.md` near 100 lines and under 150, except `wkc-plan` at about 250 (ADR-002).
+- Each `SKILL.md` aims for under 150 lines and tries to stay under 250, so a person can read it
+  ([AGENTS.md Prose](../../AGENTS.md#prose)). Neither is a hard limit; the Agent Skills
+  specification's limit is 500. `wkc-plan` is expected near 250 (ADR-002).
 - At most 6 extra AI test sessions per change. Runbooks run on Claude Code; Codex and Kiro are SKIP.
 - Each port adds `validation/wkc-<name>.md` with a few simple cases, each with an independent check.
 - `wkc-yolo` performs no merge, publish, or deploy outside its recorded limits. Its runbook checks this.
@@ -341,7 +344,9 @@ live in `rules_dir`. The one new file type is `wkc-yolo`'s run record, one per r
 
 From the PRD non-goals:
 
-- No packaging, marketplace, per-harness copies, build step, or CI in this repository.
+- No marketplace, plugin packaging, or CI in this work. The maintainer plans a marketplace and CI
+  later (2026-10-20); each needs its own written reason ([AGENTS.md Distribution](../../AGENTS.md#distribution)).
+- No per-harness copies or consumer build step.
 - No skill merges, publishes, or deploys on its own authority.
 - No `wkc-backlog`, `wkc-fix`, `wkc-qa`, `wkc-verify`, `wkc-git-fu`, or `wkc-create-ticket`.
 - No status file beside the tracker, no priority, no separate ticket per step of one change.
@@ -358,11 +363,12 @@ the previous tag. Each port also updates the README roster, the repository map u
 
 ## Development environment
 
-- Markdown only. No build and no test suite, so `test_command` is absent from the config.
+- Markdown only. No build and no test suite yet, so `test_command` is absent from the config. The
+  maintainer plans evals and basic validation scripts later (2026-10-20).
 - `gh`, authenticated, for this repository's GitHub tracker and PRs.
 - `npx skills` 1.5.26 or later; Node.js 22 or later for `wkc-workflow-diagram`.
 - `make install`, `make worktree BRANCH=<type>/<slug>`, `make merge`, `make cleanup`, `make release`.
-- Validation is by runbook in `validation/`.
+- Until then, validation is by runbook in `validation/`.
 
 ## Coverage
 
@@ -400,7 +406,8 @@ the previous tag. Each port also updates the README roster, the repository map u
   every later port can be built through it. The first port is built by hand.
 - `wkc-code-review` depends on the PR body and the ticket shape.
 - `wkc-plan` change handling depends on the ticket shape and is the riskiest edit to a shipped
-  skill: it is already over the line guide, and a longer file has more instructions to skip.
+  skill: it is already past the 150-line aim and will sit near 250, and a longer file has more
+  instructions to skip.
 - Parallel tickets can conflict at merge; coordination risks from `wkc-plan` and serialized merges
   limit that. Every merge after the first in a wave costs one more review round.
 - `wkc-yolo` validation runs parallel subagents, which needs the maintainer's approval under
@@ -421,6 +428,10 @@ the previous tag. Each port also updates the README roster, the repository map u
 
 ## Changes
 
+- 2026-10-20: Maintainer review. `SKILL.md` length is a target, under 150 and under 250 for
+  readability, not a limit; marketplace and CI are later work, not permanent boundaries; evals and
+  validation scripts are planned. Replaced "under 150, except `wkc-plan`" and "no CI in this
+  repository".
 - 2026-10-20: Second review. A `Run:` comment ties each admitted ticket to its run, and resume
   and the ticket budget count those comments; held tickets are adopted in the up-front round; an
   open PR with an incomplete handoff is still build mode; Decisions point at the run contract.
