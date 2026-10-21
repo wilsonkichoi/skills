@@ -112,3 +112,20 @@ cases 3 and 9 ran before the change, which touches neither of their paths.
 Added from the source cross-check: a **Development environment** SPEC line and a report note when `test_command` is missing or no longer matches. Static checks only: frontmatter and `agents/openai.yaml` unchanged,
 no em dash in the changed lines, and the outline additions are comments or optional lines. Case 11 is new and
 SKIP: no AI sessions were authorized for this change. Earlier cases keep their evidence; their checks did not change.
+
+### Kiro CLI run, 2026-10-21
+
+Scope: Kiro harness coverage for cases 3, 5, 9, and the second half of 11. Candidate `f70b626` (0.0.26; `skills/`
+unchanged at `3ddad89`), installed with `skills` 1.7.4. Kiro CLI 2.33.0, `claude-sonnet-5.5`, non-interactive with
+`--resume` per turn, one session, 6 turns, about 12% of a 1M context; Kiro records no token or credit counts locally.
+Fixture: the PRD that the `wkc-research` run of the same date approved and committed (clinic SMS reminders, three goals,
+four non-goals), a `local` tracker, and a config with no `test_command`. Web search was available and used for pricing.
+
+| Case | Result | Evidence |
+|---|---|---|
+| 3, approved PRD | PASS | Three question rounds before the draft. **Coverage** maps all three goals and both outcomes; **Boundaries** carries every non-goal; the sheet input, messaging adapter, and both HTTP surfaces name fields, types, and error responses. `Status: draft`. `git status` showed only the SPEC and `adr/`. |
+| 5, real alternatives | FAIL | Hosting: three options with gains, costs, and what each rules out, and the turn ended; ADR-001 records the choice. SMS provider and sheet access: the turn that asked about them had already written the SPEC, whose **Security** section named the recommended service account, while **Decisions** marked both as pending. After the answer, ADR-002 records the provider. Routine choices got no ADR. |
+| 9, approval | PASS | `Status: draft` in the file after the first draft turn; after "Approve.", `Status: approved (2026-10-21)`, the run date. |
+| 11, no `test_command` | PASS | The report said the config lacks the SPEC's `npm test`; `git diff` shows the config unchanged. |
+
+Not run on Kiro: cases 4, 6, 7, 8, 10, and the first half of 11.

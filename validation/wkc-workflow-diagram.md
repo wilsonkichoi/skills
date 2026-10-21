@@ -314,3 +314,15 @@ Backend: local JSON/files. Browser: Chrome **154.0.8037.98** through Playwright.
 Neighbor fitting was removed at the user's direction. This supersedes the previous connected-neighbor visibility guarantee.
 Logs: `/tmp/diagram-pan-only-check-final.log`, `/tmp/diagram-pan-only-visual.log`, and ignored `.cache/pan-only-visual-results.json` under the diagram directory.
 Direct checks do not establish screen-reader, physical-device, or other-browser compatibility.
+
+### Kiro CLI link path, 2026-10-21
+
+Candidate `f70b626` (0.0.26; `skills/` unchanged at `3ddad89`), installed with `skills` 1.7.4 and all three `-a`.
+Node.js 24.11.1. Direct checks only; no AI session.
+
+- PASS, case 2 through the Kiro link: from a third directory, `.kiro/skills/wkc-workflow-diagram/scripts/diagram.mjs`
+  ran `check` and `build` with `--project` at a path holding spaces, `é`, and `漢`, using this repository's
+  `workflow.json` and `layout.json`. Both exit 0 and print their result. The built HTML is byte-identical to the tracked
+  `docs/dev-agents/diagram/diagram.html`. Without `--project`, `check` exits 1 with `--project is required`. The third
+  directory and the skill directory gained no files.
+- SKIP, case 19 on Kiro CLI: no AI session was run for this skill.
