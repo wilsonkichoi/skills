@@ -326,3 +326,20 @@ blocked by 003) and no M1 tickets, two requests in sequence with option 1 given 
 | S9, request A | Edge order on a double reversal | PASS | Draft gave the order unlink 001←002, link 002←001, unlink 002←003, link 003←002. The transcript's write commands run in that order (two calls repeated, same order). Files: 001 `[]`, 002 `['001']`, 003 `['002']`, all `ready` and unassigned. |
 | S9, request B | Spike for the open unknown; SPEC gaps; move to `ready` | PASS | 005 `Spike: is notes-cli free on PyPI?` with a timebox and PyPI evidence; the missing-file, first-id, and `notes list` error gaps went to decision 006, not into criteria. After the advance `1`, 004, 005, and 007 to 010 are `ready` with the approved blockers, 006 is `backlog`; PRD, SPEC, ROADMAP unchanged. |
 | S9, request B | Approval options | Observation | The question showed three options: dropping "Approve the ROADMAP" also dropped "publish nothing". S2 and S8 kept four on the same text. Not changed; no session left to validate a rewording. |
+
+### Final review fixes, 2026-10-21
+
+The final review found that a `done` blocker could hide early exposure: a ticket keeping only a `done` blocker is on the
+frontier, so the edge order now protects unmet blockers, not a non-empty list. It also judged the dropped "Publish
+nothing" a non-blocking defect; the options line now says to keep all four. `wc -l` 249, templates `diff` clean.
+
+The maintainer approved one or two more sessions. One used, on a fixture with M2 tickets 001 `done`, 002 blocked by 001
+and 003, 003, and 004 blocked by 002, all others `ready`; two requests with option 1 given up front. About 83k
+subagent tokens.
+
+| Session | Check | Result | Evidence |
+|---|---|---|---|
+| S10, request A | Edge order with a `done` blocker (to 002 blocked by 004 only, 004 by 003 only) | PASS | Transcript writes: 004 `['002', '003']`, `['003']`; 002 `['001', '003', '004']`, `['003', '004']`, `['004']`. 002 kept the unmet 003 until 004 landed. Files match; statuses and assignees unchanged. The draft wrongly called the starting graph a cycle. |
+| S10, request B | Four options; spike; move to `ready` | PASS | Four options with "Publish nothing". 006 `Spike: is notes-cli free on PyPI?`; decision 005 at `backlog`; 006 to 011 `ready` with the approved blockers; PRD, SPEC, ROADMAP unchanged. |
+| S10, request B | SPEC-gap rule | FAIL | 010 `cli: notes list` asserts that an invalid file prints `error: cannot read notes file` and exits 3, behaviour the SPEC gives only `notes add`, as S2 did; this time it was neither flagged nor in the decision ticket. S8 and S9 kept it out on the same rule. Not changed: the rule already names this case. |
+| S10, request B | Tracker-only access | Observation | The session read ticket files with `cat` before `list`, against section 1, and said so; it wrote nothing that way. |

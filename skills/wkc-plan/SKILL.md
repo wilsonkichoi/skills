@@ -192,8 +192,8 @@ ticket, no ticket blocks itself, and there is no cycle. Never publish a graph th
 - **Waves**, for two or more new tickets: wave 1 has no unmet blocker; each later wave's blockers
   sit in earlier waves. A possible schedule, never a promise of simultaneous work, time, or headcount.
 - **Coordination risks**: side-by-side tickets that edit one schema, migration, or config. No edge.
-- **Edge order** for existing tickets: no `link` or `unlink` may leave a cycle, or leave a ticket
-  the approved graph blocks with no blocker. If no order avoids both, name the ticket it exposes.
+- **Edge order** for existing tickets: no write may leave a cycle, or leave a ticket with no unmet
+  blocker when the approved graph gives it one. If none avoids both, name the exposed ticket.
 
 ## 5. Approval
 
@@ -209,7 +209,7 @@ Show the ROADMAP or what changed in it, the milestone or change being planned, a
   Option 1 says why decision tickets, and ones whose prerequisite has no ticket, stay at `backlog`.
 
 A question ends its turn. Number the options, put the recommended one first, and accept a digit.
-For a milestone, drop "Approve the ROADMAP" from them when it is already approved and unchanged:
+With the ROADMAP approved and unchanged, keep all four and drop only "Approve the ROADMAP":
 
 1. Approve the ROADMAP and publish the tickets at `ready`.
 2. Approve the ROADMAP and publish the tickets at `backlog`.
