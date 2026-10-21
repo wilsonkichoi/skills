@@ -45,8 +45,8 @@ the user states here, unless they already said to go ahead. Never offer to appro
 
 A change that alters what the PRD or SPEC says, such as a new goal, a dropped requirement, or a
 different contract, is not a ticket change: name it, send it to `wkc-research` for the PRD or
-`wkc-architect` for the SPEC, and draft nothing that depends on it. Never make a decision the SPEC
-does not make, such as a missing contract field: it is an unresolved prerequisite (section 4).
+`wkc-architect` for the SPEC, and draft nothing that depends on it. Never fill a gap the SPEC leaves,
+such as a missing field or behaviour, even as a stated assumption: it is an unresolved prerequisite.
 
 ## 2. Write the ROADMAP
 
@@ -203,8 +203,7 @@ Show the ROADMAP or what changed in it, the milestone or change being planned, a
   the waves, the first frontier, coordination risks, and unresolved prerequisites with what they hold;
 - what publishing will do: the milestone it creates, if any, N tickets at `backlog` with M edges,
   each existing ticket it edits, links, unlinks, or cancels, and the tickets it moves to `ready`.
-  Option 1 says why decision tickets, and tickets whose unresolved prerequisite has no ticket, stay
-  at `backlog`: they are not safe to start.
+  Option 1 says why decision tickets, and ones whose prerequisite has no ticket, stay at `backlog`.
 
 A question ends its turn. Number the options, put the recommended one first, and accept a digit.
 For a milestone, drop "Approve the ROADMAP" from them when it is already approved and unchanged:
@@ -227,8 +226,9 @@ Run the tracker writes in this order and stop at the first failure; they are har
 1. `wkc-tracker milestone <name>` for each milestone the new tickets need. If that fails, stop.
 2. `create` each new ticket in creation order, with its milestone, and its `## Blocked by` entries
    rewritten from draft ids to the tracker ids already returned.
-3. On existing tickets, `link` each new edge, `unlink` each removed one, and `edit` each refined
-   ticket. A `move <id> cancel` runs last, after the edges that replace that ticket have landed.
+3. On existing tickets, `link` each new edge, then `unlink` each removed one, so no ticket reaches
+   the frontier early. A link that would close a cycle through a removed edge waits for that unlink.
+   `edit` each refined ticket. A `move <id> cancel` runs last, after the edges that replace it land.
 4. Read back: `list <milestone>` once for a milestone, and `show` each ticket a change touched.
    Every new ticket is there, at `backlog`, with exactly the approved blockers; every existing one
    shows exactly the drafted change, and its status and holder unless the draft changes them. A

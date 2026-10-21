@@ -255,8 +255,9 @@ SKIP: no AI sessions were authorized for this change. Earlier cases keep their e
 ## Dated report: 2026-10-21
 
 Scope: change handling and ticket templates (issue #40). Selected cases: 1, 2, and 22 as direct checks; 23 to 28 in
-Claude Code. Earlier cases were not rerun: their paths were reworded to fit the line budget but not changed in meaning,
-so their evidence covers the old text only. Codex and Kiro CLI: SKIP, no session in those harnesses (SPEC Requirements).
+Claude Code. Earlier cases were not rerun. Their paths were reworded to fit the line budget, and some wording narrowed: the
+note keeping draft ids apart from tracker ids, waves for a single new ticket, generated files as a coordination risk,
+and the `next` tie-break line are gone. Their evidence covers the old text only. Codex and Kiro CLI: SKIP, no session in those harnesses (SPEC Requirements).
 
 Direct checks on the worktree and a clean export of it (`git ls-files` piped through `tar`), `skills` 1.7.4:
 
@@ -269,16 +270,28 @@ Direct checks on the worktree and a clean export of it (`git ls-files` piped thr
 ### Claude Code run, 2026-10-21
 
 Six sessions, the standing limit, run one at a time as Claude Code `general-purpose` subagents on Sonnet (`sonnet`,
-effort `medium`). Headless `claude -p` is not used here, by the maintainer's standing instruction, so each session read
-the installed `SKILL.md` from the fixture rather than loading it through the harness; harness loading rests on case 1.
-The fixture is the `notes` CLI in Preparation, with a `local` tracker. Sessions used about 61k to 65k subagent tokens per
-turn. Ticket state was scored with PyYAML and `git diff` on the files, never from the report.
+effort `medium`). Headless `claude -p` is not used here, by the maintainer's standing instruction. Each session was told
+to read the installed `SKILL.md` from the fixture and not to use the `Skill` tool, so harness loading is untested: case
+1 shows only installation, links, and file equality. The fixture is the `notes` CLI in Preparation, with a `local`
+tracker. Sessions used about 61k to 65k subagent tokens per turn. Ticket state was scored with PyYAML and `git diff` on
+the files, never from the report.
+
+S1 and S2 ended on the approval question and waited for an answer. S3 to S6 were given option 1 in the user's first
+message, because S2 refused an answer relayed by the test harness. Those four show publication under advance approval,
+not the pause, answer, and publish sequence, and cannot show that nothing is written before an answer.
 
 | Session | Case | Result | Evidence |
 |---|---|---|---|
-| S1, pilot | 23 | FAIL then fixed | Draft correct: 006 has `## Why` citing "PRD goal 3 and SPEC Deployment" and `## After merge` with `make release VERSION=0.1.0 ... (needs authorization)`; 002 is the only `Spike:`; no test-only ticket; PRD, SPEC, ROADMAP unchanged. But with the ROADMAP approved, it showed the three change options for a milestone, then published all six at `backlog`. Cause: the sentence on change options followed "the options are about the tickets alone". Fixed by saying which options a milestone and a change get. |
-| S2 | 23 | PASS for the options; publication SKIP | On the fixed text, the question showed the four milestone options without "Approve the ROADMAP", option 1 moving all six to `ready`. The session refused a relayed `1` twice as not the user's own reply and wrote nothing (`git status` clean). The move to `ready` is unchanged text that case 5 covered. The report said "5 edges" for six; T5 applied the `notes add` read error to `list`, labeled as an assumption. |
-| S3 | 24 | PASS | Answer given up front in the user's message. One new file 006 at `backlog`, sections What to build, Why (citing SPEC `notes add`), Acceptance criteria, Notes; no other file changed. The final message did not quote the draft, so the three change options are SKIP here. |
-| S4 | 25 | PASS | Draft named Alice Dev as holder of `in-progress` 002 and showed the three change options. Files: 006 at `backlog`; 002 `blocked_by` `['001']` to `['001', '006']`, `status` and `assignee` unchanged. The session said PyYAML was missing and skipped its own parse check; the independent parse passed. |
-| S5 | 26 | PASS | Draft named Alice Dev and no ticket left with a `cancel` blocker. Files: 006 and 007 at `backlog`, no assignee; 003 `blocked_by` `['006', '007']`, 004 `['007']`; 002 `cancel`, assignee kept. Write order (cancel last) rests on the report. It also named the `Discovered:` gap on 002 as unresolved. |
-| S6 | 28, then 27 | PASS | Request A routed PRD goal 3 to `wkc-research` and SPEC Deployment to `wkc-architect`, drafted nothing; `git diff` on PRD and SPEC empty after the session. Request B's draft named 005 as left with a `cancel` blocker and offered `unlink` or a replacement; after `1`, only 004 changed, `ready` to `cancel`. Both requests ran in one session, A first. |
+| S1, pilot | 23 | Draft and file subchecks PASS; options FAIL, then fixed | 006 has `## Why` citing "PRD goal 3 and SPEC Deployment" and `## After merge` with `make release VERSION=0.1.0 ... (needs authorization)`; 002 is the only `Spike:`; no test-only ticket; PRD, SPEC, ROADMAP unchanged. But 006 also has a pre-merge criterion that `make release` "runs the build and the upload", with no `(needs authorization)`. With the ROADMAP approved, the question showed the three change options for a milestone, and all six tickets published at `backlog`. Cause: the sentence on change options followed "the options are about the tickets alone". Fixed by naming which options a milestone and a change get. |
+| S2 | 23 | Options subcheck PASS; SPEC-gap rule FAIL; publication not run | On the fixed text, the question showed the four milestone options without "Approve the ROADMAP". The draft gave `notes list` the `error: cannot read notes file` exit 3 behaviour, said the SPEC states it only for `notes add`, and called it an assumption: a SPEC decision the skill forbids. The rule now says a stated assumption still fills a gap; that wording is unvalidated. The session refused a relayed `1` twice and wrote nothing (`git status` clean), so the move to `ready` after the fix was never run; case 5's older evidence does not cover the new approval wording. The draft also said "5 edges" for six. |
+| S3 | 24 | Publication subcheck PASS; options not observed | One new file 006 at `backlog`, sections What to build, Why (citing SPEC `notes add`), Acceptance criteria, Notes; no other file changed. The final message did not quote the draft, so the three change options were not observed. |
+| S4 | 25 | PASS under advance approval | Draft named Alice Dev as holder of `in-progress` 002 and showed the three change options. Files: 006 at `backlog`; 002 `blocked_by` `['001']` to `['001', '006']`, `status` and `assignee` unchanged. The session skipped its own parse check, saying PyYAML was missing; the independent parse passed. |
+| S5 | 26 | PASS under advance approval | Draft named Alice Dev and no ticket left with a `cancel` blocker. Files: 006 and 007 at `backlog`, no assignee; 003 `blocked_by` `['006', '007']`, 004 `['007']`; 002 `cancel`, assignee kept. The transcript's write command creates 006 and 007, rewrites 003 and 004, then cancels 002. The session named the `Discovered:` storage-lock gap on 002 in its reply but did not carry it into either child's **Notes**. |
+| S6 | 28; 27 draft and file subchecks | 28 PASS; 27 partial | Request A routed PRD goal 3 to `wkc-research` and SPEC Deployment to `wkc-architect` and drafted nothing; `git diff` on PRD and SPEC empty after the session. Request B's draft named 005 as left with a `cancel` blocker and offered `unlink` or a replacement; after the advance `1`, only 004 changed, `ready` to `cancel`. Case 27's "nothing changes before an answer" is not established. Both requests ran in one session, A first. |
+
+### Review fixes, 2026-10-21
+
+After PR review, two `SKILL.md` changes, checked statically only because the six sessions are spent: publish step 3
+links before it unlinks, except a link that would close a cycle through a removed edge, which waits for that unlink
+(checked by hand on `A blocked-by B` reversed to `B blocked-by A`); and the SPEC-gap rule names stated assumptions.
+`wc -l` 249, templates still `diff` clean, no em dash. Neither change has model evidence.
