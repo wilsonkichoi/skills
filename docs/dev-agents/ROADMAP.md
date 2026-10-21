@@ -1,9 +1,8 @@
 # wkc- skills ROADMAP
 
-Status: draft
+Status: approved (2026-10-21)
 
-Planned from the draft [SPEC](./SPEC.md) at the maintainer's request (2026-10-20), before the SPEC
-was approved. Every milestone needs the PRD, SPEC, ADRs, and this ROADMAP merged to `main` first:
+Planned from the [SPEC](./SPEC.md), approved 2026-10-21. Every milestone needs the PRD, SPEC, ADRs, and this ROADMAP merged to `main` first:
 `wkc-implement` stops on uncommitted planning documents, and a fresh worktree cannot see them.
 
 Validation for every milestone runs on Claude Code; Codex and Kiro cases are SKIP (PRD Constraints).
@@ -41,6 +40,7 @@ Exit check: this milestone's tickets reach `done` through one `wkc-yolo` run on 
 
 ## Changes
 
+- 2026-10-21: The SPEC is approved, so the opening note cites it as approved. Replaced "Planned from the draft SPEC ... before the SPEC was approved". No milestone changed.
 - 2026-10-21: `wkc-plan` change handling and the ticket templates move first (M1), ahead of `wkc-implement` (M2) and `wkc-code-review` (M3), because both now hand discovered work to `wkc-plan` and every ticket after M1 uses its templates. M1's exit check uses a fixture `Discovered:` comment. Replaced the order M1 implement, M2 review, M3 plan, and the "until M3" interim rules.
 - 2026-10-20: SPEC templates. M2 adds the fix commit template; M3 adds the ticket templates.
 - 2026-10-20: SPEC maintainer decisions. M1 adds follow-up PRs and the `wkc-implement` comment templates; M3 adds the hand-off of discovered work from `wkc-implement` and `wkc-code-review` to `wkc-plan`, replacing a person running `wkc-plan` on the comment.

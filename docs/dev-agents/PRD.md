@@ -1,6 +1,6 @@
 # wkc- skills PRD
 
-Status: draft
+Status: approved (2026-10-21)
 
 ## Problem
 
