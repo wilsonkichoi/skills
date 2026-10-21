@@ -1,0 +1,183 @@
+# wkc- skills PRD
+
+Status: draft
+
+## Problem
+
+An AI coding agent does better work when it knows the project's intent (product, design, plan),
+the state of its tickets, and its conventions, and when it can take a ticket to a reviewed pull
+request without a person driving every step. The earlier toolkit, `agent-toolkit`, did this, but it
+became hard to maintain. It had per-harness plugin packaging and generated copies, a script
+collection, runtime contracts, rigid packet parsers, and tuning knobs
+([history](../../.local/history.md), [AGENTS.md Distribution](../../AGENTS.md#distribution)).
+Its replacement here was over-built once too: the first `wkc-manage` design grew to 335 lines across
+five runtime files before it was cut back ([simplicity rule](./rules/simplicity.md#why)).
+
+The collection is half built. Seven skills are shipped. The skills that turn a plan into merged and
+delivered work are not: `wkc-implement`, `wkc-code-review`, and `wkc-yolo`
+([README roster](../../README.md#skills)). Nothing turns what a project learns into rules either.
+Today a person carries each ticket from the tracker to a pull request by hand. The observed failure
+in [issue #15](https://github.com/wilsonkichoi/skills/issues/15) shows the cost: an implementation
+session skipped the review status change, and the maintainer set it by hand.
+
+## Who it is for
+
+- **The maintainer** (decided 2026-10-20), first. They use the skills on their own projects and use
+  them to build the rest of this collection.
+- **Adopting projects** that install the skills with `npx skills add`. Earlier examples were
+  `the_beautiful_game`, `sekai-kb`, and `lagunabeach-md` ([history](../../.local/history.md)). Some
+  trust an agent to merge; others need a person's final approval for compliance (decided 2026-10-20).
+- **Agents** in Claude Code, Codex, and Kiro CLI, which read the skills
+  ([README Install](../../README.md#install)).
+
+Not for:
+
+- Teams that want a framework, a plugin marketplace, or a build step. One shared skill tree replaced
+  those on purpose ([AGENTS.md Distribution](../../AGENTS.md#distribution)).
+- Anyone who wants merges, releases, or deploys with no gate they control. Merging is the human's
+  call unless a run they started records otherwise ([AGENTS.md Git workflow](../../AGENTS.md#git-workflow)).
+- Teams that need ticket priority or a scheduling engine. `wkc-tracker next` returns every eligible
+  ticket, lowest id first, by design ([CHANGELOG 0.0.22](../../CHANGELOG.md)).
+
+## Outcomes
+
+Decided by the maintainer on 2026-10-20:
+
+1. **The manual loop works on this repository.** The remaining work is planned and built with the
+   shipped skills: this PRD, then a SPEC from `wkc-architect`, a ROADMAP and tickets from `wkc-plan`,
+   pull requests from `wkc-implement`, and reviews from `wkc-code-review`. A person merges.
+2. **One milestone runs unattended.** `wkc-yolo` takes a milestone of a real project from the tracker
+   frontier to its exit check. It uses only `wkc-` skills. It merges on its own where the project
+   allows that, and stops for a person's merge where the project requires one. A person reviews the
+   decisions the run recorded.
+3. **Validation stays proportionate.** Each port has a runbook with simple checks that decide PASS
+   or FAIL. A simple check that the skill works is enough. Do not build broad test matrices that
+   try to cover everything and burn tokens.
+
+## Goals
+
+Ranked. Ranking is importance, not delivery order; the ROADMAP sets the order.
+
+1. **A ticket goes from `ready` to `done`.** `wkc-implement` takes one ticket to a pull request:
+   branch, build, stay current with `main`, resolve conflicts, run the acceptance checks, and hand
+   off for review with the tracker updated. `wkc-code-review` judges that pull request against its
+   ticket in a fresh context and fixes the blocking findings it raised, with each fix reviewed again
+   by a fresh context. After the merge, a rerun of `wkc-implement` runs the ticket's post-merge
+   steps and moves it to `done`. Each ticket carries its own definition of done, because done
+   differs by ticket: review and tests only, plus integration tests, or plus release, deployment,
+   and testing the release (decided 2026-10-20).
+2. **Plans follow changes between planning runs.** `wkc-plan` also takes a single request or a
+   piece of discovered work: it judges whether it touches tickets, the ROADMAP, the SPEC, or the
+   PRD, sends document changes to `wkc-research` or `wkc-architect`, and creates, edits, splits, or
+   cancels tickets through `wkc-tracker` (decided 2026-10-20; replaces the planned `wkc-backlog`).
+3. **A ticket, a wave, or a milestone runs without a person at each step.** `wkc-yolo` asks
+   everything in one round before the run: scope, readiness, and the permissions it needs. Then it
+   asks nothing (decided 2026-10-20). During the run it decides from the PRD, SPEC, ROADMAP, and
+   milestone goal, records each decision, and stops at the exit check or a limit
+   ([plan.md Decisions](../../.local/plan.md#decisions)). Whether it may merge is a per-project
+   setting (decided 2026-10-20).
+4. **What a project learns becomes rules.** An optional `wkc-retro` reviews a finished ticket,
+   milestone, or run and proposes rule files for `rules_dir`, written only on approval (decided
+   2026-10-20).
+5. **The collection stays small and readable.** Each skill is one `SKILL.md` near 100 lines, with no
+   scripts, agent definitions, or packaging unless a concrete failure requires them
+   ([simplicity rule](./rules/simplicity.md)).
+
+## Non-goals
+
+- No plugin packaging, marketplace file, per-harness copies, or consumer build step.
+- No skill merges, releases, or deploys on its own authority. `wkc-yolo` merges only where the
+  project allows agent merges. A post-merge step that publishes or deploys runs only when a person
+  or the run's limits authorized it.
+- No `wkc-backlog`, `wkc-fix`, `wkc-qa`, `wkc-verify`, `wkc-git-fu`, or `wkc-create-ticket` skill.
+  `wkc-plan` handles changes between planning runs, and `wkc-code-review` fixes its own findings.
+  PR #30 folded verify, git-fu, and create-ticket into the planned skills and left fix and QA off
+  the roster ([PR #30](https://github.com/wilsonkichoi/skills/pull/30), [plan.md](../../.local/plan.md)).
+- No separate ticket per step of one change. Testing and validating a change belong to the ticket
+  that makes it.
+- No ticket priority.
+- No progress in the PRD, SPEC, or ROADMAP. The tracker owns ticket state.
+- No verification, backup, recovery, migration, or audit machinery unless the user asks for it.
+- No per-skill version stamps or generic release configuration.
+- No exhaustive validation. See outcome 3.
+
+## Constraints
+
+- **Harnesses:** Claude Code, Codex, and Kiro CLI, from one source tree, through the `npx skills`
+  installer with each agent named by `-a` ([AGENTS.md Distribution](../../AGENTS.md#distribution)).
+- **Validation harness** (decided 2026-10-20): runbooks run on Claude Code only. Codex and Kiro cases
+  are SKIP. The maintainer uses Codex and Kiro while dogfooding, and feeds what breaks back as fixes.
+- **AI session budget:** at most 6 extra AI test sessions per change. No harness launches another
+  harness ([token usage](./rules/token-usage.md), [AI harness testing](./rules/ai-harness-testing.md)).
+- **Authoring:** `wkc-` identifiers, the five opening fields, manual invocation by default, and a
+  `SKILL.md` well under 150 lines, except `wkc-plan` at about 250 lines in one file, because a
+  model skips instructions behind a second reference ([AGENTS.md Skills](../../AGENTS.md#skills),
+  [ADR-002](./adr/ADR-002-plan-absorbs-backlog.md)).
+- **Tracker backends:** GitHub Issues, Linear, and local markdown, all through `wkc-tracker`.
+- **Compliance:** a project must be able to require a person's merge, and no run may override that.
+- **Delivery:** one port per pull request, validated before the next starts. One patch version per
+  pull request ([AGENTS.md Versioning](../../AGENTS.md#versioning)).
+- **Cost:** development cost carries little weight. The maintainer's usage limits do.
+
+## Assumptions
+
+- The shipped `wkc-research`, `wkc-architect`, and `wkc-plan` can plan their own successors. Writing
+  this PRD is the first test of that.
+- The first port is built without `wkc-implement`, because it does not exist yet. Each later port
+  can use the ones before it.
+- Adopting projects need what the maintainer needs. No adopter feedback is recorded.
+- Problems that appear on Codex or Kiro during dogfooding are rare enough to fix as they appear.
+- A rerun of `wkc-implement` can carry post-merge steps without making the skill hard to follow. If
+  it cannot, a small delivery skill takes them over (decided 2026-10-20).
+
+## Open questions
+
+1. **Delivery order.** [plan.md](../../.local/plan.md) ordered backlog first. With backlog folded into
+   `wkc-plan`, outcome 1 is served sooner if `wkc-implement` and `wkc-code-review` ship first, because
+   every later change then goes through them. The ROADMAP decides.
+2. **Where outcome 2 runs.** Settled 2026-10-20: the ROADMAP's M5 in this repository is delivered
+   by a `wkc-yolo` run.
+
+## Evidence
+
+The `.local/` files are ignored by git, so they exist only in the maintainer's checkout.
+
+- [`.local/plan.md`](../../.local/plan.md): port order, shared authoring contract, decisions table,
+  responsibility boundaries, delivery and validation steps per port.
+- [`.local/plan-wkc-*.md`](../../.local/): one draft per planned or folded skill. Drafts for
+  research, architect, and plan are history. Drafts for backlog, fix, QA, verify, git-fu, and
+  create-ticket are input for the planned skills only; their status lines say how.
+- [`.local/port-crosscheck.md`](../../.local/port-crosscheck.md): source-versus-port review of the
+  shipped lifecycle skills, with the commit-before-handoff gap.
+- [`.local/history.md`](../../.local/history.md): retained decisions and the earlier toolkit's lessons.
+- `.local/architecture.excalidraw`: the original workflow sketch. It names the roster, the ticket
+  statuses, and "following rigid rules or steps for ceremonial purpose is bad engineering".
+- [README](../../README.md), [AGENTS.md](../../AGENTS.md), [CHANGELOG](../../CHANGELOG.md), and
+  [rules](./rules/): the shipped state and the conventions.
+- [Issue #15](https://github.com/wilsonkichoi/skills/issues/15): the `wkc-implement` lifecycle
+  contract and its observed failure.
+- The maintainer's answers on 2026-10-20 to the `wkc-research` and `wkc-architect` interviews.
+- The `agent-toolkit` sources linked from the drafts were not read for this PRD.
+
+## Notes for architecture
+
+The [SPEC](./SPEC.md) and its ADRs answer the design questions this section listed: the lifecycle
+contract from issue #15, commit before handoff, correcting review findings, the merge gate, and
+discovered work, how `wkc-yolo` calls the other skills, and where a run's limits are kept. Still
+open there: a first real check of the Linear integration.
+
+## Changes
+
+- 2026-10-20: Review findings. The authoring constraint names the `wkc-plan` size exception;
+  open question 2 is settled by the ROADMAP's M5. No goal changed.
+- 2026-10-20: Goal 3 widened from a milestone to a ticket, wave, or milestone, with every question
+  asked before the run. Review: the SPEC's `wkc-yolo` run.
+- 2026-10-20: **Notes for architecture** now lists only the Linear check as open; the SPEC settled
+  the rest. No goal changed.
+- 2026-10-20: Maintainer decisions from the SPEC interview. `wkc-backlog` folds into `wkc-plan`;
+  `wkc-code-review` fixes its own findings; `wkc-yolo` may merge where the project allows it, and a
+  project can require a person's merge; done is defined per ticket and reached through a rerun of
+  `wkc-implement`; new optional `wkc-retro`. Replaced the "no skill merges" non-goal, the backlog
+  goal, and outcome 2's "a person merges". Review: the SPEC, and the README roster rows for
+  `wkc-backlog` and `wkc-retro`.
+- 2026-10-20: First version, ported from the `.local/` planning material.

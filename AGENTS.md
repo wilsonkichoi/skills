@@ -248,7 +248,8 @@ and the order.
    A ported script needs a written reason.
 3. **Rewrite, do not copy.** Cut agent-toolkit-specific policy on sight: fork contributions,
    canonical-repository permission boundaries, version migration sections, tuning knobs like
-   `work_in_progress_limit` and `max_fix_attempts`. Something re-earns its place only when its
+   `work_in_progress_limit`. `max_fix_attempts` is the exception, kept as a config field by
+   [ADR-003](docs/dev-agents/adr/ADR-003-review-and-fix-rounds.md). Something re-earns its place only when its
    absence breaks the skill.
 4. **Apply the conventions above**: the [Skill template](#skill-template), every invocation setting,
    `agents/openai.yaml`.
