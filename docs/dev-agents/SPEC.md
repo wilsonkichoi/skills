@@ -549,8 +549,9 @@ the previous tag. Each port also updates the README roster, the repository map u
 
 ## Risks and dependencies
 
-- `wkc-implement` comes before everything else in the loop: `wkc-code-review` reviews its PRs, and
-  every later port can be built through it. The first port is built by hand.
+- `wkc-plan` change handling and its ticket templates come first: `wkc-implement` and
+  `wkc-code-review` hand discovered work to it, and every later ticket uses its templates. It and
+  the first `wkc-implement` ticket are built by hand; later ports are built through `wkc-implement`.
 - `wkc-code-review` depends on the PR body and the ticket shape.
 - `wkc-plan` change handling depends on the ticket shape and is the riskiest edit to a shipped
   skill: it is already past the 150-line aim and will sit near 250, and a longer file has more
@@ -575,6 +576,9 @@ the previous tag. Each port also updates the README roster, the repository map u
 
 ## Changes
 
+- 2026-10-21: Risks put `wkc-plan` change handling first, because `wkc-implement` and
+  `wkc-code-review` now depend on it. Replaced "`wkc-implement` comes before everything else".
+  Review: ROADMAP order.
 - 2026-10-20: The work ticket gains `## Why`, the reason the work matters, with its PRD or SPEC
   source. Review: ROADMAP M3.
 - 2026-10-20: Literal templates for the work ticket, spike, and decision ticket from `wkc-plan`;
