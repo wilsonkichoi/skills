@@ -96,12 +96,15 @@ procedures stay in the config's free-text **Conventions**, and `## After merge` 
 ### Ticket
 
 Written by `wkc-plan`, read by `wkc-implement`, `wkc-code-review`, and `wkc-yolo`. It is the
-[wkc-tracker shape](../../skills/wkc-tracker/SKILL.md#5-ticket-shape) plus `## After merge`. Drop
-a section that would say nothing. A work ticket, titled `<area>: <outcome in a few words>`:
+[wkc-tracker shape](../../skills/wkc-tracker/SKILL.md#5-ticket-shape) plus `## Why` and
+`## After merge`. Drop a section that would say nothing. A work ticket, titled `<area>: <outcome in a few words>`:
 
 ```markdown
 ## What to build
 <One to three sentences on what exists when this is done.>
+
+## Why
+<The problem it solves or the outcome it serves, in one or two sentences>, from <PRD goal or SPEC section>.
 
 ## Acceptance criteria
 - [ ] <What is checked before merge>: `<command>` gives <expected result>.
@@ -119,6 +122,10 @@ a section that would say nothing. A work ticket, titled `<area>: <outcome in a f
 ## Notes
 <SPEC section>: <the excerpt the work needs, copied in>.
 ```
+
+What to build and the acceptance criteria are the goal. Why is the reason, and it is what
+`wkc-implement`, `wkc-code-review`, and `wkc-yolo` judge against when a criterion leaves a choice
+open. A spike and a decision ticket give their reason as the work that waits on the answer.
 
 A spike, titled `Spike: <question>`. Its code is thrown away, never shipped:
 
@@ -568,6 +575,8 @@ the previous tag. Each port also updates the README roster, the repository map u
 
 ## Changes
 
+- 2026-10-20: The work ticket gains `## Why`, the reason the work matters, with its PRD or SPEC
+  source. Review: ROADMAP M3.
 - 2026-10-20: Literal templates for the work ticket, spike, and decision ticket from `wkc-plan`;
   the review verdict gains `Fixed in` and `Fixing rounds used`, and a `fixed` round makes one fix
   commit from a template; `Decision (wkc-yolo):` and `Parked (wkc-yolo):` comments get templates.
