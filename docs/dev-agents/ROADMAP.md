@@ -1,6 +1,6 @@
 # wkc- skills ROADMAP
 
-Status: draft
+Status: approved (2026-10-21)
 
 Planned from the [SPEC](./SPEC.md), approved 2026-10-21. Every milestone needs the PRD, SPEC, ADRs, and this ROADMAP merged to `main` first:
 `wkc-implement` stops on uncommitted planning documents, and a fresh worktree cannot see them.

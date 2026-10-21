@@ -1,6 +1,6 @@
 # wkc- skills SPEC
 
-Status: draft
+Status: approved (2026-10-21)
 
 ## Overview
 
