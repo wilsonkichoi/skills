@@ -285,3 +285,21 @@ work now asks of it; PR #50 lists the shipped `wkc-backlog` as needing that chan
   (`wc -l` 211), case 2 PASS.
 - Claude Code tally: cases 3 to 20 and 23 PASS, case 21 FAIL, cases 22 and 24 SKIP, installed invocation SKIP. Cases
   3 to 13 and 15 to 17 ran on `0d6ee2a`, and none ran on `698d6b1`.
+
+### S8 on `32b7585`, 2026-10-21
+
+Candidate `32b7585` adds one change to `698d6b1`: section 5 names `wkc-code-review` as the review step only when it
+is installed. Direct checks: case 1 PASS (`wc -l` 212), case 2 PASS. S8, an eighth session the maintainer
+authorized, Sonnet (`sonnet`, effort `medium`), read the installed `SKILL.md` by hand. Two invocations, each its own
+turn, about 66k and 68k subagent tokens. Fixture additions: issue #19 with open PR #20 and a handoff, then merged
+SPEC PR #21, whose body mentions #19 without a reference line, and a comment on #19 naming PR #21. The tester merged
+PR #21 as the person.
+
+| Session | Case | Result | Evidence |
+|---|---|---|---|
+| S8 | 22, earlier session's item | PASS | #7, run alone: review state for PR #15, then a numbered question offering `wkc-backlog`; the transcript's last entry is that text, with no tool call after it; #7's state, comments, labels, and assignees hash the same. |
+| S8 | 24, unrelated merged PR | PASS | #19: review state for open PR #20, not finish; the reply says PR #21 is only mentioned; #19's state, comments, labels, and assignees hash the same; PR #20 `OPEN`. |
+
+Claude Code tally: cases 3 to 20 and 22 to 24 PASS, case 21 FAIL on its written check, installed invocation SKIP.
+Cases 3 to 13 and 15 to 17 ran on `0d6ee2a`, cases 14, 19, and 20 on `c847d59`, case 21 and 23 on `d5e6ec5`, and
+cases 22 and 24 on `32b7585`.
