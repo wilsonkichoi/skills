@@ -215,7 +215,9 @@ checkouts the way code does.
   It pushes the finish branch straight to the default branch when the project's **Conventions**
   allow direct pushes, and otherwise opens a PR from it whose first line is the ticket path; a
   person merges it. A rerun continues an unmerged finish branch and starts a new one after it
-  merges. With no remote, post-merge writes are committed on the local default branch.
+  merges. With no remote, post-merge writes are committed on the local default branch. Under
+  `wkc-yolo`, a finish PR whose diff touches only `issues_dir` merges under `merge_gate` without a
+  review round, at the head whose diff it checked.
 
 Before branching, `wkc-implement` checks `git status` for uncommitted changes to `prd_file`,
 `spec_file`, `roadmap_file`, ADRs, and `issues_dir`. If it finds any, it stops and asks for them to
@@ -302,6 +304,11 @@ the same way also left it alone. Not checked: a review request or approval, whic
 GitHub account; an issue starting at In Review; and a branch name that contains the ID.
 
 ### Review verdict
+
+A PR or ticket id is the preferred input: tickets run in parallel worktrees, and an explicit target
+cannot review the wrong PR. With no argument, `wkc-code-review` reviews the one open PR whose head
+is the current branch, which in a worktree is that worktree's own. With no open PR or several, it
+asks for a PR or ticket id and posts nothing.
 
 `wkc-code-review` posts one comment per round on the PR, or on the ticket when there is no PR:
 
@@ -503,7 +510,8 @@ live in `rules_dir`. The one new file type is `wkc-yolo`'s run record, one per r
   reads current state before writing again, and never repeats a completed write.
 - A failing check is reported with its output. No skill weakens a test or a criterion to pass.
 - An `approve` covers exactly the head it reviewed. `wkc-yolo` merges only that sha, with
-  `gh pr merge --match-head-commit`.
+  `gh pr merge --match-head-commit`. The one PR it merges unreviewed is a local finish PR that
+  touches only `issues_dir` (Contracts, Lifecycle), also by the sha it checked.
 - Parallel tickets merge one at a time. Before each merge, the branch takes in the current `main`,
   its checks run again, and a fresh round reviews the new head before merge. When the update was
   clean, that round only confirms that the change from the approved head is `main`'s; a conflict
@@ -590,6 +598,8 @@ the previous tag. Each port also updates the README roster, the repository map u
 - `wkc-implement`, `wkc-code-review`, and `wkc-backlog` opt into model invocation; see Invocation.
 - Codex and Kiro support subagents (maintainer, 2026-10-20). Trouble starting one is filed as a bug.
 - On Linear, PRs link with `Related to <ID>` only.
+- A bare `wkc-code-review` call reviews the current branch's one open PR, and asks otherwise. A PR
+  or ticket id stays the preferred input (maintainer, 2026-10-22; #54).
 - On the local backend, `wkc-tracker` commits each write and never pushes; `wkc-implement` carries
   ticket commits in the ticket's PR and a finish branch. Chosen over the person committing them,
   which left them uncommitted in S4 and S5, and over a gitignored `issues_dir`, which loses history
@@ -632,6 +642,11 @@ None.
 
 ## Changes
 
+- 2026-10-22: `wkc-code-review` with no argument reviews the current branch's one open PR, and
+  asks when there is none or several; a PR or ticket id is preferred (Review verdict, Decisions;
+  #54). Replaced the undefined "none" input. Under `wkc-yolo`, a local finish PR that touches only
+  `issues_dir` merges without a review round (Lifecycle, Failure handling). Replaced "merges only
+  an approved sha" without exception. Review M3 (#54) and M6.
 - 2026-10-21: On the local backend, `wkc-tracker` commits the ticket files each write changes,
   `wkc-implement` branches before it claims, and post-merge writes go on a finish branch that is
   pushed or opened as a PR (Lifecycle, Decisions; #48). Replaced the unstated "nobody commits
