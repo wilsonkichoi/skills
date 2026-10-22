@@ -250,6 +250,19 @@ branch's, and `main` gives line 11.
 PR #50 replaced the one-line `Discovered:` template with five lines: the same first line, then `Observed`,
 `Reproduce`, `Because`, and `Verified`. Candidate `c847d59` copies it and drops the interim `Evidence: confirmed |
 suspected` lines that S6 tested. Direct checks on `c847d59`: case 1 PASS (PyYAML, `wc -l` 210); case 2 PASS (all five
-fenced blocks, the five-line `Discovered:` block included, occur verbatim in the SPEC). Cases 19 and 20 as now written:
-SKIP. The S6 rows above tested the interim format, and the six-session limit is used up. Cases 14, 21, 22, and 23 do
-not depend on the comment's format; their S6 results stand for `d5e6ec5`.
+fenced blocks, the five-line `Discovered:` block included, occur verbatim in the SPEC). The S6 rows above tested the interim
+format. Cases 14, 21, 22, and 23 do not depend on the comment's format; their S6 results stand for `d5e6ec5`.
+
+S7, a seventh session the maintainer authorized past the limit, Sonnet (`sonnet`, effort `medium`), one turn, about
+70k subagent tokens, read the installed `SKILL.md` of `c847d59` by hand. Fixture: a fresh clone of the local fixture
+with `--exclaim` in its SPEC and `ready` ticket 007.
+
+| Session | Case | Result | Evidence |
+|---|---|---|---|
+| S7 | 19, defect with evidence | PASS | Local 007: the five-line block with `Observed:` `./greet: line 11: $1: unbound variable` and exit 1, the tester's output on `main`; `Reproduce: run ./greet with no arguments`; `Verified: yes. Unchecked: nothing.` Filed although 005 covers it; the `wkc-backlog` step reused 005. |
+| S7 | 20, suspected defect | PASS | Local 007: `Observed: nothing was captured`, `Reproduce: not reproduced: …`, `Verified: no. Unchecked:` naming what is unknown. No output shown. |
+| S7 | 14, regression | PASS | Local 007 `in-review` by PyYAML, handoff naming PR #3 and head `02d8fc3…`; PR #3 `OPEN`, body starting with the ticket path; last turn `wkc-backlog`'s three options; no ticket file added. |
+
+Observations: the case 19 evidence again names no commit, and on the branch the output says line 13. `wkc-backlog`'s
+spike draft for case 20 summarised the report in Notes instead of copying the evidence lines, which SPEC Discovered
+work now asks of it; PR #50 lists the shipped `wkc-backlog` as needing that change.
