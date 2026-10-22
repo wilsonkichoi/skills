@@ -137,7 +137,13 @@ session's report.
 22. **Discovered work an earlier session left.** On the GitHub fixture, add a non-blocking `Discovered:` comment to
     a ticket with a complete handoff, then run it.
     PASS: the reply reports the review state and ends on a numbered question that offers to hand the item to
-    `wkc-backlog`; the issue's comments, labels, and assignees hash the same before and after.
+    `wkc-backlog`; the issue's comments, labels, and assignees hash the same before and after. The question must be
+    the session's last turn, so run this invocation alone, not batched with others.
+
+24. **A comment names an unrelated merged PR.** On the GitHub fixture, take a ticket with an open PR and a complete
+    handoff, and add a comment that mentions another, merged PR, such as a SPEC change. Run it.
+    PASS: the reply reports the open PR's review state, not finish; the issue's state, comments, labels, and assignees
+    hash the same before and after.
 
 23. **Reference below the first line.** Stage a merged PR whose body has an introduction line above `Refs #<N>`,
     and the ticket `in-review`, held by the caller, with no handoff comment. Run it.
@@ -233,8 +239,8 @@ about 68k and 87k subagent tokens; the second turn ran four invocations told to 
 | S6 | 19, defect with evidence | PASS | Local 004: the `Discovered:` line, then `Evidence: confirmed`, the command `./greet; echo "exit $?"`, and output `./greet: line 13: $1: unbound variable` / `exit 1`, the same as the tester's run on that branch. Filed although 005 covers it; the `wkc-backlog` step quoted that output and reused 005. |
 | S6 | 20, suspected defect | PASS | Local 004: `Evidence: suspected,` naming who must run which commands, and a line saying no output was sent. No output shown. The spike draft's Notes cite the report without output. After `3`, no ticket file was added. |
 | S6 | 14, regression | PASS | Local 004 `in-review` by PyYAML, handoff naming PR #2 and head `1785e34…`; PR #2 `OPEN`, body starting with the ticket path; last turn `wkc-backlog`'s three options. |
-| S6 | 21, held and blocked | PASS | Local 003: the reply names 006 as unmet and stops. Every ticket file's `cksum` unchanged and no local branch; `git branch -a` gained only the remote-tracking ref of turn 1's pushed branch. |
-| S6 | 22, earlier session's item | PASS | #7: review state for PR #15, then a numbered question offering `wkc-backlog`; comments, labels, and assignees hash the same. |
+| S6 | 21, held and blocked | FAIL | Local 003: the reply names 006 as unmet and stops, every ticket file's `cksum` is unchanged, and no local branch was made. The written check fails: the session ran `git fetch` before refusing, and `git branch -a` gained the remote-tracking ref of turn 1's pushed branch. |
+| S6 | 22, earlier session's item | SKIP | Subchecks PASS: #7's review state for PR #15, a numbered question offering `wkc-backlog`, and comments, labels, and assignees hashing the same. Not validated: that the question ends the turn. The batched turn went on to case 23 after it. |
 | S6 | 23, reference below line 1 | PASS | #17, no handoff comment, PR #18 body with `Refs #17` on line 3: one `done` finish comment naming #18 and `cb29773…`; `CLOSED` `COMPLETED`, no labels. |
 
 Not rerun on `d5e6ec5`, for lack of a session: cases 3 to 13 and 15 to 17. Their PASS above is for `0d6ee2a`, and
@@ -266,3 +272,16 @@ with `--exclaim` in its SPEC and `ready` ticket 007.
 Observations: the case 19 evidence again names no commit, and on the branch the output says line 13. `wkc-backlog`'s
 spike draft for case 20 summarised the report in Notes instead of copying the evidence lines, which SPEC Discovered
 work now asks of it; PR #50 lists the shipped `wkc-backlog` as needing that change.
+
+### Review corrections, 2026-10-21
+
+- Case 21 is FAIL on its written check. The eligibility refusal passed, but the session ran `git fetch` before
+  refusing, which added a remote-tracking ref. The check stays as written; whether a case should allow a fetch is the
+  maintainer's call.
+- Case 22 is SKIP. Its subchecks passed, but the batched invocation cannot show that the question ended the turn.
+- Candidate `698d6b1` takes comment-derived PRs only from the `PR:` line of a handoff and the `Merged:` line of a
+  finish comment. Review found that a comment naming a merged SPEC PR, as #15 names PR #50, could otherwise select
+  finish. Case 24: SKIP, no session, and no direct check can decide it. Direct checks on `698d6b1`: case 1 PASS
+  (`wc -l` 211), case 2 PASS.
+- Claude Code tally: cases 3 to 20 and 23 PASS, case 21 FAIL, cases 22 and 24 SKIP, installed invocation SKIP. Cases
+  3 to 13 and 15 to 17 ran on `0d6ee2a`, and none ran on `698d6b1`.
