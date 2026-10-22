@@ -9,6 +9,7 @@ prd_file: docs/dev-agents/PRD.md
 spec_file: docs/dev-agents/SPEC.md
 roadmap_file: docs/dev-agents/ROADMAP.md
 test_command: "npm test"                    # run before handing work back
+max_fix_attempts: 3                         # integer, 0 or more; default 3. Review rounds that may fix code on one PR
 ---
 
 # Project development conventions

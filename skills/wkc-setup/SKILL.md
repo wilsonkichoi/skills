@@ -129,8 +129,11 @@ so later skills read the right files. Defaults are `docs/dev-agents/PRD.md`, `do
 or `CLAUDE.md` for a deliberately Claude-Code-only project. A project with a convention keeps it:
 point `context_file` at the file every harness ultimately reaches, and never invert that.
 
-**Section D: Test command.** Confirm the command inferred in step 1, or ask for it. It is what
-later skills run before handing work back. A project with no tests leaves `test_command` out.
+**Section D: Test command and review rounds.** Confirm the command inferred in step 1, or ask for
+it. It is what later skills run before handing work back. A project with no tests leaves
+`test_command` out. Then ask for `max_fix_attempts`: how many review rounds may fix code on one
+pull request, an integer, 0 or more, with `3` recommended. `wkc-code-review` reads it, and one
+review-only round always follows the last fix.
 
 ## 3. Scaffold
 
