@@ -291,7 +291,7 @@ About 60k to 65k subagent tokens per turn, 5 turns.
 
 | Session | Case | Result | Evidence |
 |---|---|---|---|
-| V1, pilot | 29 | PASS, with a scoring note | Criterion "With no `~/.greetrc`, `./bin/greet` prints `Hello, world!` and exits 0" with `Assumption: a missing or unreadable ~/.greetrc is not an error ...`; six `Assumption:` lines in all, each with a reason, none quoted as SPEC; the approval lists them as ticket criteria, not SPEC changes. It also has "With a `~/.greetrc` that has no `name` key, `./bin/greet` prints `Hello, world!`" with no `Assumption:` line. A review scored that a FAIL. It is scored as SPEC-derived here: `lib/config.sh` exports `GREET_NAME` "from its `name` key", and `bin/greet` with no `GREET_NAME` uses `world`. |
+| V1, pilot | 29 | FAIL, incomplete disclosure | Criterion "With no `~/.greetrc`, `./bin/greet` prints `Hello, world!` and exits 0" with `Assumption: a missing or unreadable ~/.greetrc is not an error ...`: focused PASS for the missing-file disclosure. Six `Assumption:` lines in all, each with a reason, none quoted as SPEC; the approval lists them as ticket criteria, not SPEC changes. But "With a `~/.greetrc` that has no `name` key, `./bin/greet` prints `Hello, world!`" has no `Assumption:` line. The SPEC does not say what a config without `name` does, and with `GREET_NAME=Bob` already set the SPEC has `bin/greet` use `Bob`, so the criterion asserts open behaviour. Found in review. |
 | V2 | 30 | PASS, with an observation | `Decision: sync upload entry shape` blocks the work ticket; no criterion picks a shape ("in the shape the SPEC records"). Four `Assumption:` lines for exit codes and the missing URL. |
 | V3 | 31 | PASS | Notes: `Evidence, from the Discovered comment on #001 (<file>, comment 2026-10-05 wkc-implement):`, then the four lines; `grep -F` finds each line of the fixture comment in the draft. |
 | V3 | 32 | PASS | The draft for the `lib/config.sh` comment has no `Evidence` line; it cites the comment on a `Source:` line. It also repeated case 29's missing-file `Assumption:`. |
@@ -324,8 +324,17 @@ Case 29 was not rerun on the final wording, because no session was left. V4 cove
 data-exchange trigger was added. The config loader exchanges no data with another system, but that is a reading,
 not a run.
 
-Direct checks on the final wording: `wc -l` 249; the three ticket templates still give an empty `diff` against the
-SPEC; the frontmatter parses. Case 1's install with `-a claude-code -a codex -a kiro-cli` from the working tree,
-`skills` 1.7.4: `.agents/skills/wkc-backlog` equals the source by `diff -r`, and `.claude/skills/wkc-backlog` and
+Direct checks on the final wording, `5938cfc`: `wc -l` 249; the three ticket templates still give an empty `diff`
+against the SPEC; the frontmatter parses. Case 1 on a `git archive` of `5938cfc`, `skills` 1.7.4: discovery lists 9
+public of 10 `SKILL.md`, `wkc-backlog` among them; the install with `-a claude-code -a codex -a kiro-cli` gives
+`.agents/skills/wkc-backlog` equal to the archive by `diff -r`, and `.claude/skills/wkc-backlog` and
 `.kiro/skills/wkc-backlog` link to it. Case 1 PASS, direct. Case 9 now accepts a disclosed `Assumption:`; it was
 not rerun.
+
+With V1's correction, case 29 has one PASS (V4, intermediate wording) and one FAIL (V1, first wording), and no run
+on the final wording.
+
+Known limit, from review and not run: "another system" could be read to cover the shell or a database the project
+owns, so a model might escalate a conventional internal choice, such as a column type, as a data exchange. That
+gives an extra decision ticket, not an invented contract. V6 tests only the sync payload. Tightening the trigger to
+a data contract that another system must agree to needs a session to check case 30, so it waits.
