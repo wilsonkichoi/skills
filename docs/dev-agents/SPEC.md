@@ -125,6 +125,7 @@ Written by `wkc-backlog`, read by `wkc-implement`, `wkc-code-review`, and `wkc-y
 
 ## Notes
 <SPEC section>: <the excerpt the work needs, copied in>.
+Evidence, from <the Discovered comment's URL, or the report it came from>: <its Observed, Reproduce, Because, and Verified lines, copied in>.   <!-- only for a reported problem -->
 ```
 
 What to build and the acceptance criteria are the goal. Why is the reason, and it is what
@@ -324,7 +325,24 @@ work outside their ticket's scope, they comment on their own ticket:
 
 ```
 Discovered: <what>. Out of scope because <why>. Blocks this ticket: yes | no.
+Observed: <what was seen, copied in: expected and actual, a command and its output, a failing test, or a code, SPEC, or log excerpt>
+Reproduce: <steps or a command, or "not reproduced: seen once, <when and where>">
+Because: <why the observation points to a problem>
+Verified: yes | no. Unchecked: <what is still unknown, or nothing>
 ```
+
+**Evidence.** Any skill that reports a defect, a failed check, or another problem for a new ticket
+gives enough evidence for another engineer or agent to judge the finding without the reporter. It
+keeps three things apart: what was observed, why that indicates a problem, and what is still
+unverified. `Observed` copies in the excerpt that shows the problem; no finding needs every kind of
+evidence. When the full output is long, the comment also cites where it lives durably, such as a
+commit, a PR, a CI run, or a tracked file. A temporary file or a session's memory is not a source
+another agent can read. `Verified: yes` means the observation itself shows the problem. A finding
+the evidence does not establish says `Verified: no` and is never presented as confirmed. A failure
+that did not reproduce is still reported, with the original observation kept. Out-of-scope work
+that is not a problem, such as a missing feature, drops the lines that would say nothing. Each
+skill that reports problems carries this template and rule in its own `SKILL.md`. A skill with no
+ticket of its own, such as `wkc-retro`, puts the same lines in the change it hands to `wkc-backlog`.
 
 Then they hand the item to `wkc-backlog` as a change. A blocker goes at once, because the build or
 review stops anyway. Other items go at the end of the session: after the handoff for
@@ -332,7 +350,9 @@ review stops anyway. Other items go at the end of the session: after the handoff
 and the approval question is the session's last turn. In the manual loop, `wkc-backlog` drafts and
 asks for approval as usual. Under `wkc-yolo`, the skill returns the items to `wkc-yolo` instead,
 which calls `wkc-backlog` for them one at a time, so parallel tickets never file the same work twice.
-The comment stays as the record `wkc-retro` reads. New tickets land at `backlog`. When the work blocks the current ticket,
+The comment stays as the record `wkc-retro` reads. `wkc-backlog` copies the evidence lines into
+the new ticket's `## Notes`, with a link to the comment, and never replaces them with a summary.
+New tickets land at `backlog`. When the work blocks the current ticket,
 `wkc-backlog` links it as a blocker, and the current ticket keeps its status and holder. It is not on
 the frontier, so its holder or `wkc-yolo` returns to it by id once the blocker is `done`.
 
@@ -447,7 +467,7 @@ Input: a ticket, a milestone, or a finished run. Reads the tickets' comments (de
 work, verdicts), the PRs, the git log, and existing rule files. Proposes new or changed rule files
 in `rules_dir`, each with the rule, why (the evidence), and how to check it, following the shape of
 [simplicity.md](./rules/simplicity.md). Writes only on approval. Defects in skills or code become
-changes for `wkc-backlog`, not rules. It never edits skills. `wkc-implement`'s finish report and
+changes for `wkc-backlog`, with evidence as Discovered work describes, not rules. It never edits skills. `wkc-implement`'s finish report and
 `wkc-yolo`'s report mention it; nothing runs it automatically.
 
 ## Data
@@ -556,6 +576,8 @@ the previous tag. Each port also updates the README roster, the repository map u
   same ticket, never by a new ticket.
 - `wkc-implement` and `wkc-code-review` hand discovered work to `wkc-backlog` themselves in the manual
   loop, and through `wkc-yolo` during a run.
+- A reported problem carries its evidence in the same comment as its `Discovered:` line, and
+  `wkc-backlog` copies it into the ticket's Notes. No separate evidence record, template, or approval step.
 - Records have literal templates for writers and tolerant readers, with no validator. agent-toolkit's
   work-summary validator and its binding rules are the machinery this replaces.
 - Distribution, naming, versioning, and authoring rules stay as [AGENTS.md](../../AGENTS.md) records them.
@@ -586,6 +608,12 @@ None.
 
 ## Changes
 
+- 2026-10-21: Any skill that reports a defect or other problem for a new ticket gives evidence: the
+  `Discovered:` comment gains `Observed`, `Reproduce`, `Because`, and `Verified` lines under its
+  unchanged first line, and the work ticket's Notes gain an `Evidence` line that `wkc-backlog` copies
+  them into. A finding the evidence does not establish is marked unverified. Reason: the report
+  behind issue #47 lost the evidence needed to check it. Replaced the one-line `Discovered:` template.
+  Review: ROADMAP M2 (PR #46 copies the template), M1's shipped `wkc-backlog`, M3, and M5.
 - 2026-10-21: `wkc-backlog` is a new component that owns ticket drafting and every ticket write, for
   a milestone or one change; `wkc-plan` keeps only the ROADMAP and returns to manual invocation
   (maintainer, ADR-004, superseding ADR-002). Discovered work, Invocation, Unattended calls, the
