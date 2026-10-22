@@ -2,6 +2,10 @@
 
 Newest first. Each version is a `## {version} ({ISO 8601 timestamp with local offset})` heading followed by a bullet list of changes.
 
+## 0.0.31 (2026-10-22T13:18:59-07:00)
+
+- `wkc-setup`'s Linear guidance says the skills do not need Linear's GitHub integration, because they set status through `wkc-tracker` and a pull request names its ticket as `Related to <ID>`. It tells the user that if the team has the integration, its pull request automations may move tickets on their own, such as to Done on merge, before a ticket's `## After merge` steps have run (#45).
+
 ## 0.0.30 (2026-10-22T11:04:37-07:00)
 
 - `wkc-backlog` makes the conventional, low-risk choice where the SPEC leaves a detail open and nothing approved says otherwise, instead of treating every gap as an unresolved prerequisite. Each choice that sets behaviour goes in the ticket's **Notes** as `Assumption: <choice>, because <reason>.`, never as a SPEC excerpt, and the approval lists each one; approving makes it a ticket criterion, never a SPEC change. A gap with no conventional answer, that shapes data exchanged with another system, or that materially risks product behaviour, security, compatibility, architecture, or data integrity still becomes a spike, a decision ticket, or work for `wkc-architect`. Error-handling criteria list cases but never invent consequential behaviour to add one (#47).

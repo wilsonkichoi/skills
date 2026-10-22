@@ -118,6 +118,11 @@ tickets parked there are invisible to the frontier and will be reported as unmap
 into the config body under **Tracker notes**, so it is a decision the user can come back to with
 the AI rather than something they have to remember.
 
+**Linear's GitHub integration is optional.** The skills do not need Linear's GitHub integration:
+they set status through `wkc-tracker`, and a pull request names its ticket as `Related to <ID>`.
+Tell the user that if the team has the GitHub integration, its pull request automations may move
+tickets on their own, such as to Done on merge, before a ticket's `## After merge` steps have run.
+
 Write the resolved `OWNER/REPO`, or the resolved team and project, into the config. Never record an
 intention to set one up later.
 
