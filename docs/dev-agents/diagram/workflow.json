@@ -27,6 +27,14 @@
       }
     },
     {
+      "id": "implementation",
+      "label": "Implementation",
+      "color": {
+        "light": "#b0405e",
+        "dark": "#e88aa3"
+      }
+    },
+    {
       "id": "documentation",
       "label": "Documentation",
       "color": {
@@ -229,6 +237,36 @@
       }
     },
     {
+      "id": "implement",
+      "label": "wkc-implement",
+      "lane": "implementation",
+      "summary": "Take one ready ticket to an open pull request at in-review, and after the merge run its post-merge steps and move it to done.",
+      "details": {
+        "body": "Claims the ticket, builds, runs its acceptance checks, opens the pull request, and hands off, with every ticket write through wkc-tracker verbs and no merge. A rerun after the merge runs the post-merge gates, or opens a follow-up pull request when one fails because of the change.",
+        "when": "Use when a ready ticket should become a pull request, and again after a person merges it.",
+        "commands": [
+          {
+            "label": "Codex",
+            "text": "$wkc-implement <id>"
+          },
+          {
+            "label": "Claude Code / Kiro CLI",
+            "text": "/wkc-implement <id>"
+          }
+        ],
+        "links": [
+          {
+            "label": "Read the wkc-implement skill",
+            "href": "skills/wkc-implement/SKILL.md"
+          },
+          {
+            "label": "Finish after the merge",
+            "href": "skills/wkc-implement/SKILL.md#6-finish-after-the-merge"
+          }
+        ]
+      }
+    },
+    {
       "id": "workflow-diagram",
       "label": "wkc-workflow-diagram",
       "lane": "documentation",
@@ -377,6 +415,19 @@
       "from": "setup",
       "to": "tracker",
       "label": "Tracker config"
+    },
+    {
+      "id": "implement-tracker",
+      "from": "implement",
+      "to": "tracker",
+      "label": "Claims and hands off"
+    },
+    {
+      "id": "implement-backlog",
+      "from": "implement",
+      "to": "backlog",
+      "kind": "optional",
+      "label": "Discovered work"
     }
   ]
 }
