@@ -24,7 +24,7 @@ graph LR
   I -->|PR, in-review| C[wkc-code-review]
   C -->|fixed: next round| C
   C -->|approve| M{merge gate}
-  M -->|merged| I2[wkc-implement rerun]
+  M -->|merged| I2[wkc-implement finish]
   I2 -->|After merge steps, done| T
   I -.->|discovered work| B
   C -.->|discovered work| B
@@ -42,7 +42,7 @@ graph LR
 | `wkc-architect` | shipped | SPEC and ADRs | free text | PRD |
 | `wkc-plan` | shipped, changes | ROADMAP only; hands an approved milestone to `wkc-backlog` (ADR-004) | a ROADMAP change, or none | PRD, SPEC, `wkc-tracker` reads |
 | `wkc-backlog` | new, from `wkc-plan` | Tickets for one milestone, or one change at a time (ADR-004) | milestone, or a change | PRD, SPEC, ROADMAP, `wkc-tracker` |
-| `wkc-implement` | new | One ticket from `ready` to PR, and after merge to `done` (ADR-001) | ticket id, or none | `wkc-tracker`, `git`, `gh`, `test_command` |
+| `wkc-implement` | new | One ticket from `ready` to PR, and after merge to `done` (ADR-001) | ticket id, `finish <id>`, or none | `wkc-tracker`, `git`, `gh`, `test_command` |
 | `wkc-code-review` | new | Review rounds on one PR: judge, fix blocking findings, record a verdict (ADR-003) | PR, ticket id, or none | `wkc-tracker`, `git`, `gh`, `max_fix_attempts` |
 | `wkc-yolo` | new | A ticket, a wave, or a milestone unattended, after one round of questions | ticket, `wave`, or milestone | the skills above, `merge_gate` |
 | `wkc-retro` | new | Propose rule files from what a ticket, milestone, or run shows | ticket, milestone, or run | `wkc-tracker`, `rules_dir` |
@@ -187,8 +187,8 @@ change never become their own ticket.
 | Review round | `wkc-code-review` | `in-review` | verdict comment |
 | Review stopped | `wkc-code-review` | `in-review` | verdict `stopped`; a person decides |
 | Merge | a person, or `wkc-yolo` when `merge_gate: agent` | `in-review` | merge commit |
-| Rerun, no post-merge gate | `wkc-implement` | `done` | finish comment |
-| Rerun, with post-merge gates | `wkc-implement` | `in-progress`, then `done` | gate comment per gate |
+| Finish, no post-merge gate | `wkc-implement finish` | `done` | finish comment |
+| Finish, with post-merge gates | `wkc-implement finish` | `in-progress`, then `done` | gate comment per gate |
 | Gate failed, cause in this ticket's change | `wkc-implement` | `in-progress`, then `in-review` | gate comment; follow-up PR |
 | Same gate fails again for the same cause | `wkc-implement` | `in-progress` | stops for a person; under `wkc-yolo`, parked |
 | Step needs authority or cannot run | `wkc-implement` | `in-progress` | ticket comment naming what is left and who must act |
@@ -196,7 +196,7 @@ change never become their own ticket.
 **Follow-up PR.** A merged PR cannot be reopened, so a defect a post-merge gate finds is fixed in a
 new PR on the same ticket. `wkc-implement` branches from the current `main`, fixes or reverts the
 change, opens a PR with the follow-up line in its body, and moves the ticket to `in-review`.
-Review rounds run as for any PR. After that merge, the rerun runs every post-merge gate again
+Review rounds run as for any PR. After that merge, `wkc-implement finish` runs every post-merge gate again
 against the new merge commit; a release that shipped the bad build ships a new patch version. A
 failure whose cause is outside the ticket, such as another ticket's defect or broken infrastructure,
 is discovered work that blocks the ticket.
@@ -214,8 +214,8 @@ checkouts the way code does.
   `<type>/<id>-finish`, from the merged default branch, and builds a follow-up fix on that branch.
   It pushes the finish branch straight to the default branch when the project's **Conventions**
   allow direct pushes, and otherwise opens a PR from it whose first line is the ticket path; a
-  person merges it. A rerun continues an unmerged finish branch and starts a new one after it
-  merges. With no remote, post-merge writes are committed on the local default branch. Under
+  person merges it. A later finish continues an unmerged finish branch and starts a new one after
+  it merges. With no remote, post-merge writes are committed on the local default branch. Under
   `wkc-yolo`, a finish PR whose diff touches only `issues_dir` merges under `merge_gate` without a
   review round, at the head whose diff it checked.
 
@@ -224,13 +224,23 @@ Before branching, `wkc-implement` checks `git status` for uncommitted changes to
 be committed, or offers to work in the current checkout. A fresh worktree cannot see them:
 `make worktree` copies only gitignored files ([tools/branch.sh](../../tools/branch.sh)).
 
-`wkc-implement` picks its mode from the ticket and its latest PR, not an argument: no PR, or an
-open PR whose handoff is incomplete, build; an open PR with a complete handoff, report its review
-state; a merged PR, finish. A handoff is complete when the ticket is `in-review` and carries a
-handoff comment naming that PR. On a ticket the caller already holds, build continues the existing branch and PR instead
-of claiming again, and finishes any missing handoff writes, each verified. A merged PR counts only when the
-host reports it `MERGED` with a merge commit; a queued or auto-merge PR is still open. With no argument, it first reports the caller's
-`in-review` tickets whose PRs merged, then offers `wkc-tracker next`.
+**Finish is explicit.** Only `wkc-implement finish <id>` runs post-merge gates and moves a ticket
+to `done`: a person types it after the merge, and `wkc-yolo` calls it after its own. `wkc-implement
+<id>` never finishes. With no PR, or an open PR whose handoff is incomplete, it builds; with an open
+PR and a complete handoff, it reports the review state; when the PR its handoff names has merged, it
+says so, names `wkc-implement finish <id>`, and writes nothing. A handoff is complete when the
+ticket is `in-review` and carries a handoff comment naming that PR. On a ticket the caller already
+holds, build continues the existing branch and PR instead of claiming again, and finishes any
+missing handoff writes, each verified.
+
+**The ticket's PR.** Finish uses only the PR named on the `PR:` line of the ticket's handoff
+comment or the `Merged:` line of its finish comment, whichever is latest. A PR that only cites the
+ticket, by a reference line in its body or a mention in a comment, never counts. With no such
+record, finish stops, asks for the PR, and writes nothing. A merged PR counts only when the host
+reports it `MERGED` with a merge commit; a queued or auto-merge PR is still open, and finish reports
+it and writes nothing. With no argument, `wkc-implement` first reports the caller's `in-review`
+tickets whose handoff PRs merged, offering `wkc-implement finish <id>` for each, then offers
+`wkc-tracker next`.
 
 ### PR body
 
@@ -277,7 +287,7 @@ Command: <command>
 Result: pass | fail | not run, <output summary or why>
 ```
 
-Finish, posted on every rerun after a merge:
+Finish, posted on every `wkc-implement finish` run:
 
 ```
 wkc-implement: done | waiting | follow-up
@@ -438,8 +448,8 @@ runs record their ticket ids and never grow; a milestone run takes each new wave
    in scope whose latest `Run:` comment names this run's record and that are not finished:
    admitted but still `ready` (recheck that it is eligible and unheld, then claim it, reusing its
    comment and budget slot), `in-progress`, `in-review`, merged and waiting for post-merge gates,
-   and tickets whose discovered blocker is now `done`. Rerunning `wkc-implement` on each picks up
-   its stage from the ticket and PR state. Nothing is claimed twice. A ticket whose latest `Run:`
+   and tickets whose discovered blocker is now `done`. `wkc-implement <id>` continues a build or
+   reports the review state, and `wkc-implement finish <id>` finishes a merged ticket. Nothing is claimed twice. A ticket whose latest `Run:`
    comment names another record belongs to that run and is skipped.
 3. **Then new work:** take the frontier tickets in scope, no more than the ticket budget has left.
    Admitting a ticket means posting `Run: <absolute record path>` on it with `wkc-tracker comment`
@@ -449,7 +459,7 @@ runs record their ticket ids and never grow; a milestone run takes each new wave
    one at a time in the directory where the run started, because a branch's ticket files are invisible from `main`
    until it merges ([local.md](../../skills/wkc-tracker/local.md)). Tickets `wkc-backlog` named as a
    coordination risk with each other run one at a time. For each: implement, review rounds in fresh
-   subagent contexts, merge when the gate allows, rerun implement to finish. Merges run one at a
+   subagent contexts, merge when the gate allows, then `wkc-implement finish <id>`. Merges run one at a
    time (see Failure handling). Read fresh tracker state before starting each ticket.
 4. **Stop:** a ticket or wave run when every recorded ticket is `done`, parked, or waiting; a
    milestone run at the milestone's exit check. A spent ticket budget stops new admissions only;
@@ -598,6 +608,10 @@ the previous tag. Each port also updates the README roster, the repository map u
 - `wkc-implement`, `wkc-code-review`, and `wkc-backlog` opt into model invocation; see Invocation.
 - Codex and Kiro support subagents (maintainer, 2026-10-20). Trouble starting one is filed as a bug.
 - On Linear, PRs link with `Related to <ID>` only.
+- `wkc-implement` finishes only when called as `wkc-implement finish <id>`, and only from the PR its
+  own handoff or finish comment names. Chosen over picking finish from the ticket's latest merged
+  PR, because PR #55, a SPEC change whose body said `Refs #54`, would have closed the never-built
+  #54 as `done`, which the tracker cannot reopen (maintainer, 2026-10-22; #59).
 - A bare `wkc-code-review` call reviews the current branch's one open PR, and asks otherwise. A PR
   or ticket id stays the preferred input (maintainer, 2026-10-22; #54).
 - On the local backend, `wkc-tracker` commits each write and never pushes; `wkc-implement` carries
@@ -642,6 +656,13 @@ None.
 
 ## Changes
 
+- 2026-10-22: `wkc-implement` finishes only on an explicit `wkc-implement finish <id>`, which
+  `wkc-yolo` calls after its merges, and only from the PR named by the ticket's own handoff or
+  finish comment; a PR that only cites the ticket never counts, and with no such record finish asks
+  (Components, Lifecycle, wkc-yolo run, Decisions). Reason: PR #55's `Refs #54` would have selected
+  finish for a ticket nobody built. Replaced "picks its mode from the ticket and its latest PR, not
+  an argument". Review M2 (#59, and `validation/wkc-implement.md` case 23, whose held ticket with no
+  handoff now asks instead of finishing) and M4.
 - 2026-10-22: `wkc-code-review` with no argument reviews the current branch's one open PR, and
   asks when there is none or several; a PR or ticket id is preferred (Review verdict, Decisions;
   #54). Replaced the undefined "none" input. Under `wkc-yolo`, a local finish PR that touches only
