@@ -53,8 +53,11 @@ Classify a change against those documents before drafting it:
 - A change that adds, moves, or drops milestone scope: send it to `wkc-plan`, and draft nothing
   that depends on it.
 
-Never fill a gap the SPEC leaves, such as a missing field or behaviour, even as a stated
-assumption: it is an unresolved prerequisite.
+Where the SPEC leaves a detail open, make the conventional, low-risk choice an experienced engineer
+would, if nothing approved says otherwise. Write each choice that sets behaviour in **Notes** as
+`Assumption: <choice>, because <reason>.`, never as a SPEC excerpt. A gap is an unresolved
+prerequisite (section 3) when it has no conventional answer, shapes data exchanged with another
+system, or materially risks product behaviour, security, compatibility, architecture, or data integrity.
 
 ## 2. Draft tickets
 
@@ -103,6 +106,7 @@ Give new tickets draft ids such as T1 and T2, kept apart from tracker ids. A wor
 
 ## Notes
 <SPEC section>: <the excerpt the work needs, copied in>.
+Evidence, from <the Discovered comment's URL, or the report it came from>: <its Observed, Reproduce, Because, and Verified lines, copied in>.   <!-- only for a reported problem -->
 ```
 
 A spike, titled `Spike: <question>`. Its code is thrown away, never shipped:
@@ -137,7 +141,10 @@ Options: <each with its gains and costs>. Who decides: a person | `wkc-architect
   release bundling several tickets becomes its own ticket blocked by them. Testing and validating a
   change never become their own ticket. Otherwise one ticket is one outcome, sized for one pull request.
 - Criteria someone else can check: a command and its output, a request and its response, a file,
-  or a manual check for what only a person can judge. Broad criteria, like error handling, list cases.
+  or a manual check for what only a person can judge. Broad criteria, like error handling, list
+  cases, but never invent consequential behaviour to add one.
+- A reported problem's `Observed`, `Reproduce`, `Because`, and `Verified` lines go into **Notes**
+  word for word, with the link to the comment or report, never as a summary.
 - Integration tests that can run before merge are acceptance criteria. Tests that need the merged
   or deployed build are `## After merge` checks.
 - Every step that publishes, deploys, or touches a shared environment ends with `(needs authorization)`.
@@ -192,6 +199,7 @@ Show the milestone or change being planned, and:
   each ticket a cancel or split leaves with a `cancel` blocker;
 - the edges as a table (ticket, blocked by), the edge order, a Mermaid `graph LR` when it helps,
   the waves, the first frontier, coordination risks, and unresolved prerequisites with what they hold;
+- each `Assumption:`, which approval makes a ticket criterion, never a change to the SPEC;
 - what publishing will do: the milestone it creates, if any, N tickets at `backlog` with M edges,
   each existing ticket it edits, links, unlinks, or cancels, and the tickets it moves to `ready`.
   Option 1 says why decision tickets, and ones whose prerequisite has no ticket, stay at `backlog`;

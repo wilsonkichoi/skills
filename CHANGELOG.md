@@ -2,6 +2,11 @@
 
 Newest first. Each version is a `## {version} ({ISO 8601 timestamp with local offset})` heading followed by a bullet list of changes.
 
+## 0.0.30 (2026-10-22T11:04:37-07:00)
+
+- `wkc-backlog` makes the conventional, low-risk choice where the SPEC leaves a detail open and nothing approved says otherwise, instead of treating every gap as an unresolved prerequisite. Each choice that sets behaviour goes in the ticket's **Notes** as `Assumption: <choice>, because <reason>.`, never as a SPEC excerpt, and the approval lists each one; approving makes it a ticket criterion, never a SPEC change. A gap with no conventional answer, that shapes data exchanged with another system, or that materially risks product behaviour, security, compatibility, architecture, or data integrity still becomes a spike, a decision ticket, or work for `wkc-architect`. Error-handling criteria list cases but never invent consequential behaviour to add one (#47).
+- `wkc-backlog` copies a reported problem's `Observed`, `Reproduce`, `Because`, and `Verified` lines into **Notes** word for word, with the link to the comment or report, never as a summary. Its work-ticket template gains the SPEC's `Evidence` line and again matches SPEC Contracts › Ticket (#47).
+
 ## 0.0.29 (2026-10-21T20:58:50-07:00)
 
 - New `wkc-implement` takes one ticket from `ready` to an open pull request with its acceptance checks run and the ticket at `in-review`, and after a person merges, a rerun runs the ticket's post-merge gates and moves it to `done` (ADR-001). It picks its mode from the ticket and its latest pull request, found from the `PR:` and `Merged:` lines of its own handoff and finish comments and from any body line that carries the ticket reference: build, report the review state, or finish. It carries the SPEC's PR body and its handoff, gate, finish, and `Discovered:` templates exactly.

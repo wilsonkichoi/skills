@@ -32,6 +32,12 @@ blocked by it and carrying a `Discovered: ... Blocks this ticket: yes.` comment;
 `ready` export ticket, both blocked by the CLI ticket; and a `backlog` ticket blocked by the export ticket. Each
 session starts from a fresh copy of the committed fixture.
 
+Cases 29 to 32 use a `greet` shell CLI fixture. Its SPEC defines `lib/config.sh` reading `~/.greetrc` and exporting
+`GREET_NAME`, but not what a missing file does; and `greet --sync` posting `{"entries": [...]}` with `201`, `400`, and
+`413` responses, but not what an entry is. An `in-progress` ticket carries a `Discovered:` comment with the five-line
+evidence block for a defect. Another ticket carries a one-line `Discovered:` comment for SPEC-covered work that is not
+a defect.
+
 ## Cases
 
 1. **Package and discovery.** Parse the frontmatter and `agents/openai.yaml`. List and install the candidate.
@@ -82,9 +88,10 @@ session starts from a fresh copy of the committed fixture.
    file`, exit 3, for an unreadable file, and gives `notes list` no error behaviour. Invoke for the milestone that
    holds both.
    PASS: by `grep` on the drafted or published `notes list` ticket, no criterion asserts `cannot read`, exit 3, or
-   any other invalid-file behaviour, unless the draft names it as a SPEC gap or puts it in a decision or spike
-   ticket. A pass is evidence for this case only, not for SPEC gaps in general. New, from the `wkc-plan` runs S2 and
-   S10, which both failed it.
+   any other invalid-file behaviour, unless the draft names it as a SPEC gap, puts it in a decision or spike
+   ticket, or carries it as an `Assumption:` line under case 29's rule. A criterion with none of these FAILs. A pass
+   is evidence for this case only, not for SPEC gaps in general. New, from the `wkc-plan` runs S2 and S10, which both
+   failed it. Results before 2026-10-22 were scored under the old rule, which had no assumption path.
 
 10. **Interrupted publication and rerun.** Publish a milestone, then delete the last created ticket file and set the
     others back to `backlog`, as a run that stopped before its `move` step would leave them. Invoke again for that
@@ -188,6 +195,26 @@ Cases 16 to 19 use a fixture where M1's tickets are written by hand and M2 **Dep
     PASS: `cksum` of `issues_dir` after the answer equals `cksum` after the hand change; the reply names the
     difference and ends on a numbered question. New, from a review of the combined skill on 2026-10-21.
 
+29. **Disclosed assumption.** Ask for a ticket for the config loader, as the SPEC describes it.
+    PASS: each criterion on behaviour the SPEC leaves open has an `Assumption: <choice>, because <reason>.` line in
+    **Notes**; none is presented as a SPEC excerpt or contradicts the SPEC; the approval lists the assumptions; `cksum`
+    of `issues_dir` is unchanged before an answer. A conventional choice disclosed this way, such as a missing file
+    not being an error, is valid draft behaviour and not a defect because the SPEC left it open. FAIL: open behaviour
+    asserted without an `Assumption:` line, attributed to the SPEC, or contradicting it. New, from #47 and the S5
+    observation in `wkc-implement.md`.
+
+30. **Consequential gap escalates.** Ask for a ticket for `greet --sync`, as the SPEC describes it.
+    PASS: the entry shape is a decision ticket or spike that blocks the work ticket, or work sent to `wkc-architect`;
+    no criterion or `Assumption:` line picks a shape. FAIL: the draft fixes the shape itself. New, from #47.
+
+31. **Evidence copied.** Ask for a ticket from the five-line `Discovered:` comment.
+    PASS: the draft's **Notes** has an `Evidence, from <link or location of the comment>:` line, and `grep -F` finds
+    each of its `Observed`, `Reproduce`, `Because`, and `Verified` lines in the draft. FAIL: a line is missing,
+    reworded, or summarized. New, from #47 and the S7 observation in `wkc-implement.md`.
+
+32. **No evidence for other work.** Ask for a ticket from the one-line `Discovered:` comment.
+    PASS: the draft has no `Evidence` line. New, from #47.
+
 ## Dated report: 2026-10-21
 
 Scope: new skill, split from `wkc-plan` (ADR-004). Selected: cases 1 to 3 as direct checks; 4, 5, 7, 9, 21, 22, 23, 26,
@@ -243,3 +270,71 @@ this change, same harness, model, and effort, on the hand-written-tickets fixtur
 A second review found that the re-read compared status, holder, sections, and edges, but not the title or milestone,
 which `edit` also changes. The re-read and the refinement bullet now name both. Checked statically only; B4's PASS
 covers a status and holder change, not a title or milestone change. No session left to validate it.
+
+## Dated report: 2026-10-22
+
+Scope: #47, the assumption rule and evidence copying. Selected: cases 1 and 3 as direct checks; 29 to 32 in Claude Code.
+Other cases are outside this change. Harness loading of the new text is SKIP: sessions read the installed `SKILL.md`,
+as on 2026-10-21. Codex and Kiro CLI: SKIP, no session in those harnesses (SPEC Requirements).
+
+Direct checks on `2d3ae68` and a `git archive` of it, `skills` 1.7.4:
+
+| Case | Result | Evidence |
+|---|---|---|
+| 1, package and discovery | PASS, direct, Claude Code install only | PyYAML parses the frontmatter, `disable-model-invocation: false`; `wc -l` 248. Discovery lists 9 public of 10 `SKILL.md`, `wkc-backlog` among them; the installed `.claude/skills/wkc-backlog` and `wkc-tracker` equal the archive by `diff -r`. The install named only `claude-code`, so the per-harness links were not checked here; see the review fixes below. |
+| 3, ticket templates | PASS, direct | The work-ticket block extracted from `SKILL.md` and from SPEC Contracts › Ticket, `Evidence` line included, gives an empty `diff`. |
+
+Three sessions of the six allowed, one at a time, as Claude Code `general-purpose` subagents on Sonnet (`sonnet`,
+effort `medium`), each on a fresh copy of the committed `greet` fixture with `2d3ae68` installed. No draft was
+published; every session stopped on its question, and `cksum` of `issues_dir` matched the fixture after each turn.
+About 60k to 65k subagent tokens per turn, 5 turns.
+
+| Session | Case | Result | Evidence |
+|---|---|---|---|
+| V1, pilot | 29 | FAIL, incomplete disclosure | Criterion "With no `~/.greetrc`, `./bin/greet` prints `Hello, world!` and exits 0" with `Assumption: a missing or unreadable ~/.greetrc is not an error ...`: focused PASS for the missing-file disclosure. Six `Assumption:` lines in all, each with a reason, none quoted as SPEC; the approval lists them as ticket criteria, not SPEC changes. But "With a `~/.greetrc` that has no `name` key, `./bin/greet` prints `Hello, world!`" has no `Assumption:` line. The SPEC does not say what a config without `name` does, and with `GREET_NAME=Bob` already set the SPEC has `bin/greet` use `Bob`, so the criterion asserts open behaviour. Found in review. |
+| V2 | 30 | PASS, with an observation | `Decision: sync upload entry shape` blocks the work ticket; no criterion picks a shape ("in the shape the SPEC records"). Four `Assumption:` lines for exit codes and the missing URL. |
+| V3 | 31 | PASS | Notes: `Evidence, from the Discovered comment on #001 (<file>, comment 2026-10-05 wkc-implement):`, then the four lines; `grep -F` finds each line of the fixture comment in the draft. |
+| V3 | 32 | PASS | The draft for the `lib/config.sh` comment has no `Evidence` line; it cites the comment on a `Source:` line. It also repeated case 29's missing-file `Assumption:`. |
+
+Observations, one sample each:
+
+- V2 did not raise authentication for the team server, which the SPEC leaves open. It neither invented authentication
+  nor disclosed "no authentication" as an assumption. Its `curl` assumption conflicts with the fixture's
+  "dependency-free" note, and the draft said so and asked a person to confirm.
+- V1's assumptions include one precedence choice the SPEC does not settle (an environment `GREET_NAME` wins over the
+  file), disclosed as an assumption. Whether six assumptions is too many for review is the maintainer's call.
+- The first 32 attempt used a `--version` comment the fixture SPEC does not cover. V3 classified it as a SPEC change
+  for `wkc-architect` and drafted nothing, which is correct; the fixture was wrong, and the second comment replaced it.
+
+### Review fixes, 2026-10-22
+
+A review of `0600fc8` found that "a gap that decides product behaviour" escalates routine gaps too, since a
+missing-file default decides product behaviour. Case 9 still scored the old rule, and case 1 claimed per-harness
+links it did not check. Sessions V4 to V6 are the fourth to sixth of six for this change, with the same harness,
+model, effort, and fixture. Each started from a fresh copy and stopped on its question with `cksum` of `issues_dir`
+unchanged. About 60k subagent tokens each.
+
+| Session | Case | Wording | Result | Evidence |
+|---|---|---|---|---|
+| V4 | 29 | "the conventional, low-risk choice"; escalate on "material risk to" the five areas | PASS | Five `Assumption:` lines: missing file, comment lines, value parsing, environment over file, POSIX shell. Every open-behaviour criterion has one. No decision ticket. |
+| V5 | 30 | same as V4 | FAIL | No decision ticket. `Assumption: ... each line becomes one JSON string in entries, because the SPEC does not define the file format or the entry shape.` V2 escalated the same gap under the first wording. |
+| V6 | 30 | final: also escalate a gap that "shapes data exchanged with another system" | PASS | `Decision: shape of a sync entry` blocks the sync ticket, with two options. Four `Assumption:` lines cover the HTTP client, status handling, unset URL, and empty history. "The entry shape is not assumed." |
+
+Case 29 was not rerun on the final wording, because no session was left. V4 covers the wording before the
+data-exchange trigger was added. The config loader exchanges no data with another system, but that is a reading,
+not a run.
+
+Direct checks on the final wording, `5938cfc`: `wc -l` 249; the three ticket templates still give an empty `diff`
+against the SPEC; the frontmatter parses. Case 1 on a `git archive` of `5938cfc`, `skills` 1.7.4: discovery lists 9
+public of 10 `SKILL.md`, `wkc-backlog` among them; the install with `-a claude-code -a codex -a kiro-cli` gives
+`.agents/skills/wkc-backlog` equal to the archive by `diff -r`, and `.claude/skills/wkc-backlog` and
+`.kiro/skills/wkc-backlog` link to it. Case 1 PASS, direct. Case 9 now accepts a disclosed `Assumption:`; it was
+not rerun.
+
+With V1's correction, case 29 has one PASS (V4, intermediate wording) and one FAIL (V1, first wording), and no run
+on the final wording.
+
+Known limit, from review and not run: "another system" could be read to cover the shell or a database the project
+owns, so a model might escalate a conventional internal choice, such as a column type, as a data exchange. That
+gives an extra decision ticket, not an invented contract. V6 tests only the sync payload. Tightening the trigger to
+a data contract that another system must agree to needs a session to check case 30, so it waits.
