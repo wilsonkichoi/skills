@@ -154,3 +154,16 @@ project, and for which harnesses? Do not change anything.` Shell was denied by `
 
 Cause: section 3 says the installed harnesses are "the project's harness skill folders" without naming them, and
 Codex's folder is the shared `.agents/skills/`. Cases 3, 5, 6, and 7 were not run on Kiro.
+
+### 2026-10-21T11:48:21-07:00 Codex pilot
+
+Scope: case 3, focused version and installed-harness question. Candidate `3ddad89` (0.0.26), installed with
+`skills` 1.7.4. Codex CLI 0.163.0, `gpt-6.1-sol`, high, one session and one turn. Fixture: installed public skills
+from the candidate. Session `01a15fca-fba9-7de2-8993-27daac622402`; raw logs are in
+`/Users/wchoi/tmp/codex-compat-20261021-114617/logs/` and the Codex session log.
+
+| Check | Result | Evidence |
+|---|---|---|
+| 3, installed skills and harnesses | PASS | `$wkc-help` found all seven public skills, identified Codex `.agents/skills/`, Claude Code `.claude/skills/`, and Kiro CLI `.kiro/skills/`, and made no fixture changes. It correctly said the release version was unknown because the local lock had no tag, branch, or commit. |
+
+This refutes the Kiro pilot observation that Codex was absent because there is no `.codex/skills/` directory. The installed Codex path is `.agents/skills/`.
