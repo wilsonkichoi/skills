@@ -303,3 +303,17 @@ PR #21 as the person.
 Claude Code tally: cases 3 to 20 and 22 to 24 PASS, case 21 FAIL on its written check, installed invocation SKIP.
 Cases 3 to 13 and 15 to 17 ran on `0d6ee2a`, cases 14, 19, and 20 on `c847d59`, cases 21 and 23 on `d5e6ec5`, and
 cases 22 and 24 on `32b7585`.
+
+### Installed invocation, 2026-10-21
+
+The maintainer typed `/wkc-implement 15` in a new Claude Code session in this repository, on `main` at merge commit
+`40018b7` (PR #46), after `make install`. `.claude/skills/wkc-implement` is the installer's symlink to
+`.agents/skills/wkc-implement`, so Claude Code's skill loader loaded the shipped copy, not a hand-read file. Model
+`claude-opus-5-5`; effort not recorded. A person's run, not a test session, so it adds none to the session count.
+
+| Case | Result | Evidence |
+|---|---|---|
+| Installed invocation, Claude Code | PASS | The slash command loaded the skill, which read the config, the rules, and `wkc-tracker`'s GitHub backend, then picked finish mode from PR #46 `MERGED` with merge commit `40018b7`. |
+| 10, finish with a runnable gate | PASS | #15: `in-review` to `in-progress` before the gate; one gate comment naming `40018b7`, `make install` exit 0, and the `diff` with no output, `Result: pass`; finish comment `done`, `Gates: all passed`; `CLOSED` `COMPLETED`, no status label, assignee kept. Read with `gh issue view 15`. |
+
+This replaces the installed-invocation SKIP above for Claude Code. Codex and Kiro CLI installed invocation stay SKIP.
