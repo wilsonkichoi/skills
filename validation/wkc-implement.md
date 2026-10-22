@@ -301,5 +301,5 @@ PR #21 as the person.
 | S8 | 24, unrelated merged PR | PASS | #19: review state for open PR #20, not finish; the reply says PR #21 is only mentioned; #19's state, comments, labels, and assignees hash the same; PR #20 `OPEN`. |
 
 Claude Code tally: cases 3 to 20 and 22 to 24 PASS, case 21 FAIL on its written check, installed invocation SKIP.
-Cases 3 to 13 and 15 to 17 ran on `0d6ee2a`, cases 14, 19, and 20 on `c847d59`, case 21 and 23 on `d5e6ec5`, and
+Cases 3 to 13 and 15 to 17 ran on `0d6ee2a`, cases 14, 19, and 20 on `c847d59`, cases 21 and 23 on `d5e6ec5`, and
 cases 22 and 24 on `32b7585`.
