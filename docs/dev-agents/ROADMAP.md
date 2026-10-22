@@ -1,8 +1,8 @@
 # wkc- skills ROADMAP
 
-Status: approved (2026-10-21)
+Status: approved (2026-10-22)
 
-Planned from the [SPEC](./SPEC.md), approved 2026-10-21. Every milestone needs the PRD, SPEC, ADRs, and this ROADMAP merged to `main` first:
+Planned from the [SPEC](./SPEC.md), approved 2026-10-22. Every milestone needs the PRD, SPEC, ADRs, and this ROADMAP merged to `main` first:
 `wkc-implement` stops on uncommitted planning documents, and a fresh worktree cannot see them.
 
 Validation for every milestone runs on Claude Code; Codex and Kiro cases are SKIP (PRD Constraints).
@@ -16,7 +16,7 @@ Exit check: on a local-tracker fixture, `wkc-plan` writes a ROADMAP and creates 
 
 ## M2: Ticket to done by hand
 Outcome: A person runs `wkc-implement <id>` on a `ready` ticket and gets an open PR with the acceptance checks run and the ticket at `in-review`. After they merge it, a rerun runs the ticket's `## After merge` steps and moves it to `done`. Work it finds out of scope goes to `wkc-backlog`.
-Scope: PRD goal 1 (the implement half). SPEC Lifecycle with follow-up PRs, PR body, ticket comments from `wkc-implement`, Linear, Discovered work with the hand-off to `wkc-backlog`, Invocation for `wkc-implement`; ADR-001. Delivers what issue #15 asks for.
+Scope: PRD goal 1 (the implement half). SPEC Lifecycle with follow-up PRs, except its **Local backend** commits (M6), PR body, ticket comments from `wkc-implement`, Linear, Discovered work with the hand-off to `wkc-backlog`, Invocation for `wkc-implement`; ADR-001. Delivers what issue #15 asks for.
 Depends on: M1, because `wkc-implement` hands discovered work to `wkc-backlog` and reads tickets in M1's templates.
 Exit check: the `wkc-implement` runbook passes on Claude Code; on a local-tracker fixture, a `Discovered:` item reaches `wkc-backlog` at handoff without a person typing it; and this milestone's second ticket is itself taken from `ready` to `done` by `wkc-implement`, with each status confirmed by `gh issue view`.
 
@@ -28,7 +28,7 @@ Exit check: in a throwaway repository, a PR with a planted defect gets a `fixed`
 
 ## M4: Unattended runs
 Outcome: A person runs `wkc-yolo` on a ticket, a wave, or a milestone, answers one round of questions, and the run finishes without asking anything more. It merges where `merge_gate` allows and stops at each merge where it does not.
-Scope: PRD goal 3. SPEC Unattended calls, `wkc-yolo` run, run record, `merge_gate` config field, Failure handling for parallel merges.
+Scope: PRD goal 3. SPEC Unattended calls, `wkc-yolo` run, run record, `merge_gate` config field, Failure handling for parallel merges. A local-backend run end to end is M6's.
 Depends on: M1, M2, M3.
 Exit check: in a throwaway GitHub repository, a milestone of two independent tickets and one ticket blocked by both runs to `done` after one round of questions, with the two independent tickets running in parallel. The same run with `merge_gate: human` stops at the first merge. A run stopped partway and started again finishes its claimed tickets without claiming them twice. Every decision appears as a `Decision (wkc-yolo):` comment. This validation runs parallel subagents and more than one session at a time, so the runbook states its session count first and needs the maintainer's approval under the token-usage rule.
 
@@ -38,7 +38,15 @@ Scope: PRD goal 4 and outcome 2. SPEC `wkc-retro`.
 Depends on: M4, because this milestone is delivered by a `wkc-yolo` run: the first real unattended milestone, PRD outcome 2.
 Exit check: this milestone's tickets reach `done` through one `wkc-yolo` run on this repository, and the maintainer reviews its `Decision (wkc-yolo):` comments. On a fixture with a known lesson that no rule covers, `wkc-retro` proposes a rule citing that evidence, writes nothing before approval, and writes exactly the approved file after it. Run on a real finished milestone, it may conclude that no rule change is justified.
 
+## M6: Local tickets committed
+Outcome: On the local backend, every ticket write is a commit. A person runs `wkc-implement` or `wkc-yolo`, and the ticket's claim, handoff, and `done` reach the default branch with the code, with history, instead of staying uncommitted in the starting checkout.
+Scope: SPEC Lifecycle **Local backend**, the `wkc-tracker` and `wkc-implement` component changes for it, `wkc-yolo` runs on the local backend, and the #48 Decisions entry. Delivers the work #48 asks for after its decision.
+Depends on: M2, because it changes `wkc-implement`; M4, because it covers `wkc-yolo` on the local backend. Last on purpose: the local tracker is low priority, so this work gates no other milestone.
+Exit check: on a local-tracker fixture with a GitHub remote, each `wkc-tracker` write is one `chore: wkc-tracker <verb> <id>` commit holding only that ticket's file, with other staged and unstaged changes unchanged and nothing pushed. `wkc-implement` branches before it claims, so the claim and handoff commits are on the ticket's branch and not on the default branch, and it stops on an unpushed `issues_dir` commit on the default branch. After the merge, a rerun makes its post-merge writes on `<type>/<id>-finish` from the merged default branch, and the ticket file on the default branch reads `done` once that branch lands. With no remote, the post-merge writes are commits on the local default branch. A `wkc-yolo` run of two local tickets runs them one at a time and ends with both `done` on the default branch. Ticket files are checked with a YAML parser and `git log`, not from the report. The `wkc-tracker` and `wkc-implement` runbooks cover these cases.
+
 ## Changes
+
+- 2026-10-22: The SPEC now has `wkc-tracker` commit each local-backend write and `wkc-implement` carry those commits to the default branch (#48, #52). The local tracker is low priority, so this work becomes a new last milestone, M6, instead of joining M2, where it would hold M2 open and with it M3 and M4. M2's scope now excludes the **Local backend** commits, and M4 leaves the local-backend run to M6. Added M6, so the ROADMAP is back to draft.
 
 - 2026-10-21: M1 delivers a new `wkc-backlog`, which owns tickets for a milestone and for one change, and narrows `wkc-plan` to the ROADMAP (ADR-004). M2 and M3 hand discovered work to `wkc-backlog`. Replaced `wkc-plan` as the ticket writer in M1 to M3 and ADR-002 in M1's scope. No milestone was added, removed, or reordered, but M1's outcome, scope, and exit check changed, so the ROADMAP is back to draft under `wkc-plan`'s approval rule.
 - 2026-10-21: The SPEC is approved, so the opening note cites it as approved. Replaced "Planned from the draft SPEC ... before the SPEC was approved". No milestone changed.
