@@ -11,6 +11,7 @@ Keep raw logs and fixtures outside tracked files.
 - Cases
 - Dated report: 2026-10-22
 - Review round 1: 2026-10-22
+- Rerun after review round 1: 2026-10-22
 
 ## Preparation
 
@@ -210,3 +211,24 @@ fixture evidence for cases 7 to 15, numeric target resolution for case 17, and t
 - SKIP: behavioral reruns of the changed resolution, finding classification, and tracker verification instructions
   (cases 14, 15, 17, and 18), and installed harness loading. This review may not start another AI session or write to
   the fixtures. The historical failures remain unresolved validation gaps. Other original coverage is unchanged.
+
+## Rerun after review round 1: 2026-10-22
+
+Candidate `7c9e2e5`, exported with `git archive` and installed into both fixtures with skills 1.7.4; `diff -r`
+matched `wkc-code-review`, `wkc-tracker`, and `wkc-backlog` to the export. Selected cases 14, 15, 17, and 18, the
+behavioral gaps round 1 left. S6, the sixth and last session allowed for #54, ran them in turn, on Sonnet as before,
+each invocation told to re-read state. S5's uncommitted local ticket comments were saved outside the repository and
+reset first. Scored from `gh`, `git`, and the ticket files, with before and after snapshots.
+
+| Session | Case | Result | Evidence |
+|---|---|---|---|
+| S6 | 17, numeric ticket input | PASS | `wkc-code-review 2` on the GitHub fixture: `gh pr view 2` failed with `Could not resolve to a PullRequest`, `wkc-tracker show 2` followed the handoff to PR #6, and the verdict landed there ([`round 2: fixed`](https://github.com/wilsonkichoi/wkc-code-review-fixture/pull/6#issuecomment-6351398471)). Issue #2 unchanged. On the local fixture, `001` and `002` went straight to `wkc-tracker show`. The PR-number and failure-stop subchecks were not rerun. |
+| S6 | 18, correct failing test | PASS | Same round on PR #6, where round 1 had listed `test.sh:12` as `open`: the only finding is `greet:21`. Fix commit `c1a4a14` changes `greet` only; `test.sh` is unchanged, and `./test.sh` at `c1a4a14` prints `all checks passed`. |
+| S6 | 14, discovered, non-blocking | PASS | `wkc-code-review 001`, told about `Hello, !`: `round 2: approve` on local PR #1 with no invented blocker, then two five-line `Discovered:` comments with `Blocks this ticket: no` appended through `wkc-tracker comment`, each followed by a verification read. After `3` on the first `wkc-backlog` question, the second item got its own question; after `3`, nothing was written. Only ticket 001's file and PR #1's comment count changed. |
+| S6 | 15, discovered blocker | PASS | `wkc-code-review 002`: one `Discovered:` comment with `Blocks this ticket: yes` through `wkc-tracker comment` and a verification read; `wkc-backlog` drafted at once with 002 blocked by the new ticket. PR #2 has no comment and head `20e01a0` unchanged; 002 stays `in-review`, held, `blocked_by: []`. |
+
+Observation, not a case failure: the `wkc-backlog` drafts summarized the `Discovered:` evidence lines in **Notes**
+instead of copying them word for word, as `wkc-backlog` asks. That is `wkc-backlog` behaviour, outside #54.
+
+Still SKIP: `validation/wkc-setup.md` cases 2 and 3, case 16, and installed harness loading. #54's six sessions
+are used.
