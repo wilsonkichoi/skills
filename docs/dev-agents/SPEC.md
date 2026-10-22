@@ -1,6 +1,6 @@
 # wkc- skills SPEC
 
-Status: approved (2026-10-21)
+Status: approved (2026-10-22)
 
 ## Overview
 
@@ -37,7 +37,7 @@ graph LR
 | Skill | State | Responsibility | Input | Depends on |
 |---|---|---|---|---|
 | `wkc-setup` | shipped, changes | Config and scaffold. Adds `merge_gate` and `max_fix_attempts` to the interview and template | none | `git`, `gh` or Linear MCP |
-| `wkc-tracker` | shipped, unchanged | Ticket state mechanics on three backends | verb and args | config |
+| `wkc-tracker` | shipped, changes | Ticket state mechanics on three backends; on local, commits each write | verb and args | config, `git` for local |
 | `wkc-research` | shipped | PRD | free text | none |
 | `wkc-architect` | shipped | SPEC and ADRs | free text | PRD |
 | `wkc-plan` | shipped, changes | ROADMAP only; hands an approved milestone to `wkc-backlog` (ADR-004) | a ROADMAP change, or none | PRD, SPEC, `wkc-tracker` reads |
@@ -71,6 +71,10 @@ section. `assign <id>` already claims a ticket and sets `in-progress` in one wri
   edges to them before the parent is canceled. A cancel names each ticket left with a `cancel`
   blocker. An `in-progress` or `in-review` parent's status is never copied to children.
 - `wkc-backlog` writes the `## After merge` section and follows the split rule below.
+- `wkc-tracker`'s local backend commits the ticket files each write changes, and `wkc-implement`
+  carries those commits to the default branch (Contracts, Lifecycle). Today `local.md` forbids
+  `git add`, `git commit`, and `git push`, and nothing commits ticket files, so the claim, handoff,
+  and status writes stay uncommitted in the starting checkout (`wkc-implement` validation S4, S5).
 - `wkc-setup`'s Linear notes say the Linear GitHub integration is not needed, and that if a team has
   it, its PR automations may move tickets on their own.
 - `wkc-setup` Section D gains the two fields, and `config-template.md` lists them.
@@ -196,6 +200,22 @@ Review rounds run as for any PR. After that merge, the rerun runs every post-mer
 against the new merge commit; a release that shipped the bad build ships a new patch version. A
 failure whose cause is outside the ticket, such as another ticket's defect or broken infrastructure,
 is discovered work that blocks the ticket.
+
+**Local backend.** Ticket files are committed, so ticket state has history and reaches other
+checkouts the way code does.
+
+- Each `wkc-tracker` write commits only the ticket files it changed, on the branch checked out, with
+  the message `chore: wkc-tracker <verb> <id>`. Other staged and unstaged changes stay as they were.
+  It never pushes. A file write whose commit fails is a write that half landed.
+- `wkc-implement` branches before it claims, so the claim and the handoff commits ride in the
+  ticket's PR. Commits to `issues_dir` on the local default branch that the remote lacks stop it,
+  as uncommitted documents do: a branch from the remote cannot see them.
+- After the merge, `wkc-implement` makes every post-merge write on a finish branch,
+  `<type>/<id>-finish`, from the merged default branch, and builds a follow-up fix on that branch.
+  It pushes the finish branch straight to the default branch when the project's **Conventions**
+  allow direct pushes, and otherwise opens a PR from it whose first line is the ticket path; a
+  person merges it. A rerun continues an unmerged finish branch and starts a new one after it
+  merges. With no remote, post-merge writes are committed on the local default branch.
 
 Before branching, `wkc-implement` checks `git status` for uncommitted changes to `prd_file`,
 `spec_file`, `roadmap_file`, ADRs, and `issues_dir`. If it finds any, it stops and asks for them to
@@ -570,6 +590,10 @@ the previous tag. Each port also updates the README roster, the repository map u
 - `wkc-implement`, `wkc-code-review`, and `wkc-backlog` opt into model invocation; see Invocation.
 - Codex and Kiro support subagents (maintainer, 2026-10-20). Trouble starting one is filed as a bug.
 - On Linear, PRs link with `Related to <ID>` only.
+- On the local backend, `wkc-tracker` commits each write and never pushes; `wkc-implement` carries
+  ticket commits in the ticket's PR and a finish branch. Chosen over the person committing them,
+  which left them uncommitted in S4 and S5, and over a gitignored `issues_dir`, which loses history
+  and the only copy of the tickets in a repo without a remote (#48).
 - `wkc-yolo`'s limits live in one record per run, `docs/dev-agents/runs/<milestone-slug>-<YYYYMMDDTHHMM>.md`,
   which git ignores through the folder's own `.gitignore`.
 - A post-merge gate that fails because of the ticket's change is fixed by a follow-up PR on the
@@ -608,6 +632,11 @@ None.
 
 ## Changes
 
+- 2026-10-21: On the local backend, `wkc-tracker` commits the ticket files each write changes,
+  `wkc-implement` branches before it claims, and post-merge writes go on a finish branch that is
+  pushed or opened as a PR (Lifecycle, Decisions; #48). Replaced the unstated "nobody commits
+  ticket files", under which `local.md` forbade git and S4 and S5 left the writes uncommitted.
+  `wkc-tracker` is no longer unchanged. Review M2 (`wkc-implement`) and M4 (`wkc-yolo` on local).
 - 2026-10-21: Any skill that reports a defect or other problem for a new ticket gives evidence: the
   `Discovered:` comment gains `Observed`, `Reproduce`, `Because`, and `Verified` lines under its
   unchanged first line, and the work ticket's Notes gain an `Evidence` line that `wkc-backlog` copies
