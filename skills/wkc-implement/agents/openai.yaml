@@ -1,0 +1,5 @@
+interface:
+  display_name: "wkc-implement"
+  short_description: "Take one ticket from ready to an open pull request with its acceptance checks run and the ticket at in-review, then after the merge run its post-merge steps and move it to done"
+policy:
+  allow_implicit_invocation: true

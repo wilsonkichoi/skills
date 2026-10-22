@@ -2,6 +2,10 @@
 
 Newest first. Each version is a `## {version} ({ISO 8601 timestamp with local offset})` heading followed by a bullet list of changes.
 
+## 0.0.29 (2026-10-21T17:20:00-07:00)
+
+- New `wkc-implement` takes one ticket from `ready` to an open pull request with its acceptance checks run and the ticket at `in-review`, and after a person merges, a rerun runs the ticket's post-merge gates and moves it to `done` (ADR-001). It picks its mode from the ticket and its latest pull request: build, report the review state, or finish. It carries the SPEC's PR body and its handoff, gate, finish, and `Discovered:` templates exactly.
+
 ## 0.0.28 (2026-10-21T14:57:25-07:00)
 
 - New `wkc-backlog` owns ticket planning: it drafts one ROADMAP milestone's tickets, or one change (a request, a bug, a `Discovered:` comment, or a refinement, split, re-block, or cancel of existing tickets), and publishes through `wkc-tracker` once the user approves. It carries everything 0.0.27 added to `wkc-plan` for tickets: the SPEC's work-ticket, spike, and decision templates, the split rule, the dependency graph with the edge order for existing tickets, approval, publishing, and recovery from an interrupted publish. It opts into model invocation; its callers are people, `wkc-plan`, `wkc-yolo`, and a model acting on a person's request.
