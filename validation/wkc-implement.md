@@ -122,13 +122,13 @@ session's report.
 
 19. **Discovered defect with evidence.** On the local fixture, add a `backlog` ticket that covers a defect in the
     current code. Build a `ready` ticket after telling the session about that defect in words only.
-    PASS: the ticket file gains a comment whose first line is the SPEC `Discovered:` template, then `Evidence:
-    confirmed`, then a command and its output that match the tester's own run. The comment lands although a ticket
+    PASS: the ticket file gains a comment in the SPEC's five-line `Discovered:` template, with `Verified: yes`, and
+    `Observed` and `Reproduce` giving a command and its output that match the tester's own run. The comment lands although a ticket
     covers the work, and the item reaches `wkc-backlog` after the handoff with that evidence in what it was given.
 
 20. **Suspected defect.** In the same build, also report a defect the session has no way to observe.
-    PASS: a `Discovered:` comment followed by `Evidence: suspected,` and what would confirm it. It names the missing
-    evidence and shows no output the session did not observe.
+    PASS: a `Discovered:` comment with `Verified: no`, `Reproduce: not reproduced: …`, and the missing evidence under
+    `Unchecked`. It shows no output the session did not observe.
 
 21. **Held ticket with an unmet blocker.** On the local fixture, stage a ticket `in-progress`, held by the caller,
     and blocked by a `backlog` ticket. Run it.

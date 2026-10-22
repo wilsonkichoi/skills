@@ -96,17 +96,23 @@ leave open. A question only a person can answer ends the turn on that question.
 
 **Discovered work.** Work outside this ticket's scope is never built here. Comment it on this
 ticket with `wkc-tracker comment`, also when another ticket may already cover it: `wkc-backlog`
-decides reuse. The comment starts with this line:
+decides reuse:
 
 ```
 Discovered: <what>. Out of scope because <why>. Blocks this ticket: yes | no.
+Observed: <what was seen, copied in: expected and actual, a command and its output, a failing test, or a code, SPEC, or log excerpt>
+Reproduce: <steps or a command, or "not reproduced: seen once, <when and where>">
+Because: <why the observation points to a problem>
+Verified: yes | no. Unchecked: <what is still unknown, or nothing>
 ```
 
-Under it, write `Evidence: confirmed` when the evidence shows the problem, or `Evidence: suspected,
-<what would confirm it>` when it does not. Then give evidence someone else can check without this
-session: the command and its exact output, the expected and the observed behaviour, and the source
-or SPEC lines quoted. Copy into the comment what a log or transcript shows, because a local path
-goes away with the session. Evidence you no longer have is named as unavailable, never rebuilt.
+The evidence lets another engineer or agent judge the finding without you. `Observed` copies in
+the excerpt that shows the problem. When the full output is long, also cite where it lives durably:
+a commit, a PR, a CI run, or a tracked file; a temporary file or this session's memory is not one.
+`Verified: yes` means the observation itself shows the problem. Otherwise say `Verified: no` and
+never present the finding as confirmed. A failure that did not reproduce is still reported, with
+the original observation kept. Evidence you no longer have goes under `Unchecked`, never rebuilt.
+Work that is not a problem, such as a missing feature, drops the lines that would say nothing.
 
 A blocker goes to `wkc-backlog` at once, as that change with its evidence, and the build stops
 there; the ticket keeps its status and holder. Other items wait for section 5.
