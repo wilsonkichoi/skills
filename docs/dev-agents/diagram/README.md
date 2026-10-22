@@ -7,15 +7,15 @@ Width stays between 280 pixels and the canvas width minus 200 pixels. It persist
 Narrow layouts keep the full-width bottom sheet.
 The default zoom is 70%, or smaller when needed to fit. Selection centers the card in available space at the current zoom.
 Closing slides the panel away without changing card positions or zoom.
-Tinted boxes group Configuration, Planning, Coordination, Documentation, and Independent cards. Purple, blue, green, amber, and gray distinguish those regions in both themes.
-The map contains all nine shipped definitions in this repository: `wkc-setup`, `wkc-research`, `wkc-architect`,
-`wkc-plan`, `wkc-backlog`, `wkc-tracker`, `wkc-workflow-diagram`, `wkc-help`, and internal `wkc-skills-release`.
+Tinted boxes group Configuration, Planning, Coordination, Implementation, Documentation, and Independent cards. Purple, blue, green, rose, amber, and gray distinguish those regions in both themes.
+The map contains all ten shipped definitions in this repository: `wkc-setup`, `wkc-research`, `wkc-architect`,
+`wkc-plan`, `wkc-backlog`, `wkc-tracker`, `wkc-implement`, `wkc-workflow-diagram`, `wkc-help`, and internal `wkc-skills-release`.
 Planned skills are excluded.
 Every card is a skill. External systems, outputs, and results appear in the owning skill's details.
 The four system cards and their six action arrows are removed at the user's direction.
 
 The map exists to show how the skills connect in a development workflow, so a person knows which one to run next.
-The main flow runs left to right in one row: setup, research, architect, plan, backlog, tracker.
+The main flow runs left to right in one row: setup, research, architect, plan, backlog, tracker, implement.
 Documentation and Independent cards sit in a lower row, out of the main flow, at the user's direction.
 Card order (Previous/Next) and lane chip order follow the same flow.
 
@@ -45,10 +45,13 @@ The arrows do not claim automatic skill invocation. Help's installer operations 
 | wkc-architect | [skills/wkc-architect/SKILL.md](../../../skills/wkc-architect/SKILL.md) | Writes only the SPEC at `spec_file` and ADRs; `wkc-tracker list` when updating with a configured tracker; callers are people |
 | wkc-plan | [skills/wkc-plan/SKILL.md](../../../skills/wkc-plan/SKILL.md) | Writes only the ROADMAP at `roadmap_file`; reads milestones through `wkc-tracker`; option 1 of its approval hands a milestone to `wkc-backlog`; callers are people |
 | wkc-backlog | [skills/wkc-backlog/SKILL.md](../../../skills/wkc-backlog/SKILL.md) | One milestone or one change; tickets from the SPEC templates; every ticket read and write through `wkc-tracker` verbs; callers are people, `wkc-plan`, `wkc-yolo`, and a model acting on a person's request |
+| wkc-implement | [skills/wkc-implement/SKILL.md](../../../skills/wkc-implement/SKILL.md) | One ticket from `ready` to an open pull request at `in-review`, and after the merge to `done`; every ticket read and write through `wkc-tracker` verbs; out-of-scope work to `wkc-backlog`; never merges; callers are people, `wkc-yolo`, and a model acting on a person's request |
 
 | Edge | Kind | Source evidence |
 | --- | --- | --- |
 | setup → research: Doc paths | Handoff, dashed | Setup section B records the PRD, SPEC, and ROADMAP paths "so later skills read the right files"; section 3 names research, architect, and plan as their writers. Research's Dependencies read `prd_file` from config, falling back to the default |
+| implement → tracker: Claims and hands off | Call, solid | Implement's Dependencies name `wkc-tracker` for `show`, `list`, `next`, `assign`, `comment`, and `move`; section 2 claims with `assign`, section 5 posts the handoff with `comment` and moves the ticket to `in-review`, and section 6 moves it to `done` |
+| implement → backlog: Discovered work | Call, dashed | Implement sections 3 and 5: a `Discovered:` comment goes to `wkc-backlog` as a change, a blocker at once and other items after the handoff. Only when the build finds out-of-scope work |
 | setup → tracker: Tracker config | Handoff, solid | Setup's What it does: writes `docs/dev-agents/config.md`, "which `wkc-tracker` reads"; its report's next step is `wkc-tracker list`. Tracker section 1 stops and asks for `wkc-setup` when the config names no backend |
 | research → architect: Approved PRD | Handoff, dashed | Research's Output: "`wkc-architect` reads an approved PRD next"; section 5 names it as the next step. Architect section 1 requires an approved PRD or offers to proceed on stated intent |
 | architect → plan: Approved SPEC | Handoff, dashed | Architect's Output: "`wkc-plan` reads an approved SPEC next"; section 6 names it as the next step. Plan section 1 requires an approved SPEC or offers to plan from stated intent |
@@ -116,6 +119,15 @@ Desktop light overview and phone dark details screenshots were visually inspecte
 The phone sheet scrolls independently; commands below the fold remain reachable.
 
 ## Implementation verification
+
+### wkc-implement, 2026-10-21
+
+New `implement` card in a new Implementation lane (rose), right of tracker in the main row. implement → tracker (Claims and hands
+off, solid) runs left into the tracker card; implement → backlog (Discovered work, dashed) runs above the row and crosses only the
+setup → tracker route. No other node, edge, or region moved. Node **v24.11.1**: check passed after the card body was cut to two
+sentences, and build passed with no warnings. Chrome through Playwright loaded the HTML offline at 1440 × 900 in light mode with no
+page errors and no network requests, and the overview was inspected: no arrow crosses a card. The tracked screenshots were not
+regenerated and predate this layout.
 
 ### wkc-backlog split, 2026-10-21
 
