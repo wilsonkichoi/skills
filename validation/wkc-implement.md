@@ -119,3 +119,61 @@ session's report.
 
 18. **Never merges.** Across every build in cases 3 to 17.
     PASS: every PR a session opened is `OPEN` when the session ends.
+
+## Dated report: 2026-10-21
+
+Scope: new skill, baseline coverage. Selected: cases 1 and 2 as direct checks, cases 3 to 18 in Claude Code. Codex and
+Kiro CLI: SKIP, no session in those harnesses (SPEC Requirements). Candidate `0d6ee2a`, exported with `git archive`,
+`skills` 1.7.4.
+
+Fixtures, all private and throwaway: `wilsonkichoi/wkc-implement-fixture` (GitHub tracker, issues #1 to #7, PRs #8 to
+#16), `wilsonkichoi/wkc-implement-fixture-local` (local tracker), `wilsonkichoi/wkc-implement-fixture-linear` with
+Linear issue DEV-52 in sandbox team `DEV`, project `implement-20261021`. The tester merged fixture PRs #9 to #14 as the
+person; no session merged anything.
+
+Direct checks:
+
+| Case | Result | Evidence |
+|---|---|---|
+| 1, package | PASS, direct | PyYAML: `disable-model-invocation: false`, `allow_implicit_invocation: true`, five fields in order, callers and the `wkc-code-review` sentence present, `description` on one line, `wc -l` 191. Discovery lists 9 public of 10 shipped `SKILL.md`, `wkc-implement` among them. The installed copy equals the source by `diff -r`. |
+| 2, templates | PASS, direct | The PR body (12 lines), handoff, gate, finish, and `Discovered:` blocks each `diff` clean against SPEC Contracts, and none is empty. |
+
+### Claude Code run, 2026-10-21
+
+Five sessions of the six allowed, one at a time, as Claude Code `general-purpose` subagents on Sonnet (`sonnet`, effort
+`medium`). Each read the installed `SKILL.md` from its fixture and did not use the `Skill` tool, so harness loading is
+untested. Later turns in a session were new invocations told to re-read state. About 55k to 90k subagent tokens per
+turn, 18 turns. Every result below was scored from `gh`, `git`, the ticket files with PyYAML, or the Linear MCP server.
+
+| Session | Case | Result | Evidence |
+|---|---|---|---|
+| S1, pilot | 3, build | PASS | #1: `in-review`, assignee `wilsonkichoi`, one handoff naming PR #14 and head `06955af…`. PR #14 `OPEN`, no labels, body `Refs #1`, each criterion with command and result, `shellcheck` unchecked as not installed. `shasum` of `AGENTS.md`, `notes.txt`, `.env` unchanged; it built in a separate worktree. |
+| S1 | 4, complete handoff | PASS | Reported the review state. Hashes of the issue's labels, assignees, and comments and of the PR's body, labels, and state equal before and after. |
+| S2 | 6, no argument | PASS | Named #2, #3, #5, #6 with merge commits before the frontier (#4, #7), then a numbered question. Issues, PRs, branches unchanged. |
+| S2 | 7, another author's PR | PASS | #4 with `app/github-actions` PR #8: not claimed, PR named, no other ticket taken; issues and branches unchanged. |
+| S2 | 8, uncommitted SPEC | PASS | #7: stopped on the two options before any claim; `git branch -a` and the issues unchanged. |
+| S2 | 5, cut-short handoff | PASS | #7 staged `in-progress` with PR #15 and no handoff: one handoff naming #15 and its head, `in-review`, same assignee, no new PR or branch. |
+| S3 | 9, no gate | PASS | After PR #14 merged: one `done` finish comment naming #14 and `2d892cb…`, `CLOSED` `COMPLETED`, no status label. |
+| S3 | 10, runnable gate | PASS | #2: the timeline shows `in-progress` before the close; gate comment `pass` naming merge commit `d6efaa2…`; finish `done`, `Gates: all passed`. |
+| S3 | 11, unauthorized step | PASS | #3: gate `not run`, finish `waiting` naming the release and that a person must authorize it, `in-progress`, no tag on the remote, the turn ended on a question. |
+| S3 | 12, follow-up PR | PASS | #5: gate `fail`, finish `follow-up`, PR #16 from `fix/count` containing current `main` (`2d892cb`), body `Refs #5` then the follow-up line naming PR #11, handoff naming #16, `in-review`. |
+| S3 | 13, same gate again | PASS | #6: gate `fail` against `8e82f84…`, the follow-up's merge commit, finish `waiting` saying a person must decide, `in-progress`, no new PR. |
+| S4 | 7, held ticket | PASS | Local 002 held by `Alice Dev`: holder named, `cksum` of every ticket file and the branch list unchanged. |
+| S4 | 14, discovered work | PASS | Local 001: `Discovered: … Blocks this ticket: no.` and the handoff under `## Comments`, status `in-review` by PyYAML; PR #1 body starts `docs/dev-agents/issues/001-cli-shout-flag.md`. The session then ran `wkc-backlog` unprompted and ended on its three change options; after `3`, no ticket file was added. |
+| S5 | 15, discovered blocker | PASS | Local 003: `Blocks this ticket: yes`, `wkc-backlog` drafted before any code, no PR for 003, status `in-progress` and holder kept. |
+| S5 | 16, no remote | PASS | Local 004: branch `feat/004-wave-flag` at `ae6b830`, ticket `in-progress`, the reply says it stopped at the local branch. |
+| S5 | 17, Linear | PASS | DEV-52: PR body starts `Related to DEV-52 https://linear.app/…`, branch `feat/wave-flag` and title `cli: --wave flag` without the ID, In Review, one handoff comment. |
+| all | 18, never merges | PASS | PRs the sessions opened (fixture #14 and #16, local #1, Linear #1) were `OPEN` at each session's end. |
+
+Observations, not failures:
+
+- On the local backend, the claim, handoff, and status writes stay as uncommitted changes to the ticket file in the
+  checkout where the session ran (S4, S5). Nothing says who commits them, so the merged PR does not carry them.
+- S1 saw that `--count` and `--repeat` did nothing and called it out of scope without a `Discovered:` comment. Tickets
+  #5 and #6 already covered that work, so no new ticket was needed.
+- In S5's blocker case, `wkc-backlog`'s draft added a criterion for a missing `~/.greetrc`, which the SPEC leaves
+  open, and said so. Its own rule says never to fill a SPEC gap, even as a stated assumption. Recorded on issue #15 as
+  discovered work.
+
+Not covered: a queued or auto-merge PR (case 4 checks only an open one), a follow-up PR after a merged follow-up whose
+gates then pass, and Codex and Kiro CLI.

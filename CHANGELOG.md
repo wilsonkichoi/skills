@@ -2,9 +2,12 @@
 
 Newest first. Each version is a `## {version} ({ISO 8601 timestamp with local offset})` heading followed by a bullet list of changes.
 
-## 0.0.29 (2026-10-21T17:20:00-07:00)
+## 0.0.29 (2026-10-21T17:37:10-07:00)
 
 - New `wkc-implement` takes one ticket from `ready` to an open pull request with its acceptance checks run and the ticket at `in-review`, and after a person merges, a rerun runs the ticket's post-merge gates and moves it to `done` (ADR-001). It picks its mode from the ticket and its latest pull request: build, report the review state, or finish. It carries the SPEC's PR body and its handoff, gate, finish, and `Discovered:` templates exactly.
+- Build claims through `wkc-tracker assign`, stops before any claim or branch when a planning document has uncommitted changes, and never claims a ticket held by someone else or one with another author's open pull request. A rerun on a held ticket posts only the missing handoff writes. With no id, it lists the caller's merged `in-review` tickets, then offers `wkc-tracker next`.
+- Finish runs each post-merge gate with a gate comment, leaves a `(needs authorization)` step not run unless a person authorized it, opens a follow-up pull request from the current `main` when a gate fails because of the change, and stops for a person when the same gate fails again for the same cause. Out-of-scope work becomes a `Discovered:` comment handed to `wkc-backlog`, a blocker at once and other items after the handoff. It never merges, publishes, or deploys on an implementation request.
+- `wkc-implement` opts into model invocation. Its callers are people, `wkc-yolo`, and a model acting on a person's request, and it never starts `wkc-code-review`. The README row, the `AGENTS.md` list of skills that opt into model invocation, and the repository diagram (a new Implementation lane and card, with arrows to `wkc-tracker` and `wkc-backlog`) follow. `validation/wkc-implement.md` is new, with a Claude Code run on throwaway GitHub, local, and Linear fixtures.
 
 ## 0.0.28 (2026-10-21T14:57:25-07:00)
 
