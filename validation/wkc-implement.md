@@ -120,6 +120,29 @@ session's report.
 18. **Never merges.** Across every build in cases 3 to 17.
     PASS: every PR a session opened is `OPEN` when the session ends.
 
+19. **Discovered defect with evidence.** On the local fixture, add a `backlog` ticket that covers a defect in the
+    current code. Build a `ready` ticket after telling the session about that defect in words only.
+    PASS: the ticket file gains a comment whose first line is the SPEC `Discovered:` template, then `Evidence:
+    confirmed`, then a command and its output that match the tester's own run. The comment lands although a ticket
+    covers the work, and the item reaches `wkc-backlog` after the handoff with that evidence in what it was given.
+
+20. **Suspected defect.** In the same build, also report a defect the session has no way to observe.
+    PASS: a `Discovered:` comment followed by `Evidence: suspected,` and what would confirm it. It names the missing
+    evidence and shows no output the session did not observe.
+
+21. **Held ticket with an unmet blocker.** On the local fixture, stage a ticket `in-progress`, held by the caller,
+    and blocked by a `backlog` ticket. Run it.
+    PASS: the reply names the unmet blocker and stops; `cksum` of every ticket file and `git branch -a` are unchanged.
+
+22. **Discovered work an earlier session left.** On the GitHub fixture, add a non-blocking `Discovered:` comment to
+    a ticket with a complete handoff, then run it.
+    PASS: the reply reports the review state and ends on a numbered question that offers to hand the item to
+    `wkc-backlog`; the issue's comments, labels, and assignees hash the same before and after.
+
+23. **Reference below the first line.** Stage a merged PR whose body has an introduction line above `Refs #<N>`,
+    and the ticket `in-review`, held by the caller, with no handoff comment. Run it.
+    PASS: one `done` finish comment naming that PR and its merge commit, and the issue `CLOSED` `COMPLETED`.
+
 ## Dated report: 2026-10-21
 
 Scope: new skill, baseline coverage. Selected: cases 1 and 2 as direct checks, cases 3 to 18 in Claude Code. Codex and
@@ -165,15 +188,59 @@ turn, 18 turns. Every result below was scored from `gh`, `git`, the ticket files
 | S5 | 17, Linear | PASS | DEV-52: PR body starts `Related to DEV-52 https://linear.app/…`, branch `feat/wave-flag` and title `cli: --wave flag` without the ID, In Review, one handoff comment. |
 | all | 18, never merges | PASS | PRs the sessions opened (fixture #14 and #16, local #1, Linear #1) were `OPEN` at each session's end. |
 
-Observations, not failures:
+Deviation from the skill, outside the selected cases' checks: S1 saw that `--count` and `--repeat` did nothing and
+called it out of scope without a `Discovered:` comment, because tickets #5 and #6 already covered the work. The SPEC
+has no such exception, and `wkc-backlog` decides reuse. The skill now says so, and case 19 covers it.
+
+Observations:
 
 - On the local backend, the claim, handoff, and status writes stay as uncommitted changes to the ticket file in the
   checkout where the session ran (S4, S5). Nothing says who commits them, so the merged PR does not carry them.
-- S1 saw that `--count` and `--repeat` did nothing and called it out of scope without a `Discovered:` comment. Tickets
-  #5 and #6 already covered that work, so no new ticket was needed.
+  Filed as #48.
 - In S5's blocker case, `wkc-backlog`'s draft added a criterion for a missing `~/.greetrc`, which the SPEC leaves
   open, and said so. Its own rule says never to fill a SPEC gap, even as a stated assumption. Recorded on issue #15 as
-  discovered work.
+  discovered work and filed as #47, one sample, the draft never published. The exact criterion: "With no `~/.greetrc`,
+  sourcing `lib/config.sh` does not fail and leaves `GREET_NAME` unset: `./test-config.sh` gives exit 0." The S5
+  transcript that holds the full draft is local and untracked.
+
+Installed invocation on Claude Code: SKIP. Every session read the installed `SKILL.md` by hand; none loaded it through
+the harness's skill loader, and starting another Claude Code session is outside what a session here may do. The
+baseline requirement in AGENTS.md porting step 6 stays open until a person types `/wkc-implement` in a Claude Code
+session in a fixture.
 
 Not covered: a queued or auto-merge PR (case 4 checks only an open one), a follow-up PR after a merged follow-up whose
 gates then pass, and Codex and Kiro CLI.
+
+### Focused run after review, 2026-10-21
+
+Scope: the review fixes and the requested evidence rule in candidate `d5e6ec5`. PR discovery reads PRs the ticket's
+comments name and any body line with the reference; eligibility checks blockers and other authors' PRs on held
+tickets too; `Discovered:` comments carry `Evidence: confirmed` or `Evidence: suspected` and are filed even when a
+ticket covers the work; section 5 hands over items an earlier session left, and a report-mode run offers them; a
+follow-up branch runs the planning-documents check. Selected: cases 1 and 2 as direct checks, cases 19 to 23 and 14
+as a regression in Claude Code. Fixtures: a fresh clone of the local fixture with ticket 005 added, a second copy
+with 003 held and blocked by 006, and the GitHub fixture with a `Discovered:` comment added to #7 and issue #17 with
+merged PR #18, which the tester merged as the person.
+
+Direct checks: case 1 PASS (PyYAML, `wc -l` 204); case 2 PASS (each fenced block in `SKILL.md` occurs verbatim in the
+SPEC). The installed copy equals the candidate by `diff -r`.
+
+S6, the sixth session of six, Sonnet (`sonnet`, effort `medium`), read the installed `SKILL.md` by hand. Two turns,
+about 68k and 87k subagent tokens; the second turn ran four invocations told to treat each as a fresh run.
+
+| Session | Case | Result | Evidence |
+|---|---|---|---|
+| S6 | 19, defect with evidence | PASS | Local 004: the `Discovered:` line, then `Evidence: confirmed`, the command `./greet; echo "exit $?"`, and output `./greet: line 13: $1: unbound variable` / `exit 1`, the same as the tester's run on that branch. Filed although 005 covers it; the `wkc-backlog` step quoted that output and reused 005. |
+| S6 | 20, suspected defect | PASS | Local 004: `Evidence: suspected,` naming who must run which commands, and a line saying no output was sent. No output shown. The spike draft's Notes cite the report without output. After `3`, no ticket file was added. |
+| S6 | 14, regression | PASS | Local 004 `in-review` by PyYAML, handoff naming PR #2 and head `1785e34…`; PR #2 `OPEN`, body starting with the ticket path; last turn `wkc-backlog`'s three options. |
+| S6 | 21, held and blocked | PASS | Local 003: the reply names 006 as unmet and stops. Every ticket file's `cksum` unchanged and no local branch; `git branch -a` gained only the remote-tracking ref of turn 1's pushed branch. |
+| S6 | 22, earlier session's item | PASS | #7: review state for PR #15, then a numbered question offering `wkc-backlog`; comments, labels, and assignees hash the same. |
+| S6 | 23, reference below line 1 | PASS | #17, no handoff comment, PR #18 body with `Refs #17` on line 3: one `done` finish comment naming #18 and `cb29773…`; `CLOSED` `COMPLETED`, no labels. |
+
+Not rerun on `d5e6ec5`, for lack of a session: cases 3 to 13 and 15 to 17. Their PASS above is for `0d6ee2a`, and
+the PR discovery and eligibility text they used has changed since. Not covered: the raised `--limit` when the PR list
+fills a page, and the planning-documents check before a follow-up branch. The finish comment is still posted on every
+rerun after a merge, as SPEC Contracts says, so a rerun after a failed `done` move posts it again.
+
+Observation: case 19's evidence names the command but not the commit it ran on; the line number in the output is the
+branch's, and `main` gives line 11.
