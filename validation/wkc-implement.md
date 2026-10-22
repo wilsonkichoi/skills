@@ -244,3 +244,12 @@ rerun after a merge, as SPEC Contracts says, so a rerun after a failed `done` mo
 
 Observation: case 19's evidence names the command but not the commit it ran on; the line number in the output is the
 branch's, and `main` gives line 11.
+
+### SPEC template change, 2026-10-21
+
+PR #50 replaced the one-line `Discovered:` template with five lines: the same first line, then `Observed`,
+`Reproduce`, `Because`, and `Verified`. Candidate `c847d59` copies it and drops the interim `Evidence: confirmed |
+suspected` lines that S6 tested. Direct checks on `c847d59`: case 1 PASS (PyYAML, `wc -l` 210); case 2 PASS (all five
+fenced blocks, the five-line `Discovered:` block included, occur verbatim in the SPEC). Cases 19 and 20 as now written:
+SKIP. The S6 rows above tested the interim format, and the six-session limit is used up. Cases 14, 21, 22, and 23 do
+not depend on the comment's format; their S6 results stand for `d5e6ec5`.
