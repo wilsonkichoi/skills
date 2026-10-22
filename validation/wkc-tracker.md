@@ -1481,6 +1481,63 @@ Versions 0.0.9 to 0.0.41 below were development steps on the `feat/tracker` bran
 together as 0.0.8, so an entry's version names a branch state, and its skill ref names the exact
 commit it tested.
 
+### 2026-10-21T11:48:56-07:00 Focused 0.0.26 run, Codex, GitHub and Linear
+
+Scope: Codex coverage for S4, A3, D4/D6 transcript checks, A4, A5, A6, A8, A9, A10, A15, A31, A33, A37, A39, A41,
+A42, A43, A20, A29, A22, A30; Linear C26, C29, C24, C8, C7, C21, C30, C35, C32, C33, C13, C15, C11, C19, and one
+focused C6 quartet. Candidate `3ddad89` (0.0.26), installed with `skills` 1.7.4. Codex CLI 0.163.0,
+`gpt-6.1-sol`, high. Every backend result below was independently checked with `gh` or Linear MCP reads. Full run report:
+`/Users/wchoi/tmp/codex-compat-20261021-114617/REPORT.md`; raw logs are in that run's `logs/` and the Codex session logs.
+
+#### GitHub
+
+Backend: `wilsonkichoi/linear-related-to-check`. Session `01a15fcb-872f-79e3-b120-222c0ecab1db`, 15 turns, including
+a user-authorized resume after a quota stop. Cumulative local usage: 14,312,401 input tokens (14,101,376 cached),
+26,269 output tokens.
+
+| Case | Verdict | Independent evidence |
+|---|---|---|
+| S3 | PASS, direct | Installer listed seven public skills of eight shipped; internal `wkc-skills-release` was excluded. |
+| S4 | PASS | `list` and `create Probe` with no config left no files newer than `skills-lock.json`; checked with the runbook's `find -newer`. |
+| A3, A4 | PASS | Remote was unchanged. Labels matched the four allowed statuses. |
+| D4 | PASS, transcript | Section A used numbered options with the recommended choice first; digit `1` was accepted. |
+| D6 | FAIL, transcript subcheck | A policy quote and skill link followed the options, so the question was not the last content in the turn. |
+| A5, A6, A8, A9, A10, A15 | PASS | `jq --rawfile` confirmed exact body bytes. Independent reads confirmed blocker, related issue, frontier, closed status, and label state. |
+| A31 | PASS | A three-issue cycle and a self-link were refused; issue relations remained unchanged. |
+| A33 | PASS | Milestone #2 was created, its existing state was reported without duplication, then closing it through `gh api` caused a stop. |
+| A37 | PASS | Exact title created issue #19. Case variant stopped and created no issue. |
+| A39, A41, A42, A43 | PASS | Independent reads confirmed the requested edit, cycle-safe blocker change, exact unlink, and harmless repeated unlink. |
+| A20, A29, A22, A30 | PASS | Assignment and move state, assignee clearing, exact comment count/body, and show output matched. |
+
+PASS 21, FAIL 1, SKIP 0. One initial A29 attempt had inconsistent fixture labels and was voided; the case passed on a
+clean `ready` state. Existing Kiro issues #8 to #11 and milestone #1 remained unchanged. Codex created issues #12 to #20,
+closed milestone #2 `Codex A33 closed probe`, open milestone #3 `Codex M1`, and open milestone #4
+`Codex M2: it's "quoted"`.
+
+#### Linear
+
+Workspace `wkc-sandbox`, team `DEV`, project `codex-compat-2026-10-21` (`P-DEV-5`). Session
+`01a160b8-3538-75f2-8eef-6bce638bc310`, 14 turns. Cumulative local usage: 8,994,654 input tokens (8,825,344 cached),
+10,059 output tokens.
+
+| Case | Verdict | Independent evidence |
+|---|---|---|
+| C26, C29 | PASS | Linear reads confirmed one milestone, correct project association, and no issue created for a missing milestone. |
+| C24, C8, C7, C21 | PASS | Reads confirmed dependency direction, frontier release, cycle refusal, and self-link refusal. |
+| C30, C35 | PASS | After a hand edit inserted a `### Constraints` subsection and fenced `## Not a heading` under Notes, edit removed the Notes content while preserving other sections and relations. |
+| C32, C33 | PASS | Milestone clear stopped without changing the milestone; exact unlink worked and its repeat made no `save_issue` call. |
+| C13, C15 | PASS | Bare assignment used exactly one `save_issue`; moving to ready cleared the assignee. |
+| C11, C19 | PASS | Independent reads confirmed exact comment body and empty comments for show. |
+| C6, one custom-input quartet | PASS, partial | `in progrss`, `in recess`, `dime`, and `binned` were checked independently. The middle two caused no `save_issue`. This is one quartet, not the full three-run case. |
+
+PASS 15, FAIL 0, SKIP 0 for the selected scope. Project issues DEV-40 to DEV-51 remain as fixtures. An additional
+Section A setup question had policy text after the numbered options. This is a question-last failure outside the
+selected C-case count.
+
+Other observations: unlike the Kiro run, Codex did not add a “Next step” after the GitHub commit offer. The closed-
+milestone stop did not offer options, so the Kiro unnumbered-options observation was not exercised. The model created
+body and `jq` files under the run directory, not `/tmp`.
+
 ### 2026-10-21T11:15:00-07:00 Focused 0.0.26 run, Kiro CLI non-interactive, GitHub and Linear
 
 Scope: harness coverage on Kiro for the verbs added since its last run (milestone, edit, unlink) and
