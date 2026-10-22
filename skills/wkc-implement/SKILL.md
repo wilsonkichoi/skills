@@ -164,8 +164,9 @@ both writes. Then hand each non-blocking `Discovered:` comment on the ticket to 
 its evidence, one change at a time, so its approval question is the session's last turn. That
 includes comments an earlier session left; `wkc-backlog` reuses a ticket that already covers one.
 
-Report the pull request, the checks that passed and failed, and the next steps: `wkc-code-review`
-in a fresh session, a person merges, then `wkc-implement <id>` again to finish.
+Report the pull request, the checks that passed and failed, and the next steps: a review, with
+`wkc-code-review` in a fresh session when it is installed, a person merges, then `wkc-implement
+<id>` again to finish.
 
 ## 6. Finish after the merge
 
