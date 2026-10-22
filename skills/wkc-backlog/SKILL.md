@@ -53,10 +53,11 @@ Classify a change against those documents before drafting it:
 - A change that adds, moves, or drops milestone scope: send it to `wkc-plan`, and draft nothing
   that depends on it.
 
-Where the SPEC leaves a detail open, choose what an experienced engineer would, if nothing approved
-says otherwise. Write each choice that sets behaviour in **Notes** as `Assumption: <choice>, because
-<reason>.`, never as a SPEC excerpt. A gap that decides product behaviour, security, compatibility,
-architecture, or data integrity, or has no conventional answer, is an unresolved prerequisite (section 3).
+Where the SPEC leaves a detail open, make the conventional, low-risk choice an experienced engineer
+would, if nothing approved says otherwise. Write each choice that sets behaviour in **Notes** as
+`Assumption: <choice>, because <reason>.`, never as a SPEC excerpt. A gap is an unresolved
+prerequisite (section 3) when it has no conventional answer, shapes data exchanged with another
+system, or materially risks product behaviour, security, compatibility, architecture, or data integrity.
 
 ## 2. Draft tickets
 
