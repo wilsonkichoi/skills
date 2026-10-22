@@ -39,9 +39,13 @@ Read the config, the `context_file`, and the rule files in `rules_dir`. `max_fix
 integer, 0 or more, and `3` when the field is absent. Any other value stops the review: name the
 field and its allowed values, and post nothing.
 
-Resolve the pull request. A number or URL is read with `gh pr view`. For a ticket id, run
-`wkc-tracker show <id>` and take the pull request on the `PR:` line of its latest `wkc-implement`
-handoff comment. With no argument, run `gh pr list --state open --head <current branch>`. Then read
+Resolve the pull request. A pull request URL or a number the caller identifies as a pull request
+is read with `gh pr view`. For a bare number on the GitHub tracker, try `gh pr view`; when GitHub
+says that number is not a pull request, resolve it as a ticket instead. Other failures stop the
+read, never trigger that fallback. A ticket id on another backend goes straight to `wkc-tracker
+show <id>`. For every ticket target, run `wkc-tracker show <id>` and take the pull request on the
+`PR:` line of its latest `wkc-implement` handoff comment. With no argument, run
+`gh pr list --state open --head <current branch>`. Then read
 it with `gh pr view <n> --json number,url,state,headRefName,headRefOid,baseRefName,body,comments`.
 A pull request that is not `OPEN` is reported and nothing is posted.
 
@@ -79,6 +83,7 @@ Check, in this order:
 - **Correctness**, including error paths and security where the diff touches input, secrets, or
   permissions.
 - **Tests** check the contract, not the implementation. A weakened or deleted assertion is a finding.
+  A correct test failing on a code defect is evidence for that defect, not a separate test defect.
 - **Scope**: every changed line traces to the ticket.
 
 **A blocking finding** is a defect, an unmet acceptance criterion, or a regression. It names the
@@ -93,7 +98,8 @@ evidence shows it in `H` again; a finding that came back after being fixed stops
 
 **Discovered work.** A problem outside this ticket's scope is never fixed here. Comment it on the
 ticket with `wkc-tracker comment`, also when another ticket may already cover it: `wkc-backlog`
-decides reuse.
+decides reuse. Follow that verb's read, write, and verify steps on every backend. On the local
+backend, an appended comment without the verification read is a failed write, not a completed verb.
 
 ```
 Discovered: <what>. Out of scope because <why>. Blocks this ticket: yes | no.

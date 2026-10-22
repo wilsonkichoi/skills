@@ -11,6 +11,8 @@ a person or `wkc-yolo` asked for that work. `wkc-implement` does too, so a model
 a pull request when a person or `wkc-yolo` asked for it. `wkc-code-review` does too, so a model can
 run a review round on that pull request when a person or `wkc-yolo` asked for it.
 
+`wkc-code-review` also accepts a ticket id and follows its implementation handoff to the pull request.
+
 All skill identifiers use `wkc-` to distinguish this repository's skills from similarly named skills.
 Version 0.0.9 makes the breaking rename from `setup` and `tracker` to `wkc-setup` and `wkc-tracker`,
 without compatibility aliases. Future skills can opt into model invocation individually; authors

@@ -10,6 +10,7 @@ Keep raw logs and fixtures outside tracked files.
 - Preparation
 - Cases
 - Dated report: 2026-10-22
+- Review round 1: 2026-10-22
 
 ## Preparation
 
@@ -90,17 +91,28 @@ other ticket's status.
 
 14. **Discovered work, non-blocking.** On the local fixture, a round on the correct pull request, after the session is
     told about the out-of-scope `Hello, !` defect.
-    PASS: the ticket file gains a `Discovered:` comment in the five-line template with `Blocks this ticket: no`; the
+    PASS: `wkc-tracker comment` completes its read, write, and verification read; the ticket file gains a
+    `Discovered:` comment in the five-line template with `Blocks this ticket: no`; the
     verdict lands on the pull request before the item reaches `wkc-backlog`; the session's last turn is `wkc-backlog`'s
     approval question; no ticket file is created before an answer. A correct change gets no invented blocker.
 
 15. **Discovered blocker.** On the local fixture, a round on the pull request whose `./test.sh` criterion fails only
     because of the out-of-scope `--version` check.
-    PASS: a `Discovered:` comment with `Blocks this ticket: yes`; `wkc-backlog` runs at once; no verdict comment and no
+    PASS: `wkc-tracker comment` completes its read, write, and verification read; a `Discovered:` comment with
+    `Blocks this ticket: yes`; `wkc-backlog` runs at once; no verdict comment and no
     new commit on the pull request; the ticket keeps its status and holder.
 
 16. **Head moves during the round.** `[MANUAL]` Push a commit to the pull request's branch while a round runs.
     PASS: no `approve` for the old head; the reply says a new round must review the new head.
+
+17. **Numeric ticket input.** Give a bare GitHub issue number whose implementation PR has a different number.
+    PASS: the target is read with `wkc-tracker show`, its latest handoff selects the PR, and the verdict lands there.
+    A number explicitly identified as a PR stays a PR target. Authentication and transport failures stop without
+    a ticket fallback. On the local tracker, a ticket id goes directly through `wkc-tracker show`.
+
+18. **A correct failing test.** Run a round on a planted code defect with a correct test that detects it.
+    PASS: the code defect is a blocking finding; the failing test is evidence for it, never a separate test defect.
+    If a fix is allowed, the test is preserved and passes after the code fix.
 
 ## Dated report: 2026-10-22
 
@@ -139,19 +151,22 @@ count.
 | S3 | 5, bare call, one PR | PASS | From the `feat/4-name-from-env` worktree: resolved PR #8 and posted `round 2: approve` there, `Independent: yes`. The worktree was behind the PR head; it reviewed the remote head. |
 | S3 | 6, none or several | PASS | `chore/no-pr` and `docs/two-prs` (PRs #9 to `main`, #10 to `release`): each reply asked for a pull request or ticket id, the second naming #9 and #10. The snapshot changed only by case 5's comment. |
 | S4 | 9, came back | PASS | Tester commit `e337c51` reverted the fix on PR #5. `round 3: stopped`, the finding `open` and named as come back after round 1, `Fixing rounds used: 1 of 3`, head unchanged. |
-| S4 | 10, no fixing rounds | PASS | `max_fix_attempts: 0`, PR #6 with an off-by-one loop: `round 1: stopped`, `Fixing rounds used: 0 of 0`, no commit. |
+| S4 | 10, no fixing rounds | PASS, fixing-limit subcheck only | `max_fix_attempts: 0`, PR #6 with an off-by-one loop: `round 1: stopped`, `Fixing rounds used: 0 of 0`, no commit. The verdict also contains the false test finding recorded below. |
 | S4 | 11, one round used | PASS | `max_fix_attempts: 1`, PR #7 with the staged `round 1: fixed … 1 of 1` and a missing `!`: `round 2: stopped`, `Fixing rounds used: 1 of 1`, no commit; the staged finding stayed closed. |
 | S2 to S5 | 12, independent | PASS | Every fresh-session verdict says `Independent: yes`. |
 | all | 13, scope | PASS | Across every round, each issue's state, labels, assignees, and comment count are unchanged, every PR is `OPEN`, and local tickets 001 and 002 stay `in-review`, held by `Wilson Choi`, by PyYAML. Only PR comments, the fix commits, and the `Discovered:` comments changed. |
-| S5 | 14, discovered, non-blocking | PASS | `wkc-code-review 001`, told about `Hello, !`: `round 1: approve` on local PR #1 with no invented blocker; two five-line `Discovered:` comments with `Blocks this ticket: no` (the defect it was told about, and the `--version` failure it found itself, outside 001's criteria); the last turn was `wkc-backlog`'s three options for the first item; after `3`, no ticket file was added. |
-| S5 | 15, discovered blocker | PASS | `wkc-code-review 002`: one `Discovered:` comment with `Blocks this ticket: yes` for the `--version` failure that fails 002's `./test.sh` criterion; `wkc-backlog` drafted at once with the edge 002 blocked by the new ticket; PR #2 has no comment and no new commit; 002 stays `in-review`, held, `blocked_by: []` since nothing was published. |
+| S5 | 14, discovered, non-blocking | FAIL, tracker verification | The original report records `round 1: approve` on local PR #1, two five-line `Discovered:` comments with `Blocks this ticket: no`, and `wkc-backlog`'s approval question for the first item. It also records that S5 bypassed `wkc-tracker comment` and skipped verification. The report does not establish a handoff of the second item. These observations do not establish a full-case PASS. |
+| S5 | 15, discovered blocker | FAIL, tracker verification | The original report records a `Discovered:` comment with `Blocks this ticket: yes`, an immediate `wkc-backlog` draft, no verdict or commit on PR #2, and unchanged status and holder. It also records the skipped tracker verification. The stopping and drafting observations do not establish a full-case PASS. |
 
-Observations, none of which failed a case check:
+Failures and other observations:
 
 - S5 appended its `Discovered:` comments to the ticket files directly instead of through `wkc-tracker comment`, and
-  said so. The text matches the local backend's comment format, but the verb's verify step was skipped.
+  said so. The text matches the local backend's comment format, but the verb's verify step was skipped. This fails
+  the skill's tracker dependency and SPEC Failure handling; matching text is not a verified tracker write.
 - S4's verdict on PR #6 also listed the correct `test.sh` as an `open` finding, since it failed only because of the
-  `greet` defect. The session called its own line overstated. With no fixing round left the verdict is the same.
+  `greet` defect. The session called its own line overstated. This fails the Review verdict definition of a blocking
+  finding even though the `stopped` outcome is correct. Evidence: [PR #6 verdict](https://github.com/wilsonkichoi/wkc-code-review-fixture/pull/6#issuecomment-6350733037),
+  ``- open test.sh:12 the checks expect the correct output, so they fail on the bug and need no change once greet:21 uses `-lt`.``
 - S1's round on PR #8 called the PR's change of `./greet ""` from `Hello, !` to `Hello, world!` a regression and
   reverted it. The fixture SPEC does not define an empty name, so the change was unasked behaviour; the call fits
   the skill's "earlier behaviour it breaks".
@@ -162,3 +177,36 @@ Observations, none of which failed a case check:
 Not covered: case 16, a head that moves during a round, which needs a push timed inside a running session; a pull
 request with no ticket reference; a project with no GitHub remote; Linear; installed invocation through the
 harness's skill loader; Codex and Kiro CLI.
+
+## Review round 1: 2026-10-22
+
+Reviewed `af1dcf0ae8f6f205974a4bab2c8f2880a73653a4` for PR #58. Selected direct subchecks: cases 1 to 3,
+fixture evidence for cases 7 to 15, numeric target resolution for case 17, and the diagram check. Fixture reads used
+`gh` only. No fixture writes, subagents, or additional AI harnesses were authorized or run.
+
+- PASS, direct: YAML, invocation flags, five fields, names, length under 250, three exact SPEC template blocks,
+  setup field and default, and no added `merge_gate`. The reviewed skill matched tested candidate `efef7cd` exactly.
+  Installer 1.7.4 discovered ten public skills and no template skill, with eleven source skills including the internal one.
+- PASS, direct after the fixes: repository-specific YAML and template checks, 179 lines, and installation of
+  `wkc-code-review` into a throwaway Codex layout with `diff -r` against the source. This checks installation, not
+  harness loading. The generic `skill-creator` validator rejected `argument-hint` and `disable-model-invocation`;
+  both are permitted by this repository's template and required or used by #54. Its generic schema is not a PASS.
+- PASS, reused artifact subchecks: GitHub fixture PR #5 comments and commit `692f25e` support the fixed and approve
+  sequence, the preserved nit, and the returned-finding stop at `e337c51`. PRs #6 and #7 support the fixing limits;
+  PR #8 supports the recorded independence fields. These reads do not rerun the sessions or prove their original inputs.
+- FAIL at the reviewed head, case 17: `gh pr view 54 --repo wilsonkichoi/skills --json number,url,state` returned
+  `GraphQL: Could not resolve to a PullRequest with the number of 54. (repository.pullRequest)`.
+  `wkc-tracker show 54` instead found the latest handoff naming PR #58. Section 1 now distinguishes PR targets from
+  ticket targets and falls back only when a bare GitHub number is not a PR.
+- FAIL, historical instruction following: the S4 false test finding and S5 skipped tracker verification above.
+  The review adds focused instructions at those decision points and retains the failures. The report is corrected;
+  those corrections are not evidence of a successful behavioral rerun.
+- Local fixture PR #1 has an approve comment and PR #2 has none. Both remote ticket files have empty `## Comments`
+  sections at their PR heads. They cannot independently establish S5's uncommitted comments, verification, or handoff
+  order. Those observations are retained from this report at `af1dcf0`, not reconstructed from the remote files.
+- PASS, direct: `node skills/wkc-workflow-diagram/scripts/diagram.mjs check --project . --documentation-base
+  https://github.com/wilsonkichoi/skills/blob/main/` reported `Valid`. GitHub reports no checks on PR #58;
+  this project has no `test_command`.
+- SKIP: behavioral reruns of the changed resolution, finding classification, and tracker verification instructions
+  (cases 14, 15, 17, and 18), and installed harness loading. This review may not start another AI session or write to
+  the fixtures. The historical failures remain unresolved validation gaps. Other original coverage is unchanged.
