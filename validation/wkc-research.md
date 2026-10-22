@@ -106,3 +106,19 @@ clinic SMS reminder service, committed before the run.
 | 8, approval | PASS | `Status: draft` after the first turn; after "Approve.", `Status: approved (2026-10-21)`, the run date, with the lead-time decision in **Changes**. `git status` showed only the PRD. |
 
 Not run on Kiro: cases 4, 6, 7, 9, and 10.
+
+### 2026-10-21T16:16:25-07:00 Codex run
+
+Scope: cases 3, 5, and 8 on Codex. Candidate `3ddad89` (0.0.26), installed with `skills` 1.7.4. Codex CLI
+0.163.0, `gpt-6.1-sol`, high, one session, five turns. Fixture: `local` tracker, `AGENTS.md`, and two `research/`
+notes that disagree on 24-hour versus 48-hour reminder lead time for a clinic SMS service. Session
+`01a160c0-68d7-7b73-8303-a259d404db9a`; raw logs are in `/Users/wchoi/tmp/codex-compat-20261021-114617/logs/`
+and the Codex session log.
+
+| Case | Result | Evidence |
+|---|---|---|
+| 3, research supplied | PASS | The approved PRD links to both notes, preserves the disagreement in evidence, and records the user's 24-hour decision. All source links resolve inside the fixture. |
+| 5, ask, then stop | FAIL | The interview used numbered options with the recommendation first, but a policy quote followed the lead-time question and options. The draft-review approval prompt also had text after its options. The question was not the last turn content. |
+| 8, approval | PASS | Review left the PRD unchanged at `Status: draft`. Approval changed only that line to `Status: approved (2026-10-21)`. The PRD was committed before architect started. |
+
+VERDICT: RED. Case 5 failed the question-last check.

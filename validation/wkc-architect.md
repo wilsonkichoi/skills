@@ -129,3 +129,22 @@ four non-goals), a `local` tracker, and a config with no `test_command`. Web sea
 | 11, no `test_command` | PASS | The report said the config lacks the SPEC's `npm test`; `git diff` shows the config unchanged. |
 
 Not run on Kiro: cases 4, 6, 7, 8, 10, and the first half of 11.
+
+### 2026-10-21T16:20:02-07:00 Codex run
+
+Scope: cases 3, 5, 9, and the second half of 11. Candidate `3ddad89` (0.0.26), installed with `skills` 1.7.4.
+Codex CLI 0.163.0, `gpt-6.1-sol`, high, shared with the following `wkc-plan` run in one session, ten turns total.
+Fixture: approved clinic SMS reminder PRD, `local` tracker, and config without `test_command`. Session
+`01a160c3-b9b3-7401-8f73-5c305af16f85`; raw logs are in `/Users/wchoi/tmp/codex-compat-20261021-114617/logs/`
+and the Codex session log.
+
+| Case | Result | Evidence |
+|---|---|---|
+| 3, approved PRD | PASS | Draft SPEC maps the four PRD goals to components and contracts, carries non-goals into Boundaries, and includes typed contracts and error codes. Status is draft. Only the SPEC and ADRs changed; no code, ROADMAP, ticket, or config was added. |
+| 5, real alternatives | PASS | Framework and database choices stayed open in the draft until options were presented. The user chose Django, PostgreSQL, and a database-backed worker. ADR-001 to ADR-003 record those choices. No ADR records a routine choice. |
+| 9, approval | PASS | Review left the SPEC unchanged at draft. Approval changed only its status to `Status: approved (2026-10-21)`, with the three named spikes still open. Approved SPEC and ADRs were committed before plan started. |
+| 11, missing `test_command`, second half | PASS | The SPEC names Python, Django, PostgreSQL, uv, and `uv run manage.py test`; config has no `test_command`. The final report identified the mismatch and assigned the config update to the maintainer. Config was unchanged. |
+
+Additional observation: the architect's numbered decision options were followed by a policy quote. The model made no
+tool call after the question, but the options were not the final message content. This is not a failure of the selected
+cases above.

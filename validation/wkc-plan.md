@@ -304,3 +304,25 @@ subagent tokens.
 | S10, request B | Four options; spike; move to `ready` | PASS | Four options with "Publish nothing". 006 `Spike: is notes-cli free on PyPI?`; decision 005 at `backlog`; 006 to 011 `ready` with the approved blockers; PRD, SPEC, ROADMAP unchanged. |
 | S10, request B | SPEC-gap rule | FAIL | 010 `cli: notes list` asserts that an invalid file prints `error: cannot read notes file` and exits 3, behaviour the SPEC gives only `notes add`, as S2 did; this time it was neither flagged nor in the decision ticket. S8 and S9 kept it out on the same rule. Not changed: the rule already names this case. |
 | S10, request B | Tracker-only access | Observation | The session read ticket files with `cat` before `list`, against section 1, and said so; it wrote nothing that way. |
+
+### 2026-10-21T16:20:02-07:00 Codex run, historical pre-split skill
+
+Scope: cases 3, 5, and 11 on the 0.0.26 `wkc-plan` that still drafted and published tickets. Candidate `3ddad89`,
+installed with `skills` 1.7.4. Codex CLI 0.163.0, `gpt-6.1-sol`, high, shared with architect in one session, ten turns
+total. Fixture: approved clinic SMS reminder PRD, SPEC, ADRs, `local` tracker, and no `test_command`. Session
+`01a160c3-b9b3-7401-8f73-5c305af16f85`; raw logs are in `/Users/wchoi/tmp/codex-compat-20261021-114617/logs/`
+and the Codex session log. This report belongs under history before the split. It is not evidence for current
+`wkc-plan` or `wkc-backlog` behavior.
+
+| Case | Result | Evidence |
+|---|---|---|
+| 3, draft and publish | FAIL | The ROADMAP and four tickets were drafted. Before writing, the transcript claimed `wkc-tracker list` and milestone list reads, but the actual command used `rg --files`; publication used generated Ruby to read and write ticket files directly. Reading the tracker skill first does not satisfy the required tracker-verb access. The final files were independently checked, but correct state does not satisfy the invocation requirement. |
+| 5, readiness | PASS | PyYAML independently parsed all four ticket frontmatters. Every non-decision ticket, including tickets with blockers, was moved to `ready`. This differs from Kiro, where only the unblocked ticket moved and blocked tickets stayed at `backlog`. |
+| 11, dependency table | PASS | The approved table matches frontmatter: 003 is blocked by 001, and 004 by 003. Blocker IDs are lower than dependent IDs. All four tickets use milestone `M1`; 001 and 002 are in wave 1, 003 in wave 2, and 004 in wave 3. The graph has no self-edge or cycle. |
+
+The approved ROADMAP and four ticket files remain in the scratch fixture. Independent parsing used PyYAML 6.0.2. The
+session also placed a policy quote after an architect decision question; see the dated Codex report in
+`validation/wkc-architect.md`.
+
+Chain total: PASS 8, FAIL 2, SKIP 0 across research 3/5/8, architect 3/5/9/11 second half, and plan 3/5/11. The
+failures were research case 5 and plan case 3.
