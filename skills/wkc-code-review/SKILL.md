@@ -23,7 +23,7 @@ disable-model-invocation: false
   run in parallel worktrees, and an explicit target cannot review the wrong pull request. With no
   argument, review the one open pull request whose head is the current branch, which in a worktree
   is that worktree's own. With no open pull request or several, ask for a pull request or ticket id
-  and post nothing.
+  and post nothing. With no GitHub remote, a ticket id, and its branch when the name lacks the id.
 - **Output:** one verdict comment on the pull request, or on the ticket when there is no pull
   request. A `fixed` round also pushes one commit to the pull request's branch. A round that is not
   independent and finds nothing to change posts nothing. The ticket's status and holder and the
@@ -41,36 +41,37 @@ Read the config, the `context_file`, and the rule files in `rules_dir`. `max_fix
 integer, 0 or more, and `3` when the field is absent. Any other value stops the review: name the
 field and its allowed values, and post nothing.
 
-**The pull request.** A pull request URL or a number the caller identifies as a pull request is
-read with `gh pr view`. For a bare number on the GitHub tracker, try `gh pr view`; when GitHub says
-that number is not a pull request, resolve it as a ticket instead. Other failures stop the read,
-never trigger that fallback. A ticket id on another backend goes straight to `wkc-tracker show
-<id>`. For a ticket target, the pull request is on the `PR:` line of the ticket's latest
-`wkc-implement` handoff comment. With no argument, run `gh pr list --state open --head <current
-branch>`. Then read it with `gh pr view <n> --json
-number,url,state,headRefName,headRefOid,baseRefName,body,comments`. A pull request that is not
-`OPEN` is reported and nothing is posted.
+**The pull request.** A pull request URL or a number the caller identifies as a pull request is read
+with `gh pr view`. For a bare number on the GitHub tracker, try `gh pr view`; when GitHub says that
+number is not a pull request, resolve it as a ticket instead. Other failures stop the read, never
+trigger that fallback. A ticket id on another backend goes straight to `wkc-tracker show <id>`. For
+a ticket target, the pull request is on the `PR:` line of the ticket's latest `wkc-implement`
+handoff comment. With no argument, run `gh pr list --state open --head <current branch>`. Then read
+it with `gh pr view <n> --json number,url,state,headRefName,headRefOid,baseRefName,body,comments`. A
+pull request that is not `OPEN` is reported and nothing is posted.
 
-**The ticket.** The review judges the change against the work that asked for it, so find the
-ticket and read it with `wkc-tracker show`. Use the first source that names exactly one ticket:
+**The ticket.** The review judges the change against the work that asked for it; read the ticket
+with `wkc-tracker show`. A ticket target is the ticket. For a pull request, it is the ticket whose
+latest `wkc-implement` handoff names this pull request: that record ties them, and a reference
+never does. Check the ticket the body's first line names first (`Refs #N` on GitHub, `Related to
+<ID>` on Linear, or the ticket path on the local backend), then the rest at `in-review` (`wkc-tracker
+list in-review`). With no such handoff, a ticket the pull request names stands in: on its first
+line, as an issue GitHub links to it (`gh pr view <n> --json closingIssuesReferences`), or by a
+**Conventions** rule, such as an id in the branch name. It must be at `in-review`, with no handoff
+naming another pull request: a pull request can cite a ticket it does not build, and the round
+would fix toward that ticket's criteria.
 
-1. The ticket target the caller gave.
-2. The pull request body's first line, the convention `wkc-implement` writes: `Refs #N` on GitHub,
-   `Related to <ID>` on Linear, or the ticket path on the local backend.
-3. Another association the project records: on the GitHub tracker, an issue GitHub links to the
-   pull request (`gh pr view <n> --json closingIssuesReferences`); or a convention the
-   **Conventions** body names, such as a ticket id in the branch name.
-4. The tracker: the `in-review` ticket whose latest `wkc-implement` handoff names this pull request
-   (`wkc-tracker list in-review`, then `show`).
+Ask for the ticket id, and post nothing, when the handoffs and references name more than one ticket
+between them, or none qualifies. Only a ticket `wkc-tracker show` reads from the configured backend
+counts; a reference to another tracker, such as a Jira key in a GitHub project, is not one.
 
-A ticket counts only when `wkc-tracker show` reads it from the configured backend. A reference to
-another tracker, such as a Jira key in a GitHub project, is not a ticket here. When a source names
-several tickets, or none names one, ask for the ticket id and post nothing.
-
-**No pull request.** A ticket with no pull request, as in a project with no GitHub remote, is
-reviewed on its branch, which `wkc-implement` names `<type>/<id>-<slug>`. With no
-such branch or several, ask and post nothing. Review that branch's head against the default
-branch, make any commit on that branch, and post the verdict on the ticket with `wkc-tracker comment`.
+**No pull request.** With a GitHub remote, a ticket with no open pull request is still being
+built: report it and post nothing. With none, `wkc-implement` stops at the ticket's branch and
+leaves the ticket `in-progress`, so review that branch: the one the caller names, else the one the
+**Conventions** branch rule gives, else `<type>/<id>-<slug>`. With no such branch or several, ask
+for it and post nothing. Review its head against the default branch, land any commit on it
+(section 4), and post the verdict with `wkc-tracker comment`. On the local backend, run that from
+the checkout with the branch checked out, where the ticket's other writes are.
 
 ## 2. Count the round
 
@@ -112,6 +113,8 @@ Check the implementation and the tests, in this order:
   assertion is a finding. A correct test failing on a code defect is evidence for that defect, not a
   separate test defect. A test that contradicts the SPEC is wrong, and correcting it is a fix.
 - **Scope**: every changed line traces to the ticket.
+- **Quality** of the changed code and tests: duplication, needless complexity, unclear names, and
+  weak error handling. These are suggestions unless they also break something.
 
 **A blocking finding** is a defect, an unmet acceptance criterion, a SPEC violation, a regression,
 or a security defect. It names the criterion, the SPEC clause, or the earlier behaviour it breaks,
@@ -167,9 +170,9 @@ there with no fix and no verdict. Other items wait for section 6.
 |---|---|
 | A blocking finding listed `fixed` earlier is back | `stopped`, with no change made |
 | Blocking findings, and no fixing round is left | `stopped`, with no change made |
-| Blocking findings, and a fixing round is left | Fix them, with any worthwhile improvements: `fixed` |
-| No blocking finding, worthwhile improvements, and a fixing round is left | Apply them: `fixed` |
-| No blocking finding, and nothing worth changing or no fixing round left | `approve`, with no change made |
+| Blocking findings, and a fixing round is left | Fix them, with worthwhile improvements unless this is the last fixing round: `fixed` |
+| No blocking finding, worthwhile improvements, and two or more fixing rounds left | Apply them: `fixed` |
+| No blocking finding, and no change the row above allows | `approve`, with no change made |
 
 A round that is not independent never approves: where the table says `approve`, post nothing and
 report that a fresh session must review `H`.
@@ -179,12 +182,13 @@ coherent change, in the project's style. An improvement is worthwhile when its b
 it stays in the ticket's scope. Apply it by default: you can make it as cheaply as describe it, and
 an unapplied suggestion usually goes unmade. Keeping behaviour the same is what an improvement
 does, never a reason to skip one. Purely subjective changes, reversals of earlier style choices
-without a reason, and refactors that add complexity for little gain stay suggestions. On the last
-fixing round, favour correctness: only a review-only round follows. Never weaken a valid test, a
-check, or a criterion, and never change a valid test to make code pass. Run the checks the change
-touches and `test_command`. A blocking finding you cannot fix stays `open`; when you can fix none of
-them, make no change: `stopped`. Make one commit for the round, in the project's commit convention,
-or with `fix:` when it has none:
+without a reason, and refactors that add complexity for little gain stay suggestions. The last
+fixing round fixes blocking findings only, and lists improvements as suggestions: only a
+review-only round follows it, so a regression an improvement adds there can only end in `stopped`.
+Never weaken a valid test, a check, or a criterion, and never change a valid test to make code
+pass. Run the checks the change touches and `test_command`. A blocking finding you cannot fix stays
+`open`; when you can fix none of them, make no change: `stopped`. Make one commit for the round, in
+the project's commit convention, or with `fix:` when it has none:
 
 ```
 fix: <what the fixes change, in a few words>
@@ -197,15 +201,18 @@ List every fix and improvement in its body. Push it to the pull request's branch
 origin HEAD:refs/heads/<headRefName>`, never with force. A refused push means the head moved: post
 nothing and report it. Confirm the new head with `gh pr view <n> --json headRefOid`. With no pull
 request, push the same way when the branch is on the remote. With no remote, fast-forward the local
-branch with `git push . HEAD:refs/heads/<branch>`; when git refuses, because the branch moved or is
-checked out elsewhere, post nothing and report the commit's sha.
+branch: `git push . HEAD:refs/heads/<branch>`, or, when a checkout has the branch checked out,
+`git -C <that checkout> merge --ff-only <sha>`, which keeps its uncommitted ticket files. When git
+refuses, because the branch moved or the merge would overwrite uncommitted changes, post nothing
+and report the commit's sha.
 
 ## 5. Post the verdict
 
-Before posting, read the head again. When it is no longer `H`, or the commit of a `fixed` round,
-post nothing: the round applies only to `H`, and a new round must review the new head. Otherwise
-post one comment with `gh pr comment <n> --body-file <file>`, or `wkc-tracker comment` on the
-ticket when there is no pull request:
+Before posting, read the head again. A round whose commit landed always posts its `fixed` verdict,
+even when the head has moved past that commit: the commit is on the branch and used a fixing round.
+Any other round posts nothing when the head is no longer `H`: the round applies only to `H`, and a
+new round must review the new head. Otherwise post one comment with `gh pr comment <n> --body-file
+<file>`, or `wkc-tracker comment` on the ticket when there is no pull request:
 
 ```
 wkc-code-review round <n>: approve | fixed | stopped
@@ -222,8 +229,8 @@ Independent: yes | no, <why>
 `Reviewed` is `H`. Keep the `Fixed in` line only in a `fixed` round, without the HTML comment. `k`
 counts the `fixed` rounds, this one included when it is `fixed`. List each blocking finding fixed
 and each improvement applied in this round, each blocking finding left open, and each suggestion
-not applied, unconfirmed findings included; drop a line kind with none. Read the comments back and confirm the
-verdict landed.
+not applied, unconfirmed findings included; drop a line kind with none. A test written for a fix
+belongs to that fix's line. Read the comments back and confirm the verdict landed.
 
 ## 6. Hand off and report
 
@@ -235,7 +242,8 @@ results, and the next step:
 
 - `fixed`: another round, in a fresh session, on the new head. This applies to fixes and
   improvements alike; this session never reviews its own commit.
-- `approve`: a person merges that sha, then `wkc-implement finish <id>` finishes the ticket. A merge of any
-  other head needs another round.
+- `approve`: a person merges that sha, then `wkc-implement finish <id>` finishes the ticket. A
+  merge of any other head needs another round.
 - `stopped`: the open findings, why the review stopped, and the fixing rounds used. A person decides.
-- No verdict, because the round was not independent: a fresh session reviews `H`.
+- No verdict: a fresh session reviews the head. Say why: the round was not independent, the head
+  moved, or git refused the commit, whose sha you give.

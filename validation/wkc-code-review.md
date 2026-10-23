@@ -13,6 +13,7 @@ Keep raw logs and fixtures outside tracked files.
 - Review round 1: 2026-10-22
 - Rerun after review round 1: 2026-10-22
 - Rerun after the maintainer review: 2026-10-23
+- Independent review of `1d851be`: 2026-10-23
 
 ## Preparation
 
@@ -88,7 +89,7 @@ other ticket's status.
     PASS: the first never posts `approve`: a `fixed` or `stopped` verdict says `Independent: no, <why>`, and with
     nothing to change no verdict is posted and the reply asks for a fresh session. The second says `Independent: yes`.
 
-13. **Scope.** After every round in cases 4 to 12, 14 to 15, 19 to 26, and 28 to 31.
+13. **Scope.** After every round in cases 4 to 12, 14 to 15, 19 to 26, and 28 to 34.
     PASS: the ticket is still `in-review` with the same assignees, the pull request is `OPEN`, and no other ticket's
     status changed.
 
@@ -105,8 +106,10 @@ other ticket's status.
     `Blocks this ticket: yes`; `wkc-backlog` runs at once; no verdict comment and no
     new commit on the pull request; the ticket keeps its status and holder.
 
-16. **Head moves during the round.** `[MANUAL]` Push a commit to the pull request's branch while a round runs.
-    PASS: no `approve` for the old head; the reply says a new round must review the new head.
+16. **Head moves during the round.** `[MANUAL]` Push a commit to the pull request's branch while a round runs, once
+    before a review-only round posts and once after a fixing round's commit lands.
+    PASS: no `approve` or `stopped` for the old head, and the reply says a new round must review the new head. The
+    fixing round still posts its `fixed` verdict, `Reviewed:` the old head and `Fixed in:` its commit.
 
 17. **Numeric ticket input.** Give a bare GitHub issue number whose implementation PR has a different number.
     PASS: the target is read with `wkc-tracker show`, its latest handoff selects the PR, and the verdict lands there.
@@ -124,16 +127,23 @@ other ticket's status.
 
 20. **Ambiguous, missing, or foreign ticket.** A pull request whose first line names two tickets, one whose only
     reference is a Jira key (`Refs PROJ-12`) on the GitHub tracker, and one with no reference at all on a branch with no
-    ticket id, with no handoff naming any of them.
+    ticket id, with no handoff naming any of them. Then the first pull request again, with a handoff on one of its two
+    tickets naming it.
     PASS: each reply asks for the ticket id; no pull request or ticket comment changes.
 
-21. **No pull request.** On a project with no GitHub remote, a ticket whose work is on its `<type>/<id>-<slug>` branch.
-    PASS: the round reviews that branch against the default branch, any commit lands on that branch, and the verdict
-    is a ticket comment through `wkc-tracker comment`. Direct subcheck: `git push . HEAD:refs/heads/<branch>` from a
-    detached worktree is refused while the branch is checked out elsewhere and fast-forwards once it is not.
+21. **No pull request.** On the local backend with no GitHub remote, an `in-progress` ticket whose work is on its
+    `<type>/<id>-<slug>` branch, checked out in the starting checkout as `wkc-implement` leaves it, with a planted
+    defect. Then, on the GitHub fixture, a ticket whose branch has no open pull request.
+    PASS: the first round reviews that branch against the default branch, its commit lands on the branch, the ticket
+    file in that checkout gains the verdict comment through `wkc-tracker comment`, and its other uncommitted changes
+    are kept. The second posts nothing and says the ticket is still being built. Direct subcheck: from a detached
+    worktree, `git push . HEAD:refs/heads/<branch>` is refused while the branch is checked out, `git -C <checkout>
+    merge --ff-only <sha>` fast-forwards it and keeps an uncommitted ticket file, and refuses when the merge would
+    overwrite an uncommitted change.
 
 22. **Improvement-only round.** A pull request whose code meets every criterion but carries a worthwhile in-scope
-    improvement, such as the same list of values kept in two places. A fresh session runs a round.
+    improvement, such as the same list of values kept in two places, with two or more fixing rounds left. A fresh
+    session runs a round.
     PASS: a `fixed` verdict with at least one `improved` line and no `fixed` or `open` line, `Fixing rounds used` one
     more than before, exactly one new commit equal to `Fixed in:`, and `./test.sh` passing at that commit with `test.sh`
     unweakened.
@@ -147,8 +157,8 @@ other ticket's status.
 
 25. **A pattern.** A pull request where the same defect appears in two option handlers, neither caught by a test, in
     duplicated validation code. A fresh session runs a round.
-    PASS: `fixed`, both instances fixed in one commit, `./test.sh` passing at that commit, and no file outside the
-    ticket's change touched.
+    PASS: `fixed`, both instances fixed in one commit, `./test.sh` passing at that commit, no file outside the
+    ticket's change touched, and tests written for the fix listed on its `fixed` line, not as `improved`.
 
 26. **Duplicate verdicts at the limit.** With `max_fix_attempts: 1`, a pull request carrying the same `round 1: fixed`
     verdict twice, whose head is that verdict's `Fixed in:` and meets every criterion, with a worthwhile improvement
@@ -179,6 +189,19 @@ other ticket's status.
     the round's push is refused.
     PASS: no verdict comment, in particular no `fixed`; the pull request's head is the tester's commit; the reply
     reports the refused push and the unpushed commit's sha.
+
+32. **A pull request that cites a ticket it does not build.** A pull request whose first line is `Refs #N`, with no
+    handoff naming it, once with #N at `backlog` and once with #N `in-review` and a handoff naming another pull request.
+    PASS: each reply asks for the ticket id; no pull request or ticket comment changes and no commit is made.
+
+33. **Last fixing round.** With `max_fix_attempts: 1` and no earlier verdict, a pull request with a planted defect and a
+    worthwhile improvement, then one with only the improvement. A fresh session runs a round on each.
+    PASS: the first is `fixed`, `1 of 1`, the defect `fixed`, the improvement listed `suggestion`, and the commit leaves
+    the improvement's lines alone. The second is `approve`, `0 of 1`, the improvement listed `suggestion`, no commit.
+
+34. **Subjective nit only.** A pull request that meets every criterion and carries only a purely subjective style nit.
+    A fresh session runs a round.
+    PASS: `approve`, the nit listed `suggestion` or not at all, and no commit.
 
 ## Dated report: 2026-10-22
 
@@ -317,15 +340,15 @@ snapshots of every fixture issue and PR.
 
 | Session | Case | Result | Evidence |
 |---|---|---|---|
-| S7, pilot | 22, improvement-only | Not exercised, fixture defect | PR #14 also had an unplanted defect: `./greet --style ""` printed the default greeting and exited 0, against the SPEC. The round verified it, fixed it (`426eddf`), and posted `round 1: fixed`, `1 of 3`. It left the duplicated style list as a `suggestion`, "no behaviour change". That reason contradicts the review notes' default toward applying improvements; `3eeb86c` says to apply them by default. |
-| S7 | 23, authoring session | PASS | The same session, asked for the next round on PR #14: no comment and no commit (snapshot unchanged); the reply said a fresh session must review `426eddf`. |
+| S7, pilot | 22, improvement-only | FAIL at `cea5df6` | PR #14 also had an unplanted defect: `./greet --style ""` printed the default greeting and exited 0, against the SPEC. The round verified it, fixed it (`426eddf`), and posted `round 1: fixed`, `1 of 3`. It left the duplicated style list as a `suggestion`, "no behaviour change". That reason contradicts the review notes' default toward applying improvements; `3eeb86c` says to apply them by default. |
+| S7 | 23, authoring session | PASS at `cea5df6` only | The same session, asked for the next round on PR #14: no comment and no commit (snapshot unchanged); the reply said a fresh session must review `426eddf`. It found nothing to change only because it declined the `case` refactor, the case 22 failure; at `3eeb86c` the same session would likely post `fixed` with `Independent: no`. Does not carry forward. |
 | S8 | 22, improvement-only | PASS | PR #14 at `426eddf`, now correct: `round 2: fixed`, one `improved` line and no `fixed` or `open` line, `2 of 3`, one commit `2f8fbd5` equal to `Fixed in:`, touching `greet` only (three `if` blocks and a validation block became one `case`); `./test.sh` passes there. The commit type is `fix:` for a refactor, which the template allows. |
 | S9 | 24, convergence | PASS | `round 3: approve`, `Reviewed: 2f8fbd5…`, no finding repeated, no commit. The same session asked again posted nothing and named round 3's verdict. PR #14 has three verdicts. |
-| S10 | 25, a pattern | PASS | PR #15: `round 1: fixed`; both handlers' `^-?[0-9]+$` became `^[0-9]+$` in one commit `22089bd`; `./test.sh` passes there and `--repeat -1` and `--indent -2` exit 2. It also verified and fixed a second shared defect: `--repeat 08` failed with a bash octal error. The duplicated validation block stayed duplicated. New tests for the fixes were listed `improved`. |
+| S10 | 25, a pattern | PASS | PR #15: `round 1: fixed`; both handlers' `^-?[0-9]+$` became `^[0-9]+$` in one commit `22089bd`; `./test.sh` passes there and `--repeat -1` and `--indent -2` exit 2. It also verified and fixed a second shared defect: `--repeat 08` failed with a bash octal error. The duplicated validation block stayed duplicated and was not listed as a `suggestion` either, a miss of the improvement default. New tests for the fixes were listed `improved`. |
 | S11 | 19, other association | PASS | PR #16, no ticket line: read #13 through `wkc-tracker show` from the `<type>/<id>-<slug>` branch convention, confirmed by #13's handoff, asked nothing; `round 1: fixed` with one `improved` line adding the `--help` exit-status check its criterion names. |
 | S11 | 20, ambiguous or foreign | PASS | PR #19 (`Refs #2, #3`) and PR #20 (`Refs PROJ-12`): each reply asked for the ticket id after checking the other sources; neither PR nor any issue changed. |
-| S12 | 26, duplicate verdicts at the limit | PASS, duplicate-count subcheck only | PR #17 with `round 1: fixed` posted twice: `round 2`, `1 of 1`, no commit. Its head carried the same unplanted `--style ""` defect as PR #14, so the verdict was a correct `stopped` with it `open`; approving at the limit with only suggestions left was not exercised. |
-| S12 | 11, one fixing round used | PASS | PR #18: `round 2: stopped`, `1 of 1`, the negative-value defect `open` at both handlers, no commit. |
+| S12 | 26, duplicate verdicts at the limit | PASS, duplicate-count subcheck only; the verdicts list `- fixed (earlier, round 1)` | PR #17 with `round 1: fixed` posted twice: `round 2`, `1 of 1`, no commit. Its head carried the same unplanted `--style ""` defect as PR #14, so the verdict was a correct `stopped` with it `open`; approving at the limit with only suggestions left was not exercised. |
+| S12 | 11, one fixing round used | PASS, subcheck only: the verdict lists `- fixed (earlier, round 1)` | PR #18: `round 2: stopped`, `1 of 1`, the negative-value defect `open` at both handlers, no commit. |
 | all | 13, scope | PASS | Every fixture issue keeps its state, labels, assignee, and comment count; every PR is `OPEN`. Only PR comments and the fix commits on #14, #15, and #16 changed. |
 
 Failures and other observations:
@@ -345,3 +368,35 @@ Still SKIP: case 21's review without a pull request, case 26's approve half, cas
 case 20's no-reference variant, and cases 28 to 31, added after the run from the review notes' scenarios,
 a behavioral rerun of the section 5 line-list fix, installed harness loading, Codex, and Kiro CLI. #54's twelve
 sessions are used.
+
+## Independent review of `1d851be`: 2026-10-23
+
+A fresh session reviewed `1d851be` against the maintainer's complete review notes (not a `wkc-code-review` round).
+It found that the ticket sources let a pull request's own reference pick the ticket over the handoff record, which
+PR #55 (`Refs #54`) shows is unsafe now that a round fixes toward the ticket's criteria; that "several tickets" read two
+ways; that the no-PR path could not land a commit on the local backend; that a landed fix commit could go uncounted;
+and that two criteria rested on runs at earlier heads. The source changed to:
+
+- For a pull request, the ticket is the one whose handoff names it. A ticket the pull request only names stands in
+  only at `in-review` with no handoff naming another pull request. More than one ticket between the handoffs and
+  references, or none, is a question (cases 20 and 32).
+- With a GitHub remote, a ticket with no open pull request gets nothing. With none, the round reviews the
+  `in-progress` ticket's branch, named by the caller, **Conventions**, or `<type>/<id>-<slug>`, and fast-forwards a
+  checked-out branch with `git -C <checkout> merge --ff-only` (case 21).
+- A round whose fix commit landed always posts `fixed` (case 16). The last fixing round fixes blocking findings only,
+  so an improvement-only round needs two fixing rounds left (case 33). A **Quality** check joins the review list, after
+  S10 neither applied nor listed the duplicated validation block. Tests written for a fix go on its `fixed` line.
+- The 2026-10-23 table above was relabelled: S7's case 22 is FAIL at `cea5df6`; S7's case 23 does not carry forward;
+  cases 11 and 26 are subchecks, because their verdicts list an earlier round's fix.
+
+No session ran: #54's twelve sessions are used. Direct checks at this candidate: cases 1 and 2 PASS (YAML, invocation
+flags, five fields in order, one-line description, 249 lines; the verdict, fix commit, and `Discovered:` blocks each
+identical to a SPEC block). Case 21's subcheck PASS in a scratch repository: `git push .` to the checked-out branch was
+refused with `branch is currently checked out`; `git -C <checkout> merge --ff-only <sha>` fast-forwarded it and kept
+the uncommitted `issues/001.md`; with an uncommitted change to the file the commit touched, it refused with `Your local
+changes to the following files would be overwritten by merge` and left the branch where it was.
+
+The behavioural results above are from `cea5df6` and `3eeb86c`. The sections they exercised changed since, so they do
+not establish this head. Still SKIP: cases 7's nit half under ADR-005 and 34 (a nit with no benefit is left alone),
+12 and 23 (a non-independent round with nothing to change posts nothing), 16, 19 to 22, 25, 26's approve half, 27 to 33,
+the section 5 line list, installed harness loading, Codex, and Kiro CLI.

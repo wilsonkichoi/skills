@@ -38,7 +38,9 @@ Option 2.
 - A round may apply worthwhile in-scope improvements, alongside its blocking fixes or on their own.
   An improvement names its concrete benefit. Purely subjective changes, reversals of earlier style
   choices without a reason, and refactoring with no identifiable benefit stay suggestions. Blocking
-  findings come first, and the last fixing round favours correctness.
+  findings come first. The last fixing round fixes blocking findings only, because only a
+  review-only round follows it, and a regression an improvement added there could only end in
+  `stopped`. So an improvement-only round needs two fixing rounds left.
 - Every round that commits code is `fixed` and uses one of `max_fix_attempts`, whatever the change
   was for. A round that changes nothing uses none. The field keeps its values and default.
 - A blocking finding is verified before it is fixed: the round confirms the defect from the code,
@@ -61,3 +63,20 @@ applies only to the head it reviewed.
 - SPEC Review verdict, the `max_fix_attempts` meaning, and #54's criteria that kept the nit out of
   the fix commit and allowed a non-independent verdict change in the same PR.
 - `wkc-yolo` already starts each round in a fresh context, so this needs no change there.
+- A round now fixes toward its ticket's unmet criteria, so the wrong ticket does harm. For a PR, the
+  SPEC takes the ticket whose handoff names it, and a ticket the PR only cites counts only when it is
+  `in-review` with no handoff naming another PR.
+
+## Left out
+
+The review notes behind this ADR proposed more. These were not done here:
+
+- Wider PR discovery for `wkc-implement` finish, such as GitHub-linked issues or branch names:
+  declined by the maintainer on 2026-10-23. Finish keeps using only its own handoff record, as #60
+  decided, because a wrong PR there moves a ticket to `done`, which the tracker cannot undo.
+- Comparing Claude Code's local `/code-review` with this skill, a skill evaluation framework, and
+  risk-based review policies: not started. The first needs a spike ticket; the other two need a
+  person's decision first, because they add product scope or a new merge-approval contract.
+- Linear issue associations as a ticket source: `wkc-tracker`'s Linear backend has no verb that
+  reads a PR's linked issues, so on Linear the ticket comes from the handoff or the `Related to
+  <ID>` line.

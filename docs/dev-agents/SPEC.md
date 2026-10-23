@@ -320,13 +320,20 @@ cannot review the wrong PR. With no argument, `wkc-code-review` reviews the one 
 is the current branch, which in a worktree is that worktree's own. With no open PR or several, it
 asks for a PR or ticket id and posts nothing.
 
-The review judges the change against its ticket. `wkc-code-review` takes the first source that names
-exactly one ticket: the caller's ticket target; the PR body's first line (PR body); an association
-the project records, such as an issue GitHub links to the PR or a convention in **Conventions**; or
-the `in-review` ticket whose latest handoff names the PR. A ticket counts only when `wkc-tracker
-show` reads it from the configured backend. Several tickets, or none, is a question, never a guess.
-With no PR, as with no GitHub remote, the round reviews the ticket's `<type>/<id>-<slug>` branch
-against the default branch, commits on that branch, and posts on the ticket.
+The review judges the change against its ticket. A ticket target is the ticket. For a PR target,
+the ticket is the one whose latest `wkc-implement` handoff names the PR, as for finish (The ticket's
+PR). With no such handoff, a ticket the PR names stands in: by its body's first line (PR body), an
+issue GitHub links to it, or a **Conventions** rule. It must be `in-review` with no handoff naming
+another PR, because a PR can cite a ticket it does not build, as PR #55 cited #54, and a round fixes
+toward its ticket's criteria. A ticket counts only when `wkc-tracker show` reads it from the
+configured backend. More than one ticket across the handoffs and references, or none, is a
+question, never a guess.
+
+With a GitHub remote, a ticket with no open PR is still being built, and the round posts nothing.
+With none, `wkc-implement` leaves the ticket `in-progress` on its branch, and the round reviews that
+branch: the one the caller names, the **Conventions** branch rule, or `<type>/<id>-<slug>`. It
+lands any commit by fast-forwarding the branch, posts on the ticket, and on the local backend runs
+`wkc-tracker` from the checkout that has the branch, where the ticket's other writes are.
 
 `wkc-code-review` posts one comment per round on the PR, or on the ticket when there is no PR:
 
@@ -364,9 +371,12 @@ wkc-code-review round <n> on <PR URL>, reviewed <full head sha>.
   after being fixed. Open findings are listed, and a person decides.
 
 Every round that commits code is `fixed` and counts against `max_fix_attempts`; a round that changes
-nothing does not. After the last allowed fix, one more fresh round always runs; it reviews only, so
-it ends in `approve` or `stopped`. With `max_fix_attempts: 0`, the first round is that review-only
-round.
+nothing does not. A round whose commit landed posts its `fixed` verdict even when the head moved
+after it; any other round posts nothing for a head that moved. After the last allowed fix, one more
+fresh round always runs; it reviews only, so it ends in `approve` or `stopped`. The last fixing
+round therefore fixes blocking findings only and lists improvements as suggestions, and an
+improvement-only round needs two fixing rounds left. With `max_fix_attempts: 0`, the first round is
+that review-only round.
 
 A round is one completed review of one head, recorded by its verdict; commits are not rounds. The
 round number is the count of earlier rounds on that PR, plus one, where two verdicts with the same
@@ -375,8 +385,8 @@ new round unless the caller asks for one.
 
 A blocking finding is a defect, an unmet acceptance criterion, a SPEC violation, a regression, or a
 security defect, verified from evidence before it is fixed. A suggestion is an improvement with a
-concrete benefit; a round applies the worthwhile in-scope ones and never makes a change with no
-benefit it can name. A later round does not raise a resolved finding again and checks the changes
+concrete benefit; a round applies the worthwhile in-scope ones, except on the last fixing round,
+and never makes a change with no benefit it can name. A later round does not raise a resolved finding again and checks the changes
 since the last round for regressions.
 
 A round is independent when its context wrote none of the PR's code; a fresh session on the same
@@ -690,11 +700,14 @@ None.
   improvements, and every round that commits code is `fixed` and counts against `max_fix_attempts`;
   a blocking finding is verified before it is fixed and includes SPEC violations and security
   defects; a later round does not repeat resolved findings; a round that is not independent never
-  approves. The ticket comes from the first source that names exactly one; rounds are counted by
-  verdict, with a duplicate counted once; the verdict gains an `improved` line kind. Replaced
-  "Suggestions are never applied", "the count of earlier verdict comments", and the PR body's first
-  line as the only ticket source (Review verdict, Config fields, Decisions). Review: M3 (#54); M4,
-  whose rounds already start fresh.
+  approves. For a PR, the ticket is the one whose handoff names it, and a ticket the PR only names
+  stands in when it is `in-review` with no handoff naming another PR; rounds are counted by verdict,
+  with a duplicate counted once; the verdict gains an `improved` line kind; the last fixing round
+  fixes blocking findings only; a landed fix commit always gets its `fixed` verdict; with no GitHub
+  remote, the round reviews the ticket's branch. Replaced "Suggestions are never applied", "the
+  count of earlier verdict comments", and the PR body's first line as the only ticket source
+  (Review verdict, Config fields, Decisions). Review: M3 (#54); M4, whose rounds already start
+  fresh.
 - 2026-10-22: `wkc-implement` finishes only on an explicit `wkc-implement finish <id>`, which
   `wkc-yolo` calls after its merges, and only from the PR named by the ticket's own handoff or
   finish comment; a PR that only cites the ticket never counts, and with no such record finish asks

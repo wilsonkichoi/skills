@@ -63,8 +63,8 @@ Ranked. Ranking is importance, not delivery order; the ROADMAP sets the order.
    branch, build, stay current with `main`, resolve conflicts, run the acceptance checks, and hand
    off for review with the tracker updated. `wkc-code-review` judges that pull request against its
    ticket in a fresh context, fixes the blocking findings it raised, and applies worthwhile in-scope
-   improvements, with each change reviewed again by a fresh context. After the merge, a rerun of
-   `wkc-implement` runs the ticket's post-merge steps and moves it to `done`. Each ticket carries its
+   improvements, with each change reviewed again by a fresh context. After the merge, `wkc-implement
+   finish <id>` runs the ticket's post-merge steps and moves it to `done`. Each ticket carries its
    own definition of done, because done differs by ticket: review and tests only, plus integration
    tests, or plus release, deployment, and testing the release (decided 2026-10-20).
 2. **Plans follow changes between planning runs.** `wkc-backlog` turns a ROADMAP milestone into
@@ -174,8 +174,10 @@ open there: a first real check of the Linear integration.
 ## Changes
 
 - 2026-10-23: Outcome 1: a review round also applies worthwhile in-scope improvements, and each
-  change is reviewed by a fresh context (maintainer, ADR-005). Replaced "fixes the blocking findings
-  it raised" as the whole of the review's changes. Review: SPEC Review verdict; ROADMAP M3.
+  change is reviewed by a fresh context (maintainer, ADR-005). Post-merge steps run from
+  `wkc-implement finish <id>`, as the SPEC says since #60. Replaced "fixes the blocking findings it
+  raised" as the whole of the review's changes, and "a rerun of `wkc-implement`" in outcome 1.
+  Review: SPEC Review verdict; ROADMAP M3.
 - 2026-10-21: Goal 2 moves to a new `wkc-backlog`, which owns tickets for a milestone and for one
   change; `wkc-plan` keeps the ROADMAP (maintainer, ADR-004). Outcome 1, open question 1, the
   `wkc-backlog` non-goal, and the authoring constraint follow. Replaced "`wkc-plan` also takes a
