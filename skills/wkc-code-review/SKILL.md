@@ -235,7 +235,7 @@ results, and the next step:
 
 - `fixed`: another round, in a fresh session, on the new head. This applies to fixes and
   improvements alike; this session never reviews its own commit.
-- `approve`: a person merges that sha, then `wkc-implement <id>` finishes the ticket. A merge of any
+- `approve`: a person merges that sha, then `wkc-implement finish <id>` finishes the ticket. A merge of any
   other head needs another round.
 - `stopped`: the open findings, why the review stopped, and the fixing rounds used. A person decides.
 - No verdict, because the round was not independent: a fresh session reviews `H`.
