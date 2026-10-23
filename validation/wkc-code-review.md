@@ -12,6 +12,7 @@ Keep raw logs and fixtures outside tracked files.
 - Dated report: 2026-10-22
 - Review round 1: 2026-10-22
 - Rerun after review round 1: 2026-10-22
+- Rerun after the maintainer review: 2026-10-23
 
 ## Preparation
 
@@ -275,3 +276,50 @@ instead of copying them word for word, as `wkc-backlog` asks. That is `wkc-backl
 
 Still SKIP: `validation/wkc-setup.md` cases 2 and 3, case 16, and installed harness loading. #54's six sessions
 are used.
+
+## Rerun after the maintainer review: 2026-10-23
+
+The maintainer's review of PR #58 changed the contract (ADR-005): rounds apply worthwhile improvements, every
+code-changing round is `fixed`, a round that is not independent never approves, the ticket comes from several
+sources, and duplicate verdicts count once. The maintainer authorized six more sessions for #54 on 2026-10-23.
+Selected: cases 1 and 2 direct, and cases 11, 12 (its not-independent half, as case 23), 13, 19, 20, and 22 to 26 in
+Claude Code. Candidates `cea5df6` (S7) and `3eeb86c` (S8 to S12), each exported with `git archive` and installed into
+the GitHub fixture with skills 1.7.4; `diff -r` matched `wkc-code-review`, `wkc-tracker`, and `wkc-backlog` each time.
+
+The tester added `--style`, `--repeat`, `--indent`, and `--help` to the fixture SPEC on `main` (`616577e`), opened
+issues #11 to #13 at `in-review` with handoffs naming PRs #14 to #16, and opened PRs #14 to #20 with the planted code,
+the duplicate `round 1: fixed` verdict on #17, and one staged verdict on #18. `max_fix_attempts: 1` was an uncommitted
+config edit for S12 only. Six Claude Code `general-purpose` subagents on Sonnet (`sonnet`, effort inherited
+`medium`), one at a time, each reading the installed `SKILL.md`; later turns in a session were new invocations told to
+re-read state. About 62k to 73k subagent tokens per turn, 12 turns. Scored from `gh` and `git` with before and after
+snapshots of every fixture issue and PR.
+
+| Session | Case | Result | Evidence |
+|---|---|---|---|
+| S7, pilot | 22, improvement-only | Not exercised, fixture defect | PR #14 also had an unplanted defect: `./greet --style ""` printed the default greeting and exited 0, against the SPEC. The round verified it, fixed it (`426eddf`), and posted `round 1: fixed`, `1 of 3`. It left the duplicated style list as a `suggestion`, "no behaviour change". That reason contradicts the review notes' default toward applying improvements; `3eeb86c` says to apply them by default. |
+| S7 | 23, authoring session | PASS | The same session, asked for the next round on PR #14: no comment and no commit (snapshot unchanged); the reply said a fresh session must review `426eddf`. |
+| S8 | 22, improvement-only | PASS | PR #14 at `426eddf`, now correct: `round 2: fixed`, one `improved` line and no `fixed` or `open` line, `2 of 3`, one commit `2f8fbd5` equal to `Fixed in:`, touching `greet` only (three `if` blocks and a validation block became one `case`); `./test.sh` passes there. The commit type is `fix:` for a refactor, which the template allows. |
+| S9 | 24, convergence | PASS | `round 3: approve`, `Reviewed: 2f8fbd5…`, no finding repeated, no commit. The same session asked again posted nothing and named round 3's verdict. PR #14 has three verdicts. |
+| S10 | 25, a pattern | PASS | PR #15: `round 1: fixed`; both handlers' `^-?[0-9]+$` became `^[0-9]+$` in one commit `22089bd`; `./test.sh` passes there and `--repeat -1` and `--indent -2` exit 2. It also verified and fixed a second shared defect: `--repeat 08` failed with a bash octal error. The duplicated validation block stayed duplicated. New tests for the fixes were listed `improved`. |
+| S11 | 19, other association | PASS | PR #16, no ticket line: read #13 through `wkc-tracker show` from the `<type>/<id>-<slug>` branch convention, confirmed by #13's handoff, asked nothing; `round 1: fixed` with one `improved` line adding the `--help` exit-status check its criterion names. |
+| S11 | 20, ambiguous or foreign | PASS | PR #19 (`Refs #2, #3`) and PR #20 (`Refs PROJ-12`): each reply asked for the ticket id after checking the other sources; neither PR nor any issue changed. |
+| S12 | 26, duplicate verdicts at the limit | PASS, duplicate-count subcheck only | PR #17 with `round 1: fixed` posted twice: `round 2`, `1 of 1`, no commit. Its head carried the same unplanted `--style ""` defect as PR #14, so the verdict was a correct `stopped` with it `open`; approving at the limit with only suggestions left was not exercised. |
+| S12 | 11, one fixing round used | PASS | PR #18: `round 2: stopped`, `1 of 1`, the negative-value defect `open` at both handlers, no commit. |
+| all | 13, scope | PASS | Every fixture issue keeps its state, labels, assignee, and comment count; every PR is `OPEN`. Only PR comments and the fix commits on #14, #15, and #16 changed. |
+
+Failures and other observations:
+
+- S12's two verdicts list `- fixed (earlier, round 1) …`, an earlier round's finding, in a `stopped` verdict. The
+  rewrite of section 5 had dropped "in this round" from the line list; the source now restores it. Not rerun: the
+  six sessions are used.
+- The fixture code for PRs #14 and #17 had an unplanted SPEC defect. Both sessions found and verified it; the fixture,
+  not the skill, is at fault, and case 26's approve half needs a fixture without it.
+
+Direct checks at the final candidate: cases 1 and 2 PASS (YAML, invocation flags, five fields, one-line description,
+under 250 lines; the verdict, fix commit, and `Discovered:` blocks are each identical to a SPEC block). Case 21's
+subcheck PASS: `git push . HEAD:refs/heads/<branch>` from a detached worktree was refused with `branch is currently
+checked out` and fast-forwarded once the other worktree was removed. The diagram `check` reports `Valid`.
+
+Still SKIP: case 21's review without a pull request, case 26's approve half, case 27 `[MANUAL]`, case 16 `[MANUAL]`,
+a behavioral rerun of the section 5 line-list fix, installed harness loading, Codex, and Kiro CLI. #54's twelve
+sessions are used.

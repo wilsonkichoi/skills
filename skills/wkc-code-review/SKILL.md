@@ -220,9 +220,9 @@ Independent: yes | no, <why>
 ```
 
 `Reviewed` is `H`. Keep the `Fixed in` line only in a `fixed` round, without the HTML comment. `k`
-counts the `fixed` rounds, this one included when it is `fixed`. List each blocking finding fixed,
-each improvement applied, each blocking finding left open, and each suggestion not applied,
-unconfirmed findings included; drop a line kind with none. Read the comments back and confirm the
+counts the `fixed` rounds, this one included when it is `fixed`. List each blocking finding fixed
+and each improvement applied in this round, each blocking finding left open, and each suggestion
+not applied, unconfirmed findings included; drop a line kind with none. Read the comments back and confirm the
 verdict landed.
 
 ## 6. Hand off and report
