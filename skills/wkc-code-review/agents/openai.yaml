@@ -1,5 +1,5 @@
 interface:
   display_name: "wkc-code-review"
-  short_description: "Run one review round on a pull request from wkc-implement, fix its blocking findings in one commit, and post a verdict comment of approve, fixed, or stopped"
+  short_description: "Run one review round on a pull request from wkc-implement, fix its verified blocking findings and apply worthwhile improvements in one commit, and post a verdict comment of approve, fixed, or stopped"
 policy:
   allow_implicit_invocation: true

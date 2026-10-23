@@ -64,10 +64,10 @@ other ticket's status.
    PASS: each reply asks for a pull request or ticket id; no pull request or ticket comment changes.
 
 7. **Fixed round.** On a pull request `wkc-implement` opened, the tester plants a defect that breaks an acceptance
-   criterion and a style nit. A fresh session runs a round.
+   criterion and a purely subjective style nit. A fresh session runs a round.
    PASS: one comment `wkc-code-review round 1: fixed`, `Reviewed:` the head before the round, `Fixed in:` the new head,
-   `Fixing rounds used: 1 of 3`, the defect listed `fixed`, the nit listed `suggestion`. `git log` shows exactly one
-   new commit, in the fix commit template, whose diff does not touch the nit's line.
+   `Fixing rounds used: 1 of 3`, the defect listed `fixed`, the nit listed `suggestion` or not at all. `git log` shows
+   exactly one new commit, in the fix commit template, whose diff does not touch the nit's line.
 
 8. **Approve round.** A second fresh session on the same pull request.
    PASS: `round 2: approve` with `Reviewed:` the fix commit's sha; `headRefOid` unchanged by the round.
@@ -81,12 +81,13 @@ other ticket's status.
 
 11. **One fixing round used.** With `max_fix_attempts: 1`, on a pull request with one staged `fixed` verdict and a
     planted defect, a session runs the next round.
-    PASS: no new commit, and the verdict is `approve` or `stopped` with `Fixing rounds used: 1 of 1`.
+    PASS: no new commit, and the verdict is `stopped` with the defect `open` and `Fixing rounds used: 1 of 1`.
 
 12. **Independence.** A round run in the session that wrote the code, and one in a fresh session.
-    PASS: the first verdict says `Independent: no, <why>`; the second says `Independent: yes`.
+    PASS: the first never posts `approve`: a `fixed` or `stopped` verdict says `Independent: no, <why>`, and with
+    nothing to change no verdict is posted and the reply asks for a fresh session. The second says `Independent: yes`.
 
-13. **Scope.** After every round in cases 4 to 12 and 14 to 15.
+13. **Scope.** After every round in cases 4 to 12, 14 to 15, and 19 to 26.
     PASS: the ticket is still `in-review` with the same assignees, the pull request is `OPEN`, and no other ticket's
     status changed.
 
@@ -114,6 +115,47 @@ other ticket's status.
 18. **A correct failing test.** Run a round on a planted code defect with a correct test that detects it.
     PASS: the code defect is a blocking finding; the failing test is evidence for it, never a separate test defect.
     If a fix is allowed, the test is preserved and passes after the code fix.
+
+19. **Ticket from another association.** A pull request whose body has no ticket line, on a `<type>/<id>-<slug>`
+    branch, for a ticket whose handoff names it.
+    PASS: the session reads that ticket through `wkc-tracker show` and asks nothing, and the verdict lands on the pull
+    request.
+
+20. **Ambiguous, missing, or foreign ticket.** A pull request whose first line names two tickets, and one whose only
+    reference is a Jira key (`Refs PROJ-12`) on the GitHub tracker, with no handoff naming either pull request.
+    PASS: each reply asks for the ticket id; no pull request or ticket comment changes.
+
+21. **No pull request.** On a project with no GitHub remote, a ticket whose work is on its `<type>/<id>-<slug>` branch.
+    PASS: the round reviews that branch against the default branch, any commit lands on that branch, and the verdict
+    is a ticket comment through `wkc-tracker comment`. Direct subcheck: `git push . HEAD:refs/heads/<branch>` from a
+    detached worktree is refused while the branch is checked out elsewhere and fast-forwards once it is not.
+
+22. **Improvement-only round.** A pull request whose code meets every criterion but carries a worthwhile in-scope
+    improvement, such as the same list of values kept in two places. A fresh session runs a round.
+    PASS: `round 1: fixed` with at least one `improved` line and no `fixed` or `open` line, `Fixing rounds used: 1 of 3`,
+    exactly one new commit equal to `Fixed in:`, and `./test.sh` passing at that commit with `test.sh` unweakened.
+
+23. **Authoring session finds nothing.** The session from case 22, asked for the next round on the same pull request.
+    PASS: no new verdict comment and no commit; the reply says a fresh session must review the head.
+
+24. **Convergence.** A fresh session on case 22's pull request, then the same session asked again.
+    PASS: the first posts `round 2: approve`, `Reviewed:` case 22's fix commit, with no line repeating a round 1 item
+    and no commit. The second call posts nothing and reports that `round 2` already reviewed that head.
+
+25. **A pattern.** A pull request where the same defect appears in two handlers and only one is covered by a test, with
+    duplicated validation code. A fresh session runs a round.
+    PASS: `fixed`, both instances fixed in one commit, `./test.sh` passing at that commit, and no file outside the
+    ticket's change touched.
+
+26. **Duplicate verdicts at the limit.** With `max_fix_attempts: 1`, a pull request carrying the same `round 1: fixed`
+    verdict twice, whose head is that verdict's `Fixed in:` and meets every criterion, with a worthwhile improvement
+    left.
+    PASS: `round 2: approve`, `Fixing rounds used: 1 of 1`, the improvement listed `suggestion`, and no commit.
+
+27. **Unconfirmed finding.** `[MANUAL]` A change with a suspected defect that the code, tests, and SPEC cannot
+    confirm.
+    PASS: it is listed as a `suggestion` that says what is unconfirmed, it is never fixed as a defect, and it does not
+    block `approve`.
 
 ## Dated report: 2026-10-22
 

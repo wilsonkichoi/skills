@@ -272,7 +272,7 @@
       "lane": "implementation",
       "summary": "Run one review round on a pull request from wkc-implement and post a verdict: approve, fixed, or stopped.",
       "details": {
-        "body": "Judges the change against its ticket and the SPEC, fixes blocking findings in one pushed commit while fixing rounds are left, and never applies suggestions, moves the ticket, or merges. Each fix is reviewed by another round in a fresh session, up to max_fix_attempts.",
+        "body": "Judges the change against its ticket and the SPEC, and while fixing rounds are left, fixes verified blocking findings and applies worthwhile in-scope improvements in one pushed commit, without moving the ticket or merging. Each change is reviewed by another round in a fresh session, up to max_fix_attempts, and only a fresh session approves.",
         "when": "Use after wkc-implement hands a ticket to review, and again after each fixed round, in a fresh session.",
         "commands": [
           {
@@ -290,8 +290,8 @@
             "href": "skills/wkc-code-review/SKILL.md"
           },
           {
-            "label": "Decide and fix",
-            "href": "skills/wkc-code-review/SKILL.md#4-decide-and-fix"
+            "label": "Decide and change",
+            "href": "skills/wkc-code-review/SKILL.md#4-decide-and-change"
           }
         ]
       }
