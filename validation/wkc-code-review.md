@@ -378,8 +378,8 @@ ways; that the no-PR path could not land a commit on the local backend; that a l
 and that two criteria rested on runs at earlier heads. The source changed to:
 
 - For a pull request, the ticket is the one whose handoff names it. A ticket the pull request only names stands in
-  only at `in-review` with no handoff naming another pull request. More than one ticket between the handoffs and
-  references, or none, is a question (cases 20 and 32).
+  only at `in-review` with no handoff naming another pull request. A pull request naming more than one ticket is a
+  question even when a handoff names it, and so is no ticket (cases 20 and 32).
 - With a GitHub remote, a ticket with no open pull request gets nothing. With none, the round reviews the
   `in-progress` ticket's branch, named by the caller, **Conventions**, or `<type>/<id>-<slug>`, and fast-forwards a
   checked-out branch with `git -C <checkout> merge --ff-only` (case 21).

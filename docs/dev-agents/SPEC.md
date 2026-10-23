@@ -326,8 +326,8 @@ PR). With no such handoff, a ticket the PR names stands in: by its body's first 
 issue GitHub links to it, or a **Conventions** rule. It must be `in-review` with no handoff naming
 another PR, because a PR can cite a ticket it does not build, as PR #55 cited #54, and a round fixes
 toward its ticket's criteria. A ticket counts only when `wkc-tracker show` reads it from the
-configured backend. More than one ticket across the handoffs and references, or none, is a
-question, never a guess.
+configured backend. A PR that names more than one ticket is a question even when a handoff names
+it, and so is a PR naming a ticket other than its handoff's, or no ticket at all; never a guess.
 
 With a GitHub remote, a ticket with no open PR is still being built, and the round posts nothing.
 With none, `wkc-implement` leaves the ticket `in-progress` on its branch, and the round reviews that

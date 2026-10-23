@@ -51,19 +51,18 @@ it with `gh pr view <n> --json number,url,state,headRefName,headRefOid,baseRefNa
 pull request that is not `OPEN` is reported and nothing is posted.
 
 **The ticket.** The review judges the change against the work that asked for it; read the ticket
-with `wkc-tracker show`. A ticket target is the ticket. For a pull request, it is the ticket whose
-latest `wkc-implement` handoff names this pull request: that record ties them, and a reference
-never does. Check the ticket the body's first line names first (`Refs #N` on GitHub, `Related to
-<ID>` on Linear, or the ticket path on the local backend), then the rest at `in-review` (`wkc-tracker
-list in-review`). With no such handoff, a ticket the pull request names stands in: on its first
-line, as an issue GitHub links to it (`gh pr view <n> --json closingIssuesReferences`), or by a
-**Conventions** rule, such as an id in the branch name. It must be at `in-review`, with no handoff
-naming another pull request: a pull request can cite a ticket it does not build, and the round
-would fix toward that ticket's criteria.
-
-Ask for the ticket id, and post nothing, when the handoffs and references name more than one ticket
-between them, or none qualifies. Only a ticket `wkc-tracker show` reads from the configured backend
-counts; a reference to another tracker, such as a Jira key in a GitHub project, is not one.
+with `wkc-tracker show`. A ticket target is the ticket. For a pull request, first list the tickets
+it names: on its body's first line (`Refs #N` on GitHub, `Related to <ID>` on Linear, or the ticket
+path on the local backend), as an issue GitHub links to it (`gh pr view <n> --json
+closingIssuesReferences`), or by a **Conventions** rule, such as an id in the branch name. When it
+names more than one, ask for the ticket id and post nothing, even when a handoff names this pull
+request. Otherwise the ticket is the one whose latest `wkc-implement` handoff names this pull
+request: check the named ticket first, then the rest at `in-review` (`wkc-tracker list in-review`).
+With no such handoff, the named ticket stands in only at `in-review` with no handoff naming another
+pull request: a pull request can cite a ticket it does not build, and the round would fix toward
+that ticket's criteria. When the pull request names a ticket other than the handoff's, or none
+qualifies, ask and post nothing. Only a ticket `wkc-tracker show` reads from the configured backend counts; a
+reference to another tracker, such as a Jira key in a GitHub project, is not one.
 
 **No pull request.** With a GitHub remote, a ticket with no open pull request is still being
 built: report it and post nothing. With none, `wkc-implement` stops at the ticket's branch and
