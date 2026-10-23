@@ -15,6 +15,7 @@ Keep raw logs and fixtures outside tracked files.
 - Rerun after the maintainer review: 2026-10-23
 - Independent review of `1d851be`: 2026-10-23
 - Sessions S13 to S16: 2026-10-23
+- Review round 3: 2026-10-23
 
 ## Preparation
 
@@ -91,8 +92,8 @@ other ticket's status.
     nothing to change no verdict is posted and the reply asks for a fresh session. The second says `Independent: yes`.
 
 13. **Scope.** After every round in cases 4 to 12, 14 to 15, 19 to 26, and 28 to 34.
-    PASS: the ticket is still `in-review` with the same assignees, the pull request is `OPEN`, and no other ticket's
-    status changed.
+    PASS: the ticket keeps its starting status and assignees. Case 21's tickets remain `in-progress`.
+    Any pull request remains `OPEN`, and no other ticket's status changed.
 
 14. **Discovered work, non-blocking.** On the local fixture, a round on the correct pull request, after the session is
     told about the out-of-scope `Hello, !` defect.
@@ -406,8 +407,9 @@ the section 5 line list, installed harness loading, Codex, and Kiro CLI.
 
 The maintainer authorized four more sessions for #54 after the independent review. Candidates `92e0459` (S13),
 `a650216` (S14), and `2e5af26` (S15, S16), each exported with `git archive` and installed with skills 1.7.4; `diff -r`
-matched `wkc-code-review`, `wkc-tracker`, and `wkc-backlog`. Claude Code `general-purpose` subagents on Sonnet, one at a
-time; later turns were new requests told to re-read state. About 52k to 71k subagent tokens per turn, 13 turns. Fixture
+matched `wkc-code-review`, `wkc-tracker`, and `wkc-backlog`. Claude Code `general-purpose` subagents on Sonnet 5.5
+(`claude-sonnet-5-5`, effort `medium`), one at a time; later turns were new requests told to re-read state.
+About 52k to 71k subagent tokens per turn, 13 turns. Fixture
 issues #21 to #23, #28 to #30, and #34 to #37, and PRs #24 to #27, #31 to #33, and #38 to #40, on the GitHub fixture;
 `max_fix_attempts: 1` was an uncommitted config edit for S14 only. Case 21 used a new local-backend clone with no remote,
 on `feat/003-shout-flag` checked out with the claim edits uncommitted, as `wkc-implement` leaves it. Scored from `gh`,
@@ -429,3 +431,42 @@ on `feat/003-shout-flag` checked out with the claim edits uncommitted, as `wkc-i
 Still SKIP: case 33's `suggestion` listing at `2e5af26`, cases 16, 19, 22, 25, 26's approve half, 27 to 31 (S13's PR #27
 exercised the stand-in path, not case 19's branch convention), the section 5 line list, installed harness loading,
 Codex, and Kiro CLI. #54's sixteen sessions are used.
+
+## Review round 3: 2026-10-23
+
+Reviewed `df28eaddc8035760b01aa0fbf07334410689d186` in a new detached worktree. No AI test session ran.
+Selected direct checks: cases 1 to 3, case 21's Git subcheck, fixture artifacts for S13 to S16, and the diagram.
+GitHub and local backends were inspected. Installation used the Codex layout without invoking that harness.
+
+- PASS, direct: PyYAML parsed both invocation flags and the config default; five opening fields, one-line
+  description, 249 lines, and all three fenced templates matched the SPEC. Skills 1.7.4 installed a clean export
+  into a temporary Codex layout; `diff -r` matched the source. VERSION remains `0.0.32`.
+- PASS, direct: case 21's checked-out branch rejects `git push .`; `merge --ff-only` preserves a dirty ticket file
+  and refuses an overlapping edit without moving the branch. The scope case incorrectly required `in-review`
+  for that path, contrary to SPEC Review verdict's `in-progress` rule. Case 13 now checks preservation in both paths.
+- PASS, reused artifact subchecks: `gh` confirms PR #26's erroneous approval and PR #31's absent verdict, with
+  their two-ticket bodies and handoffs. PRs #24 and #25 have no verdict; #21 remains `backlog`, and #11's handoff
+  names #14. PR #27's stand-in ticket #23 has no handoff. These artifacts support the recorded outcomes.
+- PASS, direct reproductions: `./test.sh` fails at `1ef28c4` and passes at `3eb6d09`; that one commit changes only
+  `greet`. Tests pass before and after `d2070cb`; that one commit changes only `test.sh` and preserves the existing
+  assertions. PR #38 is unchanged at `b8ae0b5` with an approve comment; its tests pass. PR #40 has no verdict and
+  remains at `0bf5f03`. GitHub still reports all these pull requests `OPEN`.
+- PASS, local artifact subcheck: ticket 003 retains its uncommitted claim and verdict at `67311be`.
+  Its tests fail at `51af5f5` and pass at `67311be`. These checks used exports, without editing the fixture.
+- Recovered the missing S13 to S16 effort from existing Claude Code JSONL metadata, not from the report:
+  session `35f095b0-9ed8-467e-875f-5e104d3274c5`, agents `a7bc327bbb1076038`, `a9791c6eb193dca26`,
+  `a549511b8fad02df9`, and `a10fc328460d9f7c0`. Each records `claude-sonnet-5-5`, `effort: medium`, and
+  `perTurnEffort: medium`. Their final turns also record the clarification questions and S16's refusal to approve
+  its own code. Those observations come from session logs; absence of a GitHub comment alone cannot establish them.
+- The independent review's ticket resolution and no-PR findings are addressed in sections 1 and 4. Its landed-fix
+  counting finding is addressed in section 5. Its last-round, quality, and test-line suggestions are reflected in
+  sections 3 to 5. S16 supports subjective-nit restraint and authoring-session refusal under the current instructions.
+  It does not rerun case 7's combined defect-and-nit scenario. Earlier S7/S12 report limits remain explicit.
+- Round 1's numeric-input, correct-failing-test, and local verification instructions remain present. Its S6
+  discovered-work observations are historical evidence, not a new behavioral run in this round.
+- PASS, direct: diagram `check` and `git diff --check`. The diagram's added handoff row still named
+  `wkc-implement <id>`; it now matches section 6 and the SPEC's explicit `wkc-implement finish <id>` command.
+- SKIP: new model runs for cases 7, 12/23, 14/15, 16, 19 to 22, 25 to 31, 33/34, and the section 5 line list;
+  setup cases 2 and 3; installed harness loading, Codex, and Kiro CLI. The session budget is exhausted.
+  Existing fixture reads do not establish unchanged behavior across every instruction revision.
+  PR #58 reports no CI checks, and this repository has no `test_command`.
