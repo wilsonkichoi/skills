@@ -14,6 +14,7 @@ Keep raw logs and fixtures outside tracked files.
 - Rerun after review round 1: 2026-10-22
 - Rerun after the maintainer review: 2026-10-23
 - Independent review of `1d851be`: 2026-10-23
+- Sessions S13 to S16: 2026-10-23
 
 ## Preparation
 
@@ -389,7 +390,7 @@ and that two criteria rested on runs at earlier heads. The source changed to:
 - The 2026-10-23 table above was relabelled: S7's case 22 is FAIL at `cea5df6`; S7's case 23 does not carry forward;
   cases 11 and 26 are subchecks, because their verdicts list an earlier round's fix.
 
-No session ran: #54's twelve sessions are used. Direct checks at this candidate: cases 1 and 2 PASS (YAML, invocation
+No session ran at first: #54's twelve sessions were used. Direct checks at `92e0459`: cases 1 and 2 PASS (YAML, invocation
 flags, five fields in order, one-line description, 249 lines; the verdict, fix commit, and `Discovered:` blocks each
 identical to a SPEC block). Case 21's subcheck PASS in a scratch repository: `git push .` to the checked-out branch was
 refused with `branch is currently checked out`; `git -C <checkout> merge --ff-only <sha>` fast-forwarded it and kept
@@ -397,6 +398,34 @@ the uncommitted `issues/001.md`; with an uncommitted change to the file the comm
 changes to the following files would be overwritten by merge` and left the branch where it was.
 
 The behavioural results above are from `cea5df6` and `3eeb86c`. The sections they exercised changed since, so they do
-not establish this head. Still SKIP: cases 7's nit half under ADR-005 and 34 (a nit with no benefit is left alone),
+not establish this head. Before S13 to S16, SKIP: cases 7's nit half under ADR-005 and 34 (a nit with no benefit is left alone),
 12 and 23 (a non-independent round with nothing to change posts nothing), 16, 19 to 22, 25, 26's approve half, 27 to 33,
 the section 5 line list, installed harness loading, Codex, and Kiro CLI.
+
+## Sessions S13 to S16: 2026-10-23
+
+The maintainer authorized four more sessions for #54 after the independent review. Candidates `92e0459` (S13),
+`a650216` (S14), and `2e5af26` (S15, S16), each exported with `git archive` and installed with skills 1.7.4; `diff -r`
+matched `wkc-code-review`, `wkc-tracker`, and `wkc-backlog`. Claude Code `general-purpose` subagents on Sonnet, one at a
+time; later turns were new requests told to re-read state. About 52k to 71k subagent tokens per turn, 13 turns. Fixture
+issues #21 to #23, #28 to #30, and #34 to #37, and PRs #24 to #27, #31 to #33, and #38 to #40, on the GitHub fixture;
+`max_fix_attempts: 1` was an uncommitted config edit for S14 only. Case 21 used a new local-backend clone with no remote,
+on `feat/003-shout-flag` checked out with the claim edits uncommitted, as `wkc-implement` leaves it. Scored from `gh`,
+`git`, and the ticket file, with snapshots before and after.
+
+| Session | Case | Result | Evidence |
+|---|---|---|---|
+| S13, pilot | 32, cites a ticket it does not build | PASS at `92e0459` | PR #24 (`Refs #21`, #21 at `backlog`) and PR #25 (`Refs #11`, #11's handoff names #14): each asked; snapshot unchanged. |
+| S13 | 20, two tickets with a handoff | FAIL at `92e0459` | PR #26 (`Refs #22, #12`, #22's handoff names #26): `round 1: approve` against #22, "I did not use #12, because #22's handoff ties the PR to #22". `a650216` moves the two-ticket question before the handoff lookup. |
+| S13 | stand-in control | PASS | PR #27 (`Refs #23`, #23 `in-review` with no handoff): reviewed against #23, `round 1: approve`, no question. |
+| S14 | 20, two tickets with a handoff | PASS at `a650216` | PR #31 (`Refs #28, #12`, #28's handoff names #31): asked; snapshot unchanged. |
+| S14 | 33, last fixing round | PASS, decisions only | PR #32 at `1 of 1`: `round 1: fixed`, the defect fixed in `3eb6d09`, which touches `greet` only, leaving the duplicated `test.sh` block. PR #33: `round 1: approve`, `0 of 1`, no commit. Neither verdict listed the duplicated block, which repeats `test.sh`'s `check` helper, as a `suggestion`: with S10, the third such miss. `2e5af26` names repeated helpers in the **Quality** check. |
+| S15 | 21, no pull request | PASS at `2e5af26` | `wkc-code-review 003`, no remote: reviewed `feat/003-shout-flag` against `main`, fixed the defect in `67311be`, landed it with `git merge --ff-only` in the checkout that has the branch, appended `round 1: fixed`, `1 of 3`, to the ticket file, and kept the uncommitted claim edits; `./test.sh` passes. Then GitHub #34, `in-progress` with a pushed branch and no PR: posted nothing, said it is still being built; snapshot unchanged. |
+| S16 | 34, subjective nit only | PASS | PR #38 (a `--shout` check placed first): `round 1: approve`, no commit, nit not listed. |
+| S16 | Quality recheck (case 22 shape) | PASS | PR #39, the same duplicated block as PR #33 at `0 of 3`: `round 1: fixed` with two `improved` lines, the block replaced with `check` in `d2070cb`, `./test.sh` passing. |
+| S16 | 12 and 23, authoring session | PASS | S16 built #37 by hand and opened PR #40, then ran `wkc-code-review 40`: no comment and no commit; the reply said this session wrote the code and a fresh session must review `0bf5f03`. |
+| all | 13, scope | PASS | Review rounds changed no issue's state, labels, assignee, or comments; every PR is `OPEN`. #37's label and handoff came from the turn-3 build request. |
+
+Still SKIP: case 33's `suggestion` listing at `2e5af26`, cases 16, 19, 22, 25, 26's approve half, 27 to 31 (S13's PR #27
+exercised the stand-in path, not case 19's branch convention), the section 5 line list, installed harness loading,
+Codex, and Kiro CLI. #54's sixteen sessions are used.
