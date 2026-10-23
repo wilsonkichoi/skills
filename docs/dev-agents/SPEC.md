@@ -327,7 +327,7 @@ issue GitHub links to it, or a **Conventions** rule. It must be `in-review` with
 another PR, because a PR can cite a ticket it does not build, as PR #55 cited #54, and a round fixes
 toward its ticket's criteria. A ticket counts only when `wkc-tracker show` reads it from the
 configured backend. A PR that names more than one ticket is a question even when a handoff names
-it, and so is a PR naming a ticket other than its handoff's, or no ticket at all; never a guess.
+it, and so is a PR naming a ticket other than its handoff's, or no qualifying ticket; never a guess.
 
 With a GitHub remote, a ticket with no open PR is still being built, and the round posts nothing.
 With none, `wkc-implement` leaves the ticket `in-progress` on its branch, and the round reviews that
