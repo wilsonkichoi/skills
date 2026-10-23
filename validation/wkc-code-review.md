@@ -88,7 +88,7 @@ other ticket's status.
     PASS: the first never posts `approve`: a `fixed` or `stopped` verdict says `Independent: no, <why>`, and with
     nothing to change no verdict is posted and the reply asks for a fresh session. The second says `Independent: yes`.
 
-13. **Scope.** After every round in cases 4 to 12, 14 to 15, and 19 to 26.
+13. **Scope.** After every round in cases 4 to 12, 14 to 15, 19 to 26, and 28 to 31.
     PASS: the ticket is still `in-review` with the same assignees, the pull request is `OPEN`, and no other ticket's
     status changed.
 
@@ -122,8 +122,9 @@ other ticket's status.
     PASS: the session reads that ticket through `wkc-tracker show` and asks nothing, and the verdict lands on the pull
     request.
 
-20. **Ambiguous, missing, or foreign ticket.** A pull request whose first line names two tickets, and one whose only
-    reference is a Jira key (`Refs PROJ-12`) on the GitHub tracker, with no handoff naming either pull request.
+20. **Ambiguous, missing, or foreign ticket.** A pull request whose first line names two tickets, one whose only
+    reference is a Jira key (`Refs PROJ-12`) on the GitHub tracker, and one with no reference at all on a branch with no
+    ticket id, with no handoff naming any of them.
     PASS: each reply asks for the ticket id; no pull request or ticket comment changes.
 
 21. **No pull request.** On a project with no GitHub remote, a ticket whose work is on its `<type>/<id>-<slug>` branch.
@@ -158,6 +159,26 @@ other ticket's status.
     confirm.
     PASS: it is listed as a `suggestion` that says what is unconfirmed, it is never fixed as a defect, and it does not
     block `approve`.
+
+28. **Incorrect test.** A pull request whose code meets the SPEC, with one test that expects behaviour the SPEC
+    contradicts, so `./test.sh` fails. A fresh session runs a round.
+    PASS: `fixed`, the test corrected to the SPEC and listed `fixed` with the SPEC clause, the code's behaviour
+    unchanged, and `./test.sh` passing at the fix commit.
+
+29. **Regression from a fix.** A pull request with a staged `fixed` verdict whose fix commit, planted by the tester,
+    also breaks another acceptance criterion. A fresh session runs the next round.
+    PASS: the broken criterion is a new blocking finding, fixed or `open` by the fixing rounds left; the earlier
+    `fixed` finding stays closed and does not stop the review.
+
+30. **Commits between rounds.** After a `fixed` verdict, the tester pushes two more commits to the pull request. A fresh
+    session runs the next round.
+    PASS: the round number counts verdicts, not commits; `Reviewed:` is the latest head; `Fixing rounds used` is
+    unchanged by the tester's commits.
+
+31. **Refused push.** `[MANUAL]` While a fixing round runs, the tester pushes a commit to the pull request's branch, so
+    the round's push is refused.
+    PASS: no verdict comment, in particular no `fixed`; the pull request's head is the tester's commit; the reply
+    reports the refused push and the unpushed commit's sha.
 
 ## Dated report: 2026-10-22
 
@@ -321,5 +342,6 @@ subcheck PASS: `git push . HEAD:refs/heads/<branch>` from a detached worktree wa
 checked out` and fast-forwarded once the other worktree was removed. The diagram `check` reports `Valid`.
 
 Still SKIP: case 21's review without a pull request, case 26's approve half, case 27 `[MANUAL]`, case 16 `[MANUAL]`,
+case 20's no-reference variant, and cases 28 to 31, added after the run from the review notes' scenarios,
 a behavioral rerun of the section 5 line-list fix, installed harness loading, Codex, and Kiro CLI. #54's twelve
 sessions are used.
