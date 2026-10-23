@@ -176,7 +176,9 @@ report that a fresh session must review `H`.
 
 **Change** the blocking findings first, then the worthwhile improvements, each with the smallest
 coherent change, in the project's style. An improvement is worthwhile when its benefit is real and
-it stays in the ticket's scope. Purely subjective changes, reversals of earlier style choices
+it stays in the ticket's scope. Apply it by default: you can make it as cheaply as describe it, and
+an unapplied suggestion usually goes unmade. Keeping behaviour the same is what an improvement
+does, never a reason to skip one. Purely subjective changes, reversals of earlier style choices
 without a reason, and refactors that add complexity for little gain stay suggestions. On the last
 fixing round, favour correctness: only a review-only round follows. Never weaken a valid test, a
 check, or a criterion, and never change a valid test to make code pass. Run the checks the change

@@ -132,17 +132,18 @@ other ticket's status.
 
 22. **Improvement-only round.** A pull request whose code meets every criterion but carries a worthwhile in-scope
     improvement, such as the same list of values kept in two places. A fresh session runs a round.
-    PASS: `round 1: fixed` with at least one `improved` line and no `fixed` or `open` line, `Fixing rounds used: 1 of 3`,
-    exactly one new commit equal to `Fixed in:`, and `./test.sh` passing at that commit with `test.sh` unweakened.
+    PASS: a `fixed` verdict with at least one `improved` line and no `fixed` or `open` line, `Fixing rounds used` one
+    more than before, exactly one new commit equal to `Fixed in:`, and `./test.sh` passing at that commit with `test.sh`
+    unweakened.
 
 23. **Authoring session finds nothing.** The session from case 22, asked for the next round on the same pull request.
     PASS: no new verdict comment and no commit; the reply says a fresh session must review the head.
 
 24. **Convergence.** A fresh session on case 22's pull request, then the same session asked again.
-    PASS: the first posts `round 2: approve`, `Reviewed:` case 22's fix commit, with no line repeating a round 1 item
-    and no commit. The second call posts nothing and reports that `round 2` already reviewed that head.
+    PASS: the first posts `approve`, `Reviewed:` case 22's fix commit, with no line repeating an earlier round's item
+    and no commit. The second call posts nothing and reports that this head was already reviewed.
 
-25. **A pattern.** A pull request where the same defect appears in two handlers and only one is covered by a test, with
+25. **A pattern.** A pull request where the same defect appears in two option handlers, neither caught by a test, in
     duplicated validation code. A fresh session runs a round.
     PASS: `fixed`, both instances fixed in one commit, `./test.sh` passing at that commit, and no file outside the
     ticket's change touched.
