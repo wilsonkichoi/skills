@@ -61,8 +61,8 @@ request: check the named ticket first, then the rest at `in-review` (`wkc-tracke
 With no such handoff, the named ticket stands in only at `in-review` with no handoff naming another
 pull request: a pull request can cite a ticket it does not build, and the round would fix toward
 that ticket's criteria. When the pull request names a ticket other than the handoff's, or none
-qualifies, ask and post nothing. Only a ticket `wkc-tracker show` reads from the configured backend counts; a
-reference to another tracker, such as a Jira key in a GitHub project, is not one.
+qualifies, ask and post nothing. Only a ticket `wkc-tracker show` reads from the configured backend
+counts; a reference to another tracker, such as a Jira key in a GitHub project, is not one.
 
 **No pull request.** With a GitHub remote, a ticket with no open pull request is still being
 built: report it and post nothing. With none, `wkc-implement` stops at the ticket's branch and
@@ -112,8 +112,9 @@ Check the implementation and the tests, in this order:
   assertion is a finding. A correct test failing on a code defect is evidence for that defect, not a
   separate test defect. A test that contradicts the SPEC is wrong, and correcting it is a fix.
 - **Scope**: every changed line traces to the ticket.
-- **Quality** of the changed code and tests: duplication, needless complexity, unclear names, and
-  weak error handling. These are suggestions unless they also break something.
+- **Quality**: read the diff again, tests included, for added code that repeats an existing helper
+  or another part of the change, needless complexity, unclear names, and weak error handling. These
+  are suggestions unless they also break something.
 
 **A blocking finding** is a defect, an unmet acceptance criterion, a SPEC violation, a regression,
 or a security defect. It names the criterion, the SPEC clause, or the earlier behaviour it breaks,
