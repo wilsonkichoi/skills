@@ -12,6 +12,7 @@ Keep raw logs and fixtures outside tracked files.
 - Dated report: 2026-10-21
 - Dated report: 2026-10-24, explicit finish call (#59)
 - Dated report: 2026-10-24, PR #63 review round 1
+- Dated report: 2026-10-24, review verdict in the review state (#59)
 
 ## Preparation
 
@@ -436,3 +437,33 @@ session. Earlier full-case results above remain evidence for their recorded cand
 Generic `skill-creator` validation FAIL: `Unexpected key(s) in SKILL.md frontmatter: argument-hint, disable-model-invocation.`
 The validator does not support these required repository extensions. The direct YAML checks above retain and
 verify both settings; neither was removed to make that validator pass.
+
+## Dated report: 2026-10-24, review verdict in the review state (#59)
+
+Scope: the review state that `wkc-implement <id>` reports names the latest `wkc-code-review round` verdict, its
+`Reviewed` sha, and whether that sha is the head, next to GitHub's `reviewDecision`. The maintainer folded this into
+#59 after PR #63's round 2 and reset this change's session budget to 6. Selected: cases 29 and 30 for the changed
+behavior, case 24 as the no-verdict regression, case 31 `[MANUAL]`. Codex and Kiro CLI: SKIP, no session in those
+harnesses. Candidate `ae12160`, exported with `git archive` and installed into a clone of the fixture with
+`skills` 1.7.4; `diff -r` of the installed `wkc-implement` against the candidate gave no output.
+
+Fixture: `wilsonkichoi/wkc-implement-fixture-59` from the report above. Case 24 used #18 with open PR #19, its
+handoff, and the comment naming merged PR #15, before any verdict. Case 29 then added an `approve` verdict on PR #19
+whose `Reviewed` is its head `fc29c8a…`. Case 30 used #16 with open PR #17: an `approve` verdict for `7e6fd94…`, then
+one pushed commit, head `ef5419f…`. `reviewDecision` was empty on both PRs. Before and after each turn, the tester
+hashed the issue's state, labels, assignees, and comments, the PR's state, head, body, and comments, and
+`git ls-remote`.
+
+Two sessions of the six, Claude Code `general-purpose` subagents on Sonnet (`sonnet`, default effort), each reading
+the installed `SKILL.md` by hand, so harness loading is untested here. About 64k to 66k subagent tokens per turn,
+3 turns.
+
+| Session | Case | Result | Evidence |
+|---|---|---|---|
+| S1 | 24, no verdict | PASS | `wkc-implement 18`: review state of open PR #19 at the handoff's head, `reviewDecision` empty, "verdict: none", next step a review in a fresh session, then `finish 18` after a merge. Wrote nothing; every hash unchanged. |
+| S1 | 29, approve on the head | PASS | `wkc-implement 18`, a new turn told to re-read state: named `round 1: approve` reviewing `fc29c8a…`, "the current head", reported `reviewDecision` empty as a separate record, next step "a person merges that sha", then `wkc-implement finish 18`. Wrote nothing; every hash unchanged. |
+| S2 | 30, approve on an older head | PASS | `wkc-implement 16`: named the `approve` verdict for `7e6fd94…`, "not the current head" `ef5419f…`, said the approval does not cover the PR now, next step another round in a fresh session; offered no merge. Wrote nothing; every hash unchanged. |
+| none | 31, GitHub approval | SKIP | `[MANUAL]`: needs a second account to approve; the owner cannot approve their own PR. |
+
+Direct checks: `grep -n "reviewDecision\|wkc-code-review round"` shows both in section 1; `wc -l` gives 235; the
+frontmatter parses; `git diff --check` passes.
