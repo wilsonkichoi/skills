@@ -11,6 +11,7 @@ Keep raw logs and fixtures outside tracked files.
 - Cases
 - Dated report: 2026-10-21
 - Dated report: 2026-10-24, explicit finish call (#59)
+- Dated report: 2026-10-24, PR #63 review round 1
 
 ## Preparation
 
@@ -161,6 +162,18 @@ session's report.
     `wkc-implement finish <N>`, then `wkc-implement <N>`.
     PASS: `finish` asks for the PR, and the issue hashes the same after it. The build claims the ticket, and
     `gh issue view` shows `in-progress` or `in-review`, never `CLOSED`.
+
+27. **Newer open planning PR after a merged handoff.** On the GitHub fixture, take an `in-review` ticket whose
+    handoff PR merged. Open a newer planning-only PR whose body starts `Refs #<N>`. Run `wkc-implement <N>`.
+    PASS: the reply reports the recorded PR's merge and names `wkc-implement finish <N>`; the issue's state,
+    labels, assignees, and comments and every PR's state, head, and body hash the same before and after.
+
+28. **Interrupted follow-up handoff.** Stage an `in-progress` ticket held by the caller, with a handoff and
+    a `follow-up` finish comment naming its merged PR. Open a follow-up PR with section 4's follow-up line naming
+    that PR, but no handoff for the follow-up. Also open a newer planning-only PR that cites the ticket. Run
+    `wkc-implement <N>`.
+    PASS: one handoff names the existing follow-up PR and its head; the ticket is `in-review`; the assignee is
+    unchanged; no new PR or branch; the planning PR's state, head, and body are unchanged.
 
 ## Dated report: 2026-10-21
 
@@ -373,3 +386,36 @@ planning PR #15, so nothing was duplicated.
 
 Not rerun on `1d93a43`: cases 3, 4, 7, 8, 14 to 17, and 19 to 22, whose text did not change; their results above are
 for earlier candidates. Installed invocation through the harness's skill loader: SKIP in this run, for every harness.
+
+## Dated report: 2026-10-24, PR #63 review round 1
+
+Reviewed `d28fe342016108749a4c0a3a20e26146bd412dc9` against #59 and SPEC Contracts, Lifecycle. Section 1 selected
+the latest of the recorded PR and open citing PRs. A newer open planning PR therefore selected Build despite a
+merged handoff, contrary to the SPEC's instruction to report that merge and write nothing. The fix gives the
+recorded PR precedence and keeps incomplete follow-up handoff recovery through section 4's follow-up line.
+
+Selected: case 1's metadata subcheck, case 2, and cases 27 and 28's PR selection decisions. Backend: GitHub-shaped
+synthetic data, with no service calls. Harness: one Codex subagent, `gpt-6.1-sol`, effort `medium`, given only the
+edited skill and the fixture outputs. It was not given the expected answers or this finding. This adds one session
+to the three Claude Code sessions above, four of six for this change. No further sessions were launched.
+
+- Case 1 metadata subcheck PASS: PyYAML parsed the frontmatter and invocation settings; identifiers and the five
+  opening fields match; `finish <id>` is in the input hint; `SKILL.md` is 229 lines. Installation was not rerun.
+- Case 2 PASS: all five nonempty fenced templates equal the SPEC's blocks.
+- Case 27 decision subcheck PASS: synthetic ticket #1's handoff names merged PR #2 at `bbbbbbbb...`; newer open
+  planning PR #3 starts `Refs #1`. The evaluator selected #2, planned no writes, and named `wkc-implement finish 1`.
+- Case 28 decision subcheck PASS: synthetic ticket #4 is held and `in-progress`; its handoff and finish comment
+  name merged PR #5. Open PR #6 has `Follow-up to https://github.com/acme/selection-fixture/pull/5: ./gate.sh failed.`
+  and no handoff. Newer planning PR #7 only cites #4. The evaluator selected #6, planned only the missing handoff
+  and `in-review` move with verification, and planned no claim, new PR, or gate run.
+- Direct checks PASS: version remains the branch's single `0.0.34` increment from `0.0.33`; changelog timestamp,
+  README, AGENTS, and supporting-file checks pass. Diagram `check` and `build` pass; rebuilt HTML equals HEAD.
+  `git diff --check` passes. The config has no `test_command`, and GitHub reports no PR checks.
+
+These decision subchecks do not establish full-case PASS for cases 27 and 28. Their GitHub writes, hash checks,
+and harness loading were not exercised. Claude Code and Kiro CLI decision checks: SKIP, unavailable in this Codex
+session. Earlier full-case results above remain evidence for their recorded candidate, not a new run of this fix.
+
+Generic `skill-creator` validation FAIL: `Unexpected key(s) in SKILL.md frontmatter: argument-hint, disable-model-invocation.`
+The validator does not support these required repository extensions. The direct YAML checks above retain and
+verify both settings; neither was removed to make that validator pass.

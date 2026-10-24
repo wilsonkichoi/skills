@@ -45,10 +45,12 @@ list --state open --limit 200 --json number,url,state,author,headRefName,headRef
 where any line of the body is this ticket's reference (section 4). When the list returns as many
 rows as the limit, raise it and run again. Never use `--search`; its index lags.
 
-**`wkc-implement <id>`** never finishes. The latest of the ticket's pull request and the open ones
-that cite it decides:
+**`wkc-implement <id>`** never finishes. The ticket's pull request decides. With none, use the
+latest open pull request that cites it. A newer open follow-up to the recorded merged pull request
+(section 4) takes precedence while its handoff is incomplete. An open pull request that merely
+cites the ticket never replaces its recorded pull request.
 
-| Latest pull request | Mode |
+| Pull request | Mode |
 |---|---|
 | None, or open with an incomplete handoff | Build, sections 2 to 5 |
 | Open, with a complete handoff | Report its review state and write nothing |
