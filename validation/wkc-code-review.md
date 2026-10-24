@@ -489,3 +489,44 @@ GitHub and local backends were inspected. Installation used the Codex layout wit
   setup cases 2 and 3; installed harness loading, Codex, and Kiro CLI. The session budget is exhausted.
   Existing fixture reads do not establish unchanged behavior across every instruction revision.
   PR #58 reports no CI checks, and this repository has no `test_command`.
+
+## Improvements on the last fixing round: 2026-10-23
+
+The maintainer removed the last-round limit: any fixing round, the last one included, may apply worthwhile in-scope
+improvements, and the skill no longer names this repository's ADR numbers. Case 33 was rewritten for the new rule, and
+cases 35 to 37 are new. This follow-up is a separate change under the standing limit of six sessions; five ran.
+Selected: cases 1, 2, and 37 direct; in Claude Code, cases 35 with its case 23 subcheck, 33, 26's approve half, 11, 36,
+and 13. Candidate `4955d7e` for S17 and S18 and the final text. `223955c` for S19 added one line to section 3, and
+`c356f77` reverted it, so the final `SKILL.md` is byte-identical to `4955d7e`'s. Each candidate was exported with
+`git archive` and installed with skills 1.7.4; `diff -r` matched `wkc-code-review`, `wkc-tracker`, and `wkc-backlog`.
+The GitHub fixture gained issues #41, #43, #45, #47, #49, and #51 at `in-review`, each with a handoff naming PRs #42 to
+#52, and the tester staged earlier verdicts and fix commits with the SPEC templates. `max_fix_attempts: 1` was an
+uncommitted edit in S18 to S21's clones. Each session was a Claude Code `general-purpose` subagent on
+`claude-sonnet-5-5`, effort `medium` (session logs), one at a time. Each turn used about 56k to 67k subagent tokens,
+over 8 turns. Scored from `gh`, `git`, and fixture snapshots before and after.
+
+| Session | Case | Result | Evidence |
+|---|---|---|---|
+| S17, pilot | 35, improvement on the last fixing round | PASS at `4955d7e` | PR #42 with two staged `fixed` verdicts at `2 of 3`, head `dfa8e19` correct and with an inline `--lang es` block that repeats `check`. The verdict was `round 3: fixed`, `3 of 3`, two `improved` lines and no `fixed` or `open` line. The one commit `ec2847f` equals `Fixed in:`, touches only `test.sh`, uses `check`, and adds unsupported-language checks; `./test.sh` passes there. |
+| S17 | 23 subcheck, authoring session at the limit | PASS | The same session, asked for the next round: no comment and no commit (PR #42 still `ec2847f`, three comments). The reply said this session wrote the head and a fresh session must review it. |
+| S18 | 33, defect and improvement | FAIL at `4955d7e` | PR #44, `1 of 1`: `round 1: fixed`, the `--shout` defect fixed in `55abb33`, `./test.sh` passing. The inline `--shout` block repeating `check` was neither applied nor listed. Asked afterwards, the session said it went from the blocking finding straight to the fix and skipped the **Quality** pass, and that no text told it to skip. |
+| S19 | 33, rerun | FAIL at `223955c` | Section 3 gained "Run every check below, in order, also after one finds a blocking finding". On new PR #52 with the same shape, the result was the same: `round 1: fixed`, `1 of 1`, defect fixed in `3722cb9`, and the block neither applied nor listed. The line gave no new evidence, so `c356f77` reverted it. |
+| S20 | 26's approve half | PASS at `4955d7e` | PR #46 with one staged `fixed` verdict whose `Fixed in:` is the head `75be9be`, and the inline block left. The verdict was `round 2: approve`, `1 of 1`, the block listed `suggestion` ("no fixing round is left"), and no commit. |
+| S20 | 11, one fixing round used | PASS | PR #48: `round 2: stopped`, `1 of 1`, the unsupported-language defect `open` with its SPEC clause and a reproduction, no commit, head still `7885974`. Its line list holds only this round's items. |
+| S21 | 36, regression from a last-round improvement | PASS at `4955d7e` | PR #50, a staged `round 1: fixed` with only an `improved` line, whose commit `c5f23ce` drops the unsupported-language error. The verdict was `round 2: stopped`, `1 of 1`, the regression `open` at `greet:18` with SPEC CLI and `./greet --lang fr bob` printing `Hello, bob!`, no commit, and the reply said a person decides. It also listed the missing test as `open`, not `suggestion`; the verdict is unchanged by that. |
+| all | 13, scope | PASS | No issue changed state, labels, assignees, or comments. Issue #51 is the rerun fixture, created after the first snapshot. Every PR is `OPEN`; only PR comments and the fix commits on #42, #44, and #52 changed. Each clone kept its uncommitted `config.md`. |
+
+Direct checks at the final text: cases 1 and 2 PASS (YAML, invocation flags, five fields in order, one-line
+description, 250 lines; the verdict, fix commit, and `Discovered:` blocks are each identical to a SPEC block). Case 37
+PASS: `grep -rnE 'ADR-[0-9]+' skills/wkc-code-review/` prints nothing and exits 1, and so does the same grep over
+`skills/`. Section 3 still reads "the SPEC and ADR sections they cite", and `docs/dev-agents/adr/` keeps ADR-001 to
+ADR-005.
+
+Open: case 33. When a round finds a blocking finding, Sonnet at effort `medium` fixes it and skips the **Quality** pass,
+so a repeated helper is neither applied nor listed. The same miss appeared in S10 and S14, before this change. S16 at
+`0 of 3` and S17 at `2 of 3`, each with no blocking finding, caught the same kind of block, so the limit removed here
+does not cause it. A one-line instruction did not change it (S19). Fixing it needs a different approach to the review
+order, which is outside this change.
+
+Still SKIP: cases 7, 12, 14 to 16, 19 to 22, 24, 25, and 27 to 31 at this head; the section 5 line list beyond S20's
+`stopped` verdict; installed harness loading, Codex, and Kiro CLI. One session is left under this change's limit.
