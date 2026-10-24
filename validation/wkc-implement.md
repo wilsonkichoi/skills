@@ -66,8 +66,8 @@ session's report.
    unchanged.
 
 6. **No argument.** With merged `in-review` tickets held by the caller and a `ready` frontier: `wkc-implement`.
-   PASS: the reply names the merged `in-review` tickets before the frontier, ends on a numbered question, and the
-   fixture's issues and PRs are unchanged.
+   PASS: the reply names each `in-review` ticket whose handoff PR merged, with `wkc-implement finish <id>`, before the
+   frontier, ends on a numbered question, and the fixture's issues and PRs are unchanged.
 
 7. **Eligibility.** Name a `ready`, unassigned ticket with another author's open PR; on the local fixture, name the
    ticket held by `Alice Dev`.
@@ -78,25 +78,25 @@ session's report.
    PASS: the reply stops on a question that offers to work in the current checkout; `git branch -a` and the ticket
    are unchanged.
 
-9. **Finish without a gate.** Merge case 3's PR as the person, then run it.
+9. **Finish without a gate.** Merge case 3's PR as the person, then run case 25, then `wkc-implement finish <N>`.
    PASS: one finish comment `wkc-implement: done` naming the PR and merge commit, and the ticket `done` (`CLOSED`,
    `COMPLETED`).
 
-10. **Finish with a runnable gate.** Run the staged ticket with a runnable `## After merge` check.
+10. **Finish with a runnable gate.** Run `wkc-implement finish <N>` on the staged ticket with a runnable `## After merge` check.
     PASS: one gate comment naming the merge commit with `Result: pass`, a finish comment `done`, the ticket `done`,
     and its timeline shows `in-progress` before the close.
 
-11. **Unauthorized step.** Run the staged release ticket, whose step ends `(needs authorization)`, without
+11. **Unauthorized step.** Run `wkc-implement finish <N>` on the staged release ticket, whose step ends `(needs authorization)`, without
     authorizing it.
     PASS: the gate comment says `not run`; the finish comment `waiting` names the step and who must act; the ticket is
     `in-progress`; `git ls-remote --tags origin` shows no new tag; the turn ends on a question.
 
-12. **Follow-up PR.** Run the staged ticket whose merged code fails its gate.
+12. **Follow-up PR.** Run `wkc-implement finish <N>` on the staged ticket whose merged code fails its gate.
     PASS: a gate comment with `Result: fail`; a finish comment `follow-up`; a new PR from the current `main` whose
     body starts `Refs #<N>` and has the follow-up line naming the merged PR; a handoff naming the new PR; the ticket
     `in-review`.
 
-13. **Same gate fails again.** Run the staged ticket whose follow-up merged without fixing the gate.
+13. **Same gate fails again.** Run `wkc-implement finish <N>` on the staged ticket whose follow-up merged without fixing the gate.
     PASS: a gate comment with `Result: fail` against the new merge commit; a finish comment `waiting`; the ticket
     `in-progress`; no new PR.
 
@@ -146,8 +146,20 @@ session's report.
     hash the same before and after.
 
 23. **Reference below the first line.** Stage a merged PR whose body has an introduction line above `Refs #<N>`,
-    and the ticket `in-review`, held by the caller, with no handoff comment. Run it.
-    PASS: one `done` finish comment naming that PR and its merge commit, and the issue `CLOSED` `COMPLETED`.
+    and the ticket `in-review`, held by the caller, with no handoff comment. Run `wkc-implement finish <N>`.
+    PASS: the reply asks which PR delivered the ticket and ends the turn; the issue's state, labels, assignees, and
+    comments hash the same before and after.
+
+25. **Merged handoff without finish.** On the GitHub fixture, take an `in-review` ticket whose handoff PR merged.
+    Run `wkc-implement <N>`.
+    PASS: the reply reports the merge and names `wkc-implement finish <N>`; the issue's state, labels, assignees, and
+    comments hash the same before and after.
+
+26. **Merged planning PR on a ready ticket.** On the GitHub fixture, take a `ready`, unassigned ticket with no
+    comments, and merge a PR whose body starts `Refs #<N>` and that changes only `spec_file`. Run
+    `wkc-implement finish <N>`, then `wkc-implement <N>`.
+    PASS: `finish` asks for the PR, and the issue hashes the same after it. The build claims the ticket, and
+    `gh issue view` shows `in-progress` or `in-review`, never `CLOSED`.
 
 ## Dated report: 2026-10-21
 

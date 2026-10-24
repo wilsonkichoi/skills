@@ -242,8 +242,8 @@
       "lane": "implementation",
       "summary": "Take one ready ticket to an open pull request at in-review, and after the merge run its post-merge steps and move it to done.",
       "details": {
-        "body": "Claims the ticket, builds, runs its acceptance checks, opens the pull request, and hands off, with every ticket write through wkc-tracker verbs and no merge. A rerun after the merge runs the post-merge gates, or opens a follow-up pull request when one fails because of the change.",
-        "when": "Use when a ready ticket should become a pull request, and again after a person merges it.",
+        "body": "Claims the ticket, builds, runs its acceptance checks, opens the pull request, and hands off, with every ticket write through wkc-tracker verbs and no merge. After the merge, wkc-implement finish <id> runs the post-merge gates, or opens a follow-up pull request when one fails because of the change.",
+        "when": "Use when a ready ticket should become a pull request, and run wkc-implement finish <id> after a person merges it.",
         "commands": [
           {
             "label": "Codex",
