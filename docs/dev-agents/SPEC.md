@@ -43,7 +43,7 @@ graph LR
 | `wkc-plan` | shipped, changes | ROADMAP only; hands an approved milestone to `wkc-backlog` (ADR-004) | a ROADMAP change, or none | PRD, SPEC, `wkc-tracker` reads |
 | `wkc-backlog` | new, from `wkc-plan` | Tickets for one milestone, or one change at a time (ADR-004) | milestone, or a change | PRD, SPEC, ROADMAP, `wkc-tracker` |
 | `wkc-implement` | new | One ticket from `ready` to PR, and after merge to `done` (ADR-001) | ticket id, `finish <id>`, or none | `wkc-tracker`, `git`, `gh`, `test_command` |
-| `wkc-code-review` | new | Review rounds on one PR: judge, fix blocking findings, record a verdict (ADR-003) | PR, ticket id, or none | `wkc-tracker`, `git`, `gh`, `max_fix_attempts` |
+| `wkc-code-review` | new | Review rounds on one PR: judge, fix blocking findings and apply worthwhile improvements, record a verdict (ADR-003, ADR-005) | PR, ticket id, or none | `wkc-tracker`, `git`, `gh`, `max_fix_attempts` |
 | `wkc-yolo` | new | A ticket, a wave, or a milestone unattended, after one round of questions | ticket, `wave`, or milestone | the skills above, `merge_gate` |
 | `wkc-retro` | new | Propose rule files from what a ticket, milestone, or run shows | ticket, milestone, or run | `wkc-tracker`, `rules_dir` |
 | `wkc-help`, `wkc-workflow-diagram`, `wkc-skills-release` | shipped | Help, maps, collection releases | | |
@@ -93,7 +93,7 @@ Added to `docs/dev-agents/config.md` by `wkc-setup`, in the PR that first reads 
 | Field | Values | Default when absent | Read by | Meaning |
 |---|---|---|---|---|
 | `merge_gate` | `agent`, `human` | `agent` | `wkc-yolo` | Who merges an approved PR during a run. Outside a run, a person merges through GitHub or `gh` |
-| `max_fix_attempts` | integer, 0 or more | `3` | `wkc-code-review`, `wkc-yolo` | Review rounds that may fix code on one PR. One review-only round always follows the last fix; with `0`, the only round is review-only |
+| `max_fix_attempts` | integer, 0 or more | `3` | `wkc-code-review`, `wkc-yolo` | Review rounds that may change code on one PR, for fixes or improvements. One review-only round always follows the last fix; with `0`, the only round is review-only |
 
 Any other value is a stop that names the field and its allowed values, never a guess. A run may
 tighten either field for itself (`human`, or a lower number) and never loosen it.
@@ -320,6 +320,21 @@ cannot review the wrong PR. With no argument, `wkc-code-review` reviews the one 
 is the current branch, which in a worktree is that worktree's own. With no open PR or several, it
 asks for a PR or ticket id and posts nothing.
 
+The review judges the change against its ticket. A ticket target is the ticket. For a PR target,
+the ticket is the one whose latest `wkc-implement` handoff names the PR, as for finish (The ticket's
+PR). With no such handoff, a ticket the PR names stands in: by its body's first line (PR body), an
+issue GitHub links to it, or a **Conventions** rule. It must be `in-review` with no handoff naming
+another PR, because a PR can cite a ticket it does not build, as PR #55 cited #54, and a round fixes
+toward its ticket's criteria. A ticket counts only when `wkc-tracker show` reads it from the
+configured backend. A PR that names more than one ticket is a question even when a handoff names
+it, and so is a PR naming a ticket other than its handoff's, or no qualifying ticket; never a guess.
+
+With a GitHub remote, a ticket with no open PR is still being built, and the round posts nothing.
+With none, `wkc-implement` leaves the ticket `in-progress` on its branch, and the round reviews that
+branch: the one the caller names, the **Conventions** branch rule, or `<type>/<id>-<slug>`. It
+lands any commit by fast-forwarding the branch, posts on the ticket, and on the local backend runs
+`wkc-tracker` from the checkout that has the branch, where the ticket's other writes are.
+
 `wkc-code-review` posts one comment per round on the PR, or on the ticket when there is no PR:
 
 ```
@@ -329,9 +344,14 @@ Fixed in: <full sha of the fix commit>     <!-- fixed rounds only -->
 Fixing rounds used: <k> of <max_fix_attempts>
 Independent: yes | no, <why>
 - fixed <file:line> <finding>
+- improved <file:line> <change>
 - open <file:line> <finding>
 - suggestion <file:line> <note>
 ```
+
+`fixed` lists blocking findings fixed, `improved` the improvements applied, `open` blocking findings
+left, and `suggestion` the improvements not applied and findings the evidence did not confirm.
+Verdicts from before `improved` existed stay valid.
 
 A `fixed` round makes one commit, in the project's commit convention, or with `fix:` when it has
 none:
@@ -343,17 +363,35 @@ wkc-code-review round <n> on <PR URL>, reviewed <full head sha>.
 - <file:line> <finding>
 ```
 
-- `approve`: no blocking finding, no change made. It applies only to the reviewed sha.
-- `fixed`: blocking findings fixed and pushed; another fresh round is needed.
-- `stopped`: blocking findings remain and no fixing round is left, or a finding came back after
-  being fixed. Open findings are listed, and a person decides.
+- `approve`: no blocking finding, no change made, from an independent round. It applies only to the
+  reviewed sha. Unapplied suggestions never hold it back.
+- `fixed`: the round committed and pushed code: blocking fixes, worthwhile improvements, or both.
+  Another fresh round is needed.
+- `stopped`: blocking findings remain and no fixing round is left, or a blocking finding came back
+  after being fixed. Open findings are listed, and a person decides.
 
-Rounds that fix code are counted against `max_fix_attempts`. After the last allowed fix, one more
-fresh round always runs; it reviews only, so it ends in `approve` or `stopped`. With
-`max_fix_attempts: 0`, the first round is that review-only round.
+Every round that commits code is `fixed` and counts against `max_fix_attempts`; a round that changes
+nothing does not. A round whose commit landed posts its `fixed` verdict even when the head moved
+after it; any other round posts nothing for a head that moved. After the last allowed fix, one more
+fresh round always runs; it reviews only, so it ends in `approve` or `stopped`. Any fixing round,
+the last one included, may apply worthwhile improvements, alone or with its blocking fixes; a
+blocking finding that a change on the last fixing round adds ends that review-only round in
+`stopped`. With `max_fix_attempts: 0`, the first round is that review-only round.
 
-The round number is the count of earlier verdict comments on that PR, plus one. A blocking finding
-is a defect, an unmet acceptance criterion, or a regression. Suggestions are never applied.
+A round is one completed review of one head, recorded by its verdict; commits are not rounds. The
+round number is the count of earlier rounds on that PR, plus one, where two verdicts with the same
+round number and `Reviewed` sha are one round. A head an earlier verdict already reviewed gets no
+new round unless the caller asks for one.
+
+A blocking finding is a defect, an unmet acceptance criterion, a SPEC violation, a regression, or a
+security defect, verified from evidence before it is fixed. A suggestion is an improvement with a
+concrete benefit; a round applies the worthwhile in-scope ones while a fixing round is left, and
+never makes a change with no benefit it can name, or one only because a fixing round is left. A later round does not raise a resolved finding again and checks the changes
+since the last round for regressions.
+
+A round is independent when its context wrote none of the PR's code; a fresh session on the same
+model is independent. A round that is not independent may fix or stop, with `Independent: no`, but
+never approves: where it finds nothing to change, it posts no verdict and asks for a fresh session.
 
 ### Discovered work
 
@@ -584,7 +622,7 @@ the previous tag. Each port also updates the README roster, the repository map u
 
 | PRD goal | Delivered by |
 |---|---|
-| 1. Ticket from `ready` to `done` | `wkc-implement`, `wkc-code-review`; Lifecycle, PR body, Review verdict; ticket shape; ADR-001, ADR-003 |
+| 1. Ticket from `ready` to `done` | `wkc-implement`, `wkc-code-review`; Lifecycle, PR body, Review verdict; ticket shape; ADR-001, ADR-003, ADR-005 |
 | 2. Plans follow changes | `wkc-backlog`; `wkc-plan` for ROADMAP changes; Discovered work; ADR-004 |
 | 3. Unattended milestone | `wkc-yolo`; Unattended calls; `merge_gate` |
 | 4. Learnings become rules | `wkc-retro` |
@@ -595,7 +633,9 @@ the previous tag. Each port also updates the README roster, the repository map u
 - Ticket lifecycle and definition of done: [ADR-001](./adr/ADR-001-ticket-lifecycle.md).
 - `wkc-backlog` owns tickets and `wkc-plan` the ROADMAP: [ADR-004](./adr/ADR-004-backlog-separate-from-plan.md),
   which supersedes [ADR-002](./adr/ADR-002-plan-absorbs-backlog.md).
-- The reviewer fixes its own findings in fresh-context rounds: [ADR-003](./adr/ADR-003-review-and-fix-rounds.md).
+- The reviewer fixes its own findings in fresh-context rounds: [ADR-003](./adr/ADR-003-review-and-fix-rounds.md),
+  amended by [ADR-005](./adr/ADR-005-review-rounds-improve-code.md): rounds may apply worthwhile improvements, and
+  only a fresh context approves.
 - Merge outside a run is a person's, in GitHub or with `gh`. No merge skill.
 - PRs carry no status labels.
 - `wkc-tracker next` stays as is; `wkc-yolo` selects work as its run contract says (Contracts, wkc-yolo run).
@@ -656,6 +696,18 @@ None.
 
 ## Changes
 
+- 2026-10-23: Maintainer review of PR #58 (ADR-005). A review round may apply worthwhile in-scope
+  improvements, and every round that commits code is `fixed` and counts against `max_fix_attempts`;
+  a blocking finding is verified before it is fixed and includes SPEC violations and security
+  defects; a later round does not repeat resolved findings; a round that is not independent never
+  approves. For a PR, the ticket is the one whose handoff names it, and a ticket the PR only names
+  stands in when it is `in-review` with no handoff naming another PR; rounds are counted by verdict,
+  with a duplicate counted once; the verdict gains an `improved` line kind; any fixing round,
+  the last one included, may apply improvements; a landed fix commit always gets its `fixed` verdict; with no GitHub
+  remote, the round reviews the ticket's branch. Replaced "Suggestions are never applied", "the
+  count of earlier verdict comments", and the PR body's first line as the only ticket source
+  (Review verdict, Config fields, Decisions). Review: M3 (#54); M4, whose rounds already start
+  fresh.
 - 2026-10-22: `wkc-implement` finishes only on an explicit `wkc-implement finish <id>`, which
   `wkc-yolo` calls after its merges, and only from the PR named by the ticket's own handoff or
   finish comment; a PR that only cites the ticket never counts, and with no such record finish asks

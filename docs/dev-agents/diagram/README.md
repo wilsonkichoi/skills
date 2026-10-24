@@ -8,14 +8,14 @@ Narrow layouts keep the full-width bottom sheet.
 The default zoom is 70%, or smaller when needed to fit. Selection centers the card in available space at the current zoom.
 Closing slides the panel away without changing card positions or zoom.
 Tinted boxes group Configuration, Planning, Coordination, Implementation, Documentation, and Independent cards. Purple, blue, green, rose, amber, and gray distinguish those regions in both themes.
-The map contains all ten shipped definitions in this repository: `wkc-setup`, `wkc-research`, `wkc-architect`,
-`wkc-plan`, `wkc-backlog`, `wkc-tracker`, `wkc-implement`, `wkc-workflow-diagram`, `wkc-help`, and internal `wkc-skills-release`.
+The map contains all eleven shipped definitions in this repository: `wkc-setup`, `wkc-research`, `wkc-architect`,
+`wkc-plan`, `wkc-backlog`, `wkc-tracker`, `wkc-implement`, `wkc-code-review`, `wkc-workflow-diagram`, `wkc-help`, and internal `wkc-skills-release`.
 Planned skills are excluded.
 Every card is a skill. External systems, outputs, and results appear in the owning skill's details.
 The four system cards and their six action arrows are removed at the user's direction.
 
 The map exists to show how the skills connect in a development workflow, so a person knows which one to run next.
-The main flow runs left to right in one row: setup, research, architect, plan, backlog, tracker, implement.
+The main flow runs left to right in one row: setup, research, architect, plan, backlog, tracker, implement, code-review.
 Documentation and Independent cards sit in a lower row, out of the main flow, at the user's direction.
 Card order (Previous/Next) and lane chip order follow the same flow.
 
@@ -46,12 +46,17 @@ The arrows do not claim automatic skill invocation. Help's installer operations 
 | wkc-plan | [skills/wkc-plan/SKILL.md](../../../skills/wkc-plan/SKILL.md) | Writes only the ROADMAP at `roadmap_file`; reads milestones through `wkc-tracker`; option 1 of its approval hands a milestone to `wkc-backlog`; callers are people |
 | wkc-backlog | [skills/wkc-backlog/SKILL.md](../../../skills/wkc-backlog/SKILL.md) | One milestone or one change; tickets from the SPEC templates; every ticket read and write through `wkc-tracker` verbs; callers are people, `wkc-plan`, `wkc-yolo`, and a model acting on a person's request |
 | wkc-implement | [skills/wkc-implement/SKILL.md](../../../skills/wkc-implement/SKILL.md) | One ticket from `ready` to an open pull request at `in-review`, and after the merge to `done`; every ticket read and write through `wkc-tracker` verbs; out-of-scope work to `wkc-backlog`; never merges; callers are people, `wkc-yolo`, and a model acting on a person's request |
+| wkc-code-review | [skills/wkc-code-review/SKILL.md](../../../skills/wkc-code-review/SKILL.md) | One review round on one pull request: a verdict comment of `approve`, `fixed`, or `stopped`, and one fix commit in a `fixed` round, up to `max_fix_attempts`; ticket reads and comments through `wkc-tracker` verbs; out-of-scope work to `wkc-backlog`; never moves the ticket or merges; callers are people, `wkc-yolo`, and a model acting on a person's request |
 
 | Edge | Kind | Source evidence |
 | --- | --- | --- |
 | setup → research: Doc paths | Handoff, dashed | Setup section B records the PRD, SPEC, and ROADMAP paths "so later skills read the right files"; section 3 names research, architect, and plan as their writers. Research's Dependencies read `prd_file` from config, falling back to the default |
 | implement → tracker: Claims and hands off | Call, solid | Implement's Dependencies name `wkc-tracker` for `show`, `list`, `next`, `assign`, `comment`, and `move`; section 2 claims with `assign`, section 5 posts the handoff with `comment` and moves the ticket to `in-review`, and section 6 moves it to `done` |
 | implement → backlog: Discovered work | Call, dashed | Implement sections 3 and 5: a `Discovered:` comment goes to `wkc-backlog` as a change, a blocker at once and other items after the handoff. Only when the build finds out-of-scope work |
+| implement → code-review: PR in review | Handoff, dashed | Implement section 5's report names a review with `wkc-code-review` in a fresh session as the next step, when it is installed. Code-review's What it does and When to use it take a pull request from `wkc-implement` after the handoff to `in-review`. Dashed because code-review reviews any open pull request |
+| code-review → tracker: Reads and comments | Call, solid | Code-review's Dependencies name `wkc-tracker` for `show` and `comment`; section 1 reads the ticket with `show`, and section 3 posts `Discovered:` comments with `comment` |
+| code-review → backlog: Discovered work | Call, dashed | Code-review sections 3 and 6: a `Discovered:` comment goes to `wkc-backlog` as a change, a blocker at once and other items after the verdict. Only when the review finds out-of-scope work |
+| code-review → implement: Approved head | Handoff, dashed | Code-review section 6: after `approve`, a person merges that sha, then `wkc-implement finish <id>` finishes the ticket. Dashed because implement's finish runs after any merge |
 | setup → tracker: Tracker config | Handoff, solid | Setup's What it does: writes `docs/dev-agents/config.md`, "which `wkc-tracker` reads"; its report's next step is `wkc-tracker list`. Tracker section 1 stops and asks for `wkc-setup` when the config names no backend |
 | research → architect: Approved PRD | Handoff, dashed | Research's Output: "`wkc-architect` reads an approved PRD next"; section 5 names it as the next step. Architect section 1 requires an approved PRD or offers to proceed on stated intent |
 | architect → plan: Approved SPEC | Handoff, dashed | Architect's Output: "`wkc-plan` reads an approved SPEC next"; section 6 names it as the next step. Plan section 1 requires an approved SPEC or offers to plan from stated intent |
@@ -119,6 +124,16 @@ Desktop light overview and phone dark details screenshots were visually inspecte
 The phone sheet scrolls independently; commands below the fold remain reachable.
 
 ## Implementation verification
+
+### wkc-code-review, 2026-10-22
+
+New `code-review` card in the Implementation lane, right of implement; the region widens to hold both cards. implement →
+code-review (PR in review, dashed) runs straight between them. code-review → implement (Approved head, dashed) runs below the row,
+inside code-review → tracker (Reads and comments, solid), which runs below it into tracker's bottom edge with its label under the line.
+code-review → backlog (Discovered work, dashed) runs above implement → backlog and setup → tracker into backlog's top edge, crossing
+only the setup → tracker route. No other node, edge, or route moved. Node **v24.11.1**: check and build passed with no warnings.
+Headless Chrome loaded the HTML from `file://` at 1800 × 900 in dark mode, and the overview was inspected: no arrow crosses a card.
+The tracked screenshots were not regenerated and predate this layout.
 
 ### wkc-implement, 2026-10-21
 

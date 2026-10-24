@@ -8,6 +8,7 @@
     "backlog": { "x": 1920, "y": 0 },
     "tracker": { "x": 2400, "y": 0 },
     "implement": { "x": 2880, "y": 0 },
+    "code-review": { "x": 3360, "y": 0 },
     "workflow-diagram": { "x": 480, "y": 440 },
     "help": { "x": 960, "y": 440 },
     "skills-release": { "x": 1440, "y": 440 }
@@ -44,6 +45,32 @@
         [2120, -80, 2040, -50, 2040, 0]
       ]
     },
+    "implement-code-review": {
+      "start": [3120, 80],
+      "segments": [[3200, 80, 3280, 80, 3360, 80]]
+    },
+    "code-review-implement": {
+      "start": [3420, 160],
+      "segments": [
+        [3420, 200, 3390, 220, 3340, 220],
+        [3060, 220, 3030, 200, 3030, 160]
+      ]
+    },
+    "code-review-tracker": {
+      "start": [3540, 160],
+      "segments": [
+        [3540, 230, 3510, 260, 3440, 260],
+        [2640, 260, 2610, 230, 2610, 160]
+      ],
+      "labelOffset": [0, 18]
+    },
+    "code-review-backlog": {
+      "start": [3540, 0],
+      "segments": [
+        [3540, -130, 3510, -160, 3400, -160],
+        [2030, -160, 2000, -130, 2000, 0]
+      ]
+    },
     "plan-tracker": {
       "start": [1560, 160],
       "segments": [
@@ -70,7 +97,7 @@
     { "lane": "configuration", "x": -24, "y": -52, "width": 288, "height": 236 },
     { "lane": "planning", "x": 456, "y": -52, "width": 1728, "height": 236 },
     { "lane": "coordination", "x": 2376, "y": -52, "width": 288, "height": 236 },
-    { "lane": "implementation", "x": 2856, "y": -52, "width": 288, "height": 236 },
+    { "lane": "implementation", "x": 2856, "y": -52, "width": 768, "height": 236 },
     { "lane": "documentation", "x": 456, "y": 388, "width": 768, "height": 236 },
     { "lane": "independent", "x": 1416, "y": 388, "width": 288, "height": 236 }
   ]

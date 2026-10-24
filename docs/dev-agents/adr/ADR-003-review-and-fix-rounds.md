@@ -1,6 +1,6 @@
 # ADR-003: The reviewer fixes its own findings, in fresh-context rounds
 
-Date: 2026-10-20. Status: accepted
+Date: 2026-10-20. Status: accepted, amended by [ADR-005](./ADR-005-review-rounds-improve-code.md) (suggestions, counting, independence)
 
 ## Context
 

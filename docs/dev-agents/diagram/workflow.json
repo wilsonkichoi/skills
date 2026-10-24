@@ -267,6 +267,36 @@
       }
     },
     {
+      "id": "code-review",
+      "label": "wkc-code-review",
+      "lane": "implementation",
+      "summary": "Run one review round on a pull request from wkc-implement and post a verdict: approve, fixed, or stopped.",
+      "details": {
+        "body": "Judges the change against its ticket and the SPEC, and while fixing rounds are left, fixes verified blocking findings and applies worthwhile in-scope improvements in one pushed commit, without moving the ticket or merging. Each change is reviewed by another round in a fresh session, up to max_fix_attempts, and only a fresh session approves.",
+        "when": "Use after wkc-implement hands a ticket to review, and again after each fixed round, in a fresh session.",
+        "commands": [
+          {
+            "label": "Codex",
+            "text": "$wkc-code-review <PR or ticket id>"
+          },
+          {
+            "label": "Claude Code / Kiro CLI",
+            "text": "/wkc-code-review <PR or ticket id>"
+          }
+        ],
+        "links": [
+          {
+            "label": "Read the wkc-code-review skill",
+            "href": "skills/wkc-code-review/SKILL.md"
+          },
+          {
+            "label": "Decide and change",
+            "href": "skills/wkc-code-review/SKILL.md#4-decide-and-change"
+          }
+        ]
+      }
+    },
+    {
       "id": "workflow-diagram",
       "label": "wkc-workflow-diagram",
       "lane": "documentation",
@@ -428,6 +458,33 @@
       "to": "backlog",
       "kind": "optional",
       "label": "Discovered work"
+    },
+    {
+      "id": "implement-code-review",
+      "from": "implement",
+      "to": "code-review",
+      "kind": "optional",
+      "label": "PR in review"
+    },
+    {
+      "id": "code-review-tracker",
+      "from": "code-review",
+      "to": "tracker",
+      "label": "Reads and comments"
+    },
+    {
+      "id": "code-review-backlog",
+      "from": "code-review",
+      "to": "backlog",
+      "kind": "optional",
+      "label": "Discovered work"
+    },
+    {
+      "id": "code-review-implement",
+      "from": "code-review",
+      "to": "implement",
+      "kind": "optional",
+      "label": "Approved head"
     }
   ]
 }
