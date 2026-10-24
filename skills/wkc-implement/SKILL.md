@@ -65,8 +65,14 @@ person names in reply is then the ticket's. When it is `MERGED` with a merge com
 A handoff is complete when the ticket is `in-review` and carries a handoff comment naming that pull
 request. A pull request counts as merged only when `gh` reports `MERGED` with a merge commit; a
 queued or auto-merge pull request is still open. The review state is the pull request's state,
-review decision, checks, and head sha, with the next step from section 5. When the ticket carries
-non-blocking `Discovered:` comments, end on a numbered question offering to hand them to `wkc-backlog`.
+checks, head sha, GitHub's `reviewDecision`, and the latest `wkc-code-review round` verdict in its
+comments, with that verdict's `Reviewed` sha and whether it is the head. The verdict and
+`reviewDecision` are separate records: report each as found, and never present one as the other.
+The next step follows the verdict. `approve` on the head: a person merges that sha, then
+`wkc-implement finish <id>`. A verdict on an older head: another round, in a fresh session.
+`stopped` on the head: its open findings, and a person decides. No verdict: a review, as in
+section 5. When the ticket carries non-blocking `Discovered:` comments, end on a numbered question
+offering to hand them to `wkc-backlog`.
 
 **With no id**, `wkc-tracker list in-review`, keep the caller's tickets whose handoff pull request
 merged, and name each with `wkc-implement finish <id>`. Then run `wkc-tracker next` and end the

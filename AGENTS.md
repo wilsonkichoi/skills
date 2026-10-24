@@ -151,7 +151,9 @@ documents it changed. Document outlines are guidance, scaled to the work, not re
 `wkc-implement <id>` builds or reports. Only `wkc-implement finish <id>` runs post-merge gates and
 moves a ticket to `done`. The handoff or finish comment identifies the ticket's pull request.
 A pull request that merely cites the ticket cannot replace that record. An open follow-up to the
-recorded merged pull request can continue an incomplete handoff.
+recorded merged pull request can continue an incomplete handoff. Its review state reports the
+latest `wkc-code-review` verdict and GitHub's `reviewDecision` as separate records, and offers the
+merge step only for an `approve` on the current head; a person merges.
 
 A skill that asks the user something ends its turn on the question. Asking and then carrying on
 leaves the harness working, and a working harness cannot take a plain reply. Make the answer cheap

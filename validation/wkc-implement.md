@@ -175,6 +175,23 @@ session's report.
     PASS: one handoff names the existing follow-up PR and its head; the ticket is `in-review`; the assignee is
     unchanged; no new PR or branch; the planning PR's state, head, and body are unchanged.
 
+29. **Approve verdict on the head.** On the GitHub fixture, take an `in-review` ticket with an open PR and a
+    complete handoff, and post a `wkc-code-review round 1: approve` verdict on the PR whose `Reviewed` is the PR's
+    head. Run `wkc-implement <N>`.
+    PASS: the reply names the `approve` verdict and its sha, says it is the head, reports `reviewDecision` as GitHub
+    gives it, and names a person merging that sha, then `wkc-implement finish <N>`; it builds, fixes, and reviews
+    nothing; the issue's state, labels, assignees, and comments and the PR's state, head, and body hash the same.
+
+30. **Approve verdict on an older head.** As case 29, then push one commit to the PR's branch. Run
+    `wkc-implement <N>`.
+    PASS: the reply says the verdict reviewed an older head and that another round, in a fresh session, comes
+    next; it does not offer the merge step; the hashes are the same as after the push.
+
+31. **[MANUAL] GitHub approval with no verdict.** A second account approves the PR of an `in-review` ticket with a
+    complete handoff and no `wkc-code-review round` verdict. Run `wkc-implement <N>`.
+    PASS: the reply reports `reviewDecision` `APPROVED` as a GitHub review, says no `wkc-code-review` verdict exists,
+    and never presents the GitHub approval as one; the hashes are the same before and after.
+
 ## Dated report: 2026-10-21
 
 Scope: new skill, baseline coverage. Selected: cases 1 and 2 as direct checks, cases 3 to 18 in Claude Code. Codex and
