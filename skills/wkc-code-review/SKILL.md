@@ -101,7 +101,7 @@ at `H` (`git worktree add --detach <path> H`), never by switching a checkout tha
 it, and never stash, reset, clean, or commit someone else's changes. Run the criteria's commands and
 `test_command` where a judgment needs them. Remove the worktree when the round ends.
 
-Check the implementation and the tests, in this order:
+Run every check below, in order, also after one finds a blocking finding:
 
 - **Acceptance criteria**, each at its stated bar. Name any criterion with no supporting change.
   `## After merge` steps are not judged here.
