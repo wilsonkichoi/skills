@@ -45,7 +45,7 @@ The arrows do not claim automatic skill invocation. Help's installer operations 
 | wkc-architect | [skills/wkc-architect/SKILL.md](../../../skills/wkc-architect/SKILL.md) | Writes only the SPEC at `spec_file` and ADRs; `wkc-tracker list` when updating with a configured tracker; callers are people |
 | wkc-plan | [skills/wkc-plan/SKILL.md](../../../skills/wkc-plan/SKILL.md) | Writes only the ROADMAP at `roadmap_file`; reads milestones through `wkc-tracker`; option 1 of its approval hands a milestone to `wkc-backlog`; callers are people |
 | wkc-backlog | [skills/wkc-backlog/SKILL.md](../../../skills/wkc-backlog/SKILL.md) | One milestone or one change; tickets from the SPEC templates; every ticket read and write through `wkc-tracker` verbs; callers are people, `wkc-plan`, `wkc-yolo`, and a model acting on a person's request |
-| wkc-implement | [skills/wkc-implement/SKILL.md](../../../skills/wkc-implement/SKILL.md) | One ticket from `ready` to an open pull request at `in-review`, and after the merge to `done`; every ticket read and write through `wkc-tracker` verbs; out-of-scope work to `wkc-backlog`; never merges; callers are people, `wkc-yolo`, and a model acting on a person's request |
+| wkc-implement | [skills/wkc-implement/SKILL.md](../../../skills/wkc-implement/SKILL.md) | One ticket from `ready` to an open pull request at `in-review`, and after the merge to `done` through `wkc-implement finish <id>`; every ticket read and write through `wkc-tracker` verbs; out-of-scope work to `wkc-backlog`; never merges; callers are people, `wkc-yolo`, and a model acting on a person's request |
 | wkc-code-review | [skills/wkc-code-review/SKILL.md](../../../skills/wkc-code-review/SKILL.md) | One review round on one pull request: a verdict comment of `approve`, `fixed`, or `stopped`, and one fix commit in a `fixed` round, up to `max_fix_attempts`; ticket reads and comments through `wkc-tracker` verbs; out-of-scope work to `wkc-backlog`; never moves the ticket or merges; callers are people, `wkc-yolo`, and a model acting on a person's request |
 
 | Edge | Kind | Source evidence |
@@ -124,6 +124,12 @@ Desktop light overview and phone dark details screenshots were visually inspecte
 The phone sheet scrolls independently; commands below the fold remain reachable.
 
 ## Implementation verification
+
+### wkc-implement finish call, 2026-10-24
+
+The `implement` card's body and when name `wkc-implement finish <id>` as the step after the merge, and the implement source row
+says the same. The card keeps its two build commands, the recommended maximum. No node, edge, lane, or layout changed. Node
+**v24.11.1**: check and build passed with no warnings. No browser checks were rerun; the screenshots predate this text.
 
 ### wkc-code-review, 2026-10-22
 

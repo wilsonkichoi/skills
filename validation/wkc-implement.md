@@ -10,6 +10,9 @@ Keep raw logs and fixtures outside tracked files.
 - Preparation
 - Cases
 - Dated report: 2026-10-21
+- Dated report: 2026-10-24, explicit finish call (#59)
+- Dated report: 2026-10-24, PR #63 review round 1
+- Dated report: 2026-10-24, review verdict in the review state (#59)
 
 ## Preparation
 
@@ -66,8 +69,8 @@ session's report.
    unchanged.
 
 6. **No argument.** With merged `in-review` tickets held by the caller and a `ready` frontier: `wkc-implement`.
-   PASS: the reply names the merged `in-review` tickets before the frontier, ends on a numbered question, and the
-   fixture's issues and PRs are unchanged.
+   PASS: the reply names each `in-review` ticket whose handoff PR merged, with `wkc-implement finish <id>`, before the
+   frontier, ends on a numbered question, and the fixture's issues and PRs are unchanged.
 
 7. **Eligibility.** Name a `ready`, unassigned ticket with another author's open PR; on the local fixture, name the
    ticket held by `Alice Dev`.
@@ -78,25 +81,25 @@ session's report.
    PASS: the reply stops on a question that offers to work in the current checkout; `git branch -a` and the ticket
    are unchanged.
 
-9. **Finish without a gate.** Merge case 3's PR as the person, then run it.
+9. **Finish without a gate.** Merge case 3's PR as the person, then run case 25, then `wkc-implement finish <N>`.
    PASS: one finish comment `wkc-implement: done` naming the PR and merge commit, and the ticket `done` (`CLOSED`,
    `COMPLETED`).
 
-10. **Finish with a runnable gate.** Run the staged ticket with a runnable `## After merge` check.
+10. **Finish with a runnable gate.** Run `wkc-implement finish <N>` on the staged ticket with a runnable `## After merge` check.
     PASS: one gate comment naming the merge commit with `Result: pass`, a finish comment `done`, the ticket `done`,
     and its timeline shows `in-progress` before the close.
 
-11. **Unauthorized step.** Run the staged release ticket, whose step ends `(needs authorization)`, without
+11. **Unauthorized step.** Run `wkc-implement finish <N>` on the staged release ticket, whose step ends `(needs authorization)`, without
     authorizing it.
     PASS: the gate comment says `not run`; the finish comment `waiting` names the step and who must act; the ticket is
     `in-progress`; `git ls-remote --tags origin` shows no new tag; the turn ends on a question.
 
-12. **Follow-up PR.** Run the staged ticket whose merged code fails its gate.
+12. **Follow-up PR.** Run `wkc-implement finish <N>` on the staged ticket whose merged code fails its gate.
     PASS: a gate comment with `Result: fail`; a finish comment `follow-up`; a new PR from the current `main` whose
     body starts `Refs #<N>` and has the follow-up line naming the merged PR; a handoff naming the new PR; the ticket
     `in-review`.
 
-13. **Same gate fails again.** Run the staged ticket whose follow-up merged without fixing the gate.
+13. **Same gate fails again.** Run `wkc-implement finish <N>` on the staged ticket whose follow-up merged without fixing the gate.
     PASS: a gate comment with `Result: fail` against the new merge commit; a finish comment `waiting`; the ticket
     `in-progress`; no new PR.
 
@@ -146,8 +149,49 @@ session's report.
     hash the same before and after.
 
 23. **Reference below the first line.** Stage a merged PR whose body has an introduction line above `Refs #<N>`,
-    and the ticket `in-review`, held by the caller, with no handoff comment. Run it.
-    PASS: one `done` finish comment naming that PR and its merge commit, and the issue `CLOSED` `COMPLETED`.
+    and the ticket `in-review`, held by the caller, with no handoff comment. Run `wkc-implement finish <N>`.
+    PASS: the reply asks which PR delivered the ticket and ends the turn; the issue's state, labels, assignees, and
+    comments hash the same before and after.
+
+25. **Merged handoff without finish.** On the GitHub fixture, take an `in-review` ticket whose handoff PR merged.
+    Run `wkc-implement <N>`.
+    PASS: the reply reports the merge and names `wkc-implement finish <N>`; the issue's state, labels, assignees, and
+    comments hash the same before and after.
+
+26. **Merged planning PR on a ready ticket.** On the GitHub fixture, take a `ready`, unassigned ticket with no
+    comments, and merge a PR whose body starts `Refs #<N>` and that changes only `spec_file`. Run
+    `wkc-implement finish <N>`, then `wkc-implement <N>`.
+    PASS: `finish` asks for the PR, and the issue hashes the same after it. The build claims the ticket, and
+    `gh issue view` shows `in-progress` or `in-review`, never `CLOSED`.
+
+27. **Newer open planning PR after a merged handoff.** On the GitHub fixture, take an `in-review` ticket whose
+    handoff PR merged. Open a newer planning-only PR whose body starts `Refs #<N>`. Run `wkc-implement <N>`.
+    PASS: the reply reports the recorded PR's merge and names `wkc-implement finish <N>`; the issue's state,
+    labels, assignees, and comments and every PR's state, head, and body hash the same before and after.
+
+28. **Interrupted follow-up handoff.** Stage an `in-progress` ticket held by the caller, with a handoff and
+    a `follow-up` finish comment naming its merged PR. Open a follow-up PR with section 4's follow-up line naming
+    that PR, but no handoff for the follow-up. Also open a newer planning-only PR that cites the ticket. Run
+    `wkc-implement <N>`.
+    PASS: one handoff names the existing follow-up PR and its head; the ticket is `in-review`; the assignee is
+    unchanged; no new PR or branch; the planning PR's state, head, and body are unchanged.
+
+29. **Approve verdict on the head.** On the GitHub fixture, take an `in-review` ticket with an open PR and a
+    complete handoff, and post a `wkc-code-review round 1: approve` verdict on the PR whose `Reviewed` is the PR's
+    head. Run `wkc-implement <N>`.
+    PASS: the reply names the `approve` verdict and its sha, says it is the head, reports `reviewDecision` as GitHub
+    gives it, and names a person merging that sha, then `wkc-implement finish <N>`; it builds, fixes, and reviews
+    nothing; the issue's state, labels, assignees, and comments and the PR's state, head, and body hash the same.
+
+30. **Approve verdict on an older head.** As case 29, then push one commit to the PR's branch. Run
+    `wkc-implement <N>`.
+    PASS: the reply says the verdict reviewed an older head and that another round, in a fresh session, comes
+    next; it does not offer the merge step; the hashes are the same as after the push.
+
+31. **[MANUAL] GitHub approval with no verdict.** A second account approves the PR of an `in-review` ticket with a
+    complete handoff and no `wkc-code-review round` verdict. Run `wkc-implement <N>`.
+    PASS: the reply reports `reviewDecision` `APPROVED` as a GitHub review, says no `wkc-code-review` verdict exists,
+    and never presents the GitHub approval as one; the hashes are the same before and after.
 
 ## Dated report: 2026-10-21
 
@@ -317,3 +361,109 @@ The maintainer typed `/wkc-implement 15` in a new Claude Code session in this re
 | 10, finish with a runnable gate | PASS | #15: `in-review` to `in-progress` before the gate; one gate comment naming `40018b7`, `make install` exit 0, and the `diff` with no output, `Result: pass`; finish comment `done`, `Gates: all passed`; `CLOSED` `COMPLETED`, no status label, assignee kept. Read with `gh issue view 15`. |
 
 This replaces the installed-invocation SKIP above for Claude Code. Codex and Kiro CLI installed invocation stay SKIP.
+
+## Dated report: 2026-10-24, explicit finish call (#59)
+
+Scope: `wkc-implement` finishes only as `wkc-implement finish <id>`, from the ticket's own handoff or finish comment.
+Selected: cases 1 and 2 as direct checks; in Claude Code, cases 6, 25, 9 to 13, 23, and 26 for the changed behavior,
+and cases 5 and 24 as regressions, because PR discovery now lists only open PRs that cite the ticket. Codex and Kiro
+CLI: SKIP, no session in those harnesses. Candidate `1d93a43`, exported with `git archive`, `skills` 1.7.4.
+
+Fixture: private throwaway `wilsonkichoi/wkc-implement-fixture-59`, staged by the tester. Tickets #1 (no gate), #3
+(runnable gate), #5 (`(needs authorization)` tag), #7 (gate the merged code fails), #9 (gate failed once, follow-up
+PR #11 merged without fixing it), #12 (merged PR #13 with an intro line above `Refs #12`, no handoff), #14 (`ready`,
+no comments, merged SPEC-only PR #15 with `Refs #14`), #16 (open PR #17, no handoff), and #18 (open PR #19 with a
+handoff, plus a comment naming merged PR #15). Case 9 used staged #1 instead of merging case 3's PR. The tester
+merged every merged PR as the person. Before and after each read-only turn, the tester hashed each issue's state,
+labels, assignees, and comment bodies, every PR's state, head, body, and labels, and `git ls-remote`.
+
+Direct checks: case 1 PASS (PyYAML: the five fields in order, `argument-hint` `[<id> | finish <id>]`, `wc -l` 227;
+installed copy equal to the candidate by `diff -r`). Case 2 PASS (all five fenced blocks occur verbatim in the SPEC).
+
+Three sessions of the six allowed, one at a time, as Claude Code `general-purpose` subagents on Sonnet (`sonnet`,
+effort `medium`). Each read the installed `SKILL.md` by hand, so harness loading is untested here. Each later turn
+was a new invocation told to re-read state. About 58k to 74k subagent tokens per turn, 12 turns.
+
+| Session | Case | Result | Evidence |
+|---|---|---|---|
+| S1, pilot | 6, no argument | PASS | Named #9, #7, #5, #3, #1, each with `wkc-implement finish <id>`; said #12 has no handoff and #18's PR is open; then frontier #14 and a numbered question. Every hash unchanged. |
+| S1 | 25, merged handoff | PASS | `wkc-implement 1`: reported PR #2 `MERGED` at `dd80e8a…`, said it never finishes, named `wkc-implement finish 1`. Every hash unchanged. |
+| S1 | 9, no gate | PASS | `finish 1`: one finish comment `done` naming PR #2 and `dd80e8a…`, `Gates: none`; `CLOSED` `COMPLETED`, no status label. |
+| S2 | 10, runnable gate | PASS | `finish 3`: timeline `in-progress` before the close; gate `pass` naming `5bb070d…`; finish `done`, `Gates: all passed`; `CLOSED` `COMPLETED`. |
+| S2 | 11, unauthorized step | PASS | `finish 5`: gate `not run`; finish `waiting` naming the tag and that a person must authorize it; `in-progress`; no tag on the remote; the turn ended on a question. |
+| S2 | 12, follow-up PR | PASS | `finish 7`: gate `fail` naming `0a22075…`; finish `follow-up`; PR #20 from `fix/7-shout`, which contains current `main`, body `Refs #7` then the follow-up line naming PR #8; handoff naming #20; `in-review`. |
+| S2 | 13, same gate again | PASS | `finish 9`: gate `fail` against `3d0357f…`, follow-up PR #11's merge commit; finish `waiting` saying a person must decide; `in-progress`; no new PR. |
+| S3 | 23, reference below line 1 | PASS | `finish 12`: asked which PR delivered #12, said PR #13 only cites it. #12 and #14 hash the same. |
+| S3 | 26, merged planning PR | PASS | `finish 14`: asked for the PR, said PR #15 only cites it; #14 hashed the same. Then `wkc-implement 14`: claimed and built; `in-review`, assignee `wilsonkichoi`, one handoff naming new PR #21; never `CLOSED`. |
+| S3 | 24, unrelated merged PR | PASS | `wkc-implement 18`: review state of open PR #19 at the handoff's head, not finish; #18 hashed the same; PR #19 `OPEN`. |
+| S3 | 5, cut-short handoff | PASS | `wkc-implement 16`: one handoff naming open PR #17 and its head, `in-review`, same assignee, no new PR or branch. |
+| all | 18, never merges | PASS | PRs the sessions opened, #20 and #21, were `OPEN` at the end; every merged PR was merged by the tester. |
+
+Observation: in case 26, S3's first `gh pr create` hung and it retried. The PR list shows one PR for #14 besides the
+planning PR #15, so nothing was duplicated.
+
+Not rerun on `1d93a43`: cases 3, 4, 7, 8, 14 to 17, and 19 to 22, whose text did not change; their results above are
+for earlier candidates. Installed invocation through the harness's skill loader: SKIP in this run, for every harness.
+
+## Dated report: 2026-10-24, PR #63 review round 1
+
+Reviewed `d28fe342016108749a4c0a3a20e26146bd412dc9` against #59 and SPEC Contracts, Lifecycle. Section 1 selected
+the latest of the recorded PR and open citing PRs. A newer open planning PR therefore selected Build despite a
+merged handoff, contrary to the SPEC's instruction to report that merge and write nothing. The fix gives the
+recorded PR precedence and keeps incomplete follow-up handoff recovery through section 4's follow-up line.
+
+Selected: case 1's metadata subcheck, case 2, and cases 27 and 28's PR selection decisions. Backend: GitHub-shaped
+synthetic data, with no service calls. Harness: one Codex subagent, `gpt-6.1-sol`, effort `medium`, given only the
+edited skill and the fixture outputs. It was not given the expected answers or this finding. This adds one session
+to the three Claude Code sessions above, four of six for this change. No further sessions were launched.
+
+- Case 1 metadata subcheck PASS: PyYAML parsed the frontmatter and invocation settings; identifiers and the five
+  opening fields match; `finish <id>` is in the input hint; `SKILL.md` is 229 lines. Installation was not rerun.
+- Case 2 PASS: all five nonempty fenced templates equal the SPEC's blocks.
+- Case 27 decision subcheck PASS: synthetic ticket #1's handoff names merged PR #2 at `bbbbbbbb...`; newer open
+  planning PR #3 starts `Refs #1`. The evaluator selected #2, planned no writes, and named `wkc-implement finish 1`.
+- Case 28 decision subcheck PASS: synthetic ticket #4 is held and `in-progress`; its handoff and finish comment
+  name merged PR #5. Open PR #6 has `Follow-up to https://github.com/acme/selection-fixture/pull/5: ./gate.sh failed.`
+  and no handoff. Newer planning PR #7 only cites #4. The evaluator selected #6, planned only the missing handoff
+  and `in-review` move with verification, and planned no claim, new PR, or gate run.
+- Direct checks PASS: version remains the branch's single `0.0.34` increment from `0.0.33`; changelog timestamp,
+  README, AGENTS, and supporting-file checks pass. Diagram `check` and `build` pass; rebuilt HTML equals HEAD.
+  `git diff --check` passes. The config has no `test_command`, and GitHub reports no PR checks.
+
+These decision subchecks do not establish full-case PASS for cases 27 and 28. Their GitHub writes, hash checks,
+and harness loading were not exercised. Claude Code and Kiro CLI decision checks: SKIP, unavailable in this Codex
+session. Earlier full-case results above remain evidence for their recorded candidate, not a new run of this fix.
+
+Generic `skill-creator` validation FAIL: `Unexpected key(s) in SKILL.md frontmatter: argument-hint, disable-model-invocation.`
+The validator does not support these required repository extensions. The direct YAML checks above retain and
+verify both settings; neither was removed to make that validator pass.
+
+## Dated report: 2026-10-24, review verdict in the review state (#59)
+
+Scope: the review state that `wkc-implement <id>` reports names the latest `wkc-code-review round` verdict, its
+`Reviewed` sha, and whether that sha is the head, next to GitHub's `reviewDecision`. The maintainer folded this into
+#59 after PR #63's round 2 and reset this change's session budget to 6. Selected: cases 29 and 30 for the changed
+behavior, case 24 as the no-verdict regression, case 31 `[MANUAL]`. Codex and Kiro CLI: SKIP, no session in those
+harnesses. Candidate `ae12160`, exported with `git archive` and installed into a clone of the fixture with
+`skills` 1.7.4; `diff -r` of the installed `wkc-implement` against the candidate gave no output.
+
+Fixture: `wilsonkichoi/wkc-implement-fixture-59` from the report above. Case 24 used #18 with open PR #19, its
+handoff, and the comment naming merged PR #15, before any verdict. Case 29 then added an `approve` verdict on PR #19
+whose `Reviewed` is its head `fc29c8a…`. Case 30 used #16 with open PR #17: an `approve` verdict for `7e6fd94…`, then
+one pushed commit, head `ef5419f…`. `reviewDecision` was empty on both PRs. Before and after each turn, the tester
+hashed the issue's state, labels, assignees, and comments, the PR's state, head, body, and comments, and
+`git ls-remote`.
+
+Two sessions of the six, Claude Code `general-purpose` subagents on Sonnet (`sonnet`, default effort), each reading
+the installed `SKILL.md` by hand, so harness loading is untested here. About 64k to 66k subagent tokens per turn,
+3 turns.
+
+| Session | Case | Result | Evidence |
+|---|---|---|---|
+| S1 | 24, no verdict | PASS | `wkc-implement 18`: review state of open PR #19 at the handoff's head, `reviewDecision` empty, "verdict: none", next step a review in a fresh session, then `finish 18` after a merge. Wrote nothing; every hash unchanged. |
+| S1 | 29, approve on the head | PASS | `wkc-implement 18`, a new turn told to re-read state: named `round 1: approve` reviewing `fc29c8a…`, "the current head", reported `reviewDecision` empty as a separate record, next step "a person merges that sha", then `wkc-implement finish 18`. Wrote nothing; every hash unchanged. |
+| S2 | 30, approve on an older head | PASS | `wkc-implement 16`: named the `approve` verdict for `7e6fd94…`, "not the current head" `ef5419f…`, said the approval does not cover the PR now, next step another round in a fresh session; offered no merge. Wrote nothing; every hash unchanged. |
+| none | 31, GitHub approval | SKIP | `[MANUAL]`: needs a second account to approve; the owner cannot approve their own PR. |
+
+Direct checks: `grep -n "reviewDecision\|wkc-code-review round"` shows both in section 1; `wc -l` gives 235; the
+frontmatter parses; `git diff --check` passes.
