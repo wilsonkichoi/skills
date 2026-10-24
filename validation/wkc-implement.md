@@ -10,6 +10,7 @@ Keep raw logs and fixtures outside tracked files.
 - Preparation
 - Cases
 - Dated report: 2026-10-21
+- Dated report: 2026-10-24, explicit finish call (#59)
 
 ## Preparation
 
@@ -329,3 +330,46 @@ The maintainer typed `/wkc-implement 15` in a new Claude Code session in this re
 | 10, finish with a runnable gate | PASS | #15: `in-review` to `in-progress` before the gate; one gate comment naming `40018b7`, `make install` exit 0, and the `diff` with no output, `Result: pass`; finish comment `done`, `Gates: all passed`; `CLOSED` `COMPLETED`, no status label, assignee kept. Read with `gh issue view 15`. |
 
 This replaces the installed-invocation SKIP above for Claude Code. Codex and Kiro CLI installed invocation stay SKIP.
+
+## Dated report: 2026-10-24, explicit finish call (#59)
+
+Scope: `wkc-implement` finishes only as `wkc-implement finish <id>`, from the ticket's own handoff or finish comment.
+Selected: cases 1 and 2 as direct checks; in Claude Code, cases 6, 25, 9 to 13, 23, and 26 for the changed behavior,
+and cases 5 and 24 as regressions, because PR discovery now lists only open PRs that cite the ticket. Codex and Kiro
+CLI: SKIP, no session in those harnesses. Candidate `1d93a43`, exported with `git archive`, `skills` 1.7.4.
+
+Fixture: private throwaway `wilsonkichoi/wkc-implement-fixture-59`, staged by the tester. Tickets #1 (no gate), #3
+(runnable gate), #5 (`(needs authorization)` tag), #7 (gate the merged code fails), #9 (gate failed once, follow-up
+PR #11 merged without fixing it), #12 (merged PR #13 with an intro line above `Refs #12`, no handoff), #14 (`ready`,
+no comments, merged SPEC-only PR #15 with `Refs #14`), #16 (open PR #17, no handoff), and #18 (open PR #19 with a
+handoff, plus a comment naming merged PR #15). Case 9 used staged #1 instead of merging case 3's PR. The tester
+merged every merged PR as the person. Before and after each read-only turn, the tester hashed each issue's state,
+labels, assignees, and comment bodies, every PR's state, head, body, and labels, and `git ls-remote`.
+
+Direct checks: case 1 PASS (PyYAML: the five fields in order, `argument-hint` `[<id> | finish <id>]`, `wc -l` 227;
+installed copy equal to the candidate by `diff -r`). Case 2 PASS (all five fenced blocks occur verbatim in the SPEC).
+
+Three sessions of the six allowed, one at a time, as Claude Code `general-purpose` subagents on Sonnet (`sonnet`,
+effort `medium`). Each read the installed `SKILL.md` by hand, so harness loading is untested here. Each later turn
+was a new invocation told to re-read state. About 58k to 74k subagent tokens per turn, 12 turns.
+
+| Session | Case | Result | Evidence |
+|---|---|---|---|
+| S1, pilot | 6, no argument | PASS | Named #9, #7, #5, #3, #1, each with `wkc-implement finish <id>`; said #12 has no handoff and #18's PR is open; then frontier #14 and a numbered question. Every hash unchanged. |
+| S1 | 25, merged handoff | PASS | `wkc-implement 1`: reported PR #2 `MERGED` at `dd80e8a…`, said it never finishes, named `wkc-implement finish 1`. Every hash unchanged. |
+| S1 | 9, no gate | PASS | `finish 1`: one finish comment `done` naming PR #2 and `dd80e8a…`, `Gates: none`; `CLOSED` `COMPLETED`, no status label. |
+| S2 | 10, runnable gate | PASS | `finish 3`: timeline `in-progress` before the close; gate `pass` naming `5bb070d…`; finish `done`, `Gates: all passed`; `CLOSED` `COMPLETED`. |
+| S2 | 11, unauthorized step | PASS | `finish 5`: gate `not run`; finish `waiting` naming the tag and that a person must authorize it; `in-progress`; no tag on the remote; the turn ended on a question. |
+| S2 | 12, follow-up PR | PASS | `finish 7`: gate `fail` naming `0a22075…`; finish `follow-up`; PR #20 from `fix/7-shout`, which contains current `main`, body `Refs #7` then the follow-up line naming PR #8; handoff naming #20; `in-review`. |
+| S2 | 13, same gate again | PASS | `finish 9`: gate `fail` against `3d0357f…`, follow-up PR #11's merge commit; finish `waiting` saying a person must decide; `in-progress`; no new PR. |
+| S3 | 23, reference below line 1 | PASS | `finish 12`: asked which PR delivered #12, said PR #13 only cites it. #12 and #14 hash the same. |
+| S3 | 26, merged planning PR | PASS | `finish 14`: asked for the PR, said PR #15 only cites it; #14 hashed the same. Then `wkc-implement 14`: claimed and built; `in-review`, assignee `wilsonkichoi`, one handoff naming new PR #21; never `CLOSED`. |
+| S3 | 24, unrelated merged PR | PASS | `wkc-implement 18`: review state of open PR #19 at the handoff's head, not finish; #18 hashed the same; PR #19 `OPEN`. |
+| S3 | 5, cut-short handoff | PASS | `wkc-implement 16`: one handoff naming open PR #17 and its head, `in-review`, same assignee, no new PR or branch. |
+| all | 18, never merges | PASS | PRs the sessions opened, #20 and #21, were `OPEN` at the end; every merged PR was merged by the tester. |
+
+Observation: in case 26, S3's first `gh pr create` hung and it retried. The PR list shows one PR for #14 besides the
+planning PR #15, so nothing was duplicated.
+
+Not rerun on `1d93a43`: cases 3, 4, 7, 8, 14 to 17, and 19 to 22, whose text did not change; their results above are
+for earlier candidates. Installed invocation through the harness's skill loader: SKIP in this run, for every harness.
