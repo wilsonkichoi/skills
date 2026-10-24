@@ -373,10 +373,10 @@ wkc-code-review round <n> on <PR URL>, reviewed <full head sha>.
 Every round that commits code is `fixed` and counts against `max_fix_attempts`; a round that changes
 nothing does not. A round whose commit landed posts its `fixed` verdict even when the head moved
 after it; any other round posts nothing for a head that moved. After the last allowed fix, one more
-fresh round always runs; it reviews only, so it ends in `approve` or `stopped`. The last fixing
-round therefore fixes blocking findings only and lists improvements as suggestions, and an
-improvement-only round needs two fixing rounds left. With `max_fix_attempts: 0`, the first round is
-that review-only round.
+fresh round always runs; it reviews only, so it ends in `approve` or `stopped`. Any fixing round,
+the last one included, may apply worthwhile improvements, alone or with its blocking fixes; a
+blocking finding that a change on the last fixing round adds ends that review-only round in
+`stopped`. With `max_fix_attempts: 0`, the first round is that review-only round.
 
 A round is one completed review of one head, recorded by its verdict; commits are not rounds. The
 round number is the count of earlier rounds on that PR, plus one, where two verdicts with the same
@@ -385,8 +385,8 @@ new round unless the caller asks for one.
 
 A blocking finding is a defect, an unmet acceptance criterion, a SPEC violation, a regression, or a
 security defect, verified from evidence before it is fixed. A suggestion is an improvement with a
-concrete benefit; a round applies the worthwhile in-scope ones, except on the last fixing round,
-and never makes a change with no benefit it can name. A later round does not raise a resolved finding again and checks the changes
+concrete benefit; a round applies the worthwhile in-scope ones while a fixing round is left, and
+never makes a change with no benefit it can name, or one only because a fixing round is left. A later round does not raise a resolved finding again and checks the changes
 since the last round for regressions.
 
 A round is independent when its context wrote none of the PR's code; a fresh session on the same
@@ -702,8 +702,8 @@ None.
   defects; a later round does not repeat resolved findings; a round that is not independent never
   approves. For a PR, the ticket is the one whose handoff names it, and a ticket the PR only names
   stands in when it is `in-review` with no handoff naming another PR; rounds are counted by verdict,
-  with a duplicate counted once; the verdict gains an `improved` line kind; the last fixing round
-  fixes blocking findings only; a landed fix commit always gets its `fixed` verdict; with no GitHub
+  with a duplicate counted once; the verdict gains an `improved` line kind; any fixing round,
+  the last one included, may apply improvements; a landed fix commit always gets its `fixed` verdict; with no GitHub
   remote, the round reviews the ticket's branch. Replaced "Suggestions are never applied", "the
   count of earlier verdict comments", and the PR body's first line as the only ticket source
   (Review verdict, Config fields, Decisions). Review: M3 (#54); M4, whose rounds already start

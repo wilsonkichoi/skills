@@ -38,9 +38,12 @@ Option 2.
 - A round may apply worthwhile in-scope improvements, alongside its blocking fixes or on their own.
   An improvement names its concrete benefit. Purely subjective changes, reversals of earlier style
   choices without a reason, and refactoring with no identifiable benefit stay suggestions. Blocking
-  findings come first. The last fixing round fixes blocking findings only, because only a
-  review-only round follows it, and a regression an improvement added there could only end in
-  `stopped`. So an improvement-only round needs two fixing rounds left.
+  findings come first. Any fixing round may apply improvements, the last one included, and a round
+  never makes a change only because a fixing round is left.
+  An earlier draft of this ADR in PR #58 kept the last fixing round to blocking fixes, because only
+  a review-only round follows it. The maintainer removed that limit on 2026-10-23: with the default
+  of 3, the third fixing round could not improve code, and the review-only round and the stop rules
+  already bound what a late improvement can break.
 - Every round that commits code is `fixed` and uses one of `max_fix_attempts`, whatever the change
   was for. A round that changes nothing uses none. The field keeps its values and default.
 - A blocking finding is verified before it is fixed: the round confirms the defect from the code,
@@ -63,6 +66,8 @@ applies only to the head it reviewed.
 - SPEC Review verdict, the `max_fix_attempts` meaning, and #54's criteria that kept the nit out of
   the fix commit and allowed a non-independent verdict change in the same PR.
 - `wkc-yolo` already starts each round in a fresh context, so this needs no change there.
+- An improvement on the last fixing round that adds a blocking finding ends the review-only round
+  in `stopped`, and a person decides. That costs a handoff a blocking-only last round would avoid.
 - A round now fixes toward its ticket's unmet criteria, so the wrong ticket does harm. For a PR, the
   SPEC takes the ticket whose handoff names it, and a ticket the PR only cites counts only when it is
   `in-review` with no handoff naming another PR.

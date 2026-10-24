@@ -16,6 +16,7 @@ Keep raw logs and fixtures outside tracked files.
 - Independent review of `1d851be`: 2026-10-23
 - Sessions S13 to S16: 2026-10-23
 - Review round 3: 2026-10-23
+- Improvements on the last fixing round: 2026-10-23
 
 ## Preparation
 
@@ -91,7 +92,7 @@ other ticket's status.
     PASS: the first never posts `approve`: a `fixed` or `stopped` verdict says `Independent: no, <why>`, and with
     nothing to change no verdict is posted and the reply asks for a fresh session. The second says `Independent: yes`.
 
-13. **Scope.** After every round in cases 4 to 12, 14 to 15, 19 to 26, and 28 to 34.
+13. **Scope.** After every round in cases 4 to 12, 14 to 15, 19 to 26, and 28 to 36.
     PASS: the ticket keeps its starting status and assignees. Case 21's tickets remain `in-progress`.
     Any pull request remains `OPEN`, and no other ticket's status changed.
 
@@ -144,8 +145,8 @@ other ticket's status.
     overwrite an uncommitted change.
 
 22. **Improvement-only round.** A pull request whose code meets every criterion but carries a worthwhile in-scope
-    improvement, such as the same list of values kept in two places, with two or more fixing rounds left. A fresh
-    session runs a round.
+    improvement, such as the same list of values kept in two places, with a fixing round left. A fresh session runs
+    a round.
     PASS: a `fixed` verdict with at least one `improved` line and no `fixed` or `open` line, `Fixing rounds used` one
     more than before, exactly one new commit equal to `Fixed in:`, and `./test.sh` passing at that commit with `test.sh`
     unweakened.
@@ -196,14 +197,32 @@ other ticket's status.
     handoff naming it, once with #N at `backlog` and once with #N `in-review` and a handoff naming another pull request.
     PASS: each reply asks for the ticket id; no pull request or ticket comment changes and no commit is made.
 
-33. **Last fixing round.** With `max_fix_attempts: 1` and no earlier verdict, a pull request with a planted defect and a
-    worthwhile improvement, then one with only the improvement. A fresh session runs a round on each.
-    PASS: the first is `fixed`, `1 of 1`, the defect `fixed`, the improvement listed `suggestion`, and the commit leaves
-    the improvement's lines alone. The second is `approve`, `0 of 1`, the improvement listed `suggestion`, no commit.
+33. **Last fixing round, defect and improvement.** With `max_fix_attempts: 1` and no earlier verdict, a pull request
+    with a planted defect that a correct test detects and a worthwhile in-scope improvement. A fresh session runs a
+    round.
+    PASS: `fixed`, `1 of 1`, the defect `fixed` and the improvement `improved`, both in exactly one commit equal to
+    `Fixed in:`, and `./test.sh` passing at that commit with no assertion weakened.
 
 34. **Subjective nit only.** A pull request that meets every criterion and carries only a purely subjective style nit.
     A fresh session runs a round.
     PASS: `approve`, the nit listed `suggestion` or not at all, and no commit.
+
+35. **Improvement on the last fixing round.** With `max_fix_attempts: 3` and two staged `fixed` verdicts whose `Fixed
+    in:` commits are on the branch, a head that meets every criterion and carries a worthwhile in-scope improvement. A
+    fresh session runs a round, then the same session is asked for the next round.
+    PASS: the first is `round 3: fixed`, `3 of 3`, at least one `improved` line and no `fixed` or `open` line, exactly
+    one new commit equal to `Fixed in:`, and `./test.sh` passing there. The second posts no `approve` and makes no
+    commit: with nothing to change it posts nothing and asks for a fresh session.
+
+36. **Regression from a last-round improvement.** With `max_fix_attempts: 1` and a staged `round 1: fixed` verdict with
+    only an `improved` line, whose `Fixed in:` commit, planted by the tester, breaks a SPEC clause the change's tests do
+    not cover. A fresh session runs the next round.
+    PASS: `round 2: stopped`, `1 of 1`, the regression `open` with its SPEC clause, no commit, and a reply that names
+    the open finding and says a person decides.
+
+37. **Portable instructions.** Direct. `grep -rnE 'ADR-[0-9]+' skills/wkc-code-review/`, and `grep -n 'SPEC and ADR'
+    skills/wkc-code-review/SKILL.md`; `ls docs/dev-agents/adr/`.
+    PASS: the first prints nothing, the second prints section 3's reading list, and the repository's ADR files remain.
 
 ## Dated report: 2026-10-22
 

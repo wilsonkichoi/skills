@@ -10,7 +10,7 @@ disable-model-invocation: false
 - **What it does:** runs one review round on one pull request. It judges the implementation and its
   tests against the ticket and the SPEC, verifies each blocking finding, and, while a fixing round
   is left, fixes those findings and applies worthwhile in-scope improvements in one commit. It posts
-  one verdict comment: `approve`, `fixed`, or `stopped` (ADR-003, ADR-005).
+  one verdict comment: `approve`, `fixed`, or `stopped`.
 - **When to use it:** after `wkc-implement` hands a ticket to `in-review`, and again after each
   `fixed` round, every round in a fresh session. Callers are people, `wkc-yolo`, and a model acting
   on a person's request. A model runs it only when a person or `wkc-yolo` asked for that work.
@@ -170,21 +170,22 @@ there with no fix and no verdict. Other items wait for section 6.
 |---|---|
 | A blocking finding listed `fixed` earlier is back | `stopped`, with no change made |
 | Blocking findings, and no fixing round is left | `stopped`, with no change made |
-| Blocking findings, and a fixing round is left | Fix them, with worthwhile improvements unless this is the last fixing round: `fixed` |
-| No blocking finding, worthwhile improvements, and two or more fixing rounds left | Apply them: `fixed` |
+| Blocking findings, and a fixing round is left | Fix them and apply worthwhile in-scope improvements where appropriate: `fixed` |
+| No blocking finding, worthwhile improvements, and at least one fixing round left | Apply them: `fixed` |
 | No blocking finding, and no change the row above allows | `approve`, with no change made |
 
 A round that is not independent never approves: where the table says `approve`, post nothing and
 report that a fresh session must review `H`.
 
-**Change** the blocking findings first, then the worthwhile improvements, each with the smallest
-coherent change, in the project's style. An improvement is worthwhile when its benefit is real and
-it stays in the ticket's scope. Apply it by default: you can make it as cheaply as describe it, and
-an unapplied suggestion usually goes unmade. Keeping behaviour the same is what an improvement
-does, never a reason to skip one. Purely subjective changes, reversals of earlier style choices
-without a reason, and refactors that add complexity for little gain stay suggestions. The last
-fixing round fixes blocking findings only, and lists improvements as suggestions: only a
-review-only round follows it, so a regression an improvement adds there can only end in `stopped`.
+**Change** the verified blocking findings first, then the worthwhile improvements, each with the
+smallest coherent change, in the project's style. An improvement is worthwhile when its benefit is
+real and it stays in the ticket's scope. Apply it by default whenever a fixing round is left, the
+last one included: you can make it as cheaply as describe it, and an unapplied suggestion usually
+goes unmade. Judge each one's benefit, scope, complexity, and regression risk. Keeping behaviour the
+same is what an improvement does, never a reason to skip one. Speculative, purely subjective, or
+low-value changes, reversals of earlier style choices without a reason, and refactors that add
+complexity for little gain stay suggestions; a fixing round left is never a reason to make one.
+A blocking finding that a change on the last fixing round adds ends the next round in `stopped`.
 Never weaken a valid test, a check, or a criterion, and never change a valid test to make code
 pass. Run the checks the change touches and `test_command`. A blocking finding you cannot fix stays
 `open`; when you can fix none of them, make no change: `stopped`. Make one commit for the round, in
