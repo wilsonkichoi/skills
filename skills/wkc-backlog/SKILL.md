@@ -109,6 +109,12 @@ Give new tickets draft ids such as T1 and T2, kept apart from tracker ids. A wor
 Evidence, from <the Discovered comment's URL, or the report it came from>: <its Observed, Reproduce, Because, and Verified lines, copied in>.   <!-- only for a reported problem -->
 ```
 
+When writing **Notes** for a reported problem, keep the template's `Evidence, from <source>:` line
+with the link to the comment or report. Then copy its `Observed`, `Reproduce`, `Because`, and
+`Verified` lines word for word. For a `Discovered:` item, copy from the original comment returned
+by `wkc-tracker show <id>`, including a handoff from `wkc-code-review`. Never use the caller's
+summary in place of those lines.
+
 A spike, titled `Spike: <question>`. Its code is thrown away, never shipped:
 
 ```markdown
@@ -143,8 +149,6 @@ Options: <each with its gains and costs>. Who decides: a person | `wkc-architect
 - Criteria someone else can check: a command and its output, a request and its response, a file,
   or a manual check for what only a person can judge. Broad criteria, like error handling, list
   cases, but never invent consequential behaviour to add one.
-- A reported problem's `Observed`, `Reproduce`, `Because`, and `Verified` lines go into **Notes**
-  word for word, with the link to the comment or report, never as a summary.
 - Integration tests that can run before merge are acceptance criteria. Tests that need the merged
   or deployed build are `## After merge` checks.
 - Every step that publishes, deploys, or touches a shared environment ends with `(needs authorization)`.

@@ -2,6 +2,10 @@
 
 Newest first. Each version is a `## {version} ({ISO 8601 timestamp with local offset})` heading followed by a bullet list of changes.
 
+## 0.0.33 (2026-10-23T23:04:22-07:00)
+
+- `wkc-backlog` puts its evidence-copying instruction next to the work-ticket Notes template. A `Discovered:` item's `Observed`, `Reproduce`, `Because`, and `Verified` lines come word for word from the original comment returned by `wkc-tracker show`, including handoffs from `wkc-code-review`, never from the caller's summary (#61).
+
 ## 0.0.32 (2026-10-23T17:14:20-07:00)
 
 - New `wkc-code-review` runs one review round on a pull request from `wkc-implement` (ADR-003, ADR-005). It judges the implementation and its tests against its ticket's acceptance criteria and the SPEC, and reads the diff for quality, such as code that repeats an existing helper. A defect, an unmet criterion, a SPEC violation, a regression, or a security defect is blocking only with the requirement it breaks, its evidence, and a concrete failure scenario, and is verified before it is fixed; a finding the evidence does not confirm is reported as an unconfirmed suggestion. While a fixing round is left, it fixes the blocking findings, including other instances of the same pattern in the ticket's change, and applies worthwhile in-scope improvements, all in one pushed commit from the SPEC's fix commit template. Any fixing round may apply improvements, the last one included; a blocking finding one adds there ends the review-only round in `stopped`. It posts one verdict comment from the SPEC template, `approve`, `fixed`, or `stopped`, tied to the reviewed head, and the verdict gains an `improved` line kind. It never merges, approves through GitHub's review state, or moves, assigns, creates, or edits a ticket.

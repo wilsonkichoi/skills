@@ -208,6 +208,8 @@ Cases 16 to 19 use a fixture where M1's tickets are written by hand and M2 **Dep
     no criterion or `Assumption:` line picks a shape. FAIL: the draft fixes the shape itself. New, from #47.
 
 31. **Evidence copied.** Ask for a ticket from the five-line `Discovered:` comment.
+    Include a local-tracker comment written by `wkc-code-review` and handed over by its section 6.
+    The draft must use the original comment returned by `wkc-tracker show`, even when the caller summarizes it.
     PASS: the draft's **Notes** has an `Evidence, from <link or location of the comment>:` line, and `grep -F` finds
     each of its `Observed`, `Reproduce`, `Because`, and `Verified` lines in the draft. FAIL: a line is missing,
     reworded, or summarized. New, from #47 and the S7 observation in `wkc-implement.md`.
@@ -333,6 +335,53 @@ not rerun.
 
 With V1's correction, case 29 has one PASS (V4, intermediate wording) and one FAIL (V1, first wording), and no run
 on the final wording.
+
+## Dated report: 2026-10-23
+
+Scope: #61, copying evidence from a `wkc-code-review` handoff. Selected: case 31 on the local backend
+in Codex, plus case 1's YAML, invocation settings, opening fields, references, and installed-copy
+subchecks, and case 3's template comparison as direct checks. This is not a full case 1 or
+cross-harness compatibility run. Claude Code and Kiro CLI behavior was outside this selection.
+
+Source: `origin/main` at `63b9b92`, with the candidate `skills/wkc-backlog/SKILL.md` blob
+`8acf76005ff9da7ba72c714135e4ef1d10f7ccf6`. `wkc-code-review` and `wkc-tracker` were unchanged.
+`skills` 1.7.4 installed all three into an isolated clone of the existing S6 local fixture from
+the [code-review report](./wkc-code-review.md#rerun-after-review-round-1-2026-10-22).
+The clone had no remote and checked out `feat/001-shout-flag` at
+`343ec85bce9817ae88ff595a23fccc41003dfa15`. Config gained `max_fix_attempts: 3`.
+Ticket 001 kept the five-line empty-name `Discovered:` comment authored by `wkc-code-review` on
+2026-10-22. The other discovered item was omitted to isolate this handoff. A recorded approval
+verdict supplied the section 6 checkpoint. This run tested the handoff, not a new review round.
+
+Both sessions received this exact prompt:
+
+```text
+$wkc-code-review 001
+Resume at section 6. The review is complete and its verdict is recorded on the ticket. Hand the non-blocking empty-name Discovered item on ticket 001 to wkc-backlog. This is a draft-only session; stop at the approval question.
+```
+
+Two sessions of the six allowed, one at a time, using Codex CLI 0.164.0, model `gpt-6.1-sol`,
+effort `medium`, and `--ignore-user-config`. The CLI exposed no per-session cost cap.
+Pilot usage was inspected before the second session: 158,588 input tokens, including 123,008 cached,
+and 1,128 output tokens. The second session used 158,409 input tokens, including 129,920 cached,
+and 1,261 output tokens. No additional AI session ran.
+
+| Check | Result | Independent evidence |
+|---|---|---|
+| 31, pilot | FAIL | `grep -F` found all four original evidence lines in Notes, but the source line began `Evidence from`, missing the template's comma. The instruction was then made explicit about keeping `Evidence, from <source>:`. |
+| 31, final wording | PASS | Section 6 continued into `wkc-backlog`, which read ticket 001 through the local `wkc-tracker` backend and drafted T1. A separate `grep -F` for each original `Observed:`, `Reproduce:`, `Because:`, and `Verified:` line found it in the draft's Notes. Another found `Evidence, from ` with the comment's file link and heading. Both sessions stopped on the approval question. SHA-256 checks of every ticket file matched before and after; no draft was published. |
+| 1, selected package subchecks | PASS, direct | PyYAML parsed the frontmatter and `agents/openai.yaml`; names, the five opening fields, supported extension values, invocation settings, and relative references passed. No supporting Markdown file exceeded 100 lines. `SKILL.md` is 253 lines, within the 500-line specification limit but above the repository's 250-line target. `diff -r` matched the three installed skill directories against the candidate. Discovery and other harness links were not selected. |
+| 3, ticket templates | PASS, direct | All three Markdown ticket templates extracted from the candidate matched SPEC Contracts / Ticket byte for byte. `git diff --check` also passed. |
+
+Both sessions ran the fixture's `./test.sh`, which failed with the existing unrelated fixture defect:
+`FAIL: greet --version: expected 'greet 1.0', got 'greet 0.9'`. This is not a case 31 failure.
+The defect and its original evidence were already recorded in S6 of the code-review report.
+
+The generic `skill-creator/scripts/quick_validate.py` rejected the existing `argument-hint` and
+`disable-model-invocation` fields as unexpected keys. Those are supported repository harness
+extensions. The separate package checks above validated their values without changing the validator.
+Raw prompts, session JSONL, drafts, fixture snapshots, and direct-check output remain outside tracked
+files in `.local/runs/61-backlog-evidence/` in the implementation worktree.
 
 Known limit, from review and not run: "another system" could be read to cover the shell or a database the project
 owns, so a model might escalate a conventional internal choice, such as a column type, as a data exchange. That

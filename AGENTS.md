@@ -141,6 +141,8 @@ Updates preserve authored content, edge meaning, and layout. A new default alone
 
 Inputs and outputs between skills stay loose. A skill states what it expects and what it produces,
 but does not reject work over formatting. Following rigid steps for ceremony is not the point.
+`wkc-backlog` copies a `Discovered:` item's evidence into ticket Notes from the original comment
+returned by `wkc-tracker show`, including handoffs from `wkc-code-review`.
 
 The lifecycle documents (PRD, SPEC, ROADMAP) are optional, not a pipeline. Each skill uses whatever
 exists, and work that fits the current intent skips the earlier stages: do the work, then update the
