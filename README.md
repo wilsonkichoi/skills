@@ -116,6 +116,9 @@ composes, because it only runs skills that already work by hand. It keeps its st
 resume. Once the run starts, it asks nothing; the decisions it records are what a person reviews
 afterwards.
 
+For reported problems, `wkc-backlog` copies the evidence lines into ticket Notes from the original
+`Discovered:` comment returned by `wkc-tracker show`, including handoffs from `wkc-code-review`.
+
 ## Workflow diagrams
 
 `wkc-workflow-diagram` reads actual definitions and preserves authored content when updating an existing diagram.
