@@ -19,6 +19,7 @@ Keep raw logs and fixtures outside tracked files.
 - Improvements on the last fixing round: 2026-10-23
 - Dated report: 2026-10-25, unattended calls (#73)
 - Review round 1: 2026-10-25, PR #78
+- Review round 2: 2026-10-25, PR #78
 
 ## Preparation
 
@@ -600,3 +601,14 @@ evidence from `wilsonkichoi/wkc-yolo-fixture-73`. No new AI sessions; the change
 - Reused: the preceding report's unchanged unattended rules and fixture PR #13's confirming verdict and #15's
   conflict-fix verdict. Their heads and comments were read independently in this round. Codex and Kiro model
   coverage stays SKIP. No configured `test_command`; GitHub reports no checks on PR #78.
+
+## Review round 2: 2026-10-25, PR #78
+
+Reviewed `9a4f299445156f71491e71355f3bc36e10fdea7e`. Selected: case 41's PR-description subcheck, and case 39's
+merge-classification subcheck as a direct check. Direct checks in Claude Code; no AI sessions.
+
+- PASS, static subcheck only: section 4 now updates **What changed** after the push and the head check, so a refused
+  push leaves the body untouched. Full case 41 model behavior: SKIP, session limit reached.
+- PASS: all six unattended template blocks equal the SPEC's; `git diff --check` is clean; names and invocation
+  settings unchanged. A controlled Git fixture gave `git merge-tree --write-tree A M` exit 0 with the tree of the
+  merge head, a clean update. Codex and Kiro model coverage stays SKIP.
