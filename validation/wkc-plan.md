@@ -36,7 +36,8 @@ the skill's report.
    harness links to it.
 
 2. **Document ownership is consistent.** Read `wkc-plan`, `wkc-backlog`, `wkc-architect`, `wkc-tracker`, and the root `README.md`.
-   PASS: plan writes only `roadmap_file`; every tracker verb it names is a read in the `wkc-tracker` verb table;
+   PASS: plan writes only `roadmap_file`; every tracker verb it names is a read in the `wkc-tracker` verb table,
+   except `milestone close`, its one write, named only in **Dependencies** and section 5;
    it carries no ticket template, graph rule, or publish step (`grep` for `## What to build`, `create`, `link`,
    `Edge order`); it never writes the PRD, SPEC, code, or config; architect names plan as its next step; the README
    names plan as the ROADMAP's writer and `wkc-backlog` as the tickets' writer; the ROADMAP outline carries no
@@ -90,6 +91,23 @@ the skill's report.
     PASS: as there, no skill-tool call for `wkc-plan` or `wkc-architect`, and `git status --porcelain` is empty.
     New, from #67.
 
+34. **Close with an open ticket.** On a GitHub fixture whose milestone has one `done` and one `ready` ticket, run
+    `wkc-plan close <milestone>`.
+    PASS: the reply names the `ready` ticket and stops with no close question; `gh api` shows the milestone `open`;
+    every issue's state, labels, and comment count, and the ROADMAP hash, are unchanged. New, from #66.
+
+35. **Close after the exit check.** Close the case 34 ticket, then run `wkc-plan close <milestone>` twice in one
+    session, answering `2` and then `1`.
+    PASS: each turn shows the counts by status and the ROADMAP's exit check for that milestone, and ends on a
+    numbered question; after `2` the milestone is `open` by `gh api`; after `1` it is `closed`. The ROADMAP hashes
+    the same before and after, and no issue changed. New, from #66.
+
+36. **Close on the local backend.** On a local-tracker fixture whose milestone has only terminal tickets, run
+    `wkc-plan close <milestone>` and answer `1`.
+    PASS: the turn shows the counts and exit check and asks; after `1`, the reply comes from `wkc-tracker milestone
+    close` and says the backend has no milestone state; `shasum` of every ticket file and the ROADMAP is unchanged
+    and `git status --porcelain` is empty. New, from #66.
+
 ## Moved cases
 
 Moved to [wkc-backlog.md](./wkc-backlog.md) on 2026-10-21, adapted to the new skill. Cases 3 and 16 were split: the
@@ -104,6 +122,34 @@ ticket parts moved, the ROADMAP parts stay above. Case 28 is in both runbooks.
 | 17 to 21 | wkc-backlog 16 to 20 |
 | 22 | wkc-backlog 3, ticket templates |
 | 24 to 28 | wkc-backlog 21 to 25 |
+
+## Dated report: 2026-10-24, milestone close (#66)
+
+Scope: `wkc-plan close <milestone>`. Selected: case 1's package subchecks and case 2's tracker-verb subcheck as direct
+checks; cases 34 to 36 in Claude Code. Codex and Kiro CLI: SKIP, no session in those harnesses. Other cases are outside
+this change. Candidate `56fec07`, exported with `git archive` and installed with `skills` 1.7.4; `diff -r` of the
+installed `wkc-plan`, `wkc-implement`, and `wkc-tracker` against the candidate gave no output.
+
+Fixture: private throwaway `wilsonkichoi/wkc-implement-fixture-59`, reused, with a ROADMAP naming exit checks for
+`M2: Greeting styles`, `M3: Finish check`, and `M4: Busy` pushed to its `main`. M2 held #22 (`done`) and #24 (`ready`);
+M3 held #23 (`done`) and #25; M4 held #26 (`ready`) and #27; #28 had no milestone. #25, #27, and #28 were staged
+`in-review`, held by the tester, each with a handoff comment naming a PR the tester merged (#29, #30, #31). A local
+fixture held milestone `M1: Local close` with tickets `001` (`done`) and `002` (`cancel`). Before and after each turn
+the tester recorded every milestone's state and each issue's state, reason, labels, assignees, and comment count, and
+the ROADMAP hash, by `gh` and `shasum`.
+
+Two sessions of the six for this change, S1 and S2; S3 is in the [wkc-implement report](./wkc-implement.md). Claude Code
+`general-purpose` subagents on Sonnet (`sonnet`, effort `medium`), run one at a time, each reading the installed
+`SKILL.md` by hand, so harness loading is untested here. Each later turn continued the same session. About 55k to 64k
+subagent tokens per turn, 7 turns across S1 and S2.
+
+| Case | Result | Evidence |
+|---|---|---|
+| 1, selected subchecks | PASS, direct | PyYAML: names match, model invocation unchanged, five opening fields in order, `argument-hint` `[a change to the ROADMAP | close <milestone>]`, `description` on one line, `wc -l` 143. |
+| 2, tracker-verb subcheck | PASS, direct | `grep -n "milestone close"` finds it only in **Dependencies** and section 5; every other verb named is a read. |
+| 34 | PASS | S1 pilot, `close M2: Greeting styles`: named #24 `ready` and #22 `done`, asked no close question, ran only reads. Every recorded field unchanged; M2 `open`. |
+| 35 | PASS | Tester closed #24 as `NOT_PLANNED`. S1, two more turns of the same command: each showed `done` 1, `cancel` 1, and M2's exit check, and ended on the numbered question. After `2`: M2 `open`, nothing changed. After `1`: one `PATCH .../milestones/1 -f state=closed`; M2 `closed`; every issue and the ROADMAP hash unchanged. |
+| 36 | PASS | S2, `close M1: Local close` on the local fixture: showed the counts and exit check and asked, noting the backend has no milestone state. After `1`: reported that `milestone close` writes nothing on the local backend. `shasum` of both ticket files and the ROADMAP unchanged; `git status --porcelain` empty. |
 
 ## Dated report: 2026-10-24
 

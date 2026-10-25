@@ -13,6 +13,7 @@ Keep raw logs and fixtures outside tracked files.
 - Dated report: 2026-10-24, explicit finish call (#59)
 - Dated report: 2026-10-24, PR #63 review round 1
 - Dated report: 2026-10-24, review verdict in the review state (#59)
+- Dated report: 2026-10-24, milestone close named by finish (#66)
 
 ## Preparation
 
@@ -192,6 +193,17 @@ session's report.
     complete handoff and no `wkc-code-review round` verdict. Run `wkc-implement <N>`.
     PASS: the reply reports `reviewDecision` `APPROVED` as a GitHub review, says no `wkc-code-review` verdict exists,
     and never presents the GitHub approval as one; the hashes are the same before and after.
+
+32. **Finish names a milestone close.** On the GitHub fixture, stage an `in-review` ticket held by the caller, with a
+    merged handoff PR, as the last open ticket of a milestone whose other ticket is `done`. Run
+    `wkc-implement finish <N>`.
+    PASS: the ticket is `done` (`CLOSED`, `COMPLETED`) with one finish comment; the report names
+    `wkc-plan close <milestone>`; `gh api` shows the milestone still `open`. New, from #66.
+
+33. **Finish names no close.** As case 32, once on a ticket whose milestone still has a `ready` ticket, and once on a
+    ticket with no milestone.
+    PASS: both tickets are `done`, both reports name no `wkc-plan close`, and every milestone keeps its state by
+    `gh api`. New, from #66.
 
 ## Dated report: 2026-10-21
 
@@ -467,3 +479,27 @@ the installed `SKILL.md` by hand, so harness loading is untested here. About 64k
 
 Direct checks: `grep -n "reviewDecision\|wkc-code-review round"` shows both in section 1; `wc -l` gives 235; the
 frontmatter parses; `git diff --check` passes.
+
+## Dated report: 2026-10-24, milestone close named by finish (#66)
+
+Scope: after a move to `done`, `wkc-implement finish` names `wkc-plan close <milestone>` when the ticket's milestone has
+nothing open. Selected: case 1's package subchecks as direct checks; cases 32 and 33 in Claude Code. Codex and Kiro CLI:
+SKIP, no session in those harnesses. Candidate `56fec07`; source, install, and fixture are in the
+[wkc-plan report](./wkc-plan.md#dated-report-2026-10-24-milestone-close-66).
+
+Direct checks: case 1 subchecks PASS (PyYAML: names match, model invocation unchanged, five opening fields in order,
+`wc -l` 239, under 250; installed copy equal to the candidate by `diff -r`).
+
+Session S3, the third of six for this change: a Claude Code `general-purpose` subagent on Sonnet (`sonnet`, effort
+`medium`), reading the installed `SKILL.md` by hand, so harness loading is untested here. Three turns in one session,
+about 66k to 70k subagent tokens each.
+
+| Case | Result | Evidence |
+|---|---|---|
+| 32 | PASS | `finish 25`: one finish comment `done` naming PR #29 at `b6cdece…`, `Gates: none`; #25 `CLOSED` `COMPLETED`. The report said both M3 tickets are `done` and named `wkc-plan close M3: Finish check`. M3 still `open` by `gh api`; no other field changed. |
+| 33, open ticket left | PASS | `finish 27`: #27 `CLOSED` `COMPLETED` with one finish comment. The report said M4 still has #26 `ready` and suggested no close. M4 still `open`. |
+| 33, no milestone | PASS | `finish 28`: #28 `CLOSED` `COMPLETED` with one finish comment. The report said the ticket has no milestone and suggested no close. Every milestone kept its state. |
+
+Observation: in S3's first turn the session created an empty `/tmp/p.jq` by a stray redirect, outside the fixture. The
+tester deleted it. No ticket or milestone was affected.
+
