@@ -1,6 +1,6 @@
 # wkc- skills SPEC
 
-Status: approved (2026-10-22)
+Status: approved (2026-10-24)
 
 ## Overview
 
@@ -37,10 +37,10 @@ graph LR
 | Skill | State | Responsibility | Input | Depends on |
 |---|---|---|---|---|
 | `wkc-setup` | shipped, changes | Config and scaffold. Adds `merge_gate` and `max_fix_attempts` to the interview and template | none | `git`, `gh` or Linear MCP |
-| `wkc-tracker` | shipped, changes | Ticket state mechanics on three backends; on local, commits each write | verb and args | config, `git` for local |
+| `wkc-tracker` | shipped, changes | Ticket state mechanics on three backends; on local, commits each write; closes a milestone on request | verb and args | config, `git` for local |
 | `wkc-research` | shipped | PRD | free text | none |
-| `wkc-architect` | shipped | SPEC and ADRs | free text | PRD |
-| `wkc-plan` | shipped, changes | ROADMAP only; hands an approved milestone to `wkc-backlog` (ADR-004) | a ROADMAP change, or none | PRD, SPEC, `wkc-tracker` reads |
+| `wkc-architect` | shipped, changes | SPEC and ADRs; opts into model invocation | free text | PRD |
+| `wkc-plan` | shipped, changes | ROADMAP, and closing a finished milestone; hands an approved milestone to `wkc-backlog` (ADR-004); opts into model invocation | a ROADMAP change, `close <milestone>`, or none | PRD, SPEC, `wkc-tracker` reads and `milestone close` |
 | `wkc-backlog` | new, from `wkc-plan` | Tickets for one milestone, or one change at a time (ADR-004) | milestone, or a change | PRD, SPEC, ROADMAP, `wkc-tracker` |
 | `wkc-implement` | new | One ticket from `ready` to PR, and after merge to `done` (ADR-001) | ticket id, `finish <id>`, or none | `wkc-tracker`, `git`, `gh`, `test_command` |
 | `wkc-code-review` | new | Review rounds on one PR: judge, fix blocking findings and apply worthwhile improvements, record a verdict (ADR-003, ADR-005) | PR, ticket id, or none | `wkc-tracker`, `git`, `gh`, `max_fix_attempts` |
@@ -48,7 +48,7 @@ graph LR
 | `wkc-retro` | new | Propose rule files from what a ticket, milestone, or run shows | ticket, milestone, or run | `wkc-tracker`, `rules_dir` |
 | `wkc-help`, `wkc-workflow-diagram`, `wkc-skills-release` | shipped | Help, maps, collection releases | | |
 
-**Existing code that stays.** `wkc-tracker` needs no new verb. Its ticket shape is loose: "Other
+**Existing code that stays.** `wkc-tracker`'s ticket verbs need no addition. Its ticket shape is loose: "Other
 skills may add sections, no verb rejects a ticket over formatting"
 ([wkc-tracker §5](../../skills/wkc-tracker/SKILL.md#5-ticket-shape)). `## After merge` is one more
 section. `assign <id>` already claims a ticket and sets `in-progress` in one write; `move`,
@@ -56,9 +56,17 @@ section. `assign <id>` already claims a ticket and sets `in-progress` in one wri
 
 **Existing code that changes.**
 
-- `wkc-plan` keeps only the ROADMAP. It reads the tracker through `wkc-tracker`, writes no ticket,
-  and returns to manual invocation. Its ticket drafting, graph check, approval, and publishing move
-  to `wkc-backlog` (ADR-004).
+- `wkc-plan` keeps the ROADMAP. It reads the tracker through `wkc-tracker`, writes no ticket,
+  and opts into model invocation (Invocation). Its ticket drafting, graph check, approval, and publishing move
+  to `wkc-backlog` (ADR-004). Its one tracker write is `milestone close`, from `wkc-plan close
+  <milestone>` (Contracts, Milestone close).
+- `wkc-tracker` gains `milestone close <name>`. Today its `milestone <name>` row says "Never
+  rename, close, or reopen one" and "No verb closes a milestone, including when all its tickets are
+  done", so GitHub milestones M2 and M3 stayed open with every ticket closed (3 of 3, 1 of 1).
+  Rename and reopen stay out.
+- `wkc-implement finish`, after it moves a ticket to `done`, reads `milestone show` for the
+  ticket's milestone and names `wkc-plan close <milestone>` in its report when nothing in it is
+  open. It never closes a milestone.
 - `wkc-backlog` is one `SKILL.md`. It takes a milestone or one change: a request, a bug, or
   discovered work, or a refinement, split, re-block, or cancel of existing tickets. Both run the
   same read, draft, graph check, approval, and publish steps. It sits near 240 lines: past the
@@ -431,16 +439,38 @@ New tickets land at `backlog`. When the work blocks the current ticket,
 `wkc-backlog` links it as a blocker, and the current ticket keeps its status and holder. It is not on
 the frontier, so its holder or `wkc-yolo` returns to it by id once the blocker is `done`.
 
+### Milestone close
+
+`wkc-tracker milestone close <name>` is mechanism only. Its precondition: exactly one milestone has
+that name, and it is open. An already closed one needs no write: report it. Verification: a fresh
+read shows that milestone closed. On GitHub it sets the milestone's `state` to `closed`. Linear
+project milestones have no open or closed state, and local milestones are not objects, so on those
+backends the verb writes nothing and says the backend has no milestone state. The verb never checks
+tickets; deciding is the caller's.
+
+`wkc-plan close <milestone>` decides. It reads `milestone show <milestone>` and the milestone's
+**Exit check** in the ROADMAP. It stops, naming them, while any ticket is `backlog`, `ready`,
+`in-progress`, or `in-review`, or has no clean status. Otherwise it shows the counts and the exit
+check, and asks whether the exit check passed. The person confirms; `wkc-plan` runs no exit check,
+because some need AI sessions or a maintainer review. Only on a yes in this conversation does it
+call `milestone close`. It never edits the ROADMAP for a close: the tracker owns progress.
+
 ### Invocation
 
-`wkc-implement`, `wkc-code-review`, and `wkc-backlog` opt into model invocation (maintainer,
-2026-10-20; `wkc-backlog` took `wkc-plan`'s place on 2026-10-21): `disable-model-invocation: false`
-and `policy.allow_implicit_invocation: true`. Each body declares its callers: people, `wkc-yolo`,
-and a model acting on a person's request, plus `wkc-plan` for `wkc-backlog`. A model runs one only
-when a person or `wkc-yolo` asked for that work. `wkc-implement` never starts `wkc-code-review`
-itself, because the review must not run in the context that wrote the code. `wkc-yolo`,
-`wkc-retro`, `wkc-research`, `wkc-architect`, `wkc-plan`, and `wkc-setup` stay manual: a run that
-can merge, and a write to rules or product documents, starts only when a person types it.
+`wkc-implement`, `wkc-code-review`, `wkc-backlog`, `wkc-architect`, and `wkc-plan` opt into model
+invocation (maintainer, 2026-10-20; `wkc-backlog` took `wkc-plan`'s place on 2026-10-21;
+`wkc-architect` and `wkc-plan` 2026-10-24): `disable-model-invocation: false` and
+`policy.allow_implicit_invocation: true`. Each body declares its callers: people, `wkc-yolo`, and a
+model acting on a person's request, plus `wkc-plan` for `wkc-backlog`. `wkc-architect`'s and
+`wkc-plan`'s callers are people, a model acting on a person's request, and `wkc-backlog`, which
+invokes `wkc-architect` for a change it classifies as a SPEC change and `wkc-plan` for a ROADMAP
+change; never `wkc-yolo`. A model runs one only when a person or `wkc-yolo` asked for that work.
+`wkc-implement` never starts `wkc-code-review` itself, because the review must not run in the
+context that wrote the code. A SPEC or ROADMAP that a model-invoked skill changes is still `Status:
+draft` until the person approves it in the conversation, and `wkc-plan close` still needs the
+person's yes, so model invocation never approves a design, a plan, or a close. `wkc-yolo`,
+`wkc-retro`, `wkc-research`, and `wkc-setup` stay manual: a run that can merge, and a write to rules
+or the PRD, starts only when a person types it.
 
 ### Unattended calls
 
@@ -623,7 +653,7 @@ the previous tag. Each port also updates the README roster, the repository map u
 | PRD goal | Delivered by |
 |---|---|
 | 1. Ticket from `ready` to `done` | `wkc-implement`, `wkc-code-review`; Lifecycle, PR body, Review verdict; ticket shape; ADR-001, ADR-003, ADR-005 |
-| 2. Plans follow changes | `wkc-backlog`; `wkc-plan` for ROADMAP changes; Discovered work; ADR-004 |
+| 2. Plans follow changes | `wkc-backlog`; `wkc-plan` for ROADMAP changes and Milestone close; `wkc-architect` for SPEC changes; Discovered work; ADR-004 |
 | 3. Unattended milestone | `wkc-yolo`; Unattended calls; `merge_gate` |
 | 4. Learnings become rules | `wkc-retro` |
 | 5. Small and readable | Requirements; Boundaries; one `SKILL.md` per skill |
@@ -645,7 +675,15 @@ the previous tag. Each port also updates the README roster, the repository map u
   creates or edits tickets beyond its own ticket's state and comments.
 - An existing ticket changes only as shown in the approved draft.
 - `wkc-yolo` scope is a ticket, a wave, or a milestone; parallelism and stopping follow its run contract.
-- `wkc-implement`, `wkc-code-review`, and `wkc-backlog` opt into model invocation; see Invocation.
+- `wkc-implement`, `wkc-code-review`, `wkc-backlog`, `wkc-architect`, and `wkc-plan` opt into model
+  invocation; see Invocation. `wkc-backlog` invokes `wkc-architect` for a SPEC change and `wkc-plan`
+  for a ROADMAP change, chosen over naming them for the person to type, which stopped the
+  2026-10-24 milestone-close change at a manual skill (maintainer, 2026-10-24).
+- A milestone closes only through `wkc-plan close <milestone>`, after every ticket is terminal and
+  the person confirms the exit check. Chosen over closing on ticket counts alone, because closed
+  tickets do not prove the milestone's outcome, and over `wkc-plan` running the exit check, because
+  some exit checks need AI sessions or a maintainer review (maintainer, 2026-10-24).
+  `wkc-implement finish` only suggests it.
 - Codex and Kiro support subagents (maintainer, 2026-10-20). Trouble starting one is filed as a bug.
 - On Linear, PRs link with `Related to <ID>` only.
 - `wkc-implement` finishes only when called as `wkc-implement finish <id>`, and only from the PR its
@@ -696,6 +734,18 @@ None.
 
 ## Changes
 
+- 2026-10-24: Milestones can close. `wkc-tracker` gains `milestone close <name>`, mechanism only,
+  real on GitHub and a no-write report on Linear and local; `wkc-plan close <milestone>` closes one
+  after every ticket is terminal and the person confirms the exit check; `wkc-implement finish`
+  names that call when its ticket leaves the milestone with nothing open (Components, Milestone
+  close, Decisions). Reason: M2 and M3 stayed open on GitHub with every ticket closed. Replaced
+  "`wkc-tracker` needs no new verb", `wkc-plan`'s reads-only tracker use, and the tracker's "never
+  close". `wkc-architect` and `wkc-plan` opt into model invocation, with `wkc-backlog` as a
+  caller for SPEC and ROADMAP changes (Components, Invocation, Decisions). Replaced both in the
+  manual list, and `wkc-plan`'s "returns to manual invocation" from 2026-10-21 and ADR-004's
+  Consequences, which ADR-004's status line now marks as amended. No ROADMAP
+  milestone covers this work: `wkc-plan` places it. Review M2 (`wkc-implement`) and M1
+  (`wkc-backlog`).
 - 2026-10-23: Maintainer review of PR #58 (ADR-005). A review round may apply worthwhile in-scope
   improvements, and every round that commits code is `fixed` and counts against `max_fix_attempts`;
   a blocking finding is verified before it is fixed and includes SPEC violations and security

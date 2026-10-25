@@ -1,6 +1,6 @@
 # wkc- skills ROADMAP
 
-Status: approved (2026-10-22)
+Status: approved (2026-10-24)
 
 Planned from the [SPEC](./SPEC.md), approved 2026-10-22. Every milestone needs the PRD, SPEC, ADRs, and this ROADMAP merged to `main` first:
 `wkc-implement` stops on uncommitted planning documents, and a fresh worktree cannot see them.
@@ -26,6 +26,12 @@ Scope: PRD goal 1 (the review half). SPEC Review verdict and fix commit, `max_fi
 Depends on: M2, because it reviews PRs from `wkc-implement`; M1, for the hand-off.
 Exit check: in a throwaway repository, a PR with a planted defect gets a `fixed` verdict, then an `approve` from a second fresh session naming the new head; a defect that comes back after its fix gets `stopped`. The PRs for this milestone are opened by `wkc-implement`.
 
+## M3.1: Milestones close
+Outcome: A person runs `wkc-plan close <milestone>` and, once every ticket is terminal and they confirm the exit check, the milestone closes on GitHub. `wkc-implement finish` names that call when its ticket leaves the milestone with nothing open. `wkc-backlog` invokes `wkc-architect` for a SPEC change and `wkc-plan` for a ROADMAP change, so a person no longer types the next planning skill.
+Scope: SPEC Milestone close, the `wkc-tracker`, `wkc-plan`, and `wkc-implement` component changes for it, and Invocation for `wkc-architect` and `wkc-plan`, with the `wkc-backlog` calls; the 2026-10-24 SPEC Changes entry. Numbered M3.1 so M4 to M6 keep the names the PRD and SPEC cite.
+Depends on: M1, because `wkc-backlog` gains the calls; M2, because it changes `wkc-implement finish`.
+Exit check: in a throwaway GitHub repository, `wkc-plan close` on a milestone with one open ticket stops and names it, and writes nothing; with every ticket terminal, it shows the counts and the exit check, closes nothing on a no, and on a yes leaves the milestone `closed` by `gh api`. On a local-tracker fixture, `wkc-tracker milestone close` writes nothing and says the backend has no milestone state. `wkc-implement finish` on a fixture milestone's last open ticket names `wkc-plan close <milestone>` and leaves it open. On Claude Code, `wkc-backlog` given a SPEC change invokes `wkc-architect`, and given a ROADMAP change invokes `wkc-plan`, and each leaves its document at `Status: draft`. Then, on this repository, the maintainer closes `M2: Ticket to done by hand` and `M3: Independent review with fixes` with `wkc-plan close`.
+
 ## M4: Unattended runs
 Outcome: A person runs `wkc-yolo` on a ticket, a wave, or a milestone, answers one round of questions, and the run finishes without asking anything more. It merges where `merge_gate` allows and stops at each merge where it does not.
 Scope: PRD goal 3. SPEC Unattended calls, `wkc-yolo` run, run record, `merge_gate` config field, Failure handling for parallel merges. A local-backend run end to end is M6's.
@@ -46,6 +52,7 @@ Exit check: on a local-tracker fixture with a GitHub remote, each `wkc-tracker` 
 
 ## Changes
 
+- 2026-10-24: Added M3.1, placed after M3, for the 2026-10-24 SPEC change: milestones close through `wkc-plan close`, and `wkc-architect` and `wkc-plan` opt into model invocation. Reason: M2 and M3 stayed open on GitHub with every ticket closed. Numbered M3.1 instead of renumbering M4 to M6, which the PRD and SPEC cite by number. It follows M3 in order only; it depends on M1 and M2.
 - 2026-10-22: The SPEC now has `wkc-tracker` commit each local-backend write and `wkc-implement` carry those commits to the default branch (#48, #52). The local tracker is low priority, so this work becomes a new last milestone, M6, instead of joining M2, where it would hold M2 open and with it M3 and M4. M2's scope now excludes the **Local backend** commits, and M4 leaves the local-backend run to M6. Added M6, so the ROADMAP is back to draft.
 
 - 2026-10-21: M1 delivers a new `wkc-backlog`, which owns tickets for a milestone and for one change, and narrows `wkc-plan` to the ROADMAP (ADR-004). M2 and M3 hand discovered work to `wkc-backlog`. Replaced `wkc-plan` as the ticket writer in M1 to M3 and ADR-002 in M1's scope. No milestone was added, removed, or reordered, but M1's outcome, scope, and exit check changed, so the ROADMAP is back to draft under `wkc-plan`'s approval rule.
