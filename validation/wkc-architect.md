@@ -164,3 +164,15 @@ and the Codex session log.
 Additional observation: the architect's numbered decision options were followed by a policy quote. The model made no
 tool call after the question, but the options were not the final message content. This is not a failure of the selected
 cases above.
+
+## Dated report: 2026-10-24
+
+Scope: #67, model invocation. Selected: case 1's package subchecks as direct checks; cases 12 and 13 in Claude Code.
+Codex and Kiro CLI: SKIP, no session in those harnesses. Other cases are outside this change. Source, fixture,
+model, and usage are in the [wkc-backlog report](./wkc-backlog.md#dated-report-2026-10-24); session S1 ran both cases.
+
+| Case | Result | Evidence |
+|---|---|---|
+| 1, selected subchecks | PASS, direct | PyYAML: `disable-model-invocation: false`, `allow_implicit_invocation: true`, names match, five opening fields; **When to use it** names people, a model acting on a person's request, and `wkc-backlog`, never `wkc-yolo`, and keeps the SPEC at `Status: draft` until the person approves it. Installed copies equal the archive by `diff -r`. |
+| 12 | PASS | wkc-backlog case 33: a `Skill(wkc-architect)` call; the SPEC reads `Status: draft`; `issues_dir` unchanged. |
+| 13 | PASS | S1's first prompt, before any skill ran, asked how to upper-case a string in bash. The JSONL shows no tool call of any kind in that turn, so no skill loaded and no file changed. |

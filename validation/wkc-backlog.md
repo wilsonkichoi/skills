@@ -407,3 +407,33 @@ Known limit, from review and not run: "another system" could be read to cover th
 owns, so a model might escalate a conventional internal choice, such as a column type, as a data exchange. That
 gives an extra decision ticket, not an invented contract. V6 tests only the sync payload. Tightening the trigger to
 a data contract that another system must agree to needs a session to check case 30, so it waits.
+
+## Dated report: 2026-10-24
+
+Scope: #67, `wkc-backlog` invoking `wkc-architect` and `wkc-plan`. Selected: case 1's package subchecks as direct
+checks; cases 33 to 35 in Claude Code. Codex and Kiro CLI: SKIP, no session in those harnesses
+([AI harness testing](../docs/dev-agents/rules/ai-harness-testing.md)). Other cases are outside this change.
+
+Source: `a5eceb9`, through `git archive`, installed with `skills` 1.7.4 into two fresh clones (S1, S2) of the
+`greet` fixture from the [2026-10-23 code-review run](./wkc-code-review.md) at `67311be`: approved PRD, SPEC, and
+ROADMAP, a `local` tracker, and ticket 003 `ready` in M1. Each clone got `wkc-architect`, `wkc-plan`,
+`wkc-backlog`, and `wkc-tracker` for all three harnesses.
+
+| Case | Result | Evidence |
+|---|---|---|
+| 1, selected subchecks | PASS, direct | PyYAML parses the frontmatter and `agents/openai.yaml` of all three skills; names match; each has `disable-model-invocation: false` and `allow_implicit_invocation: true`; five opening fields in order; `wc -l`: backlog 257, architect 145, plan 119. Discovery lists 10 public skills of 11 `SKILL.md`, both skills included. `diff -r` of each installed `.agents`, `.claude`, and `.kiro` copy against the archive gives no output. |
+
+Two sessions of the six allowed, one at a time: interactive Claude Code sessions the maintainer started in each
+clone, so the harness discovered the installed skills, on `claude-sonnet-5-5`. Invocation is scored from each
+session's JSONL `Skill` tool calls, and file state by `shasum` against a snapshot taken before the session. Usage:
+S1 1.48M input tokens (1.37M cached) and 12.0k output; S2 0.85M input (0.72M cached) and 4.8k output. Interactive
+sessions expose no per-session cost cap.
+
+| Session | Case | Result | Evidence |
+|---|---|---|---|
+| S1 | 33 | PASS | Request: an invalid `--count` prints `greet: invalid count: <value>` and exits 64. Backlog called it a SPEC change and called `Skill(wkc-architect)`. Architect asked one scope question, answered `1`. Afterwards only `SPEC.md` changed by `shasum`, and it reads `Status: draft`; PRD, ROADMAP, and `issues_dir` match the snapshot. The turn ended on architect's approval question, unanswered. |
+| S2 | 34 | PASS | Request: add `M2: Version` for the SPEC's existing `--version`. Backlog called `Skill(wkc-plan)`. Afterwards only `ROADMAP.md` changed, with M2 and a **Changes** entry, and it reads `Status: draft`; PRD, SPEC, and `issues_dir` match the snapshot. The turn ended on plan's three options. |
+| none | 35 | SKIP | The `wkc-yolo` prompt was not run; S2's transcript ends after case 34. |
+
+Raw transcripts, snapshots, and the clones are outside tracked files in `.local/runs/67-invocation/` of the main
+checkout.

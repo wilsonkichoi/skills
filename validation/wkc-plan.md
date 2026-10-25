@@ -105,6 +105,18 @@ ticket parts moved, the ROADMAP parts stay above. Case 28 is in both runbooks.
 | 22 | wkc-backlog 3, ticket templates |
 | 24 to 28 | wkc-backlog 21 to 25 |
 
+## Dated report: 2026-10-24
+
+Scope: #67, model invocation. Selected: case 1's package subchecks as direct checks; cases 32 and 33 in Claude Code.
+Codex and Kiro CLI: SKIP, no session in those harnesses. Other cases are outside this change. Source, fixture,
+model, and usage are in the [wkc-backlog report](./wkc-backlog.md#dated-report-2026-10-24).
+
+| Case | Result | Evidence |
+|---|---|---|
+| 1, selected subchecks | PASS, direct | PyYAML: `disable-model-invocation: false`, `allow_implicit_invocation: true`, names match, five opening fields, `wc -l` 119; **When to use it** names people, a model acting on a person's request, and `wkc-backlog`, never `wkc-yolo`, and keeps the ROADMAP at `Status: draft` until the person approves it. Installed copies equal the archive by `diff -r`. |
+| 32 | PASS | wkc-backlog case 34, session S2: a `Skill(wkc-plan)` call; the ROADMAP reads `Status: draft` with the new milestone; `issues_dir` unchanged. |
+| 33 | PASS | [wkc-architect case 13](./wkc-architect.md#dated-report-2026-10-24), session S1: no tool call in the unrelated turn. |
+
 ## Dated report: 2026-10-21, after the split
 
 Scope: `wkc-plan` reduced to the ROADMAP (ADR-004). Selected: cases 1 and 2 as direct checks; 3, 29, and 30 in one
