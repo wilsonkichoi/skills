@@ -19,7 +19,7 @@ disable-model-invocation: false
 - **Dependencies:** `docs/dev-agents/config.md`: `issue_tracker`, `test_command`, `context_file`,
   `rules_dir`, `prd_file`, `spec_file`, `roadmap_file`, `issues_dir`, and the **Conventions** body.
   The `wkc-tracker` skill for every ticket read and write: `show`, `list`, `next`, `assign`,
-  `comment`, and `move`. `git`, and `gh` against a GitHub remote for pull requests. The
+  `comment`, `move`, and `milestone show`. `git`, and `gh` against a GitHub remote for pull requests. The
   `wkc-backlog` skill for work found out of scope.
 - **Input:** `<id>`, a ticket id: build, or report the state of its pull request. It never
   finishes. `finish <id>`: finish that ticket after its pull request merged, and nothing else. With
@@ -230,6 +230,10 @@ Gates: none | all passed | left: <steps, and who must act>
   `in-progress`, and a person decides. Open no second follow-up.
 - **Failed for a cause outside this ticket:** a `Discovered:` comment with `Blocks this ticket:
   yes`, handed to `wkc-backlog` at once; the ticket stays `in-progress`.
+
+**Milestone.** After a move to `done`, when the ticket has a milestone, read `wkc-tracker
+milestone show <milestone>`. When no ticket in it is open or lacks a clean status, name `wkc-plan
+close <milestone>` in the report. Never close a milestone.
 
 Report the gates, their results, the ticket's status, and what is left and who must act. Offer
 `wkc-retro` on the ticket when it is installed.

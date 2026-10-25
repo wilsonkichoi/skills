@@ -146,10 +146,10 @@
       "id": "plan",
       "label": "wkc-plan",
       "lane": "planning",
-      "summary": "Write or update the ROADMAP, the ordered milestones that deliver an approved SPEC.",
+      "summary": "Write or update the ROADMAP, the ordered milestones that deliver an approved SPEC, and close a finished milestone.",
       "details": {
-        "body": "Orders milestones by dependency and risk, each with an outcome and an exit check, and reads milestones through wkc-tracker. Output: the ROADMAP at `roadmap_file`, with no tickets; an approved milestone goes to wkc-backlog.",
-        "when": "Use when a design needs milestones, or when a change adds, moves, or drops milestone scope.",
+        "body": "Orders milestones by dependency and risk, each with an outcome and an exit check, and reads milestones through wkc-tracker; wkc-plan close <milestone> closes one once every ticket is terminal and the person confirms its exit check. Output: the ROADMAP at `roadmap_file`, with no tickets; an approved milestone goes to wkc-backlog.",
+        "when": "Use when a design needs milestones, when a change adds, moves, or drops milestone scope, or to close a finished milestone.",
         "commands": [
           {
             "label": "Codex",
@@ -242,7 +242,7 @@
       "lane": "implementation",
       "summary": "Take one ready ticket to an open pull request at in-review, and after the merge run its post-merge steps and move it to done.",
       "details": {
-        "body": "Claims the ticket, builds, runs its acceptance checks, opens the pull request, and hands off, with every ticket write through wkc-tracker verbs and no merge. After the merge, wkc-implement finish <id> runs the post-merge gates, or opens a follow-up pull request when one fails because of the change.",
+        "body": "Claims the ticket, builds, runs its acceptance checks, opens the pull request, and hands off, with every ticket write through wkc-tracker verbs and no merge. After the merge, wkc-implement finish <id> runs the post-merge gates, or opens a follow-up pull request when one fails because of the change, and names wkc-plan close <milestone> when the ticket's milestone has nothing open.",
         "when": "Use when a ready ticket should become a pull request, and run wkc-implement finish <id> after a person merges it.",
         "commands": [
           {
@@ -444,7 +444,7 @@
       "id": "plan-tracker",
       "from": "plan",
       "to": "tracker",
-      "label": "Reads milestones",
+      "label": "Reads and closes milestones",
       "kind": "optional"
     },
     {

@@ -1,5 +1,5 @@
 interface:
   display_name: "wkc-plan"
-  short_description: "Write or update the ROADMAP, the ordered milestones that deliver an approved SPEC, then hand an approved milestone to wkc-backlog for tickets"
+  short_description: "Write or update the ROADMAP, the ordered milestones that deliver an approved SPEC, then hand an approved milestone to wkc-backlog for tickets, and close a finished milestone"
 policy:
   allow_implicit_invocation: true

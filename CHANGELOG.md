@@ -2,6 +2,12 @@
 
 Newest first. Each version is a `## {version} ({ISO 8601 timestamp with local offset})` heading followed by a bullet list of changes.
 
+## 0.0.37 (2026-10-24T18:46:52-07:00)
+
+- `wkc-plan close <milestone>` closes a finished milestone (#66, SPEC Contracts › Milestone close). It reads `wkc-tracker milestone show` and the milestone's **Exit check** in the ROADMAP. While any ticket is `backlog`, `ready`, `in-progress`, or `in-review`, or has no clean status, it names them and writes nothing. Otherwise it shows the counts and the exit check and asks whether the exit check passed; it runs no exit check itself. Only on a yes does it call `wkc-tracker milestone close`, its one tracker write, and it never edits the ROADMAP for a close. On Linear and local the tracker verb writes nothing and says so.
+- `wkc-implement finish`, after it moves a ticket to `done`, reads `milestone show` for the ticket's milestone and names `wkc-plan close <milestone>` in its report when nothing in it is open. It never closes a milestone.
+- The `wkc-plan` description, `argument-hint`, **Input**, and **Dependencies** name `close <milestone>`. The README rows, `AGENTS.md`, and the workflow diagram follow. `validation/wkc-plan.md` and `validation/wkc-implement.md` gain the close cases and a dated report.
+
 ## 0.0.36 (2026-10-24T17:49:20-07:00)
 
 - `wkc-architect` and `wkc-plan` opt into model invocation: `disable-model-invocation: false` and `policy.allow_implicit_invocation: true` (#67, SPEC Contracts › Invocation). Their callers are people, a model acting on a person's request, and `wkc-backlog`, never `wkc-yolo`. Model invocation approves nothing: the SPEC or ROADMAP stays `Status: draft` until the person approves it in the conversation.
