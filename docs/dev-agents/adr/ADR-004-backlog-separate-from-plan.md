@@ -1,6 +1,6 @@
 # ADR-004: wkc-backlog owns tickets, wkc-plan owns the ROADMAP
 
-Date: 2026-10-21. Status: accepted. Supersedes [ADR-002](./ADR-002-plan-absorbs-backlog.md).
+Date: 2026-10-21. Status: accepted, amended 2026-10-24 by [SPEC Invocation](../SPEC.md#invocation) (`wkc-plan` opts into model invocation again, beside `wkc-backlog`). Supersedes [ADR-002](./ADR-002-plan-absorbs-backlog.md).
 
 ## Context
 
