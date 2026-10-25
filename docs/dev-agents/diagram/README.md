@@ -43,9 +43,9 @@ The arrows do not claim automatic skill invocation. Help's installer operations 
 | wkc-skills-release | [skills/wkc-skills-release/SKILL.md](../../../skills/wkc-skills-release/SKILL.md) | Internal maintainer skill; clean synchronized main and authenticated GitHub access; merged collection publication without setup |
 | wkc-research | [skills/wkc-research/SKILL.md](../../../skills/wkc-research/SKILL.md) | Writes only the PRD at `prd_file`; approval status line; no tracker; callers are people |
 | wkc-architect | [skills/wkc-architect/SKILL.md](../../../skills/wkc-architect/SKILL.md) | Writes only the SPEC at `spec_file` and ADRs; `wkc-tracker list` when updating with a configured tracker; callers are people, a model acting on a person's request, and `wkc-backlog` for a SPEC change, never `wkc-yolo`; the SPEC stays `Status: draft` until the person approves it |
-| wkc-plan | [skills/wkc-plan/SKILL.md](../../../skills/wkc-plan/SKILL.md) | Writes only the ROADMAP at `roadmap_file`; reads milestones through `wkc-tracker`; option 1 of its approval hands a milestone to `wkc-backlog`; callers are people, a model acting on a person's request, and `wkc-backlog` for a ROADMAP change, never `wkc-yolo`; the ROADMAP stays `Status: draft` until the person approves it |
+| wkc-plan | [skills/wkc-plan/SKILL.md](../../../skills/wkc-plan/SKILL.md) | Writes only the ROADMAP at `roadmap_file`; reads milestones through `wkc-tracker`, and `close <milestone>` calls `milestone close` on the person's yes; option 1 of its approval hands a milestone to `wkc-backlog`; callers are people, a model acting on a person's request, and `wkc-backlog` for a ROADMAP change, never `wkc-yolo`; the ROADMAP stays `Status: draft` until the person approves it |
 | wkc-backlog | [skills/wkc-backlog/SKILL.md](../../../skills/wkc-backlog/SKILL.md) | One milestone or one change; tickets from the SPEC templates; every ticket read and write through `wkc-tracker` verbs; invokes `wkc-architect` for a SPEC change and `wkc-plan` for a ROADMAP change, except under `wkc-yolo`; callers are people, `wkc-plan`, `wkc-yolo`, and a model acting on a person's request |
-| wkc-implement | [skills/wkc-implement/SKILL.md](../../../skills/wkc-implement/SKILL.md) | One ticket from `ready` to an open pull request at `in-review`, and after the merge to `done` through `wkc-implement finish <id>`; every ticket read and write through `wkc-tracker` verbs; out-of-scope work to `wkc-backlog`; never merges; callers are people, `wkc-yolo`, and a model acting on a person's request |
+| wkc-implement | [skills/wkc-implement/SKILL.md](../../../skills/wkc-implement/SKILL.md) | One ticket from `ready` to an open pull request at `in-review`, and after the merge to `done` through `wkc-implement finish <id>`, which names `wkc-plan close <milestone>` when the milestone has nothing open; every ticket read and write through `wkc-tracker` verbs; out-of-scope work to `wkc-backlog`; never merges; callers are people, `wkc-yolo`, and a model acting on a person's request |
 | wkc-code-review | [skills/wkc-code-review/SKILL.md](../../../skills/wkc-code-review/SKILL.md) | One review round on one pull request: a verdict comment of `approve`, `fixed`, or `stopped`, and one fix commit in a `fixed` round, up to `max_fix_attempts`; ticket reads and comments through `wkc-tracker` verbs; out-of-scope work to `wkc-backlog`; never moves the ticket or merges; callers are people, `wkc-yolo`, and a model acting on a person's request |
 
 | Edge | Kind | Source evidence |
@@ -62,7 +62,7 @@ The arrows do not claim automatic skill invocation. Help's installer operations 
 | architect → plan: Approved SPEC | Handoff, dashed | Architect's Output: "`wkc-plan` reads an approved SPEC next"; section 6 names it as the next step. Plan section 1 requires an approved SPEC or offers to plan from stated intent |
 | plan → backlog: Approved milestone | Handoff, dashed | Plan section 3: option 1 approves the ROADMAP, then invokes `wkc-backlog` for the named milestone; its report names `wkc-backlog <milestone>` as the next step. Backlog section 1 needs an approved ROADMAP for a milestone, or offers to plan from stated intent |
 | backlog → tracker: Manages tickets | Call, solid | Backlog's Dependencies name `wkc-tracker` for `list`, `show`, `milestone`, `create`, `edit`, `link`, `unlink`, and `move`; backlog reaches tickets only through those verbs, and section 5 publishes through them |
-| plan → tracker: Reads milestones | Call, dashed | Plan's Dependencies name `wkc-tracker` for reads only; section 1 reads `milestone list` and `milestone show`, and plans without the tracker when it cannot run |
+| plan → tracker: Reads and closes milestones | Call, dashed | Plan's Dependencies name `wkc-tracker` reads and one write, `milestone close`; section 1 reads `milestone list` and `milestone show`, and plans without the tracker when it cannot run; section 5 calls `milestone close` only on the person's yes |
 | architect → tracker: Lists tickets | Call, dashed | Architect's Dependencies and section 4: on a contract change with a configured tracker, list open tickets through the `wkc-tracker` `list` verb |
 | backlog → architect: SPEC change | Call, dashed | Backlog's Dependencies name `wkc-architect`; section 1 invokes it for a change it classifies as a SPEC change and drafts nothing that depends on it. Architect's When to use it names `wkc-backlog` as a caller. Only for that class of change, and never under `wkc-yolo` |
 | backlog → plan: ROADMAP change | Call, dashed | Backlog's Dependencies name `wkc-plan`; section 1 invokes it for a change that adds, moves, or drops milestone scope and drafts nothing that depends on it. Plan's When to use it names `wkc-backlog` as a caller. Only for that class of change, and never under `wkc-yolo` |
@@ -126,6 +126,16 @@ Desktop light overview and phone dark details screenshots were visually inspecte
 The phone sheet scrolls independently; commands below the fold remain reachable.
 
 ## Implementation verification
+
+### wkc-plan close, 2026-10-24
+
+`wkc-plan close <milestone>` closes a finished milestone, and `wkc-implement finish` names it (#66). The `plan` card's summary,
+body, and when, the `implement` card's body, both source rows, and the plan → tracker label and evidence row changed. No edge
+was added for the suggestion: finish only names the call, and a person types it. No node, edge route, lane, or layout changed.
+Node **v24.11.1**: check and build passed with no warnings. Headless Chrome loaded the HTML from `file://` at 1800 × 900, and
+the overview was inspected: the longer plan → tracker label stays under its line and clears every route and region border. The
+light-theme flag rendered the same dark page, so light theme is SKIP. Tablet, phone, details, and keyboard checks: SKIP, no
+layout changed. The tracked screenshots were not regenerated.
 
 ### wkc-backlog calls architect and plan, 2026-10-24
 

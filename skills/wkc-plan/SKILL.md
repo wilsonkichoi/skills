@@ -1,7 +1,7 @@
 ---
 name: wkc-plan
-description: Write or update the ROADMAP, the ordered milestones that deliver an approved SPEC, each with an outcome, scope, dependencies, and an exit check, then hand an approved milestone to wkc-backlog for tickets. Use when a design is ready to be broken into milestones, or when a PRD, SPEC, or request adds, moves, or drops milestone scope.
-argument-hint: "[a change to the ROADMAP]"
+description: Write or update the ROADMAP, the ordered milestones that deliver an approved SPEC, each with an outcome, scope, dependencies, and an exit check, then hand an approved milestone to wkc-backlog for tickets, and close a finished milestone. Use when a design is ready to be broken into milestones, when a PRD, SPEC, or request adds, moves, or drops milestone scope, or when a person asks to close a milestone.
+argument-hint: "[a change to the ROADMAP | close <milestone>]"
 disable-model-invocation: false
 ---
 
@@ -9,23 +9,28 @@ disable-model-invocation: false
 
 - **What it does:** writes the ROADMAP at `roadmap_file`: milestones in delivery order, each with an
   outcome someone can check. Once the user approves it, `wkc-backlog` turns a milestone into tickets.
+  `close <milestone>` closes a milestone in the tracker once its tickets are finished and the person
+  confirms its exit check.
 - **When to use it:** after `wkc-architect` approves a SPEC, or when a PRD or SPEC change, or a
   request, adds, moves, or drops milestone scope. A bug, a request inside a milestone's scope, or a
   change to tickets goes to `wkc-backlog` instead. Callers are people, a model acting on a person's
   request, and `wkc-backlog`, which invokes it for a change it classifies as a ROADMAP change;
   never `wkc-yolo`. A model runs it only when a person asked for that work. Model invocation
   approves nothing: the ROADMAP stays `Status: draft` until the person approves it in the
-  conversation.
+  conversation, and a milestone closes only on the person's yes.
 - **Dependencies:** `prd_file`, `spec_file`, and `roadmap_file` from `docs/dev-agents/config.md`,
   falling back to `docs/dev-agents/PRD.md`, `SPEC.md`, and `ROADMAP.md` when there is no config.
-  The `wkc-tracker` skill for reads only: `list`, `show`, and `milestone`, in its `list` and `show`
-  forms. The `wkc-backlog` skill for a milestone's tickets.
+  The `wkc-tracker` skill for reads: `list`, `show`, and `milestone`, in its `list` and `show`
+  forms; its one write is `milestone close`, from `close <milestone>`. The `wkc-backlog` skill for
+  a milestone's tickets.
 - **Input:** free text: a change to the ROADMAP, such as a milestone to add, split, reorder, or
   drop. With nothing given, read the documents and the tracker, and write or update the ROADMAP.
+  `close <milestone>`: close that milestone, by its exact tracker name; section 5 runs, and nothing
+  else.
 - **Output:** the ROADMAP file and its status line, and a short report that names the next
-  milestone for `wkc-backlog`.
+  milestone for `wkc-backlog`. For `close`: the milestone closed, or what keeps it open.
 
-Writes only the ROADMAP. Never creates, edits, links, or moves a ticket, and never reads or writes
+Writes only the ROADMAP, and closes a milestone only through section 5. Never creates, edits, links, or moves a ticket, and never reads or writes
 ticket files, `gh`, or Linear itself. Never edits the PRD or SPEC, their status lines included, and
 writes no code or config. Keep what the user wrote in the ROADMAP unless they ask to change it.
 
@@ -117,3 +122,22 @@ drafts the tickets and asks for its own approval before it publishes anything.
 Say what changed in the ROADMAP and its status line, the open decisions for `wkc-architect`, the
 ticket work a change leaves for `wkc-backlog`, and the next milestone that needs tickets. Run
 `wkc-backlog <milestone>` when a milestone needs tickets.
+
+## 5. Close a milestone
+
+Read the config, the ROADMAP, and `wkc-tracker milestone show <milestone>`. A name the tracker
+cannot find is a stop that names the milestones that exist. No approved SPEC is needed.
+
+While any ticket in it is `backlog`, `ready`, `in-progress`, or `in-review`, or has no clean
+status, stop: name each one from `wkc-tracker list <milestone>`, and write nothing.
+
+Otherwise show the counts by status and the milestone's **Exit check** from the ROADMAP, or say it
+has none. Ask whether the exit check passed. You run no exit check, because some need AI sessions
+or a maintainer review. The question ends the turn:
+
+1. Yes, the exit check passed: close <milestone>.
+2. No, keep it open.
+
+Only on a yes in this conversation, call `wkc-tracker milestone close <milestone>`, and report what
+it says, including a backend with no milestone state. Never edit the ROADMAP for a close: the
+tracker owns progress.

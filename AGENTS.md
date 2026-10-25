@@ -148,6 +148,8 @@ returned by `wkc-tracker show`, including handoffs from `wkc-code-review`.
 verifies it with a fresh read. It never checks tickets; the caller decides whether to close.
 An already closed milestone needs no write. Linear and local have no milestone state, so the verb
 writes nothing and says so. The ensure form, `milestone <name>`, never renames or reopens one.
+`wkc-plan close <milestone>` is the caller that decides: it stops while any ticket is open, and
+closes only on the person's yes to the milestone's exit check. `wkc-implement finish` only names it.
 
 The lifecycle documents (PRD, SPEC, ROADMAP) are optional, not a pipeline. Each skill uses whatever
 exists, and work that fits the current intent skips the earlier stages: do the work, then update the
