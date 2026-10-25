@@ -1,6 +1,6 @@
 # wkc- skills PRD
 
-Status: approved (2026-10-21)
+Status: approved (2026-10-24)
 
 ## Problem
 
@@ -50,7 +50,7 @@ Decided by the maintainer on 2026-10-20:
 2. **One milestone runs unattended.** `wkc-yolo` takes a milestone of a real project from the tracker
    frontier to its exit check. It uses only `wkc-` skills. It merges on its own where the project
    allows that, and stops for a person's merge where the project requires one. A person reviews the
-   decisions the run recorded.
+   decisions and document changes the run recorded (decided 2026-10-24).
 3. **Validation stays proportionate.** Each port has a runbook with simple checks that decide PASS
    or FAIL. A simple check that the skill works is enough. Do not build broad test matrices that
    try to cover everything and burn tokens.
@@ -74,11 +74,17 @@ Ranked. Ranking is importance, not delivery order; the ROADMAP sets the order.
    tickets through `wkc-tracker`. `wkc-plan` keeps the ROADMAP (decided 2026-10-21; replaces
    `wkc-plan` absorbing `wkc-backlog`, [ADR-004](./adr/ADR-004-backlog-separate-from-plan.md)).
 3. **A ticket, a wave, or a milestone runs without a person at each step.** `wkc-yolo` asks
-   everything in one round before the run: scope, readiness, and the permissions it needs. Then it
-   asks nothing (decided 2026-10-20). During the run it decides from the PRD, SPEC, ROADMAP, and
-   milestone goal, records each decision, and stops at the exit check or a limit
-   ([PR #30](https://github.com/wilsonkichoi/skills/pull/30)). Whether it may merge is a per-project
-   setting (decided 2026-10-20).
+   everything in one round before the run: scope, readiness, security posture, and the permissions
+   it needs, including whether it holds delegated planning authority. Then it asks nothing (decided
+   2026-10-20). During the run it works as an engineering team with a technical lead. Within the
+   PRD's product intent it makes implementation and architecture decisions. With delegated
+   authority it also changes the SPEC and its technical requirements, ADRs, the ROADMAP, future
+   milestones, tickets, and dependencies when engineering evidence justifies it, with no person
+   approving each change (decided 2026-10-24). It records every decision and its reason, and stops
+   at the exit check or a limit ([PR #30](https://github.com/wilsonkichoi/skills/pull/30)). Whether
+   it may merge is a per-project setting (decided 2026-10-20). Product intent, security
+   protections, authorization limits, and operational safeguards are outside its authority: a
+   person sets them and reviews the outcome.
 4. **What a project learns becomes rules.** An optional `wkc-retro` reviews a finished ticket,
    milestone, or run and proposes rule files for `rules_dir`, written only on approval (decided
    2026-10-20).
@@ -95,6 +101,9 @@ Ranked. Ranking is importance, not delivery order; the ROADMAP sets the order.
 - No skill merges, releases, or deploys on its own authority. `wkc-yolo` merges only where the
   project allows agent merges. A post-merge step that publishes or deploys runs only when a person
   or the run's limits authorized it.
+- No run edits the PRD, closes a milestone, weakens a security protection, authorization limit, or
+  operational safeguard, or weakens an acceptance criterion to make failing work pass (decided
+  2026-10-24).
 - No `wkc-fix`, `wkc-qa`, `wkc-verify`, `wkc-git-fu`, or `wkc-create-ticket` skill.
   `wkc-backlog` handles changes between planning runs, and `wkc-code-review` fixes its own findings.
   PR #30 folded verify, git-fu, and create-ticket into the planned skills and left fix and QA off
@@ -123,6 +132,10 @@ Ranked. Ranking is importance, not delivery order; the ROADMAP sets the order.
   ([AGENTS.md Skills](../../AGENTS.md#skills), [ADR-004](./adr/ADR-004-backlog-separate-from-plan.md)).
 - **Tracker backends:** GitHub Issues, Linear, and local markdown, all through `wkc-tracker`.
 - **Compliance:** a project must be able to require a person's merge, and no run may override that.
+- **Security** (decided 2026-10-24): where a project configures a secret scan, every push by the
+  skills runs it first, in every mode, and a failed scan blocks the push. An unattended run does not
+  start without a working scan. Host push protection and branch protection are separate layers. A
+  project without a scan keeps working manually, with a warning.
 - **Delivery:** one port per pull request, validated before the next starts. One patch version per
   pull request ([AGENTS.md Versioning](../../AGENTS.md#versioning)).
 - **Cost:** development cost carries little weight. The maintainer's usage limits do.
@@ -163,15 +176,28 @@ Ranked. Ranking is importance, not delivery order; the ROADMAP sets the order.
   contract and its observed failure.
 - The maintainer's answers on 2026-10-20 to the `wkc-research` and `wkc-architect` interviews.
 - The `agent-toolkit` sources linked from the drafts were not read for this PRD.
+- The maintainer's architecture change request of 2026-10-24 for full engineering autonomy under
+  `wkc-yolo`, and their answers on [PR #75](https://github.com/wilsonkichoi/skills/pull/75): delegated
+  planning, required secret scanning for runs, and push protection as a separate layer.
 
 ## Notes for architecture
 
 The [SPEC](./SPEC.md) and its ADRs answer the design questions this section listed: the lifecycle
 contract from issue #15, commit before handoff, correcting review findings, the merge gate, and
 discovered work, how `wkc-yolo` calls the other skills, and where a run's limits are kept. Still
-open there: a first real check of the Linear integration.
+open there: a first real check of the Linear integration. Delegated run authority and the security
+layers are answered by SPEC Delegated run authority and
+[ADR-006](./adr/ADR-006-delegated-run-authority.md).
 
 ## Changes
+
+- 2026-10-24: Goal 3: with delegated authority, a run changes the SPEC and its technical
+  requirements, ADRs, ROADMAP, future milestones, tickets, and dependencies without per-change
+  approval, and its kickoff covers security posture and planning authority; outcome 2: a person
+  reviews the run's document changes too; new non-goal on what no run may edit or weaken; new
+  Security constraint for secret scanning (maintainer, PR #75, ADR-006). Replaced "During the run it
+  decides from the PRD, SPEC, ROADMAP, and milestone goal". Review: SPEC Delegated run authority,
+  Push check, Security, and Boundaries; ROADMAP M4; #73 and #74.
 
 - 2026-10-23: Outcome 1: a review round also applies worthwhile in-scope improvements, and each
   change is reviewed by a fresh context (maintainer, ADR-005). Post-merge steps run from
