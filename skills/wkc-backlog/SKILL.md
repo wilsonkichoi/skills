@@ -16,7 +16,8 @@ disable-model-invocation: false
 - **Dependencies:** `prd_file`, `spec_file`, and `roadmap_file` from `docs/dev-agents/config.md`,
   falling back to `docs/dev-agents/PRD.md`, `SPEC.md`, and `ROADMAP.md` when there is no config.
   The `wkc-tracker` skill for every ticket read and write: `list`, `show`, `milestone`, `create`,
-  `edit`, `link`, `unlink`, and `move`.
+  `edit`, `link`, `unlink`, and `move`. The `wkc-architect` and `wkc-plan` skills for a SPEC or a
+  ROADMAP change.
 - **Input:** free text: a milestone name or number to plan, or one change: a request, a bug, a
   `Discovered:` comment, or a refinement, split, re-block, or cancel of existing tickets. With
   nothing given, read the documents and the tracker, and draft tickets for the first milestone in
@@ -48,10 +49,13 @@ Classify a change against those documents before drafting it:
 
 - Work they already cover, or a bug against them: tickets, drafted here.
 - A change to what the PRD or SPEC says, such as a new goal, a dropped requirement, or a different
-  contract: not a ticket change. Name it, send it to `wkc-research` for the PRD or `wkc-architect`
-  for the SPEC, and draft nothing that depends on it.
-- A change that adds, moves, or drops milestone scope: send it to `wkc-plan`, and draft nothing
-  that depends on it.
+  contract: not a ticket change. Name it, send a PRD change to `wkc-research`, invoke the
+  `wkc-architect` skill with a SPEC change, and draft nothing that depends on it.
+- A change that adds, moves, or drops milestone scope: a ROADMAP change. Invoke the `wkc-plan`
+  skill with it, and draft nothing that depends on it.
+
+Under `wkc-yolo`, name a SPEC or ROADMAP change in the return instead of invoking either skill,
+because `wkc-yolo` is not their caller.
 
 Where the SPEC leaves a detail open, make the conventional, low-risk choice an experienced engineer
 would, if nothing approved says otherwise. Write each choice that sets behaviour in **Notes** as

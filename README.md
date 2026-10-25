@@ -7,7 +7,10 @@ require explicit invocation on Claude Code and Codex; Kiro has no documented set
 `wkc-tracker` opts into model invocation, so a model or another skill can read and
 change ticket state without a typed command. `wkc-help` does too, so a plain question about these
 skills or their installation reaches it. `wkc-backlog` does too, so a model can hand it a change when
-a person or `wkc-yolo` asked for that work. `wkc-implement` does too, so a model can take a ticket to
+a person or `wkc-yolo` asked for that work. `wkc-architect` and `wkc-plan` do too, so a model, or
+`wkc-backlog` with a change it classifies as a SPEC or ROADMAP change, can start them when a person
+asked for that work; `wkc-yolo` never does. The SPEC or ROADMAP stays `Status: draft` until the
+person approves it. `wkc-implement` does too, so a model can take a ticket to
 a pull request when a person or `wkc-yolo` asked for it. `wkc-code-review` does too, so a model can
 run a review round on that pull request when a person or `wkc-yolo` asked for it.
 

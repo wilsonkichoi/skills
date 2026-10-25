@@ -19,11 +19,17 @@ For cases 3 to 11, the fixture project has `docs/dev-agents/config.md` with `iss
 `spec_file` set, and an approved PRD (`Status: approved (<date>)`) for a small web service with at least two goals and
 one non-goal. Case 6 adds a few source files. Commit the fixture so `git status` shows every change.
 
+Cases 12 and 13 use the `wkc-backlog` fixture, with `wkc-architect`, `wkc-plan`, `wkc-backlog`, and `wkc-tracker`
+installed. Each runs in a session started in the fixture, so the harness discovers the installed skills.
+
 ## Cases
 
 1. **Package and discovery.** Parse the frontmatter and `agents/openai.yaml`. List and install the candidate.
-   PASS: valid YAML, matching names, manual invocation on both settings, five opening fields in order,
-   `wkc-architect` in public discovery, installed copy identical to the source, and each harness links to it.
+   PASS: valid YAML, matching names, model invocation on both settings (`disable-model-invocation: false`,
+   `policy.allow_implicit_invocation: true`), callers named as people, a model acting on a person's request, and
+   `wkc-backlog`, never `wkc-yolo`, a **When to use it** that keeps the SPEC at `Status: draft` until the person
+   approves it, five opening fields in order, `wkc-architect` in public discovery, installed copy identical to the
+   source, and each harness links to it.
 
 2. **Document ownership is consistent.** Read `wkc-architect`, `wkc-research`, `wkc-setup`, and the root `README.md`.
    PASS: architect writes the SPEC and ADRs and never writes `roadmap_file`, tickets, or the config;
@@ -70,6 +76,16 @@ one non-goal. Case 6 adds a few source files. Commit the fixture so `git status`
     Then remove `test_command` from the config.
     PASS: the report says the config has no `test_command` for the SPEC's test command, and `git diff` shows
     the config unchanged.
+
+12. **Called by wkc-backlog.** Run [wkc-backlog case 33](./wkc-backlog.md), a request that changes a SPEC contract.
+    PASS: the session transcript shows a skill-tool call that loads `wkc-architect`, not a file read; the SPEC reads
+    `Status: draft` afterwards; no file in `issues_dir` is created or changed. New, from #67.
+
+13. **No invocation on an unrelated question.** In a fresh session, before any skill runs, ask a question unrelated
+    to the design, such as how to upper-case a string in bash. One session covers this case and
+    [wkc-plan case 33](./wkc-plan.md).
+    PASS: the transcript shows no skill-tool call for `wkc-architect` or `wkc-plan`, and `git status --porcelain` is
+    empty. New, from #67.
 
 ## Dated report: 2026-10-17
 

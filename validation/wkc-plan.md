@@ -28,8 +28,10 @@ the skill's report.
 ## Cases
 
 1. **Package and discovery.** Parse the frontmatter and `agents/openai.yaml`. List and install the candidate.
-   PASS: valid YAML, matching names, manual invocation on both settings (`disable-model-invocation: true`,
-   `policy.allow_implicit_invocation: false`), callers named as people, `wc -l` of `SKILL.md` under 150, five
+   PASS: valid YAML, matching names, model invocation on both settings (`disable-model-invocation: false`,
+   `policy.allow_implicit_invocation: true`), callers named as people, a model acting on a person's request, and
+   `wkc-backlog`, never `wkc-yolo`, a **When to use it** that keeps the ROADMAP at `Status: draft` until the person
+   approves it, `wc -l` of `SKILL.md` under 150, five
    opening fields in order, `wkc-plan` in public discovery, installed copy identical to the source, and each
    harness links to it.
 
@@ -79,6 +81,14 @@ the skill's report.
     exit check. Then, on a fresh copy, ask only to fix a typo in a milestone's outcome.
     PASS: the exit check change resets the status to `Status: draft`, adds a dated **Changes** entry, changes no other
     milestone by `git diff`, and changes no ticket file. The typo fix keeps `Status: approved (<date>)`.
+
+32. **Called by wkc-backlog.** Run [wkc-backlog case 34](./wkc-backlog.md), a request that adds a milestone.
+    PASS: the session transcript shows a skill-tool call that loads `wkc-plan`, not a file read; the ROADMAP reads
+    `Status: draft` afterwards; no file in `issues_dir` is created or changed. New, from #67.
+
+33. **No invocation on an unrelated question.** The session of [wkc-architect case 13](./wkc-architect.md).
+    PASS: as there, no skill-tool call for `wkc-plan` or `wkc-architect`, and `git status --porcelain` is empty.
+    New, from #67.
 
 ## Moved cases
 

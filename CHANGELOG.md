@@ -2,6 +2,12 @@
 
 Newest first. Each version is a `## {version} ({ISO 8601 timestamp with local offset})` heading followed by a bullet list of changes.
 
+## 0.0.35 (2026-10-24T17:49:20-07:00)
+
+- `wkc-architect` and `wkc-plan` opt into model invocation: `disable-model-invocation: false` and `policy.allow_implicit_invocation: true` (#67, SPEC Contracts › Invocation). Their callers are people, a model acting on a person's request, and `wkc-backlog`, never `wkc-yolo`. Model invocation approves nothing: the SPEC or ROADMAP stays `Status: draft` until the person approves it in the conversation.
+- `wkc-backlog` invokes `wkc-architect` for a change it classifies as a SPEC change and `wkc-plan` for a ROADMAP change, instead of only naming them for the person to type. Under `wkc-yolo` it names the change in its return instead, because `wkc-yolo` is not their caller.
+- `AGENTS.md` and the README list both skills among those that opt into model invocation. `validation/wkc-architect.md`, `validation/wkc-plan.md`, and `validation/wkc-backlog.md` gain the invocation cases and a dated report.
+
 ## 0.0.34 (2026-10-24T00:36:38-07:00)
 
 - `wkc-implement` finishes a ticket only when called as `wkc-implement finish <id>`, and only from the ticket's pull request: the one on the `PR:` line of its latest handoff comment or the `Merged:` line of its latest finish comment. A pull request that only cites the ticket, by a `Refs` line in its body or a mention in a comment, never counts, so a planning pull request such as #55 can no longer select finish for a ticket nobody built (#59). `wkc-implement <id>` builds or reports the review state; when the ticket's pull request has merged, it names `wkc-implement finish <id>` and writes nothing. `finish <id>` with no handoff or finish comment asks for the pull request and writes nothing. With no argument, it names each `in-review` ticket whose handoff pull request merged with its `finish` call. Only open pull requests that cite the ticket are still read, for eligibility and to continue a build.

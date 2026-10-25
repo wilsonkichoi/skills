@@ -2,7 +2,7 @@
 name: wkc-plan
 description: Write or update the ROADMAP, the ordered milestones that deliver an approved SPEC, each with an outcome, scope, dependencies, and an exit check, then hand an approved milestone to wkc-backlog for tickets. Use when a design is ready to be broken into milestones, or when a PRD, SPEC, or request adds, moves, or drops milestone scope.
 argument-hint: "[a change to the ROADMAP]"
-disable-model-invocation: true
+disable-model-invocation: false
 ---
 
 # wkc-plan
@@ -11,7 +11,11 @@ disable-model-invocation: true
   outcome someone can check. Once the user approves it, `wkc-backlog` turns a milestone into tickets.
 - **When to use it:** after `wkc-architect` approves a SPEC, or when a PRD or SPEC change, or a
   request, adds, moves, or drops milestone scope. A bug, a request inside a milestone's scope, or a
-  change to tickets goes to `wkc-backlog` instead. Callers are people.
+  change to tickets goes to `wkc-backlog` instead. Callers are people, a model acting on a person's
+  request, and `wkc-backlog`, which invokes it for a change it classifies as a ROADMAP change;
+  never `wkc-yolo`. A model runs it only when a person asked for that work. Model invocation
+  approves nothing: the ROADMAP stays `Status: draft` until the person approves it in the
+  conversation.
 - **Dependencies:** `prd_file`, `spec_file`, and `roadmap_file` from `docs/dev-agents/config.md`,
   falling back to `docs/dev-agents/PRD.md`, `SPEC.md`, and `ROADMAP.md` when there is no config.
   The `wkc-tracker` skill for reads only: `list`, `show`, and `milestone`, in its `list` and `show`
