@@ -24,6 +24,14 @@ worktree_of() {
     $0 == "branch " ref { print path }'
 }
 
+# True when local tip <tip> is pull request <number>'s head <head> or behind it, so the pull
+# request has all its work. A review round can push a fix commit from another checkout.
+in_pr() {
+  [ "$1" = "$2" ] && return
+  git -C "$main_root" fetch --quiet origin "refs/pull/$3/head"
+  git -C "$main_root" merge-base --is-ancestor "$1" "$2"
+}
+
 cmd_worktree() {
   local branch=$1
   local dest=${WORKTREES:-$(dirname "$main_root")/$(basename "$main_root")-worktrees}/${branch//\//-}
@@ -56,7 +64,7 @@ cmd_merge() {
   # A local branch ahead of the PR means the merge would leave out work.
   local tip=""
   if tip=$(git rev-parse --verify --quiet "refs/heads/$branch"); then
-    [ "$tip" = "$head" ] || die "local $branch is at ${tip:0:7}, PR #$number head is ${head:0:7}; push or reset it first"
+    in_pr "$tip" "$head" "$number" || die "local $branch is at ${tip:0:7}, PR #$number head is ${head:0:7}; push or reset it first"
   fi
 
   echo "merging PR #$number: $title ($branch at ${head:0:7})"
@@ -74,7 +82,7 @@ cmd_cleanup() {
   # Squash merges leave the branch unmerged by ancestry, so compare with the PR head instead.
   local tip=""
   if tip=$(git rev-parse --verify --quiet "refs/heads/$branch"); then
-    [ "$tip" = "$head" ] || die "local $branch is at ${tip:0:7}, but PR #$number merged ${head:0:7}; it has work the PR does not"
+    in_pr "$tip" "$head" "$number" || die "local $branch is at ${tip:0:7}, but PR #$number merged ${head:0:7}; it has work the PR does not"
   fi
 
   local path
