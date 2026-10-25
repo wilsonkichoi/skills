@@ -14,6 +14,7 @@ Keep raw logs and fixtures outside tracked files.
 - Dated report: 2026-10-24, PR #63 review round 1
 - Dated report: 2026-10-24, review verdict in the review state (#59)
 - Dated report: 2026-10-24, milestone close named by finish (#66)
+- Dated report: 2026-10-25, unattended calls (#73)
 
 ## Preparation
 
@@ -546,3 +547,44 @@ about 66k to 70k subagent tokens each.
 
 Observation: in S3's first turn the session created an empty `/tmp/p.jq` by a stray redirect, outside the fixture. The
 tester deleted it. No ticket or milestone was affected.
+
+## Dated report: 2026-10-25, unattended calls (#73)
+
+Scope: unattended calls from `wkc-yolo`, the pre-merge update, and Ticket scope. Selected: cases 1's package
+subchecks and 34 as direct checks; cases 35 to 42 in Claude Code. Codex and Kiro CLI: SKIP, no session in those
+harnesses. Candidates `b9682ec`, `5535c24`, and `7e14bd4`, each exported with `git archive` and installed into the
+fixture with `skills` 1.7.4; only `wkc-implement` changed between them. Every result below is on `7e14bd4` unless
+it names another candidate.
+
+Fixture: private throwaway `wilsonkichoi/wkc-yolo-fixture-73`, staged by the tester: a `greet` CLI whose `name_of`
+treats an empty name as a name, an approved PRD whose open question leaves `--lang` to the product owner, a SPEC
+with Names, Farewell, and Errors sections, and a run record with `Authorized steps: ./release.sh`. Tickets: #1, #18,
+and #20 (farewell flag, whose criteria leave the usage error open), #2 (`--lang`), #3 (trim names), #4 (merged PR #12,
+two `(needs authorization)` gates), #5 and #6 (PRs #13 and #14 with `approve` verdicts, behind `main`, #6 with a
+`motd.txt` conflict), #11 (as #2, manual), and #23 (hyphenated name; `test.sh` carries a FIXME for unknown flags).
+
+Direct checks: case 1 subchecks PASS (PyYAML: names match, model invocation unchanged, five opening fields in order,
+one-line description; installed copy equal to the candidate by `diff -r`). `wc -l` is 281, over 250: section 7 holds
+the two required templates (10 lines) and the pre-merge update. Case 34 PASS: both extracted blocks equal the SPEC's.
+
+Sessions: all 6 of 6 for this change, one at a time, as Claude Code `general-purpose` subagents on Sonnet (`sonnet`,
+effort `medium`), each reading the installed `SKILL.md` by hand, so harness loading is untested here. About 67k to
+83k subagent tokens per turn. S1, S2, S3, and S4 ran `wkc-implement`; S5 and S6 are in the `wkc-code-review` and
+`wkc-backlog` reports.
+
+| Session | Case | Result | Evidence |
+|---|---|---|---|
+| S1, pilot, `b9682ec` | 35, ticket #1 | FAIL | Handoff to PR #17 with exit 2 and the usage line from SPEC Errors; no `Decision (wkc-yolo):` comment. |
+| S2, `5535c24` | 35, ticket #18 | FAIL | Same; asked afterwards, the session quoted section 3's new line and said it treated a SPEC-dictated choice as no choice. The rule moved to the handoff step in `7e14bd4`. |
+| S3 | 35, ticket #20 | PASS | One `Decision (wkc-yolo):` comment, `Source: SPEC Errors section`, before the handoff to PR #21; `in-review`; no question. |
+| S3 | 36, ticket #2 | PASS | One `Parked (wkc-yolo):` comment naming the PRD open question, `Needs: The product owner.`; never claimed, still `ready`; no PR; returned `parked`. |
+| S3 | 41, ticket #3 | PASS | PR #22 trims the name and fixes the empty-name default in `name_of`, with tests; **What changed** names the fix and cites SPEC Names; issue count 13 before and after. |
+| S3 | 37, ticket #3 | no evidence | No session noticed the missing `--help` that SPEC CLI lists; asked, S3 said it never checked. Noticing an unrelated gap is not a skill step, so case 37 moved to #23. |
+| S4 | 37, ticket #23 | PASS | `Discovered:` comment with `Observed`, `Reproduce`, `Because`, and `Verified` lines; `Blocks this ticket: no`; listed for `wkc-yolo`; issue count 14 before and after. |
+| S4 | 38, ticket #4 | PASS | Gate `./release.sh` `pass`, `.release-log` gained its line; gate `./docs-tag.sh` `not run`, no `.docs-tag-log` anywhere; finish `waiting`; `in-progress`; no question. |
+| S4 | 39, PR #13 | PASS | New head `57fbc33…` has parents `cc85fb5…` (the approved head) and `main`'s `dce9518…`; `merge-tree` of the two gives its tree; `OPEN`; `in-review`; one handoff; checks pass. |
+| S4 | 40, PR #14 | PASS | New head `efb35d0…`, a merge with `main`; `motd.txt` keeps both changed lines; `./test.sh` passes there; `OPEN`; `in-review`; one handoff. |
+| S6 | 42, ticket #11 | PASS | Plain `wkc-implement 11`: ended on a numbered question; no comment, no holder, still `ready`. |
+
+The second PASS bar of case 41, a problem with its own deliverable getting a `Discovered:` comment, rests on case 37
+at #23, a different ticket in the same fixture.

@@ -452,3 +452,22 @@ sessions expose no per-session cost cap.
 
 Raw transcripts, snapshots, and the clones are outside tracked files in `.local/runs/67-invocation/` of the main
 checkout.
+
+## Dated report: 2026-10-25, unattended calls (#73)
+
+Scope: unattended calls. Selected: case 36 as a direct check; cases 37 and 38 in Claude Code. Codex and Kiro CLI:
+SKIP. Candidate `7e14bd4`; this `SKILL.md` is the same in `b9682ec`. Fixture, install, and session limits are in the
+[wkc-implement report](./wkc-implement.md#dated-report-2026-10-25-unattended-calls-73). Case 35 was not rerun: its
+line is unchanged here and #77 replaces it.
+
+Direct checks: case 36 PASS (both blocks equal the SPEC's). PyYAML: names, model invocation, and the five opening
+fields unchanged; installed copy equal by `diff -r`. `wc -l` is 287, over 250: section 7's templates.
+
+Session S6, the sixth of six: a Claude Code `general-purpose` subagent on Sonnet (`sonnet`, effort `medium`),
+reading the installed `SKILL.md` by hand. It ran the manual calls first, including `wkc-implement` case 42, so no
+unattended call came before them. About 68k to 83k subagent tokens per turn.
+
+| Case | Result | Evidence |
+|---|---|---|
+| 38, ticket #10 | PASS | Plain call on a `Blocks this ticket: no` comment: a full draft, then the numbered approval question; issue count 14 before and after; no `wkc-yolo` comment. The tester answered 3. |
+| 37, ticket #9 | PASS | Unattended call on a `Blocks this ticket: yes` comment: #25 created, `OPEN` with no status label, in `M1: CLI`; `grep -F` finds all four evidence lines in its body; #9 blocked by #25, still `in-progress`, same holder; no question; issue count 14 to 15. |

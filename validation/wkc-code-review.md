@@ -17,6 +17,7 @@ Keep raw logs and fixtures outside tracked files.
 - Sessions S13 to S16: 2026-10-23
 - Review round 3: 2026-10-23
 - Improvements on the last fixing round: 2026-10-23
+- Dated report: 2026-10-25, unattended calls (#73)
 
 ## Preparation
 
@@ -551,3 +552,24 @@ order, which is outside this change.
 
 Still SKIP: cases 7, 12, 14 to 16, 19 to 22, 24, 25, and 27 to 31 at this head; the section 5 line list beyond S20's
 `stopped` verdict; installed harness loading, Codex, and Kiro CLI. One session is left under this change's limit.
+
+## Dated report: 2026-10-25, unattended calls (#73)
+
+Scope: the confirming round after an update from the base, Ticket scope, and unattended calls. Selected: case 38 as a
+direct check; cases 39 to 41 in Claude Code. Codex and Kiro CLI: SKIP. Candidate `7e14bd4`; this `SKILL.md` is the
+same in `b9682ec`. Fixture, install, and session limits are in the
+[wkc-implement report](./wkc-implement.md#dated-report-2026-10-25-unattended-calls-73).
+
+Direct checks: case 38 PASS (both blocks equal the SPEC's). PyYAML: names, model invocation, and the five opening
+fields unchanged; installed copy equal by `diff -r`. `wc -l` is 287, over 250: section 7's templates and the
+update check.
+
+Session S5, the fifth of six: a fresh Claude Code `general-purpose` subagent on Sonnet (`sonnet`, effort `medium`)
+that wrote none of the fixture's code, reading the installed `SKILL.md` by hand. Three calls, each said to come from
+`wkc-yolo`; about 68k to 80k subagent tokens each.
+
+| Case | Result | Evidence |
+|---|---|---|
+| 39, PR #13 | PASS | After `wkc-implement` case 39: `round 2: approve`, `Reviewed: 57fbc33…`, the head; it ran `git merge-tree --write-tree` and matched the tree; head unchanged, no commit. |
+| 40, PR #15 | PASS | Tester's conflict merge `9217dfd…` dropped `main`'s carol test. `round 2: fixed`, `fixed test.sh:3` naming the dropped line; one commit `873728a…` restoring it; `./test.sh` passes; no `approve` for `9217dfd…`. |
+| 41, PR #16 | PASS | `round 1: fixed`; the `fixed greet:6` line names `./greet ""` printing `Hello, !` in the edited `name_of`; one commit `fe2a14a…`; no `Discovered:` comment on #8. |
