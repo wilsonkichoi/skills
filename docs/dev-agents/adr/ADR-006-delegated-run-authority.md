@@ -59,12 +59,19 @@ Planning option 1 and security option 1 (maintainer, 2026-10-24).
   `Status: approved (YYYY-MM-DD, delegated: <run record path>)`; `wkc-yolo` merges it as a planning
   PR under `merge_gate`, after a fresh subagent checks the diff stays inside the PRD and touches
   nothing that is never delegated.
-- Never delegated: the PRD, closing a milestone, and removing or weakening the SPEC's Security,
-  Boundaries, or Requirements, `merge_gate`, a run limit, or a check. Product intent is the
-  boundary, not the size of a change.
-- `push_check` runs before every push in `wkc-implement` and `wkc-code-review`, and a run requires
-  it. Security is layered: `push_check`, a project's own hook, host push protection, and branch
-  protection. The SPEC says which layers the agent can get around.
+- Technical requirements, contracts, components, and decisions may be revised, replaced, or
+  removed when engineering evidence justifies it. An earlier approval is never by itself a reason
+  to keep one, and the Changes entry gives the reason (maintainer, 2026-10-24). The design is meant
+  to evolve, not freeze.
+- Never delegated: the PRD, closing a milestone, and weakening a security protection, an
+  authorization limit, an operational safeguard, a requirement the PRD sets, or an acceptance
+  criterion to make failing work pass. Product intent is the boundary, not the size of a change.
+- A configured `push_check` binds every push the skills make, in every mode: `wkc-implement`,
+  `wkc-code-review`, and `wkc-yolo`'s planning PRs. A project without one keeps working manually
+  with a warning, and a run requires a usable one. Kickoff reads push protection as `enabled`,
+  `disabled`, or `unverifiable`; GitHub shows its status only to admins, so a missing field never
+  counts as off. Security is layered: `push_check`, a project's own hook, host push protection, and
+  branch protection. The SPEC says which layers the agent can get around.
 - Outside a run nothing changes: every approval question stays.
 
 ## Consequences
@@ -72,6 +79,9 @@ Planning option 1 and security option 1 (maintainer, 2026-10-24).
 - A person can find every delegated change by its status line, its **Changes** entry, and its
   Decision comment, and can revert its planning PR. Review happens after, not before.
 - With `merge_gate: human`, planning PRs wait for a person, so delegation adds little there.
+- A run can drop a technical requirement a person once approved. The fresh-subagent check before
+  each planning PR and the Changes entry's evidence are the guard; the PRD-set requirements and the
+  safeguards above are out of reach.
 - The inner security layers stop mistakes, not an agent that ignores its instructions. A project
   that needs that guarantee gives runs a narrower identity, which option 2 would have required.
 - Revisit planning option 2 if delegated changes turn out to need frequent reverts; revisit

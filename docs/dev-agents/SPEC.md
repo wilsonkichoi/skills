@@ -17,8 +17,8 @@ them. The remaining work is `wkc-implement`, `wkc-code-review`, `wkc-yolo`, `wkc
 Delegated run authority (ADR-006) follows the maintainer's request of 2026-10-24: a `wkc-yolo` run
 may change the SPEC, the ROADMAP, milestones, and tickets within the PRD's product intent, without a
 person approving each change, while security checks, `merge_gate`, and the run's limits stay hard
-boundaries. PRD goal 3 still says the run "decides from" those documents; its revision through
-`wkc-research` is due before this SPEC is approved.
+boundaries. PRD goal 3, its non-goals, and its Security constraint record that authority
+(revised 2026-10-24).
 
 ```mermaid
 graph LR
@@ -116,7 +116,7 @@ Added to `docs/dev-agents/config.md` by `wkc-setup`, in the PR that first reads 
 |---|---|---|---|---|
 | `merge_gate` | `agent`, `human` | `agent` | `wkc-yolo` | Who merges an approved PR during a run. Outside a run, a person merges through GitHub or `gh` |
 | `max_fix_attempts` | integer, 0 or more | `3` | `wkc-code-review`, `wkc-yolo` | Review rounds that may change code on one PR, for fixes or improvements. One review-only round always follows the last fix; with `0`, the only round is review-only |
-| `push_check` | a shell command | none | `wkc-implement`, `wkc-code-review`, `wkc-yolo` | Scans the commits about to be pushed for secrets; exit 0 passes, anything else blocks the push. Example: `gitleaks git --redact --log-opts="origin/main..HEAD"`. A run needs it |
+| `push_check` | a shell command | none | `wkc-implement`, `wkc-code-review`, `wkc-yolo` | Scans the commits about to be pushed for secrets; exit 0 passes, anything else blocks the push. Example: `gitleaks git --redact --log-opts="origin/main..HEAD"`. Once set, it binds every push in every mode; a run needs a usable one |
 
 Any other value of `merge_gate` or `max_fix_attempts` is a stop that names the field and its allowed
 values, never a guess. A run may tighten either field for itself (`human`, or a lower number) and
@@ -256,13 +256,15 @@ be committed, or offers to work in the current checkout. A fresh worktree cannot
 `make worktree` copies only gitignored files ([tools/branch.sh](../../tools/branch.sh)).
 
 **Push check.** A push to a public repository exposes a secret whatever review finds later, so the
-check runs before the push, not before the merge. When `push_check` is set, `wkc-implement` and
-`wkc-code-review` run it in the checkout holding the commits, before every `git push`, and never
-pass `--no-verify` or disable a hook. A failure blocks that push. The skill removes the finding from
+check runs before the push, not before the merge. When `push_check` is set, it binds every push the
+skills make, in every mode, manual or unattended: `wkc-implement` and `wkc-code-review` run it in
+the checkout holding the commits, before every `git push`, and `wkc-yolo` runs it before pushing a
+planning PR. No skill passes `--no-verify`, disables a hook, or skips the check. A failure blocks that push. The skill removes the finding from
 the commits being pushed (rewriting its own unpushed commits when the secret is in history), runs
 the check again, and pushes only on a pass. It reports the file, line, and rule, and never the
 value. The same finding failing again with no new evidence stops: under a run, the ticket parks.
-With no `push_check`, a manual push goes ahead and the report says no push check is configured.
+With no `push_check`, a manual push goes ahead, with a warning in the report that no push check is
+configured; that keeps existing projects working. A run never pushes without one.
 
 **Finish is explicit.** Only `wkc-implement finish <id>` runs post-merge gates and moves a ticket
 to `done`: a person types it after the merge, and `wkc-yolo` calls it after its own. `wkc-implement
@@ -562,10 +564,18 @@ change.
   once it merges. `wkc-yolo` commits it on a `docs/<slug>` branch in its own worktree, runs
   `push_check`, pushes, opens a PR, and merges it under `merge_gate` at the head it checked. With
   `merge_gate: human`, it waits for a person's merge, and the tickets that need it wait too.
-- **Never delegated.** A run never edits the PRD, never closes a milestone, and never removes or
-  weakens an entry in the SPEC's Security, Boundaries, or Requirements sections, `merge_gate`, the
-  run's limits, or a check. A change that needs one of those parks the ticket that raised it, with
-  `Needs: a person`.
+- **What may change.** Technical requirements, contracts, components, and decisions, including
+  ADRs and the SPEC's Requirements, may be revised, replaced, or removed when engineering evidence
+  shows they are unnecessary, obsolete, too restrictive, or in the way of a better design. An
+  earlier approval is never by itself a reason to keep one. The **Changes** entry gives the
+  evidence and the reason.
+- **Never delegated.** A run never edits the PRD and never closes a milestone. It never removes or
+  weakens a security protection (the SPEC's Security section, `push_check`, the review's security
+  checks), an authorization limit (`merge_gate`, the run record, `(needs authorization)` steps), an
+  operational safeguard (the stops in Failure handling, the Boundaries that come from PRD non-goals),
+  or a requirement the PRD sets, such as the session budget or the authoring limits. It never
+  weakens an acceptance criterion to make failing work pass. A change that needs one of those parks
+  the ticket that raised it, with `Needs: a person`.
 - **With `Planning: none`,** a SPEC or ROADMAP change parks the ticket that needs it, as before.
 
 Outside a run, nothing here applies: every skill asks for approval as it always has.
@@ -582,10 +592,16 @@ runs record their ticket ids and never grow; a milestone run takes each new wave
    only recorded, default run; every `(needs authorization)` step in the tickets in scope, listed
    and approved once, default all; a budget in tickets or wall-clock time, default none; and the
    tickets in scope the person already holds, each adopted into the run or left out. Security is
-   part of readiness: with no `push_check` the run does not start, and push protection is read with
-   `gh api repos/<owner>/<repo> --jq .security_and_analysis.secret_scanning_push_protection.status`;
-   when it is not `enabled`, the round names the gap and the person accepts it or stops. Write the
-   answers to the run record. After this round the run asks nothing.
+   part of readiness. `push_check` must be configured and usable: the run executes it once on the
+   current branch before the round, and with no command, or any exit but 0, the run does not start
+   and the round shows the output. Push protection is read with
+   `gh api repos/<owner>/<repo> --jq '.security_and_analysis.secret_scanning_push_protection.status // "unverifiable"'`.
+   `enabled` is confirmed on. `disabled` is confirmed off: the round says so, and the person accepts
+   it or stops. `unverifiable` means the read could not tell, never that it is off: GitHub shows the
+   block only to repository admins and organization owners or security managers, and a call that
+   fails for another reason counts the same. The round says why it could not tell, and the person
+   accepts it or stops. An authentication error stops everything, as always. Write the answers to
+   the run record. After this round the run asks nothing.
 2. **Resume first:** before taking new work, and after each ticket finishes, continue the tickets
    in scope whose latest `Run:` comment names this run's record and that are not finished:
    admitted but still `ready` (recheck that it is eligible and unheld, then claim it, reusing its
@@ -649,7 +665,7 @@ Started: <ISO 8601 time>. By: <person>.
 - Planning: delegated | none
 - New prerequisites: run | record only
 - push_check: <the command>
-- Push protection: enabled | <status>, accepted by <person>
+- Push protection: enabled | disabled, accepted by <person> | unverifiable (<why>), accepted by <person>
 ```
 
 ### wkc-retro
@@ -727,8 +743,8 @@ live in `rules_dir`. The one new file type is `wkc-yolo`'s run record, one per r
 - At most 6 extra AI test sessions per change. Runbooks run on Claude Code; Codex and Kiro are SKIP.
 - Each port adds `validation/wkc-<name>.md` with a few simple cases, each with an independent check.
 - `wkc-yolo` performs no merge, publish, or deploy outside its recorded limits. Its runbook checks this.
-- In a run, no push happens without a passing `push_check`. The runbooks check it with a planted
-  test credential.
+- With `push_check` configured, no push by the skills happens without a pass, in any mode, and a
+  run never pushes without one. The runbooks check it with a planted test credential.
 
 ## Boundaries
 
@@ -738,8 +754,8 @@ From the PRD non-goals:
   later (2026-10-20); each needs its own written reason ([AGENTS.md Distribution](../../AGENTS.md#distribution)).
 - No per-harness copies or consumer build step.
 - No skill merges, publishes, or deploys on its own authority.
-- A run never edits the PRD, and delegated planning never weakens Security, Boundaries,
-  Requirements, `merge_gate`, a run limit, or a check.
+- A run never edits the PRD, closes a milestone, weakens a security protection, authorization
+  limit, or operational safeguard, or weakens an acceptance criterion to make failing work pass.
 - No `wkc-fix`, `wkc-qa`, `wkc-verify`, `wkc-git-fu`, or `wkc-create-ticket`.
 - No status file beside the tracker, no priority, no separate ticket per step of one change.
 - No scripts in installed skills unless a concrete failure requires one. Branch setup is written as
@@ -822,11 +838,14 @@ the previous tag. Each port also updates the README roster, the repository map u
   work-summary validator and its binding rules are the machinery this replaces.
 - Distribution, naming, versioning, and authoring rules stay as [AGENTS.md](../../AGENTS.md) records them.
 - A run with `Planning: delegated` approves its own SPEC, ADR, ROADMAP, milestone, and ticket
-  changes within the PRD, with a marked approval line and a Decision comment per change:
-  [ADR-006](./adr/ADR-006-delegated-run-authority.md). Chosen over deferring SPEC changes to after
-  the run and over parking (maintainer, 2026-10-24).
-- Secret scanning runs before every push through `push_check`, which a run requires, and the run's
-  kickoff reads push protection and records its absence only with the person's acceptance. Chosen
+  changes within the PRD, technical requirements included, with a marked approval line and a
+  Decision comment per change: [ADR-006](./adr/ADR-006-delegated-run-authority.md). Chosen over
+  deferring SPEC changes to after the run and over parking (maintainer, 2026-10-24). Security
+  protections, authorization limits, operational safeguards, PRD-set requirements, and acceptance
+  criteria are never weakened.
+- Secret scanning runs before every push through `push_check` once it is configured, in every mode,
+  and a run requires a usable one. The run's kickoff reads push protection as enabled, disabled, or
+  unverifiable, and records the last two only with the person's acceptance. Chosen
   over requiring a separate agent identity, which a user-owned repository cannot restrict fully, and
   over `push_check` alone (maintainer, 2026-10-24; ADR-006).
 - Ticket scope is the ticket's outcome: related problems are fixed in the ticket, in every mode
@@ -869,17 +888,19 @@ None.
 
 - 2026-10-24: Delegated run authority (maintainer; ADR-006). A run with `Planning: delegated`
   changes the SPEC, ADRs, ROADMAP, milestones, and tickets through `wkc-backlog`, `wkc-architect`,
-  and `wkc-plan`, approving each with a marked status line and merging it as a planning PR; it never
-  edits the PRD or weakens Security, Boundaries, Requirements, `merge_gate`, limits, or checks. New
-  `push_check` field, run before every push and required by a run; kickoff reads push protection;
+  and `wkc-plan`, approving each with a marked status line and merging it as a planning PR; it may
+  revise technical requirements on evidence, and never edits the PRD or weakens security
+  protections, authorization limits, operational safeguards, PRD-set requirements, or acceptance
+  criteria. New `push_check` field, binding every push once configured, in every mode, and required
+  by a run; kickoff reads push protection as enabled, disabled, or unverifiable;
   layered security; a review security checklist; Ticket scope fixes related problems in the
   ticket; new prerequisites may join a run; waiting is apart from parked; the run record gains four
   lines (Overview, Components, Config fields, Ticket scope, Lifecycle, Review verdict, Invocation,
   Unattended calls, Delegated run authority, wkc-yolo run, Failure handling, Security, Requirements,
   Boundaries, Decisions, Risks). Replaced "never `wkc-yolo`" for `wkc-architect` and `wkc-plan`,
   model invocation never approving a design or plan, the ticket or wave run parking every new
-  prerequisite, and the two config fields. PRD goal 3 needs a revision through `wkc-research`.
-  Review M4 (#73, #74) and M5.
+  prerequisite, and the two config fields. Follows the PRD revision of the same day (goal 3,
+  non-goals, Security constraint). Review M4 (#73, #74) and M5.
 
 - 2026-10-24: Milestones can close. `wkc-tracker` gains `milestone close <name>`, mechanism only,
   real on GitHub and a no-write report on Linear and local; `wkc-plan close <milestone>` closes one
