@@ -584,6 +584,19 @@ query: `## Notes` is exactly the new line, no `### Constraints` or fenced block 
 `gh api -X PATCH`, standing in for another person, before `$wkc-tracker edit <T> title "<new
 title>"` writes. Check: the new title, and the body exactly as the other person left it.
 
+**A47 milestone close closes exactly one milestone, and only it.** With open `X` holding two issues,
+one `ready` and one closed as completed, and open `Y2`, and no `Y`. Record
+`gh api 'repos/<R>/milestones?state=all' --jq '[.[] | {title, state, updated_at}]'` and
+`gh issue list --repo <R> --state all --json number,title,body,state,stateReason,labels,assignees,milestone,updatedAt | shasum`.
+
+1. `$wkc-tracker milestone close X`: expect `closed` from
+   `gh api 'repos/<R>/milestones?state=all' --jq '.[] | select(.title=="X") | .state'`, `Y2` still
+   open, and the issue hash unchanged. The open issue in `X` does not stop the close: the caller decides.
+2. `$wkc-tracker milestone close X` again: expect a reply that `X` is already closed, and `X`'s
+   `updated_at` unchanged.
+3. `$wkc-tracker milestone close Y`: expect a stop that names the milestones that exist, and the
+   milestones record unchanged. `Y2` must not close.
+
 **A32 an empty frontier says why.** This case needs a frontier with nothing on it, so run it after
 every other A case. For each ticket `$wkc-tracker next` returns, `gh issue edit <n> --repo <R>
 --remove-label ready` until it returns nothing. Then build three held tickets with `gh`, not the
@@ -905,6 +918,10 @@ Then a title edit: `status` stays `'done'`.
 `## Comments` after `## Related`. Edit `## Notes` the same way. Check with `diff` against a copy: only
 the `## Notes` span differs, and `## Related` and the comments are unchanged.
 
+**B32 milestone close writes nothing here.** Give one ticket `milestone: 'M1'`. Record
+`git status --porcelain` and `cksum` of every file under `issues_dir`. `$wkc-tracker milestone close
+M1`: expect a reply that the backend has no milestone state. Check: both records unchanged.
+
 **B20 an empty frontier says why.** Run it after every other B case. Move every ticket
 `$wkc-tracker next` returns to `backlog` by editing its `status`, until it returns nothing. Then write
 six files by hand, since the skill will not write the cycle:
@@ -1205,6 +1222,11 @@ the new title, and an empty `blockedBy`.
 `## Notes` the same way. Check with `get_issue`: `## Notes` is exactly the new line, no
 `### Constraints` or fenced block is left, and `## Related` is unchanged by the reading rules.
 
+**C36 milestone close writes nothing here.** With project milestone `M1` holding one issue, record
+`list_milestones` and `get_issue` for that issue. `$wkc-tracker milestone close M1`: expect a reply
+that the backend has no milestone state, and no `save_milestone` or `save_issue` call. Check: both
+reads unchanged, `M1` still listed.
+
 ---
 
 ## D. Harness parity
@@ -1480,6 +1502,52 @@ here.
 Versions 0.0.9 to 0.0.41 below were development steps on the `feat/tracker` branch. They shipped
 together as 0.0.8, so an entry's version names a branch state, and its skill ref names the exact
 commit it tested.
+
+### 2026-10-24T18:15:18-07:00 PR #69 round 1, focused direct checks
+
+Reviewed `ff3a7459730afd8ecaeb2a9a8ebd0a7c97b6497b` against #65 and SPEC Contracts, Milestone close.
+Selected scope: direct API subchecks of A47.1 to A47.3 on the existing GitHub fixture
+`wilsonkichoi/wkc-tracker-fixture-65`, static Linear/local no-write rules, and the pre-commit checklist.
+Current harness: Codex. No additional AI sessions or other harnesses launched.
+
+- PASS, API subchecks: created an empty temporary milestone, closed it with the documented
+  state-only PATCH, and verified its title and `closed` state with a separate GET. Repeat close
+  skipped PATCH; missing `Y` returned no exact match and listed `Y2`. Both left the full milestone
+  records unchanged. Original milestones `X` and `Y2` were unchanged throughout. Deleted only the
+  temporary milestone and confirmed the original milestone records were restored.
+- PASS, issue preservation: all fixture issue records were identical before and after, SHA-256
+  `e1cad064502856baddb682c1b4d0aebed31e1eba1f0ab501af4aeecd2bfc26af`.
+- PASS, static checks: one `milestone close` entry per backend, Linear/local no-write instructions,
+  cases A47/B32/C36 present, skill remains 264 lines, and `git diff --check` clean. Added the missing
+  root README and `AGENTS.md` behavior documentation required by #65's checklist criterion.
+- Limits: these are direct API subchecks, not full model-behavior PASS results for A47, B32, or C36.
+  The temporary milestone was empty. The earlier Claude Code report below covers the populated
+  milestone and local fixture; its results are retained, not counted as new checks. The skill files
+  are byte-identical to its source `bb629f2`. No configured `test_command` or PR CI checks exist.
+
+### 2026-10-24T17:51:24-07:00 Focused 0.0.35 milestone close run, Claude Code
+
+Scope: the new `milestone close` verb, issue #65. Cases A47 and B32, plus static checks. Skill ref
+`bb629f2`, installed with `npx skills add '...skills.git#bb629f2' -a claude-code --skill wkc-tracker`
+into two scratch projects; `diff -r` against the source showed no difference. GitHub fixture: private
+throwaway `wilsonkichoi/wkc-tracker-fixture-65`, open `X` with one `ready` and one completed issue,
+open `Y2`, no `Y`. Local fixture: one committed ticket in `M1`. One Claude Code test session: a
+`sonnet` subagent told to read only the installed `SKILL.md` and backend file, with no expected
+results in its prompt, run as two turns of one session (about 131k subagent tokens). 1 of the 6
+sessions allowed for this change.
+
+| Case | Verdict | Independent evidence |
+|---|---|---|
+| B32 | PASS | Reply: the local backend has no milestone state. `git status --porcelain` and `cksum` of the ticket and config identical before and after. |
+| A47.1 | PASS | One PATCH of milestone 1 with `state=closed`. The `state=all` read gives `X` `closed`, `Y2` `open` with the same `updated_at`; the `gh issue list` hash is identical, the open issue in `X` included. |
+| A47.2 | PASS | Reply: already closed, nothing written. `X`'s `updated_at` unchanged at `2026-10-25T00:50:37Z`. |
+| A47.3 | PASS | Reply named `X` (closed) and `Y2` (open) and refused to guess `Y2`. Milestones record and issue hash unchanged. |
+| Static | PASS | `grep -n "milestone close"` gives one line in each of `github.md`, `linear.md`, `local.md`; `linear.md` says it writes nothing because project milestones have no open or closed state. `SKILL.md` is 264 lines. |
+| C36 | not selected | The Linear behaviour is a no-write statement covered by the static check. |
+| Codex, Kiro CLI | SKIP | This session may not launch another harness. |
+
+PASS 5, FAIL 0, SKIP 2 (Codex, Kiro CLI). The test session is a subagent reading the installed files,
+not a slash invocation in a separate CLI session. The fixture repository stays for a person to delete.
 
 ### 2026-10-21T11:48:56-07:00 Focused 0.0.26 run, Codex, GitHub and Linear
 

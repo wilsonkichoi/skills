@@ -4,7 +4,7 @@
 - Statuses
 - Tools
 - Reading rules
-- Per verb: next, create, edit, link, unlink, assign, milestones (ensure, list, show), duplicate
+- Per verb: next, create, edit, link, unlink, assign, milestones (ensure, close, list, show), duplicate
 
 Use the official Linear MCP server. Scope every call with `linear_team` from
 `docs/dev-agents/config.md`, and with `linear_project` wherever the tool takes a project. Never
@@ -169,6 +169,9 @@ save_milestone { project: <linear_project>, name: <name> }
 Never pass `id`, which updates an existing milestone. Then read `list_milestones` again: exactly one
 milestone has that name. If the server offers no tool that creates one, write nothing and ask the
 person to add the milestone to the project in Linear.
+
+`milestone close <name>` writes nothing: Linear project milestones have no open or closed state. Say
+the backend has no milestone state. Never update, archive, or delete the milestone in its place.
 
 `milestone list` is `list_milestones` with `linear_project`, following `hasNextPage`: report each
 milestone's name and id. Linear project milestones have no open or closed state, so report none;

@@ -72,6 +72,7 @@ filed by hand in the web UI is a real ticket immediately, with no import step.
 /wkc-tracker link <id> blocked-by <id>
 /wkc-tracker unlink <id> blocked-by <id>
 /wkc-tracker milestone <name>
+/wkc-tracker milestone close <name>
 /wkc-tracker milestone list
 /wkc-tracker milestone show <name>
 ```
@@ -138,16 +139,23 @@ The tracker carries it out and keeps the graph valid.
 
 **`milestone`** makes sure a milestone exists before tickets go into it:
 `/wkc-tracker milestone "M2: Reply handling"`. It creates an open one when nothing has that name, and
-leaves an existing open one alone. It never renames, closes, or reopens a milestone: a closed one is
+leaves an existing open one alone. It never renames or reopens a milestone: a closed one is
 reported, and reopening it is your call. In local markdown there is nothing to create, since a
 milestone exists as soon as a ticket carries it. `wkc-backlog` uses it before creating a milestone's
 tickets.
+
+**`milestone close`** closes one open milestone on GitHub: `/wkc-tracker milestone close "M2: Reply
+handling"`. The name has to match exactly; otherwise it stops and lists the milestones that exist. An
+already closed one is reported and left alone. It does not look at the milestone's tickets, so
+deciding that a milestone is finished is yours, or the calling skill's. Linear project milestones and
+local milestones have no open or closed state, so there it writes nothing and says so.
 
 `/wkc-tracker milestone list` and `/wkc-tracker milestone show "M2: Reply handling"` only read.
 `list` shows every milestone, closed and empty ones included on GitHub and Linear. `show` gives one
 milestone's tickets counted by status, with `done`, `cancel`, and `duplicate` kept apart. In local
 markdown both are worked out from the tickets, so a milestone with no tickets does not exist there.
-To ensure a milestone literally named `list`, quote it: `/wkc-tracker milestone "list"`.
+To ensure a milestone literally named `list`, or one starting with `show ` or `close `, quote it:
+`/wkc-tracker milestone "list"`.
 
 ## `next`, and the frontier
 
