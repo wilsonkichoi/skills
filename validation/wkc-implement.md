@@ -205,6 +205,50 @@ session's report.
     PASS: both tickets are `done`, both reports name no `wkc-plan close`, and every milestone keeps its state by
     `gh api`. New, from #66.
 
+Cases 34 to 42 are from #73. An unattended call says it comes from `wkc-yolo` and gives a fixture run record's
+absolute path, written from SPEC Contracts › wkc-yolo run with `Authorized steps` naming one step. Count issues with
+`gh issue list --state all --limit 200 --json number --jq length` before and after each case.
+
+34. **Unattended templates.** Direct. Extract the fenced blocks that start `Decision (wkc-yolo):` and
+    `Parked (wkc-yolo):` from `SKILL.md` and from SPEC Contracts › Unattended calls.
+    PASS: `diff` of each pair gives no output, and no extracted block is empty.
+
+35. **Decide.** Unattended `wkc-implement <N>` on a `ready` ticket whose criteria leave a choice open that a fixture
+    SPEC section settles, such as the exit code of a usage error.
+    PASS: the ticket reaches `in-review` with one handoff and no question in the reply; it carries one
+    `Decision (wkc-yolo):` comment whose `Source:` names that SPEC section.
+
+36. **Park.** Unattended `wkc-implement <N>` on a `ready` ticket whose open question no fixture document or run limit
+    settles, such as a list of languages the PRD leaves to the product owner.
+    PASS: one `Parked (wkc-yolo):` comment; the status is the one it had when the comment landed, by the issue
+    timeline; the reply returns `parked` and asks nothing; no pull request.
+
+37. **Discovered work under a run.** In an unattended build that meets a non-blocking problem with its own
+    deliverable, such as a SPEC flag the code lacks.
+    PASS: a `Discovered:` comment with `Observed`, `Reproduce`, `Because`, and `Verified` lines on the ticket; the reply
+    lists the item; the issue count is unchanged.
+
+38. **Authorized steps.** Unattended `wkc-implement finish <N>` on a merged ticket with two `(needs authorization)`
+    gates, one listed in the record's `Authorized steps`.
+    PASS: the listed gate's comment says `pass` and its command left its mark; the other's says `not run` and left
+    none; the finish comment is `waiting`; the ticket is `in-progress`; the reply asks nothing.
+
+39. **Pre-merge update, clean.** Unattended `wkc-implement <N>`, asking for the pre-merge update, on an `in-review`
+    ticket whose open PR has an `approve` verdict on its head, behind `main` with no conflict.
+    PASS: the PR head is a merge of the approved head and `main`; the PR is `OPEN`; the ticket is `in-review`; still one
+    handoff comment; the acceptance commands pass at the new head.
+
+40. **Pre-merge update, conflict.** As case 39, on a PR whose change conflicts with `main`.
+    PASS: as case 39, and both sides' changes are in the new head.
+
+41. **Ticket scope.** `wkc-implement <N>` on a ticket whose change touches a function with an adjacent defect the
+    outcome needs fixed, in a fixture that also holds a problem with its own deliverable.
+    PASS: the PR fixes the defect, its **What changed** names the fix and why it belongs, and the issue count is
+    unchanged; the other problem has a `Discovered:` comment.
+
+42. **Manual call unchanged.** Case 36's ticket shape, called as plain `wkc-implement <N>`.
+    PASS: the reply ends on the question; the ticket has no `Decision (wkc-yolo):` or `Parked (wkc-yolo):` comment.
+
 ## Dated report: 2026-10-21
 
 Scope: new skill, baseline coverage. Selected: cases 1 and 2 as direct checks, cases 3 to 18 in Claude Code. Codex and

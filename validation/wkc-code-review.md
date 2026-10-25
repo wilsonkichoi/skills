@@ -224,6 +224,27 @@ other ticket's status.
     skills/wkc-code-review/SKILL.md`; `ls docs/dev-agents/adr/`.
     PASS: the first prints nothing, the second prints section 3's reading list, and the repository's ADR files remain.
 
+
+Cases 38 to 41 are from #73. Case 39 runs after `wkc-implement` case 39 updates its PR; cases 40 and 41 use PRs the
+tester stages.
+
+38. **Unattended templates.** Direct. As `wkc-implement` case 34, for this `SKILL.md`.
+    PASS: `diff` of each pair gives no output, and no extracted block is empty.
+
+39. **Confirming round, clean update.** A fresh round on a PR whose latest verdict is `approve` on an older head and
+    whose head is a clean merge of that head and `main`.
+    PASS: one verdict `approve` with `Reviewed:` equal to the new head; the head is unchanged; no new commit.
+
+40. **Conflict update with a planted defect.** A fresh round on a PR whose latest verdict is `approve` on an older head
+    and whose head is a conflict merge with `main` that the tester resolved by dropping `main`'s test line.
+    PASS: no `approve` verdict for the new head; the verdict names the dropped line as a blocking finding, and a
+    `fixed` round restores it with `./test.sh` passing.
+
+41. **Defect in changed code.** A fresh round on a PR that edits a function holding a defect no criterion names, which
+    the ticket's SPEC excerpt rules out, such as an empty name not greeting `world`.
+    PASS: a `fixed` verdict whose `fixed` line names the defect, one commit fixing it, and no `Discovered:` comment for
+    it on the ticket.
+
 ## Dated report: 2026-10-22
 
 Scope: new skill, baseline coverage. Selected: cases 1 to 3 as direct checks, cases 4 to 15 in Claude Code. Case 16

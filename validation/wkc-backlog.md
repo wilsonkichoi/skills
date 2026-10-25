@@ -237,6 +237,21 @@ call loads a skill; reading its `SKILL.md` as a file does not.
     PASS: no skill-tool call for `wkc-architect` or `wkc-plan`; the return names the SPEC change; the SPEC,
     ROADMAP, and `issues_dir` are unchanged by checksum. New, from #67.
 
+
+Cases 36 to 38 are from #73. An unattended call says it comes from `wkc-yolo` and gives a fixture run record's
+absolute path.
+
+36. **Unattended templates.** Direct. As `wkc-implement` case 34, for this `SKILL.md`.
+    PASS: `diff` of each pair gives no output, and no extracted block is empty.
+
+37. **A discovered blocker under a run.** Unattended, with a ticket whose comment is `Discovered: <what>. Out of scope
+    because <why>. Blocks this ticket: yes.` and its evidence lines.
+    PASS: one new ticket at `backlog`, its **Notes** carrying the evidence lines; the carrier is blocked by it; the
+    carrier's status and holder are unchanged; the reply asks nothing.
+
+38. **Manual call unchanged.** The same kind of comment on another ticket, called without the `wkc-yolo` statement.
+    PASS: the reply ends on the approval question; the issue count is unchanged.
+
 ## Dated report: 2026-10-21
 
 Scope: new skill, split from `wkc-plan` (ADR-004). Selected: cases 1 to 3 as direct checks; 4, 5, 7, 9, 21, 22, 23, 26,
