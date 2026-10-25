@@ -146,7 +146,7 @@ subagent tokens per turn, 7 turns across S1 and S2.
 | Case | Result | Evidence |
 |---|---|---|
 | 1, selected subchecks | PASS, direct | PyYAML: names match, model invocation unchanged, five opening fields in order, `argument-hint` `[a change to the ROADMAP | close <milestone>]`, `description` on one line, `wc -l` 143. |
-| 2, tracker-verb subcheck | PASS, direct | `grep -n "milestone close"` finds it only in **Dependencies** and section 5; every other verb named is a read. |
+| 2, tracker-verb subcheck | PASS, direct | `grep -n "milestone close"` finds the verb, in backticks, only in **Dependencies** and section 5; the other matches are the words "milestone closes" and "milestone closed". Every other verb named is a read. |
 | 34 | PASS | S1 pilot, `close M2: Greeting styles`: named #24 `ready` and #22 `done`, asked no close question, ran only reads. Every recorded field unchanged; M2 `open`. |
 | 35 | PASS | Tester closed #24 as `NOT_PLANNED`. S1, two more turns of the same command: each showed `done` 1, `cancel` 1, and M2's exit check, and ended on the numbered question. After `2`: M2 `open`, nothing changed. After `1`: one `PATCH .../milestones/1 -f state=closed`; M2 `closed`; every issue and the ROADMAP hash unchanged. |
 | 36 | PASS | S2, `close M1: Local close` on the local fixture: showed the counts and exit check and asked, noting the backend has no milestone state. After `1`: reported that `milestone close` writes nothing on the local backend. `shasum` of both ticket files and the ROADMAP unchanged; `git status --porcelain` empty. |

@@ -502,4 +502,3 @@ about 66k to 70k subagent tokens each.
 
 Observation: in S3's first turn the session created an empty `/tmp/p.jq` by a stray redirect, outside the fixture. The
 tester deleted it. No ticket or milestone was affected.
-
