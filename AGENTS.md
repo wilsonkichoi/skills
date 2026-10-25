@@ -227,7 +227,8 @@ Keep raw logs and repeated setup details outside tracked reports; preserve conci
 
 Never commit or push directly to `main`, on any harness, even with admin rights. Always:
 
-1. Branch from an up-to-date `main` (`git checkout -b <type>/<slug>`, e.g. `docs/...`, `feat/...`).
+1. Start the branch in its own worktree from an up-to-date `main`, with `make worktree
+   BRANCH=<type>/<slug>` (e.g. `docs/...`, `feat/...`). The main checkout stays on `main`.
 2. Commit on the branch, push it, open a pull request against `main`.
 3. Keep the branch current: merge or rebase `origin/main` in whenever GitHub reports it out of date.
 
