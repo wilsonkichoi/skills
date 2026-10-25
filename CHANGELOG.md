@@ -2,6 +2,13 @@
 
 Newest first. Each version is a `## {version} ({ISO 8601 timestamp with local offset})` heading followed by a bullet list of changes.
 
+## 0.0.36 (2026-10-24T17:49:20-07:00)
+
+- `wkc-architect` and `wkc-plan` opt into model invocation: `disable-model-invocation: false` and `policy.allow_implicit_invocation: true` (#67, SPEC Contracts › Invocation). Their callers are people, a model acting on a person's request, and `wkc-backlog`, never `wkc-yolo`. Model invocation approves nothing: the SPEC or ROADMAP stays `Status: draft` until the person approves it in the conversation.
+- `wkc-backlog` invokes `wkc-architect` for a change it classifies as a SPEC change and `wkc-plan` for a ROADMAP change, instead of only naming them for the person to type. Under `wkc-yolo` it names the change in its return instead, because `wkc-yolo` is not their caller.
+- The workflow diagram gains two dashed call arrows, `wkc-backlog` → `wkc-architect` (SPEC change) and `wkc-backlog` → `wkc-plan` (ROADMAP change), and its source rows name the new callers.
+- `AGENTS.md` and the README list both skills among those that opt into model invocation. `validation/wkc-architect.md`, `validation/wkc-plan.md`, and `validation/wkc-backlog.md` gain the invocation cases and a dated report.
+
 ## 0.0.35 (2026-10-24T17:48:56-07:00)
 
 - `wkc-tracker milestone close <name>` closes exactly one open milestone with that name on GitHub, by a PATCH of its `state` only, and verifies it with a fresh read (#65). A name that matches nothing stops and names the milestones that exist; an already closed one is reported with no write. It never checks the milestone's tickets: whether to close is the caller's decision. Linear project milestones and local milestones have no open or closed state, so on those backends it writes nothing and says so. `milestone <name>` still never renames or reopens one, and the line "No verb closes a milestone" is gone. GitHub milestones M2 and M3 stayed open with every ticket closed because no verb could close one.

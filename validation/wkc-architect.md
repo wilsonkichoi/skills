@@ -19,11 +19,17 @@ For cases 3 to 11, the fixture project has `docs/dev-agents/config.md` with `iss
 `spec_file` set, and an approved PRD (`Status: approved (<date>)`) for a small web service with at least two goals and
 one non-goal. Case 6 adds a few source files. Commit the fixture so `git status` shows every change.
 
+Cases 12 and 13 use the `wkc-backlog` fixture, with `wkc-architect`, `wkc-plan`, `wkc-backlog`, and `wkc-tracker`
+installed. Each runs in a session started in the fixture, so the harness discovers the installed skills.
+
 ## Cases
 
 1. **Package and discovery.** Parse the frontmatter and `agents/openai.yaml`. List and install the candidate.
-   PASS: valid YAML, matching names, manual invocation on both settings, five opening fields in order,
-   `wkc-architect` in public discovery, installed copy identical to the source, and each harness links to it.
+   PASS: valid YAML, matching names, model invocation on both settings (`disable-model-invocation: false`,
+   `policy.allow_implicit_invocation: true`), callers named as people, a model acting on a person's request, and
+   `wkc-backlog`, never `wkc-yolo`, a **When to use it** that keeps the SPEC at `Status: draft` until the person
+   approves it, five opening fields in order, `wkc-architect` in public discovery, installed copy identical to the
+   source, and each harness links to it.
 
 2. **Document ownership is consistent.** Read `wkc-architect`, `wkc-research`, `wkc-setup`, and the root `README.md`.
    PASS: architect writes the SPEC and ADRs and never writes `roadmap_file`, tickets, or the config;
@@ -70,6 +76,16 @@ one non-goal. Case 6 adds a few source files. Commit the fixture so `git status`
     Then remove `test_command` from the config.
     PASS: the report says the config has no `test_command` for the SPEC's test command, and `git diff` shows
     the config unchanged.
+
+12. **Called by wkc-backlog.** Run [wkc-backlog case 33](./wkc-backlog.md), a request that changes a SPEC contract.
+    PASS: the session transcript shows a skill-tool call that loads `wkc-architect`, not a file read; the SPEC reads
+    `Status: draft` afterwards; no file in `issues_dir` is created or changed. New, from #67.
+
+13. **No invocation on an unrelated question.** In a fresh session, before any skill runs, ask a question unrelated
+    to the design, such as how to upper-case a string in bash. One session covers this case and
+    [wkc-plan case 33](./wkc-plan.md).
+    PASS: the transcript shows no skill-tool call for `wkc-architect` or `wkc-plan`, and `git status --porcelain` is
+    empty. New, from #67.
 
 ## Dated report: 2026-10-17
 
@@ -148,3 +164,15 @@ and the Codex session log.
 Additional observation: the architect's numbered decision options were followed by a policy quote. The model made no
 tool call after the question, but the options were not the final message content. This is not a failure of the selected
 cases above.
+
+## Dated report: 2026-10-24
+
+Scope: #67, model invocation. Selected: case 1's package subchecks as direct checks; cases 12 and 13 in Claude Code.
+Codex and Kiro CLI: SKIP, no session in those harnesses. Other cases are outside this change. Source, fixture,
+model, and usage are in the [wkc-backlog report](./wkc-backlog.md#dated-report-2026-10-24); session S1 ran both cases.
+
+| Case | Result | Evidence |
+|---|---|---|
+| 1, selected subchecks | PASS, direct | PyYAML: `disable-model-invocation: false`, `allow_implicit_invocation: true`, names match, five opening fields; **When to use it** names people, a model acting on a person's request, and `wkc-backlog`, never `wkc-yolo`, and keeps the SPEC at `Status: draft` until the person approves it. Installed copies equal the archive by `diff -r`. |
+| 12 | PASS | wkc-backlog case 33: a `Skill(wkc-architect)` call; the SPEC reads `Status: draft`; `issues_dir` unchanged. |
+| 13 | PASS | S1's first prompt, before any skill ran, asked how to upper-case a string in bash. The JSONL shows no tool call of any kind in that turn, so no skill loaded and no file changed. |

@@ -2,7 +2,7 @@
 name: wkc-architect
 description: Write or update the technical specification (SPEC) from an approved PRD and the existing code, covering components, contracts, data, failure handling, and the decisions behind them, with ADRs for the big ones. Use when a product or change needs technical design before it is planned or built.
 argument-hint: "[change summary, file paths, or URLs]"
-disable-model-invocation: true
+disable-model-invocation: false
 ---
 
 # wkc-architect
@@ -13,7 +13,10 @@ disable-model-invocation: true
 - **When to use it:** after `wkc-research` approves a PRD, or for a change that needs new contracts,
   components, or a decision someone will later ask about. Re-run it when the PRD changes. A small
   feature or fix that fits the current design does not need it: do the work and update the SPEC
-  afterwards if something it says changed. Callers are people.
+  afterwards if something it says changed. Callers are people, a model acting on a person's
+  request, and `wkc-backlog`, which invokes it for a change it classifies as a SPEC change; never
+  `wkc-yolo`. A model runs it only when a person asked for that work. Model invocation approves
+  nothing: the SPEC stays `Status: draft` until the person approves it in the conversation.
 - **Dependencies:** `prd_file` and `spec_file` from `docs/dev-agents/config.md`, falling back to
   `docs/dev-agents/PRD.md` and `docs/dev-agents/SPEC.md` when there is no config. `wkc-tracker`
   `list`, only when updating a SPEC in a project with a configured tracker.

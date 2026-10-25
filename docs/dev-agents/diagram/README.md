@@ -42,9 +42,9 @@ The arrows do not claim automatic skill invocation. Help's installer operations 
 | wkc-help | [skills/wkc-help/SKILL.md](../../../skills/wkc-help/SKILL.md) | Answers from installed definitions; gives installer commands and runs changes only on a person's request |
 | wkc-skills-release | [skills/wkc-skills-release/SKILL.md](../../../skills/wkc-skills-release/SKILL.md) | Internal maintainer skill; clean synchronized main and authenticated GitHub access; merged collection publication without setup |
 | wkc-research | [skills/wkc-research/SKILL.md](../../../skills/wkc-research/SKILL.md) | Writes only the PRD at `prd_file`; approval status line; no tracker; callers are people |
-| wkc-architect | [skills/wkc-architect/SKILL.md](../../../skills/wkc-architect/SKILL.md) | Writes only the SPEC at `spec_file` and ADRs; `wkc-tracker list` when updating with a configured tracker; callers are people |
-| wkc-plan | [skills/wkc-plan/SKILL.md](../../../skills/wkc-plan/SKILL.md) | Writes only the ROADMAP at `roadmap_file`; reads milestones through `wkc-tracker`; option 1 of its approval hands a milestone to `wkc-backlog`; callers are people |
-| wkc-backlog | [skills/wkc-backlog/SKILL.md](../../../skills/wkc-backlog/SKILL.md) | One milestone or one change; tickets from the SPEC templates; every ticket read and write through `wkc-tracker` verbs; callers are people, `wkc-plan`, `wkc-yolo`, and a model acting on a person's request |
+| wkc-architect | [skills/wkc-architect/SKILL.md](../../../skills/wkc-architect/SKILL.md) | Writes only the SPEC at `spec_file` and ADRs; `wkc-tracker list` when updating with a configured tracker; callers are people, a model acting on a person's request, and `wkc-backlog` for a SPEC change, never `wkc-yolo`; the SPEC stays `Status: draft` until the person approves it |
+| wkc-plan | [skills/wkc-plan/SKILL.md](../../../skills/wkc-plan/SKILL.md) | Writes only the ROADMAP at `roadmap_file`; reads milestones through `wkc-tracker`; option 1 of its approval hands a milestone to `wkc-backlog`; callers are people, a model acting on a person's request, and `wkc-backlog` for a ROADMAP change, never `wkc-yolo`; the ROADMAP stays `Status: draft` until the person approves it |
+| wkc-backlog | [skills/wkc-backlog/SKILL.md](../../../skills/wkc-backlog/SKILL.md) | One milestone or one change; tickets from the SPEC templates; every ticket read and write through `wkc-tracker` verbs; invokes `wkc-architect` for a SPEC change and `wkc-plan` for a ROADMAP change, except under `wkc-yolo`; callers are people, `wkc-plan`, `wkc-yolo`, and a model acting on a person's request |
 | wkc-implement | [skills/wkc-implement/SKILL.md](../../../skills/wkc-implement/SKILL.md) | One ticket from `ready` to an open pull request at `in-review`, and after the merge to `done` through `wkc-implement finish <id>`; every ticket read and write through `wkc-tracker` verbs; out-of-scope work to `wkc-backlog`; never merges; callers are people, `wkc-yolo`, and a model acting on a person's request |
 | wkc-code-review | [skills/wkc-code-review/SKILL.md](../../../skills/wkc-code-review/SKILL.md) | One review round on one pull request: a verdict comment of `approve`, `fixed`, or `stopped`, and one fix commit in a `fixed` round, up to `max_fix_attempts`; ticket reads and comments through `wkc-tracker` verbs; out-of-scope work to `wkc-backlog`; never moves the ticket or merges; callers are people, `wkc-yolo`, and a model acting on a person's request |
 
@@ -64,6 +64,8 @@ The arrows do not claim automatic skill invocation. Help's installer operations 
 | backlog → tracker: Manages tickets | Call, solid | Backlog's Dependencies name `wkc-tracker` for `list`, `show`, `milestone`, `create`, `edit`, `link`, `unlink`, and `move`; backlog reaches tickets only through those verbs, and section 5 publishes through them |
 | plan → tracker: Reads milestones | Call, dashed | Plan's Dependencies name `wkc-tracker` for reads only; section 1 reads `milestone list` and `milestone show`, and plans without the tracker when it cannot run |
 | architect → tracker: Lists tickets | Call, dashed | Architect's Dependencies and section 4: on a contract change with a configured tracker, list open tickets through the `wkc-tracker` `list` verb |
+| backlog → architect: SPEC change | Call, dashed | Backlog's Dependencies name `wkc-architect`; section 1 invokes it for a change it classifies as a SPEC change and drafts nothing that depends on it. Architect's When to use it names `wkc-backlog` as a caller. Only for that class of change, and never under `wkc-yolo` |
+| backlog → plan: ROADMAP change | Call, dashed | Backlog's Dependencies name `wkc-plan`; section 1 invokes it for a change that adds, moves, or drops milestone scope and drafts nothing that depends on it. Plan's When to use it names `wkc-backlog` as a caller. Only for that class of change, and never under `wkc-yolo` |
 
 Setup and diagram file outputs are described in their own cards. Setup's label creation and tracker's GitHub Issues operations use
 [docs/dev-agents/config.md](../config.md) as backend evidence. Help's card describes the installer; the release card describes tags and GitHub Releases.
@@ -124,6 +126,18 @@ Desktop light overview and phone dark details screenshots were visually inspecte
 The phone sheet scrolls independently; commands below the fold remain reachable.
 
 ## Implementation verification
+
+### wkc-backlog calls architect and plan, 2026-10-24
+
+`wkc-architect` and `wkc-plan` opt into model invocation, and `wkc-backlog` invokes them for a SPEC or ROADMAP change (#67).
+backlog → architect (SPEC change, dashed) leaves backlog's top edge left of the two Discovered work routes, runs above the row
+inside setup → tracker, and enters architect's top edge. backlog → plan (ROADMAP change, dashed) leaves backlog's bottom edge and
+runs above plan → tracker into plan's bottom edge, with its label under the line. The architect, plan, and backlog source rows name
+the new callers and call. No node, existing edge, route, or region moved. Node **v24.11.1**: check and build passed with no
+warnings. Headless Chrome loaded the HTML from `file://` with the network blocked at 1800 × 900, in light and dark themes, and the
+overview was inspected: no arrow crosses a card, the new routes cross no other route, and both labels clear the region borders.
+Tablet, phone, details, and keyboard checks: SKIP, no node or panel content changed. The tracked screenshots were not regenerated
+and predate this layout.
 
 ### wkc-implement finish call, 2026-10-24
 

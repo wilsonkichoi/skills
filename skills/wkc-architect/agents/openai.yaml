@@ -2,4 +2,4 @@ interface:
   display_name: "wkc-architect"
   short_description: "Write or update the technical specification (SPEC) from an approved PRD and the existing code, covering components, contracts, data, failure handling, and the decisions behind them"
 policy:
-  allow_implicit_invocation: false
+  allow_implicit_invocation: true

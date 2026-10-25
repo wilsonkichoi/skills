@@ -28,8 +28,10 @@ the skill's report.
 ## Cases
 
 1. **Package and discovery.** Parse the frontmatter and `agents/openai.yaml`. List and install the candidate.
-   PASS: valid YAML, matching names, manual invocation on both settings (`disable-model-invocation: true`,
-   `policy.allow_implicit_invocation: false`), callers named as people, `wc -l` of `SKILL.md` under 150, five
+   PASS: valid YAML, matching names, model invocation on both settings (`disable-model-invocation: false`,
+   `policy.allow_implicit_invocation: true`), callers named as people, a model acting on a person's request, and
+   `wkc-backlog`, never `wkc-yolo`, a **When to use it** that keeps the ROADMAP at `Status: draft` until the person
+   approves it, `wc -l` of `SKILL.md` under 150, five
    opening fields in order, `wkc-plan` in public discovery, installed copy identical to the source, and each
    harness links to it.
 
@@ -80,6 +82,14 @@ the skill's report.
     PASS: the exit check change resets the status to `Status: draft`, adds a dated **Changes** entry, changes no other
     milestone by `git diff`, and changes no ticket file. The typo fix keeps `Status: approved (<date>)`.
 
+32. **Called by wkc-backlog.** Run [wkc-backlog case 34](./wkc-backlog.md), a request that adds a milestone.
+    PASS: the session transcript shows a skill-tool call that loads `wkc-plan`, not a file read; the ROADMAP reads
+    `Status: draft` afterwards; no file in `issues_dir` is created or changed. New, from #67.
+
+33. **No invocation on an unrelated question.** The session of [wkc-architect case 13](./wkc-architect.md).
+    PASS: as there, no skill-tool call for `wkc-plan` or `wkc-architect`, and `git status --porcelain` is empty.
+    New, from #67.
+
 ## Moved cases
 
 Moved to [wkc-backlog.md](./wkc-backlog.md) on 2026-10-21, adapted to the new skill. Cases 3 and 16 were split: the
@@ -94,6 +104,18 @@ ticket parts moved, the ROADMAP parts stay above. Case 28 is in both runbooks.
 | 17 to 21 | wkc-backlog 16 to 20 |
 | 22 | wkc-backlog 3, ticket templates |
 | 24 to 28 | wkc-backlog 21 to 25 |
+
+## Dated report: 2026-10-24
+
+Scope: #67, model invocation. Selected: case 1's package subchecks as direct checks; cases 32 and 33 in Claude Code.
+Codex and Kiro CLI: SKIP, no session in those harnesses. Other cases are outside this change. Source, fixture,
+model, and usage are in the [wkc-backlog report](./wkc-backlog.md#dated-report-2026-10-24).
+
+| Case | Result | Evidence |
+|---|---|---|
+| 1, selected subchecks | PASS, direct | PyYAML: `disable-model-invocation: false`, `allow_implicit_invocation: true`, names match, five opening fields, `wc -l` 119; **When to use it** names people, a model acting on a person's request, and `wkc-backlog`, never `wkc-yolo`, and keeps the ROADMAP at `Status: draft` until the person approves it. Installed copies equal the archive by `diff -r`. |
+| 32 | PASS | wkc-backlog case 34, session S2: a `Skill(wkc-plan)` call; the ROADMAP reads `Status: draft` with the new milestone; `issues_dir` unchanged. |
+| 33 | PASS | [wkc-architect case 13](./wkc-architect.md#dated-report-2026-10-24), session S1: no tool call in the unrelated turn. |
 
 ## Dated report: 2026-10-21, after the split
 
