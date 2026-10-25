@@ -6,6 +6,7 @@ Newest first. Each version is a `## {version} ({ISO 8601 timestamp with local of
 
 - `wkc-architect` and `wkc-plan` opt into model invocation: `disable-model-invocation: false` and `policy.allow_implicit_invocation: true` (#67, SPEC Contracts › Invocation). Their callers are people, a model acting on a person's request, and `wkc-backlog`, never `wkc-yolo`. Model invocation approves nothing: the SPEC or ROADMAP stays `Status: draft` until the person approves it in the conversation.
 - `wkc-backlog` invokes `wkc-architect` for a change it classifies as a SPEC change and `wkc-plan` for a ROADMAP change, instead of only naming them for the person to type. Under `wkc-yolo` it names the change in its return instead, because `wkc-yolo` is not their caller.
+- The workflow diagram gains two dashed call arrows, `wkc-backlog` → `wkc-architect` (SPEC change) and `wkc-backlog` → `wkc-plan` (ROADMAP change), and its source rows name the new callers.
 - `AGENTS.md` and the README list both skills among those that opt into model invocation. `validation/wkc-architect.md`, `validation/wkc-plan.md`, and `validation/wkc-backlog.md` gain the invocation cases and a dated report.
 
 ## 0.0.34 (2026-10-24T00:36:38-07:00)

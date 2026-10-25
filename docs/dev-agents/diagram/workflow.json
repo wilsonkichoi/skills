@@ -427,6 +427,20 @@
       "label": "Manages tickets"
     },
     {
+      "id": "backlog-architect",
+      "from": "backlog",
+      "to": "architect",
+      "kind": "optional",
+      "label": "SPEC change"
+    },
+    {
+      "id": "backlog-plan",
+      "from": "backlog",
+      "to": "plan",
+      "kind": "optional",
+      "label": "ROADMAP change"
+    },
+    {
       "id": "plan-tracker",
       "from": "plan",
       "to": "tracker",
