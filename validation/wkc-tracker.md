@@ -584,6 +584,19 @@ query: `## Notes` is exactly the new line, no `### Constraints` or fenced block 
 `gh api -X PATCH`, standing in for another person, before `$wkc-tracker edit <T> title "<new
 title>"` writes. Check: the new title, and the body exactly as the other person left it.
 
+**A47 milestone close closes exactly one milestone, and only it.** With open `X` holding two issues,
+one `ready` and one closed as completed, and open `Y2`, and no `Y`. Record
+`gh api 'repos/<R>/milestones?state=all' --jq '[.[] | {title, state, updated_at}]'` and
+`gh issue list --repo <R> --state all --json number,title,body,state,stateReason,labels,assignees,milestone,updatedAt | shasum`.
+
+1. `$wkc-tracker milestone close X`: expect `closed` from
+   `gh api 'repos/<R>/milestones?state=all' --jq '.[] | select(.title=="X") | .state'`, `Y2` still
+   open, and the issue hash unchanged. The open issue in `X` does not stop the close: the caller decides.
+2. `$wkc-tracker milestone close X` again: expect a reply that `X` is already closed, and `X`'s
+   `updated_at` unchanged.
+3. `$wkc-tracker milestone close Y`: expect a stop that names the milestones that exist, and the
+   milestones record unchanged. `Y2` must not close.
+
 **A32 an empty frontier says why.** This case needs a frontier with nothing on it, so run it after
 every other A case. For each ticket `$wkc-tracker next` returns, `gh issue edit <n> --repo <R>
 --remove-label ready` until it returns nothing. Then build three held tickets with `gh`, not the
@@ -905,6 +918,10 @@ Then a title edit: `status` stays `'done'`.
 `## Comments` after `## Related`. Edit `## Notes` the same way. Check with `diff` against a copy: only
 the `## Notes` span differs, and `## Related` and the comments are unchanged.
 
+**B32 milestone close writes nothing here.** Give one ticket `milestone: 'M1'`. Record
+`git status --porcelain` and `cksum` of every file under `issues_dir`. `$wkc-tracker milestone close
+M1`: expect a reply that the backend has no milestone state. Check: both records unchanged.
+
 **B20 an empty frontier says why.** Run it after every other B case. Move every ticket
 `$wkc-tracker next` returns to `backlog` by editing its `status`, until it returns nothing. Then write
 six files by hand, since the skill will not write the cycle:
@@ -1204,6 +1221,11 @@ the new title, and an empty `blockedBy`.
 **C35 edit replaces a section with its subsections.** The same body as A45 in an issue. Edit
 `## Notes` the same way. Check with `get_issue`: `## Notes` is exactly the new line, no
 `### Constraints` or fenced block is left, and `## Related` is unchanged by the reading rules.
+
+**C36 milestone close writes nothing here.** With project milestone `M1` holding one issue, record
+`list_milestones` and `get_issue` for that issue. `$wkc-tracker milestone close M1`: expect a reply
+that the backend has no milestone state, and no `save_milestone` or `save_issue` call. Check: both
+reads unchanged, `M1` still listed.
 
 ---
 
