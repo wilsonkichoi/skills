@@ -1503,6 +1503,28 @@ Versions 0.0.9 to 0.0.41 below were development steps on the `feat/tracker` bran
 together as 0.0.8, so an entry's version names a branch state, and its skill ref names the exact
 commit it tested.
 
+### 2026-10-24T18:15:18-07:00 PR #69 round 1, focused direct checks
+
+Reviewed `ff3a7459730afd8ecaeb2a9a8ebd0a7c97b6497b` against #65 and SPEC Contracts, Milestone close.
+Selected scope: direct API subchecks of A47.1 to A47.3 on the existing GitHub fixture
+`wilsonkichoi/wkc-tracker-fixture-65`, static Linear/local no-write rules, and the pre-commit checklist.
+Current harness: Codex. No additional AI sessions or other harnesses launched.
+
+- PASS, API subchecks: created an empty temporary milestone, closed it with the documented
+  state-only PATCH, and verified its title and `closed` state with a separate GET. Repeat close
+  skipped PATCH; missing `Y` returned no exact match and listed `Y2`. Both left the full milestone
+  records unchanged. Original milestones `X` and `Y2` were unchanged throughout. Deleted only the
+  temporary milestone and confirmed the original milestone records were restored.
+- PASS, issue preservation: all fixture issue records were identical before and after, SHA-256
+  `e1cad064502856baddb682c1b4d0aebed31e1eba1f0ab501af4aeecd2bfc26af`.
+- PASS, static checks: one `milestone close` entry per backend, Linear/local no-write instructions,
+  cases A47/B32/C36 present, skill remains 264 lines, and `git diff --check` clean. Added the missing
+  root README and `AGENTS.md` behavior documentation required by #65's checklist criterion.
+- Limits: these are direct API subchecks, not full model-behavior PASS results for A47, B32, or C36.
+  The temporary milestone was empty. The earlier Claude Code report below covers the populated
+  milestone and local fixture; its results are retained, not counted as new checks. The skill files
+  are byte-identical to its source `bb629f2`. No configured `test_command` or PR CI checks exist.
+
 ### 2026-10-24T17:51:24-07:00 Focused 0.0.35 milestone close run, Claude Code
 
 Scope: the new `milestone close` verb, issue #65. Cases A47 and B32, plus static checks. Skill ref

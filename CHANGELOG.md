@@ -5,7 +5,7 @@ Newest first. Each version is a `## {version} ({ISO 8601 timestamp with local of
 ## 0.0.35 (2026-10-24T17:48:56-07:00)
 
 - `wkc-tracker milestone close <name>` closes exactly one open milestone with that name on GitHub, by a PATCH of its `state` only, and verifies it with a fresh read (#65). A name that matches nothing stops and names the milestones that exist; an already closed one is reported with no write. It never checks the milestone's tickets: whether to close is the caller's decision. Linear project milestones and local milestones have no open or closed state, so on those backends it writes nothing and says so. `milestone <name>` still never renames or reopens one, and the line "No verb closes a milestone" is gone. GitHub milestones M2 and M3 stayed open with every ticket closed because no verb could close one.
-- The skill README documents the verb. `validation/wkc-tracker.md` adds cases A47, B32, and C36, and a Claude Code run where A47 and B32 pass.
+- The skill README, root README, and `AGENTS.md` document the verb. `validation/wkc-tracker.md` adds cases A47, B32, and C36, and a Claude Code run where A47 and B32 pass.
 
 ## 0.0.34 (2026-10-24T00:36:38-07:00)
 
