@@ -110,9 +110,7 @@ session started, because ticket files on a branch are invisible from other check
 
 Read the ticket's **What to build**, **Why**, **Acceptance criteria**, **After merge**, and
 **Notes**, and the SPEC sections they cite. The criteria are the goal; **Why** decides a choice they
-leave open. Under a run, post each choice that sets behaviour the criteria leave open as a decision,
-also one a SPEC section settles (section 7). A question only a person can answer ends the turn on
-that question.
+leave open. A question only a person can answer ends the turn on that question.
 
 - The ticket is its outcome, not the narrowest reading of its criteria. Build the smallest change
   that delivers all of it, in the project's style. Also fix a problem the outcome needs fixed, or one
@@ -177,6 +175,10 @@ labels and no Development link: the ticket's status is the state. With no GitHub
 pushed or local branch, leave the ticket `in-progress`, and say so.
 
 ## 5. Hand off
+
+Under a run, first list each behaviour the criteria did not state and the build had to settle, such
+as an exit code or a message, even one a SPEC section dictates. Post each as a `Decision (wkc-yolo):`
+comment (section 7) whose `Source:` names where it was settled.
 
 Post the handoff with `wkc-tracker comment`, then `wkc-tracker move <id> in-review`:
 
@@ -250,7 +252,7 @@ Report the gates, their results, the ticket's status, and what is left and who m
 
 A call is unattended when it says it comes from `wkc-yolo` and gives the run record's absolute
 path. The record holds the run's limits. Such a call never ends a turn on a question. Wherever this
-skill would ask, and for each choice section 3 names, decide from the ticket, PRD, SPEC, ROADMAP,
+skill would ask, and for each choice section 5 lists, decide from the ticket, PRD, SPEC, ROADMAP,
 and limits, and post the decision on the ticket with `wkc-tracker comment`:
 
 ```
