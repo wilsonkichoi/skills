@@ -8,12 +8,12 @@ Authoring conventions live in [AGENTS.md](./AGENTS.md); this file covers the rep
 Never commit or push directly to `main`.
 
 ```
-git checkout main && git pull
-git checkout -b docs/some-slug
+make worktree BRANCH=docs/some-slug
 ```
 
-Branch names are `<type>/<slug>`: `docs/`, `feat/`, `fix/`, `chore/`. Commit on the branch, push it,
-and open a pull request against `main`:
+That starts the branch from an up-to-date `origin/main` in its own worktree, so the main checkout
+stays on `main`. Branch names are `<type>/<slug>`: `docs/`, `feat/`, `fix/`, `chore/`. Commit on
+the branch, push it, and open a pull request against `main`:
 
 ```
 gh pr create --base main --fill
