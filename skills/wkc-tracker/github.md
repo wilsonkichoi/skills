@@ -4,7 +4,7 @@
 - Statuses
 - Reading rules
 - list, show, next, create, edit
-- milestone: ensure, list, show
+- milestone: ensure, close, list, show
 - assign, bare and explicit forms
 - move, to an open or a terminal status, then verifying a move
 - comment, link, unlink
@@ -202,8 +202,21 @@ gh api repos/<owner>/<repo>/milestones -f title='<title>'
 
 Run the read first. An open match needs no write; a closed one is a stop; two matches are a stop
 that names both. Otherwise create it, and verify by running the read again: it must print exactly
-one milestone, `open`. Never pass `-f state` or
-PATCH an existing milestone.
+one milestone, `open`. The ensure form never passes `-f state` and never PATCHes an existing
+milestone.
+
+`milestone close <name>`:
+
+```
+gh api --paginate 'repos/<owner>/<repo>/milestones?state=all&per_page=100' \
+  | jq --arg t '<title>' '.[] | select(.title == $t) | {number, state}'
+gh api --method PATCH repos/<owner>/<repo>/milestones/<number> -f state=closed
+gh api repos/<owner>/<repo>/milestones/<number> --jq '{title, state}'
+```
+
+Run the read first. No match is a stop that names the milestones that exist, from the same call with
+`--jq '.[].title'`; two matches are a stop that names both; a closed match needs no write. Otherwise
+PATCH only `state`, then verify with the last read: the same title, `closed`. Never touch an issue.
 
 `milestone list`:
 

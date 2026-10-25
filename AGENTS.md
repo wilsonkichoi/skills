@@ -144,6 +144,11 @@ but does not reject work over formatting. Following rigid steps for ceremony is 
 `wkc-backlog` copies a `Discovered:` item's evidence into ticket Notes from the original comment
 returned by `wkc-tracker show`, including handoffs from `wkc-code-review`.
 
+`wkc-tracker milestone close <name>` closes exactly one open GitHub milestone with that name and
+verifies it with a fresh read. It never checks tickets; the caller decides whether to close.
+An already closed milestone needs no write. Linear and local have no milestone state, so the verb
+writes nothing and says so. The ensure form, `milestone <name>`, never renames or reopens one.
+
 The lifecycle documents (PRD, SPEC, ROADMAP) are optional, not a pipeline. Each skill uses whatever
 exists, and work that fits the current intent skips the earlier stages: do the work, then update the
 documents it changed. Document outlines are guidance, scaled to the work, not required headings.

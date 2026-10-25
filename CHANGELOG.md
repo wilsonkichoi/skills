@@ -2,6 +2,11 @@
 
 Newest first. Each version is a `## {version} ({ISO 8601 timestamp with local offset})` heading followed by a bullet list of changes.
 
+## 0.0.35 (2026-10-24T17:48:56-07:00)
+
+- `wkc-tracker milestone close <name>` closes exactly one open milestone with that name on GitHub, by a PATCH of its `state` only, and verifies it with a fresh read (#65). A name that matches nothing stops and names the milestones that exist; an already closed one is reported with no write. It never checks the milestone's tickets: whether to close is the caller's decision. Linear project milestones and local milestones have no open or closed state, so on those backends it writes nothing and says so. `milestone <name>` still never renames or reopens one, and the line "No verb closes a milestone" is gone. GitHub milestones M2 and M3 stayed open with every ticket closed because no verb could close one.
+- The skill README, root README, and `AGENTS.md` document the verb. `validation/wkc-tracker.md` adds cases A47, B32, and C36, and a Claude Code run where A47 and B32 pass.
+
 ## 0.0.34 (2026-10-24T00:36:38-07:00)
 
 - `wkc-implement` finishes a ticket only when called as `wkc-implement finish <id>`, and only from the ticket's pull request: the one on the `PR:` line of its latest handoff comment or the `Merged:` line of its latest finish comment. A pull request that only cites the ticket, by a `Refs` line in its body or a mention in a comment, never counts, so a planning pull request such as #55 can no longer select finish for a ticket nobody built (#59). `wkc-implement <id>` builds or reports the review state; when the ticket's pull request has merged, it names `wkc-implement finish <id>` and writes nothing. `finish <id>` with no handoff or finish comment asks for the pull request and writes nothing. With no argument, it names each `in-review` ticket whose handoff pull request merged with its `finish` call. Only open pull requests that cite the ticket are still read, for eligibility and to continue a build.
