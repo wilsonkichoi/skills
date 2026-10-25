@@ -16,8 +16,8 @@ disable-model-invocation: false
 - **Dependencies:** `prd_file`, `spec_file`, and `roadmap_file` from `docs/dev-agents/config.md`,
   falling back to `docs/dev-agents/PRD.md`, `SPEC.md`, and `ROADMAP.md` when there is no config.
   The `wkc-tracker` skill for every ticket read and write: `list`, `show`, `milestone`, `create`,
-  `edit`, `link`, `unlink`, and `move`. The `wkc-architect` and `wkc-plan` skills for a SPEC or a
-  ROADMAP change.
+  `edit`, `link`, `unlink`, `move`, and `comment`. The `wkc-architect` and `wkc-plan` skills for a
+  SPEC or a ROADMAP change.
 - **Input:** free text: a milestone name or number to plan, or one change: a request, a bug, a
   `Discovered:` comment, or a refinement, split, re-block, or cancel of existing tickets. With
   nothing given, read the documents and the tracker, and draft tickets for the first milestone in

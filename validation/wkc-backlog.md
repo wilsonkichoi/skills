@@ -242,7 +242,8 @@ Cases 36 to 38 are from #73. An unattended call says it comes from `wkc-yolo` an
 absolute path.
 
 36. **Unattended templates.** Direct. As `wkc-implement` case 34, for this `SKILL.md`.
-    PASS: `diff` of each pair gives no output, and no extracted block is empty.
+    PASS: `diff` of each pair gives no output, and no extracted block is empty. Also check that **Dependencies** lists
+    `wkc-tracker comment`, which writes the decision and parking comments.
 
 37. **A discovered blocker under a run.** Unattended, with a ticket whose comment is `Discovered: <what>. Out of scope
     because <why>. Blocks this ticket: yes.` and its evidence lines.
@@ -471,3 +472,11 @@ unattended call came before them. About 68k to 83k subagent tokens per turn.
 |---|---|---|
 | 38, ticket #10 | PASS | Plain call on a `Blocks this ticket: no` comment: a full draft, then the numbered approval question; issue count 14 before and after; no `wkc-yolo` comment. The tester answered 3. |
 | 37, ticket #9 | PASS | Unattended call on a `Blocks this ticket: yes` comment: #25 created, `OPEN` with no status label, in `M1: CLI`; `grep -F` finds all four evidence lines in its body; #9 blocked by #25, still `in-progress`, same holder; no question; issue count 14 to 15. |
+
+## Review round 1: 2026-10-25, PR #78
+
+Selected: case 36's exact-template and new dependency subchecks, direct in Codex. PASS: both blocks still equal
+the SPEC; **Dependencies** now names `comment`, the verb section 7 uses for decision and parking records.
+PyYAML metadata and Codex invocation settings pass. The preceding Claude Code evidence for cases 37 and 38 is
+reused because their instructions are unchanged. No new AI sessions; six of six were already used. Codex and Kiro
+model coverage stays SKIP.

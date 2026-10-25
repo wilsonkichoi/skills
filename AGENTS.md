@@ -167,6 +167,8 @@ Under one, `wkc-implement`, `wkc-code-review`, and `wkc-backlog` never end a tur
 Each decides from the ticket, PRD, SPEC, ROADMAP, and run limits and posts `Decision (wkc-yolo):`,
 or parks the ticket with `Parked (wkc-yolo):` and returns `parked`. Discovered work goes back to
 `wkc-yolo`, never to `wkc-backlog`. Each skill copies both templates from the SPEC into its own `SKILL.md`.
+Both `wkc-implement` and `wkc-code-review` name related fixes and why they belong in the pull
+request body's **What changed** section.
 
 A skill that asks the user something ends its turn on the question. Asking and then carrying on
 leaves the harness working, and a working harness cannot take a plain reply. Make the answer cheap

@@ -18,6 +18,7 @@ Keep raw logs and fixtures outside tracked files.
 - Review round 3: 2026-10-23
 - Improvements on the last fixing round: 2026-10-23
 - Dated report: 2026-10-25, unattended calls (#73)
+- Review round 1: 2026-10-25, PR #78
 
 ## Preparation
 
@@ -244,7 +245,9 @@ tester stages.
 41. **Defect in changed code.** A fresh round on a PR that edits a function holding a defect no criterion names, which
     the ticket's SPEC excerpt rules out, such as an empty name not greeting `world`.
     PASS: a `fixed` verdict whose `fixed` line names the defect, one commit fixing it, and no `Discovered:` comment for
-    it on the ticket.
+    it on the ticket. The PR body's **What changed** also names the related fix and why it belongs, preserving the
+    remaining body. Check this requirement directly in section 4 as a static subcheck; a full case still needs the
+    fixture's body read back after the round.
 
 ## Dated report: 2026-10-22
 
@@ -573,3 +576,27 @@ that wrote none of the fixture's code, reading the installed `SKILL.md` by hand.
 | 39, PR #13 | PASS | After `wkc-implement` case 39: `round 2: approve`, `Reviewed: 57fbc33…`, the head; it ran `git merge-tree --write-tree` and matched the tree; head unchanged, no commit. |
 | 40, PR #15 | PASS | Tester's conflict merge `9217dfd…` dropped `main`'s carol test. `round 2: fixed`, `fixed test.sh:3` naming the dropped line; one commit `873728a…` restoring it; `./test.sh` passes; no `approve` for `9217dfd…`. |
 | 41, PR #16 | PASS | `round 1: fixed`; the `fixed greet:6` line names `./greet ""` printing `Hello, !` in the edited `name_of`; one commit `fe2a14a…`; no `Discovered:` comment on #8. |
+
+## Review round 1: 2026-10-25, PR #78
+
+Reviewed `f4f3547688667f8bae39b249862ae4f9ea4ec49d`. Selected: cases 1's metadata and opening-field subchecks,
+38, 39 and 40's merge-classification subchecks, and 41's PR-description subcheck. Direct checks in Codex; GitHub
+evidence from `wilsonkichoi/wkc-yolo-fixture-73`. No new AI sessions; the change has used its six-session limit.
+
+- FAIL at the reviewed head: SPEC Contracts, Ticket scope requires each related fix and why it belongs in
+  **What changed**. [Fixture PR #16](https://github.com/wilsonkichoi/wkc-yolo-fixture-73/pull/16) still says only
+  `name_of falls back to GREET_NAME before world.` Its
+  [fixed verdict](https://github.com/wilsonkichoi/wkc-yolo-fixture-73/pull/16#issuecomment-6404763641) records the
+  additional trimming and empty-name fixes. Section 4 had no instruction to update the body. The earlier case 41
+  PASS covers its original subchecks only, not the added PR-description requirement.
+- PASS after the fix, static subcheck only: section 4 requires the related fix, its scope reason, and preservation
+  of the rest of the PR body. Full case 41 model behavior after this change: SKIP, session limit reached.
+- PASS: PyYAML parses all three changed skills and their Codex settings; names, model invocation, and the five
+  opening fields match. All six unattended template blocks equal the SPEC. Lines: implement 281, review 289,
+  backlog 287. Review's two added lines carry the SPEC's required PR-description update; all stay below 500.
+- PASS: controlled temporary Git fixtures classify an independent-file update as clean (`merge-tree` exits 0,
+  tree equals the merge head), and a same-line conflict as requiring full review (`merge-tree` exits 1).
+  These are mechanical subchecks, not new model runs of cases 39 and 40.
+- Reused: the preceding report's unchanged unattended rules and fixture PR #13's confirming verdict and #15's
+  conflict-fix verdict. Their heads and comments were read independently in this round. Codex and Kiro model
+  coverage stays SKIP. No configured `test_command`; GitHub reports no checks on PR #78.

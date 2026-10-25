@@ -198,7 +198,9 @@ low-value changes, reversals of earlier style choices without a reason, and refa
 complexity for little gain stay suggestions; a fixing round left is never a reason to make one.
 A blocking finding that a change on the last fixing round adds ends the next round in `stopped`.
 Never weaken a valid test, a check, or a criterion, and never change a valid test to make code
-pass. Run the checks the change touches and `test_command`. A blocking finding you cannot fix stays
+pass. For each related fix allowed by section 3's scope rule, update the pull request body's
+**What changed** to name the fix and why it belongs, preserving the rest of the body. Run the checks
+the change touches and `test_command`. A blocking finding you cannot fix stays
 `open`; when you can fix none of them, make no change: `stopped`. Make one commit for the round, in
 the project's commit convention, or with `fix:` when it has none:
 
