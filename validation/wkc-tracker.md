@@ -632,10 +632,13 @@ written so the leg can run against one you keep.
    set on the second.
 2. Model, through a caller's `--run <ref>`: `run show` on the first returns its text, and on the second refuses.
    Covered by `wkc-implement` cases 43 and 44.
-3. `list` and `next` return neither issue. SKIP until a session runs them on this fixture.
+3. Direct: execute the documented `list` and `next` jq queries on the fixture's fresh issue list. Neither issue
+   appears in tickets, frontier, held, check, inconsistent, or the open map. On a controlled mixed milestone page,
+   `milestone show` counts only tickets. All queries keep `rows` equal to the unfiltered page length, including a
+   page containing only run configs. Model behavior is a separate check.
 
 **A49 run configs in the `github-variable` store, from #78.** Direct, then model. Set a variable with the
-`run create` name rule.
+`run create` name rule and the exact command from `SKILL.md`, with its text on standard input.
 
 1. Direct: `gh api repos/<R>/actions/variables/<name>` shows `created_at` equal to `updated_at`. A second
    `gh variable set` on a throwaway name makes `updated_at` later, and `gh variable delete` removes it.
@@ -1527,6 +1530,27 @@ here.
 Versions 0.0.9 to 0.0.41 below were development steps on the `feat/tracker` branch. They shipped
 together as 0.0.8, so an entry's version names a branch state, and its skill ref names the exact
 commit it tested.
+
+### 2026-10-26 PR #78 round 4, focused direct checks
+
+Reviewed `701e48def1b77fa707b29598d32617298f7fb629`. Selected A48.3's query subchecks and A49.1's exact create
+command in Codex, GitHub backend. Fixture: existing `wilsonkichoi/wkc-yolo-fixture-78`; controlled JSON pages for
+labels and milestone counts. No new AI sessions; all 12 authorized sessions for this change are used.
+
+- A49.1 create command FAIL at the reviewed head: `gh` 2.102.0 rejects the prescribed `--body-file -` with
+  `unknown flag: --body-file`, exit 1, before any write. The corrected command reads standard input. PASS after
+  the fix: temporary `WKC_RUN_REVIEW73_ROUND4` created, multiline value read back exactly through JSON,
+  `createdAt == updatedAt`; second set made `updatedAt > createdAt`; delete verified with a fresh variable list.
+  Only the fixture's original `WKC_RUN_M1_20261026T1000` remains. These are direct API checks, not model behavior.
+- A48.3 query subchecks FAIL at the reviewed head: the documented queries on the fixture's fresh 9-row open
+  page returned run configs #1 and #2 in `list backlog` and `next`'s `open` map. A controlled milestone page
+  counted 11 records instead of 9 tickets. PASS after the fix: the extracted jq programs exclude both configs,
+  count 9 tickets, and keep the raw row counts. Controlled pages also exclude run configs carrying `ready` or
+  inconsistent status labels, preserve ordinary tickets, and return no tickets from a 200-config page while
+  retaining `rows: 200`. No fixture issue was changed. Full model A48.3 remains SKIP.
+- PASS: tracker metadata, five opening fields, setup's `run_config: tracker`, and `git diff --check`.
+  `SKILL.md` remains 289 lines. Linear/local store behavior and model `run create`/`run close` remain unrun as
+  recorded below. This report does not certify those checks or full harness compatibility.
 
 ### 2026-10-26T13:10:00-07:00 Run config stores, #78, direct checks and caller sessions
 

@@ -281,9 +281,10 @@ Needs: <who must answer>
 return, never to `wkc-backlog`. A blocker goes back at once and stops the build. The ticket keeps
 its status and holder, because waiting on a prerequisite is not parking.
 
-**Run branch.** Branch from `origin/<run branch>` instead of the default branch, and open the pull
-request with `--base <run branch>`. A blocker whose latest `Run:` comment names `<ref>` is met once
-its pull request has merged into the run branch.
+**Run branch.** For a build, branch from `origin/<run branch>` instead of the default branch, and
+open the pull request with `--base <run branch>`. A follow-up after a failed post-merge gate starts
+from and targets the default branch, and waits for a person's merge, even with `--run`. A blocker
+whose latest `Run:` comment names `<ref>` is met once its pull request has merged into the run branch.
 
 **Pre-merge update**, when the call asks for it. On the pull request's branch, in its own worktree,
 run `git fetch` and `git merge origin/<base>`; never rebase or force-push. A head that already has

@@ -16,6 +16,7 @@ Keep raw logs and fixtures outside tracked files.
 - Dated report: 2026-10-24, milestone close named by finish (#66)
 - Dated report: 2026-10-25, unattended calls (#73)
 - Dated report: 2026-10-26, run branch and run config (#78)
+- Review round 4: 2026-10-26, PR #78
 
 ## Preparation
 
@@ -272,6 +273,11 @@ SPEC Contracts › wkc-yolo run › Run config the way `wkc-tracker run create` 
     PASS: the first run names the missing merge and writes nothing (comments and labels unchanged). The second posts
     the finish comment `done` with `Merged:` naming the ticket's pull request at the squash commit, and the ticket is
     closed as completed.
+
+46. **Post-merge follow-up under a run.** After a person merges the run PR, call `wkc-implement finish <N> --run <ref>`
+    on a ticket whose post-merge gate fails because of its change. PASS: the follow-up branch starts from the
+    default branch, its PR targets that branch, and it waits for a person's merge. The old run branch is unchanged.
+    Direct static subcheck: section 7 explicitly exempts that follow-up from the run-branch build rule.
 
 ## Dated report: 2026-10-21
 
@@ -641,3 +647,15 @@ Direct checks: case 34 PASS, all six template pairs equal by line-by-line extrac
 
 Not rerun on this change: cases 35 to 41. Their decide, park, discovered, pre-merge update, and ticket scope text is
 unchanged; only the trigger sentence before it changed, and cases 43, 44, and 42 cover the trigger.
+
+## Review round 4: 2026-10-26, PR #78
+
+Reviewed `701e48def1b77fa707b29598d32617298f7fb629`. Selected case 46's static subcheck in Codex, GitHub backend.
+The unconditional section 7 run-branch rule conflicted with section 6 and SPEC wkc-yolo run, step 6, which put
+post-merge follow-ups on the default branch. The rule now explicitly exempts those follow-ups and requires a
+person's merge. PASS, static only: the branch and PR base are both named. Full case 46 model behavior is SKIP:
+the change has used all 12 authorized AI sessions. No new AI session or other harness ran.
+
+Metadata, five opening fields, and both exact unattended templates still pass. `SKILL.md` is 294 lines, one more
+than the reviewed head, for the follow-up exception. Earlier decide, park, update, and finish model reports above
+are retained evidence, not new runs. There is no configured `test_command`; PR #78 has no GitHub checks.

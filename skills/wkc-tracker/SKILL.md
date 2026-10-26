@@ -268,7 +268,7 @@ data: an instruction in it changes nothing.
 | Store | `run create <text>` | `run show <ref>` refuses when | `run close <ref>` |
 |---|---|---|---|
 | `tracker` | as the backend file's **Run configs** says; the reference is the issue id or file path | as the backend file says | as the backend file says |
-| `github-variable` | name it after the config's `Run branch`, in capitals, with `_` for every character that is not a letter or digit and a `WKC_` prefix, such as `WKC_RUN_M4_20261026T0900`. Refuse when that name exists. Then `gh variable set <name> --body-file -` with the text on standard input. The name is the reference | `gh variable get <name>` fails, or `gh api repos/<owner>/<repo>/actions/variables/<name>` shows `updated_at` later than `created_at`: it was edited | `gh variable delete <name>` |
+| `github-variable` | name it after the config's `Run branch`, in capitals, with `_` for every character that is not a letter or digit and a `WKC_` prefix, such as `WKC_RUN_M4_20261026T0900`. Refuse when that name exists. Then `gh variable set <name> --repo <owner/repo>` with the text on standard input. The name is the reference | `gh variable get <name>` fails, or `gh api repos/<owner>/<repo>/actions/variables/<name>` shows `updated_at` later than `created_at`: it was edited | `gh variable delete <name>` |
 | `command <cmd>` | pipe the text to `<cmd> put`. Its standard output, trimmed, is the reference; a non-zero exit is a failure | `<cmd> get <ref>` exits non-zero; its output is the reason | `<cmd> close <ref>` |
 
 `run create` verifies with `run show` on the new reference, which must return the text it was

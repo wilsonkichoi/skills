@@ -67,7 +67,8 @@ word, with each `'` inside it written as `'\''`.
 ```
 gh issue list --repo <owner/repo> --state open --limit 200 \
   --json number,title,state,stateReason,assignees,labels,milestone,blockedBy \
-  --jq '<prelude> {rows: length,
+  --jq '<prelude> length as $rows | map(select(all(.labels[]; .name != "wkc-run"))) |
+       {rows: $rows,
          tickets: [.[] | select(status == "<wanted>")],
          inconsistent: [.[] | select(status == "inconsistent") | .number]}'
 ```
@@ -107,7 +108,8 @@ duplicate originals**. Give each closed blocker its repository and status from t
 ```
 gh issue list --repo <owner/repo> --state open --limit 200 \
   --json number,title,state,assignees,labels,blockedBy \
-  --jq '<prelude> {rows: length,
+  --jq '<prelude> length as $rows | map(select(all(.labels[]; .name != "wkc-run"))) |
+       {rows: $rows,
          frontier: [.[]
            | if .blockedBy == null
              then error("blockedBy is null: this host does not expose issue dependencies")
@@ -236,7 +238,8 @@ the unfiltered list, by the reading rules:
 ```
 gh issue list --repo <owner/repo> --state all --limit 1000 \
   --json number,state,stateReason,labels,milestone \
-  | jq --arg t '<title>' '<prelude> {rows: length,
+  | jq --arg t '<title>' '<prelude> length as $rows | map(select(all(.labels[]; .name != "wkc-run"))) |
+       {rows: $rows,
          counts: ([.[] | select(.milestone.title == $t) | status]
                   | group_by(.) | map({key: .[0], value: length}) | from_entries)}'
 ```
