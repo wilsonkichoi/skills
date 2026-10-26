@@ -10,7 +10,7 @@ Newest first. Each version is a `## {version} ({ISO 8601 timestamp with local of
 - Pre-merge update: when a `wkc-yolo` call asks for it, `wkc-implement <id>` merges the default branch into the ticket's open pull request, resolves any conflict, reruns the acceptance checks, and pushes, with no rebase, no force push, and no second handoff. `wkc-code-review` confirms a clean update and approves it with no change: the head is a merge of the approved head and a base-branch commit, and `git merge-tree --write-tree` of the two gives the head's tree. A conflict fix, or anything else, gets the whole review. This check runs in every mode.
 - Ticket scope (SPEC Contracts › Ticket scope), in every mode: `wkc-implement` fixes a problem the ticket's outcome needs fixed, or one in code the ticket changes, in the same pull request. `wkc-code-review` treats a defect in code the pull request changes as a blocking finding even when no criterion names it. Both name each related fix and why it belongs in **What changed**. A problem with its own deliverable, or one that must land at a different time, is still discovered work. This replaces `wkc-implement`'s "Build this ticket only".
 - `wkc-backlog` declares the `wkc-tracker comment` dependency used by its unattended decision and parking records.
-- The README rows and `AGENTS.md` describe the unattended calls. `validation/wkc-implement.md`, `validation/wkc-code-review.md`, and `validation/wkc-backlog.md` gain the new cases and a dated report.
+- The README rows describe the unattended calls. `validation/wkc-implement.md`, `validation/wkc-code-review.md`, and `validation/wkc-backlog.md` gain the new cases and a dated report.
 
 ## 0.0.37 (2026-10-24T18:46:52-07:00)
 

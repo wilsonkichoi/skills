@@ -162,14 +162,6 @@ recorded merged pull request can continue an incomplete handoff. Its review stat
 latest `wkc-code-review` verdict and GitHub's `reviewDecision` as separate records, and offers the
 merge step only for an `approve` on the current head; a person merges.
 
-A call is unattended when it says it comes from `wkc-yolo` and gives the run record's absolute path.
-Under one, `wkc-implement`, `wkc-code-review`, and `wkc-backlog` never end a turn on a question.
-Each decides from the ticket, PRD, SPEC, ROADMAP, and run limits and posts `Decision (wkc-yolo):`,
-or parks the ticket with `Parked (wkc-yolo):` and returns `parked`. Discovered work goes back to
-`wkc-yolo`, never to `wkc-backlog`. Each skill copies both templates from the SPEC into its own `SKILL.md`.
-Both `wkc-implement` and `wkc-code-review` name related fixes and why they belong in the pull
-request body's **What changed** section.
-
 A skill that asks the user something ends its turn on the question. Asking and then carrying on
 leaves the harness working, and a working harness cannot take a plain reply. Make the answer cheap
 too: numbered options with the recommended one first, and a digit accepted. Use a harness's own
