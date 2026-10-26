@@ -20,6 +20,7 @@ Keep raw logs and fixtures outside tracked files.
 - Dated report: 2026-10-25, unattended calls (#73)
 - Review round 1: 2026-10-25, PR #78
 - Review round 2: 2026-10-25, PR #78
+- Dated report: 2026-10-26, run branch and run config (#78)
 
 ## Preparation
 
@@ -228,8 +229,8 @@ other ticket's status.
     PASS: the first prints nothing, the second prints section 3's reading list, and the repository's ADR files remain.
 
 
-Cases 38 to 41 are from #73. Case 39 runs after `wkc-implement` case 39 updates its PR; cases 40 and 41 use PRs the
-tester stages.
+Cases 38 to 42 are from #73. Case 39 runs after `wkc-implement` case 39 updates its PR; cases 40 to 42 use PRs the
+tester stages. An unattended call passes `--run <ref>`.
 
 38. **Unattended templates.** Direct. As `wkc-implement` case 34, for this `SKILL.md`.
     PASS: `diff` of each pair gives no output, and no extracted block is empty.
@@ -249,6 +250,12 @@ tester stages.
     it on the ticket. The PR body's **What changed** also names the related fix and why it belongs, preserving the
     remaining body. Check this requirement directly in section 4 as a static subcheck; a full case still needs the
     fixture's body read back after the round.
+
+42. **Run config limit, `github-variable` store.** `wkc-code-review <ticket> --run <variable name>` with
+    `run_config: github-variable`, on a PR with a planted defect against its criterion, where the variable's config
+    says `max_fix_attempts: 0` and the project config says 3.
+    PASS: one verdict `stopped` naming the defect as a blocking finding; no new commit on the PR; the reply asks
+    nothing. The session's commands show `gh variable get` for that name.
 
 ## Dated report: 2026-10-22
 
@@ -612,3 +619,25 @@ merge-classification subcheck as a direct check. Direct checks in Claude Code; n
 - PASS: all six unattended template blocks equal the SPEC's; `git diff --check` is clean; names and invocation
   settings unchanged. A controlled Git fixture gave `git merge-tree --write-tree A M` exit 0 with the tree of the
   merge head, a clean update. Codex and Kiro model coverage stays SKIP.
+
+## Dated report: 2026-10-26, run branch and run config (#78)
+
+Scope: the maintainer's review of PR #78 (ADR-007): `--run <ref>` as the only unattended trigger, the run config read
+through `wkc-tracker run show`, the run branch, and finish through a run branch. Candidate `455f4e8`, exported with
+`git archive` and copied into each session's checkout under `.claude/skills/`; `diff -r` equal to the candidate. Codex
+and Kiro CLI: SKIP, no session in those harnesses.
+
+Fixture: private throwaway `wilsonkichoi/wkc-yolo-fixture-78`, a copy of the #73 fixture's `main`, with run branches
+`run/m1-20261026T1000` and `run/m1-20261026T1100`, run config issues #1 (clean) and #2 (body edited), variable
+`WKC_RUN_M1_20261026T1000` (`max_fix_attempts: 0`), and a logging command store holding `cfg-1793044093`.
+
+Sessions: 5 past the standing limit of 6, approved by the maintainer on 2026-10-26. One at a time, as Claude Code
+`general-purpose` subagents on Sonnet (`sonnet`, effort `medium`), each reading the installed `SKILL.md` by hand, so
+harness loading is untested here. About 62k to 72k subagent tokens per turn.
+
+Direct checks: case 38 PASS, both template pairs equal the SPEC's. `argument-hint` is
+`[PR or ticket id] [--run <ref>]`. `wc -l` is 290.
+
+| Session | Case | Result | Evidence |
+|---|---|---|---|
+| S3 | 42, ticket #8, PR #9 | PASS | `run_config: github-variable`, project config without `max_fix_attempts` (default 3). `wkc-code-review 8 --run WKC_RUN_M1_20261026T1000` posted `round 1: stopped`, `Reviewed: bb6bc1f…`, `Fixing rounds used: 0 of 0`, naming the unmet criterion (`HELLO, ann!`) and the test that asserts it. Head unchanged; no question. |

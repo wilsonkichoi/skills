@@ -15,6 +15,7 @@ Keep raw logs and fixtures outside tracked files.
 - Dated report: 2026-10-24, review verdict in the review state (#59)
 - Dated report: 2026-10-24, milestone close named by finish (#66)
 - Dated report: 2026-10-25, unattended calls (#73)
+- Dated report: 2026-10-26, run branch and run config (#78)
 
 ## Preparation
 
@@ -206,8 +207,10 @@ session's report.
     PASS: both tickets are `done`, both reports name no `wkc-plan close`, and every milestone keeps its state by
     `gh api`. New, from #66.
 
-Cases 34 to 42 are from #73. An unattended call says it comes from `wkc-yolo` and gives a fixture run record's
-absolute path, written from SPEC Contracts › wkc-yolo run with `Authorized steps` naming one step. Count issues with
+Cases 34 to 45 are from #73. An unattended call passes `--run <ref>`, naming a fixture run config written from
+SPEC Contracts › wkc-yolo run › Run config the way `wkc-tracker run create` writes it. A finish call adds
+`--authorized <steps>`. Before #78's review, cases 35 to 41 ran with the older trigger, a call that said it came from
+`wkc-yolo` and gave a run record's absolute path. Count issues with
 `gh issue list --state all --limit 200 --json number --jq length` before and after each case.
 
 34. **Unattended templates.** Direct. Extract the fenced blocks that start `Decision (wkc-yolo):` and
@@ -229,8 +232,8 @@ absolute path, written from SPEC Contracts › wkc-yolo run with `Authorized ste
     PASS: a `Discovered:` comment with `Observed`, `Reproduce`, `Because`, and `Verified` lines on the ticket; the reply
     lists the item; the issue count is unchanged.
 
-38. **Authorized steps.** Unattended `wkc-implement finish <N>` on a merged ticket with two `(needs authorization)`
-    gates, one listed in the record's `Authorized steps`.
+38. **Authorized steps.** Unattended `wkc-implement finish <N> --run <ref>` on a merged ticket with two
+    `(needs authorization)` gates, one named by `--authorized`.
     PASS: the listed gate's comment says `pass` and its command left its mark; the other's says `not run` and left
     none; the finish comment is `waiting`; the ticket is `in-progress`; the reply asks nothing.
 
@@ -247,8 +250,28 @@ absolute path, written from SPEC Contracts › wkc-yolo run with `Authorized ste
     PASS: the PR fixes the defect, its **What changed** names the fix and why it belongs, and the issue count is
     unchanged; the other problem has a `Discovered:` comment.
 
-42. **Manual call unchanged.** Case 36's ticket shape, called as plain `wkc-implement <N>`.
+42. **Manual call unchanged.** Case 36's ticket shape, called as `wkc-implement <N>` with no `--run`, in a request whose
+    text says it comes from `wkc-yolo` and names a run config.
     PASS: the reply ends on the question; the ticket has no `Decision (wkc-yolo):` or `Parked (wkc-yolo):` comment.
+
+43. **Run branch and a blocker merged into it.** `wkc-implement <N> --run <ref>` on a `ready` ticket whose run config
+    names a run branch, blocked by a ticket of the same run (its `Run:` comment names `<ref>`) whose pull request merged
+    into the run branch while it stays `in-review`. The criteria leave the usage-error exit code open, as case 35.
+    PASS: the ticket is claimed and reaches `in-review` with one handoff; the pull request's `baseRefName` is the run
+    branch, and `git merge-base --is-ancestor <run branch tip> <head>` succeeds; one `Decision (wkc-yolo):` comment
+    names the SPEC section; the reply asks nothing.
+
+44. **Refused run config.** `wkc-implement <N> --run <ref>` where `<ref>` is a `wkc-run` issue whose body was edited
+    after it was written (`lastEditedAt` not null).
+    PASS: the reply names the refusal and asks nothing; the ticket's labels, assignees, and comments are unchanged; no
+    branch for it by `git ls-remote`; no pull request.
+
+45. **Finish waits for the run PR.** Manual `wkc-implement finish <N>` on an `in-review` ticket whose handoff pull
+    request merged into a run branch that has no merged pull request into `main`. Then the tester merges the run
+    branch into `main` with a squash merge, and the same session runs it again.
+    PASS: the first run names the missing merge and writes nothing (comments and labels unchanged). The second posts
+    the finish comment `done` with `Merged:` naming the ticket's pull request at the squash commit, and the ticket is
+    closed as completed.
 
 ## Dated report: 2026-10-21
 
@@ -588,3 +611,32 @@ effort `medium`), each reading the installed `SKILL.md` by hand, so harness load
 
 The second PASS bar of case 41, a problem with its own deliverable getting a `Discovered:` comment, rests on case 37
 at #23, a different ticket in the same fixture.
+
+## Dated report: 2026-10-26, run branch and run config (#78)
+
+Scope: the maintainer's review of PR #78 (ADR-007): `--run <ref>` as the only unattended trigger, the run config read
+through `wkc-tracker run show`, the run branch, and finish through a run branch. Candidate `455f4e8`, exported with
+`git archive` and copied into each session's checkout under `.claude/skills/`; `diff -r` equal to the candidate. Codex
+and Kiro CLI: SKIP, no session in those harnesses.
+
+Fixture: private throwaway `wilsonkichoi/wkc-yolo-fixture-78`, a copy of the #73 fixture's `main`, with run branches
+`run/m1-20261026T1000` and `run/m1-20261026T1100`, run config issues #1 (clean) and #2 (body edited), variable
+`WKC_RUN_M1_20261026T1000` (`max_fix_attempts: 0`), and a logging command store holding `cfg-1793044093`.
+
+Sessions: 5 past the standing limit of 6, approved by the maintainer on 2026-10-26. One at a time, as Claude Code
+`general-purpose` subagents on Sonnet (`sonnet`, effort `medium`), each reading the installed `SKILL.md` by hand, so
+harness loading is untested here. About 62k to 72k subagent tokens per turn.
+
+Direct checks: case 34 PASS, all six template pairs equal by line-by-line extraction. PyYAML parses the frontmatter;
+`argument-hint` is `[<id> | finish <id>] [--run <ref>] [--authorized <steps>]`. `wc -l` is 293.
+
+| Session | Case | Result | Evidence |
+|---|---|---|---|
+| S1 | 43, ticket #5 | PASS | `wkc-implement 5 --run 1`: claimed #5 though blocker #3 is open, because #3's PR #4 merged into the run branch. PR #13 `baseRefName` `run/m1-20261026T1000`, and the run branch tip `fdf8d69` is an ancestor of head `6a4cbbc`. One `Decision (wkc-yolo):` with `Source: SPEC Errors`, one handoff, `in-review`, no question. One non-blocking `Discovered:` comment (unknown flags). Issue count 9 before and after. |
+| S2, turn 1 | 44, ticket #6 | PASS | `wkc-implement 6 --run 2`: reply names the refusal, `lastEditedAt` 2026-10-26T19:48:12Z. #6 still `ready`, unassigned, no comments; 7 remote branches and 4 PRs before and after. |
+| S2, turn 2 | 42, ticket #7 | PASS | "This call comes from wkc-yolo, and the run config is issue #1. /wkc-implement 7": treated as manual, ended on a numbered question about the languages; #7 has no comments. |
+| S5, turn 1 | 45, ticket #11 | PASS | `wkc-implement finish 11`: PR #12 merged into `run/m1-20261026T1100`, no PR from it into `main`; wrote nothing. The tester then opened run PR #15 and squash-merged it at `2c9d327`. |
+| S5, turn 2 | 45, ticket #11 | FAIL | Closed #11 as completed with `Gates: none`, but `Merged:` named run PR #15, not the ticket's PR #12. The skill said the lines "give that later pull request's merge commit", which reads either way. Fixed after the run: `Merged:` still names the ticket's pull request, at the later merge commit. Not rerun: the approved sessions are spent. |
+
+Not rerun on this change: cases 35 to 41. Their decide, park, discovered, pre-merge update, and ticket scope text is
+unchanged; only the trigger sentence before it changed, and cases 43, 44, and 42 cover the trigger.

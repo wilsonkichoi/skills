@@ -71,8 +71,8 @@ request. A pull request counts as merged only when `gh` reports `MERGED` with a 
 queued or auto-merge pull request is still open. For finish, one merged into a branch other than
 the default branch, such as a run branch, counts only once a pull request from that branch into the
 default branch has merged: `gh pr list --head <branch> --base <default> --state merged`. Until
-then, report which merge is missing and write nothing. Its `Merged:` and `Merge commit:` lines then
-give that later pull request's merge commit. The review state is the pull request's state,
+then, report which merge is missing and write nothing. `Merged:` still names the ticket's pull
+request, at that later pull request's merge commit, and gate comments use that commit. The review state is the pull request's state,
 checks, head sha, GitHub's `reviewDecision`, and the latest `wkc-code-review round` verdict in its
 comments, with that verdict's `Reviewed` sha and whether it is the head. The verdict and
 `reviewDecision` are separate records: report each as found, and never present one as the other.
