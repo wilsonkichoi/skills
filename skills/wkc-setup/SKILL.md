@@ -153,8 +153,8 @@ skill in the run reads it, from any machine. Offer, recommended first:
    on standard input and prints a reference, `<cmd> get <ref>` prints it or exits non-zero to
    refuse, and `<cmd> close <ref>` retires it.
 
-Read the repository's visibility with `gh repo view --json visibility` before giving the GitHub
-warnings.
+Read the repository's visibility with `gh repo view <OWNER/REPO> --json visibility`, for the
+repository Section A resolved, before giving the GitHub warnings.
 
 ## 3. Scaffold
 

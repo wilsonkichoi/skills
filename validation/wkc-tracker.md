@@ -643,6 +643,10 @@ written so the leg can run against one you keep.
 1. Direct: `gh api repos/<R>/actions/variables/<name>` shows `created_at` equal to `updated_at`. A second
    `gh variable set` on a throwaway name makes `updated_at` later, and `gh variable delete` removes it.
 2. Model: `run show` through `wkc-code-review` case 42 reads it.
+3. Direct: in a checkout whose `origin` is the fixture and whose `upstream` is another repository, the
+   prescribed `run show` read returns the fixture's text, and its `value` equals the text given to `run create`
+   apart from the final newline, which the store drops. The prescribed `run close` command deletes the fixture's
+   variable. Bare `gh variable get` resolves to `upstream` there, which is why every command names the repository.
 
 **A50 run configs in the `command` store, from #78.** Direct, then model. A fixture command implements `put`, `get`,
 and `close` and logs each call.
@@ -1530,6 +1534,21 @@ here.
 Versions 0.0.9 to 0.0.41 below were development steps on the `feat/tracker` branch. They shipped
 together as 0.0.8, so an entry's version names a branch state, and its skill ref names the exact
 commit it tested.
+
+### 2026-10-26T14:40:02-07:00 PR #78 round 6, focused direct checks
+
+Reviewed `44fca3d57566ed0d28654ea2c2ab402d06e13893`. Selected A49.3 in Claude Code, GitHub backend, fixture
+`wilsonkichoi/wkc-yolo-fixture-78`, gh 2.102.0. No AI sessions.
+
+- A49.3 FAIL at the reviewed head: in a checkout with `origin` the fixture and `upstream` `wilsonkichoi/skills`,
+  `gh repo view` resolves to `wilsonkichoi/skills`, and the prescribed bare `gh variable get
+  WKC_RUN_M1_20261026T1000` prints `variable WKC_RUN_M1_20261026T1000 was not found`.
+- A49.3 PASS after the fix, from the same checkout: the `gh api` name check exits 1 for the free throwaway name
+  `WKC_RUN_REVIEW73_ROUND6`; `gh variable set --repo` exits 0; the `gh api` read returns `created_at` equal to
+  `updated_at`, both `2026-10-26T21:40:02Z`, and a `value` equal to the four-line text without its final newline;
+  the name check then exits 0, so a second create refuses; `gh variable delete --repo` exits 0 and the read then
+  fails. Only `WKC_RUN_M1_20261026T1000` remains on the fixture, as before. Model `run show` on the new read is SKIP:
+  all 12 authorized AI sessions are used.
 
 ### 2026-10-26 PR #78 round 4, focused direct checks
 

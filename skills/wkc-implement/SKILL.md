@@ -58,7 +58,7 @@ cites the ticket never replaces its recorded pull request.
 |---|---|
 | None, or open with an incomplete handoff | Build, sections 2 to 5 |
 | Open, with a complete handoff | Report its review state and write nothing; the pre-merge update when `wkc-yolo` asks (section 7) |
-| The ticket's, `MERGED` with a merge commit | Report the merge, name `wkc-implement finish <id>`, and write nothing. Merged into a run branch: say finish waits for the run PR |
+| The ticket's, `MERGED` with a merge commit | Report the merge, name `wkc-implement finish <id>`, and write nothing. Merged into a run branch whose run PR has not merged: say finish waits for it |
 | The ticket's, closed without merging | Report it and ask whether to build again |
 
 **`wkc-implement finish <id>`** only finishes, and only from the ticket's pull request. With none,
