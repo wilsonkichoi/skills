@@ -623,7 +623,7 @@ Fixture: private throwaway `wilsonkichoi/wkc-yolo-fixture-78`, a copy of the #73
 `run/m1-20261026T1000` and `run/m1-20261026T1100`, run config issues #1 (clean) and #2 (body edited), variable
 `WKC_RUN_M1_20261026T1000` (`max_fix_attempts: 0`), and a logging command store holding `cfg-1793044093`.
 
-Sessions: 5 past the standing limit of 6, approved by the maintainer on 2026-10-26. One at a time, as Claude Code
+Sessions: 6 past the standing limit of 6 (5, then 1 for the rerun), approved by the maintainer on 2026-10-26. One at a time, as Claude Code
 `general-purpose` subagents on Sonnet (`sonnet`, effort `medium`), each reading the installed `SKILL.md` by hand, so
 harness loading is untested here. About 62k to 72k subagent tokens per turn.
 
@@ -636,7 +636,8 @@ Direct checks: case 34 PASS, all six template pairs equal by line-by-line extrac
 | S2, turn 1 | 44, ticket #6 | PASS | `wkc-implement 6 --run 2`: reply names the refusal, `lastEditedAt` 2026-10-26T19:48:12Z. #6 still `ready`, unassigned, no comments; 7 remote branches and 4 PRs before and after. |
 | S2, turn 2 | 42, ticket #7 | PASS | "This call comes from wkc-yolo, and the run config is issue #1. /wkc-implement 7": treated as manual, ended on a numbered question about the languages; #7 has no comments. |
 | S5, turn 1 | 45, ticket #11 | PASS | `wkc-implement finish 11`: PR #12 merged into `run/m1-20261026T1100`, no PR from it into `main`; wrote nothing. The tester then opened run PR #15 and squash-merged it at `2c9d327`. |
-| S5, turn 2 | 45, ticket #11 | FAIL | Closed #11 as completed with `Gates: none`, but `Merged:` named run PR #15, not the ticket's PR #12. The skill said the lines "give that later pull request's merge commit", which reads either way. Fixed after the run: `Merged:` still names the ticket's pull request, at the later merge commit. Not rerun: the approved sessions are spent. |
+| S5, turn 2 | 45, ticket #11 | FAIL | Closed #11 as completed with `Gates: none`, but `Merged:` named run PR #15, not the ticket's PR #12. The skill said the lines "give that later pull request's merge commit", which reads either way. Fixed in `ebd7018`: `Merged:` still names the ticket's pull request, at the later merge commit. Rerun as S6. |
+| S6, `ebd7018` | 45, ticket #16 | PASS | One more session, approved by the maintainer on 2026-10-26. Ticket #16's PR #17 merged into `run/m1-20261026T1300`; the tester squash-merged run PR #18 at `9ca9b51`. `wkc-implement finish 16` posted `done` with `Merged: …/pull/17 at 9ca9b51…` and `Gates: none`, and closed #16 as completed. This rerun covers the second turn only; the first turn's no-write result is from S5. |
 
 Not rerun on this change: cases 35 to 41. Their decide, park, discovered, pre-merge update, and ticket scope text is
 unchanged; only the trigger sentence before it changed, and cases 43, 44, and 42 cover the trigger.
