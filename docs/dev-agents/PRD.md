@@ -1,6 +1,6 @@
 # wkc- skills PRD
 
-Status: approved (2026-10-24)
+Status: approved (2026-10-26)
 
 ## Problem
 
@@ -25,8 +25,9 @@ session skipped the review status change, and the maintainer set it by hand.
 - **The maintainer** (decided 2026-10-20), first. They use the skills on their own projects and use
   them to build the rest of this collection.
 - **Adopting projects** that install the skills with `npx skills add`. Earlier examples were
-  `the_beautiful_game`, `sekai-kb`, and `lagunabeach-md` (maintainer). Some
-  trust an agent to merge; others need a person's final approval for compliance (decided 2026-10-20).
+  `the_beautiful_game`, `sekai-kb`, and `lagunabeach-md` (maintainer). Some need a person's final
+  approval for compliance (decided 2026-10-20), and a person approves what reaches the default
+  branch in every project (decided 2026-10-26).
 - **Agents** in Claude Code, Codex, and Kiro CLI, which read the skills
   ([README Install](../../README.md#install)).
 
@@ -34,8 +35,9 @@ Not for:
 
 - Teams that want a framework or a consumer build step. One shared skill tree replaced those on
   purpose ([AGENTS.md Distribution](../../AGENTS.md#distribution)).
-- Anyone who wants merges, releases, or deploys with no gate they control. Merging is the human's
-  call unless a run they started records otherwise ([AGENTS.md Git workflow](../../AGENTS.md#git-workflow)).
+- Anyone who wants merges, releases, or deploys with no gate they control. Merging into the default
+  branch is always a person's call; a run merges only into its own run branch
+  ([AGENTS.md Git workflow](../../AGENTS.md#git-workflow)).
 - Teams that need ticket priority or a scheduling engine. `wkc-tracker next` returns every eligible
   ticket, lowest id first, by design ([CHANGELOG 0.0.22](../../CHANGELOG.md)).
 
@@ -48,9 +50,9 @@ Decided by the maintainer on 2026-10-20:
    from `wkc-backlog`, pull requests from `wkc-implement`, and reviews from `wkc-code-review`. A
    person merges.
 2. **One milestone runs unattended.** `wkc-yolo` takes a milestone of a real project from the tracker
-   frontier to its exit check. It uses only `wkc-` skills. It merges on its own where the project
-   allows that, and stops for a person's merge where the project requires one. A person reviews the
-   decisions and document changes the run recorded (decided 2026-10-24).
+   frontier to its exit check. It uses only `wkc-` skills. It merges reviewed tickets into its own
+   run branch, and a person reviews the whole run, its decisions and document changes included, and
+   merges it into the default branch (decided 2026-10-24, revised 2026-10-26).
 3. **Validation stays proportionate.** Each port has a runbook with simple checks that decide PASS
    or FAIL. A simple check that the skill works is enough. Do not build broad test matrices that
    try to cover everything and burn tokens.
@@ -74,17 +76,21 @@ Ranked. Ranking is importance, not delivery order; the ROADMAP sets the order.
    tickets through `wkc-tracker`. `wkc-plan` keeps the ROADMAP (decided 2026-10-21; replaces
    `wkc-plan` absorbing `wkc-backlog`, [ADR-004](./adr/ADR-004-backlog-separate-from-plan.md)).
 3. **A ticket, a wave, or a milestone runs without a person at each step.** `wkc-yolo` asks
-   everything in one round before the run: scope, readiness, security posture, and the permissions
-   it needs, including whether it holds delegated planning authority. Then it asks nothing (decided
-   2026-10-20). During the run it works as an engineering team with a technical lead. Within the
+   everything in one round before the run: scope, readiness and the blind spots it finds in the
+   work, security posture, and the permissions it needs, including whether it holds delegated
+   planning authority. Then it asks nothing until a person merges its run (decided 2026-10-20,
+   revised 2026-10-26). During the run it works as an engineering team with a technical lead. Within the
    PRD's product intent it makes implementation and architecture decisions. With delegated
    authority it also changes the SPEC and its technical requirements, ADRs, the ROADMAP, future
    milestones, tickets, and dependencies when engineering evidence justifies it, with no person
    approving each change (decided 2026-10-24). It records every decision and its reason, and stops
-   at the exit check or a limit ([PR #30](https://github.com/wilsonkichoi/skills/pull/30)). Whether
-   it may merge is a per-project setting (decided 2026-10-20). Product intent, security
-   protections, authorization limits, and operational safeguards are outside its authority: a
-   person sets them and reviews the outcome.
+   at the exit check or a limit ([PR #30](https://github.com/wilsonkichoi/skills/pull/30)). It works
+   on its own run branch and merges each reviewed ticket there; it never merges into the default
+   branch. At the end it opens one pull request from the run branch, and a person reviews it and
+   makes the final call to merge. After that merge it asks one closing round, which release or
+   deploy steps may run, and then finishes the tickets (decided 2026-10-26). Product intent,
+   security protections, authorization limits, and operational safeguards are outside its
+   authority: a person sets them and reviews the outcome.
 4. **What a project learns becomes rules.** An optional `wkc-retro` reviews a finished ticket,
    milestone, or run and proposes rule files for `rules_dir`, written only on approval (decided
    2026-10-20).
@@ -98,12 +104,12 @@ Ranked. Ranking is importance, not delivery order; the ROADMAP sets the order.
 - No marketplace, plugin packaging, or CI in this work. The maintainer plans a marketplace and CI
   later (decided 2026-10-20).
 - No per-harness copies or consumer build step.
-- No skill merges, releases, or deploys on its own authority. `wkc-yolo` merges only where the
-  project allows agent merges. A post-merge step that publishes or deploys runs only when a person
-  or the run's limits authorized it.
+- No skill merges, releases, or deploys on its own authority. `wkc-yolo` merges only into its own
+  run branch, never into the default branch. A post-merge step that publishes or deploys runs only
+  when a person authorized it, in a run after the person merged the run (decided 2026-10-26).
 - No run edits the PRD, closes a milestone, weakens a security protection, authorization limit, or
   operational safeguard, or weakens an acceptance criterion to make failing work pass (decided
-  2026-10-24).
+  2026-10-24). That holds on the run branch too.
 - No `wkc-fix`, `wkc-qa`, `wkc-verify`, `wkc-git-fu`, or `wkc-create-ticket` skill.
   `wkc-backlog` handles changes between planning runs, and `wkc-code-review` fixes its own findings.
   PR #30 folded verify, git-fu, and create-ticket into the planned skills and left fix and QA off
@@ -131,11 +137,14 @@ Ranked. Ranking is importance, not delivery order; the ROADMAP sets the order.
   reference; a skill that outgrows one file splits by responsibility
   ([AGENTS.md Skills](../../AGENTS.md#skills), [ADR-004](./adr/ADR-004-backlog-separate-from-plan.md)).
 - **Tracker backends:** GitHub Issues, Linear, and local markdown, all through `wkc-tracker`.
-- **Compliance:** a project must be able to require a person's merge, and no run may override that.
+- **Compliance:** a person merges every change into the default branch, and no run may override that
+  (decided 2026-10-26).
 - **Security** (decided 2026-10-24): where a project configures a secret scan, every push by the
   skills runs it first, in every mode, and a failed scan blocks the push. An unattended run does not
   start without a working scan. Host push protection and branch protection are separate layers. A
-  project without a scan keeps working manually, with a warning.
+  project without a scan keeps working manually, with a warning. A run's config holds its limits
+  only, never credentials or security posture, and each project chooses where it is stored
+  (decided 2026-10-26).
 - **Delivery:** one port per pull request, validated before the next starts. One patch version per
   pull request ([AGENTS.md Versioning](../../AGENTS.md#versioning)).
 - **Cost:** development cost carries little weight. The maintainer's usage limits do.
@@ -190,6 +199,15 @@ layers are answered by SPEC Delegated run authority and
 [ADR-006](./adr/ADR-006-delegated-run-authority.md).
 
 ## Changes
+
+- 2026-10-26: A run merges only into its own run branch, and a person reviews and merges the run
+  into the default branch; release and deploy steps are approved in a closing round after that
+  merge; the kickoff round names the blind spots it finds; a run's config holds limits only, in a
+  store the project chooses (maintainer, PR #78, ADR-007). Replaced "Whether it may merge is a
+  per-project setting", outcome 2's "merges on its own where the project allows that", the
+  non-goal's "where the project allows agent merges" and "or the run's limits", and the compliance
+  constraint's "must be able to require". Review: SPEC Unattended calls, Delegated run authority,
+  wkc-yolo run, Config fields, Lifecycle, Failure handling, Security; ROADMAP M4; #74, #76, #77.
 
 - 2026-10-24: Goal 3: with delegated authority, a run changes the SPEC and its technical
   requirements, ADRs, ROADMAP, future milestones, tickets, and dependencies without per-change

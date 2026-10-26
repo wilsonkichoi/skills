@@ -7,6 +7,7 @@
 - Missing fields
 - Per verb
 - Verifying a write
+- Run configs
 
 One file per ticket under `issues_dir`, named `NNN-slug.md`. One session at a time.
 
@@ -72,7 +73,7 @@ Terminal statuses are `done`, `cancel`, and `duplicate`.
 
 | Verb | File operation |
 |---|---|
-| `list` | Read every frontmatter in `issues_dir` and filter |
+| `list` | Read every frontmatter in `issues_dir` and filter. Only files directly in it are tickets, never `runs/` |
 | `show` | Read the one file whole. For a duplicate, name its `duplicate_of` |
 | `next` | Keep `status: ready` with an empty `assignee` and every `blocked_by` id met. Sort by id |
 | `create` | Write one file with `status: 'backlog'`, its `blocked_by`, and its `milestone` when given, in one write. No cycle walk. When no other file carries that milestone, say the ticket starts it and name the milestones that exist, so a typo shows |
@@ -110,3 +111,11 @@ Re-read the file and parse its frontmatter with a YAML parser.
 | `move` | the target `status`; an empty `assignee` after `backlog` or `ready` |
 
 Never run `git add`, `git commit`, or `git push`.
+
+## Run configs
+
+A run config is a file in `issues_dir/runs/`, never a ticket. `run create` writes the text to
+`issues_dir/runs/<Run branch with each / as ->.md`, such as `runs/run-m4-20261026T0900.md`, and
+refuses when the file exists. The path is the reference. `run show` reads it, and refuses when it is
+missing. Nothing shows whether it was edited, so an edit goes undetected. `run close` writes
+nothing: the file stays as the run's record.

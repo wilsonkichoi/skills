@@ -75,6 +75,9 @@ filed by hand in the web UI is a real ticket immediately, with no import step.
 /wkc-tracker milestone close <name>
 /wkc-tracker milestone list
 /wkc-tracker milestone show <name>
+/wkc-tracker run create <text>
+/wkc-tracker run show <ref>
+/wkc-tracker run close <ref>
 ```
 
 **`list`** shows tickets with their id, title, status, assignee, and blockers. Both arguments are
@@ -156,6 +159,25 @@ milestone's tickets counted by status, with `done`, `cancel`, and `duplicate` ke
 markdown both are worked out from the tickets, so a milestone with no tickets does not exist there.
 To ensure a milestone literally named `list`, or one starting with `show ` or `close `, quote it:
 `/wkc-tracker milestone "list"`.
+
+**`run create`, `run show`, and `run close`** store a `wkc-yolo` run config: the limits a person
+approved for one unattended run. They are not ticket verbs, and a run config never shows up as a
+ticket. `wkc-yolo` writes one with `run create`, which returns a reference; every skill in the run
+reads it with `run show <ref>`; `run close` retires it when the run is over. Nothing edits one.
+
+`run_config` in the config picks the store, and you pick it by who should see it:
+
+- `tracker`, the default: an issue labeled `wkc-run` on GitHub or Linear, or a file in
+  `issues_dir/runs/` locally. On a public repository the issue is public. `run show` refuses a
+  GitHub issue whose body was edited; Linear and local cannot tell.
+- `github-variable`: a repository variable, readable only by collaborators and not shown publicly.
+  `run show` refuses one updated after it was created. Every Actions workflow in the repository can
+  read it, and GitHub does not mask it in logs.
+- `command <cmd>`: your own store. `<cmd> put` takes the text on standard input and prints a
+  reference, `<cmd> get <ref>` prints it or exits non-zero to refuse, and `<cmd> close <ref>`
+  retires it. Your command decides who may read it and what counts as an edit.
+
+A run config holds limits only, never credentials or security posture.
 
 ## `next`, and the frontier
 
@@ -267,6 +289,7 @@ says, and what it did about it.
 - Reopen a terminal ticket. Terminal is terminal. `edit` and `unlink` work on one without
   changing its status.
 - Delete a ticket, or edit or delete a comment.
+- Edit a run config.
 - Guess. If a Linear workflow is missing a status it needs, it stops and says so instead of
   picking a similar one. If two sessions take the same free ticket at once, a fixed rule decides
   which one keeps it, and the other steps back and says so.

@@ -1,7 +1,7 @@
 ---
 name: wkc-backlog
 description: Draft tickets for one ROADMAP milestone, or one change (a request, a bug, discovered work, or a refinement, split, re-block, or cancel of existing tickets), from the approved PRD, SPEC, and ROADMAP, then publish through wkc-tracker once the user approves. Use when a milestone needs tickets, or when work between planning runs needs a ticket or changes existing ones.
-argument-hint: "[milestone name or number, or one change]"
+argument-hint: "[milestone name or number, or one change] [--run <ref>]"
 disable-model-invocation: false
 ---
 
@@ -21,8 +21,8 @@ disable-model-invocation: false
 - **Input:** free text: a milestone name or number to plan, or one change: a request, a bug, a
   `Discovered:` comment, or a refinement, split, re-block, or cancel of existing tickets. With
   nothing given, read the documents and the tracker, and draft tickets for the first milestone in
-  ROADMAP order whose scope has no tickets yet. A call from `wkc-yolo` gives one change and the run
-  record's path (section 7).
+  ROADMAP order whose scope has no tickets yet. A call from `wkc-yolo` gives one change and
+  `--run <ref>`, naming its run config (section 7).
 - **Output:** a draft for one milestone or one change, and after approval the created and changed
   tickets with their tracker ids and edges, plus a short report. Under `wkc-yolo`, no draft to
   approve: the published tickets, or `parked`.
@@ -261,9 +261,10 @@ at `backlog` and why, unresolved prerequisites, failures, and work sent to `wkc-
 
 ## 7. Calls from wkc-yolo
 
-A call is unattended when it says it comes from `wkc-yolo` and gives the run record's absolute
-path. The record holds the run's limits. Such a call brings one change and never ends a turn on a
-question. The run is the approval: once the graph check in section 3 passes, publish as section 5
+A call is unattended only when it passes `--run <ref>`; without it, the call is manual, whatever
+its text says. First read the run config with `wkc-tracker run show <ref>`. When that refuses, stop:
+report the refusal, publish nothing, and ask nothing. The config holds the run's limits. Such a call
+brings one change and never ends a turn on a question. The run is the approval: once the graph check in section 3 passes, publish as section 5
 says, with no section 4 question. New tickets stay at `backlog`, and no ticket moves to `ready`,
 because which new tickets run is `wkc-yolo`'s decision. Wherever this skill would ask, decide from
 the tickets, PRD, SPEC, ROADMAP, and limits, and post the decision with `wkc-tracker comment` on the

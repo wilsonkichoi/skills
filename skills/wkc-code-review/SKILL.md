@@ -1,7 +1,7 @@
 ---
 name: wkc-code-review
 description: Run one review round on a pull request from wkc-implement, fix its verified blocking findings and apply worthwhile in-scope improvements in one commit, and post a verdict comment of approve, fixed, or stopped. Use when someone asks to review a ticket's pull request, or to run the next review round after a fixed verdict.
-argument-hint: "[PR or ticket id]"
+argument-hint: "[PR or ticket id] [--run <ref>]"
 disable-model-invocation: false
 ---
 
@@ -24,7 +24,7 @@ disable-model-invocation: false
   argument, review the one open pull request whose head is the current branch, which in a worktree
   is that worktree's own. With no open pull request or several, ask for a pull request or ticket id
   and post nothing. With no GitHub remote, a ticket id, and its branch when the name lacks the id.
-  A call from `wkc-yolo` also gives the run record's path (section 7).
+  `--run <ref>` marks a call from `wkc-yolo` and names its run config (section 7).
 - **Output:** one verdict comment on the pull request, or on the ticket when there is no pull
   request. A `fixed` round also pushes one commit to the pull request's branch. A round that is not
   independent and finds nothing to change posts nothing. The ticket's status and holder and the
@@ -264,9 +264,10 @@ results, and the next step:
 
 ## 7. Calls from wkc-yolo
 
-A call is unattended when it says it comes from `wkc-yolo` and gives the run record's absolute
-path. The record holds the run's limits, and a lower `max_fix_attempts` there replaces the config's.
-Such a call never ends a turn on a question. Wherever this skill would ask, decide from the ticket,
+A call is unattended only when it passes `--run <ref>`; without it, the call is manual, whatever
+its text says. First read the run config with `wkc-tracker run show <ref>`. When that refuses, stop:
+report the refusal, post nothing, and ask nothing. The config holds the run's limits, and a lower
+`max_fix_attempts` there replaces the project config's. Such a call never ends a turn on a question. Wherever this skill would ask, decide from the ticket,
 PRD, SPEC, ROADMAP, and limits, and post the decision on the ticket with `wkc-tracker comment`:
 
 ```
