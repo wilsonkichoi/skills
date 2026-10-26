@@ -99,8 +99,7 @@ Manual invocation is the default. A manually invoked skill keeps these settings:
 - claude code: `SKILL.md` frontmatter `disable-model-invocation: true`
 - codex cli: `agents/openai.yaml` -> `policy: allow_implicit_invocation: false`
 
-A skill may explicitly opt into model invocation, one skill at a time. `wkc-tracker`, `wkc-help`, `wkc-architect`, `wkc-plan`, `wkc-backlog`, `wkc-implement`, and `wkc-code-review` do. Authors
-must declare the intended callers in the skill body: people, models, or named skills. Enable
+A skill may explicitly opt into model invocation, one skill at a time. Authors must declare the intended callers in the skill body: people, models, or named skills. Enable
 supported invocation settings for each harness when models are intended callers:
 
 - Claude Code: set `disable-model-invocation: false` or omit the restriction.
@@ -131,36 +130,13 @@ Maintainer scripts are a separate case. Each one starts from an action repeated 
 guess, and lives in `tools/` behind a `Makefile` target. Keep each one a single readable file whose
 structure follows the process it replaces, so it can be checked against that process and fixed in
 one place. A skill may call one only when the skill runs in this repository, as `wkc-skills-release` does.
-Renderer changes must preserve visible keyboard focus when closing details after node navigation.
-Details open at half the desktop canvas width with region accents and a darkened backdrop. Selection only centers the card in available space and preserves zoom.
-Closing slides details away and keeps the current card position and zoom. Region boxes group cards from the same lane.
-Preserve desktop panel resizing by pointer and keyboard, width limits, and the full-width mobile details sheet.
-`wkc-workflow-diagram` authors skill cards only, with source-backed action arrows between skills.
-Systems, outputs, results, and prerequisites stay in skill summaries or details. Explicit requests can select another arrow meaning, including artifact dataflow.
-Updates preserve authored content, edge meaning, and layout. A new default alone never authorizes changing existing edges.
 
 Inputs and outputs between skills stay loose. A skill states what it expects and what it produces,
 but does not reject work over formatting. Following rigid steps for ceremony is not the point.
-`wkc-backlog` copies a `Discovered:` item's evidence into ticket Notes from the original comment
-returned by `wkc-tracker show`, including handoffs from `wkc-code-review`.
-
-`wkc-tracker milestone close <name>` closes exactly one open GitHub milestone with that name and
-verifies it with a fresh read. It never checks tickets; the caller decides whether to close.
-An already closed milestone needs no write. Linear and local have no milestone state, so the verb
-writes nothing and says so. The ensure form, `milestone <name>`, never renames or reopens one.
-`wkc-plan close <milestone>` is the caller that decides: it stops while any ticket is open, and
-closes only on the person's yes to the milestone's exit check. `wkc-implement finish` only names it.
 
 The lifecycle documents (PRD, SPEC, ROADMAP) are optional, not a pipeline. Each skill uses whatever
 exists, and work that fits the current intent skips the earlier stages: do the work, then update the
 documents it changed. Document outlines are guidance, scaled to the work, not required headings.
-
-`wkc-implement <id>` builds or reports. Only `wkc-implement finish <id>` runs post-merge gates and
-moves a ticket to `done`. The handoff or finish comment identifies the ticket's pull request.
-A pull request that merely cites the ticket cannot replace that record. An open follow-up to the
-recorded merged pull request can continue an incomplete handoff. Its review state reports the
-latest `wkc-code-review` verdict and GitHub's `reviewDecision` as separate records, and offers the
-merge step only for an `approve` on the current head; a person merges.
 
 A skill that asks the user something ends its turn on the question. Asking and then carrying on
 leaves the harness working, and a working harness cannot take a plain reply. Make the answer cheap
@@ -298,7 +274,9 @@ Before any commit that adds, removes, or modifies files under `skills/`:
 
 1. Version bumped in `VERSION`, once per pull request (see [Versioning](#versioning))
 2. That version's `CHANGELOG.md` entry added, or rewritten to cover this commit: a `## {version} ({ISO 8601 standard with local time offset e.g. 2026-08-21T17:16:30-07:00})` heading, one blank line, then one `- ` bullet per change
-3. `README.md` (repo root) and `AGENTS.md` updated if skill behavior/description changed
+3. `README.md` (repo root) updated if a skill's description or user-facing behavior changed.
+   `AGENTS.md` changes only when an authoring convention changes. It never restates what a skill
+   does: that lives in the skill's own files and the SPEC, and no skill reads `AGENTS.md` at run time
 4. `README.md` roster row added or updated when a skill is added, renamed, or removed
 5. `validation/wkc-<name>.md` updated when a verb, a command, or a guarantee changed. A runbook
    that still tests the old behaviour is worse than none, because it reports PASS
