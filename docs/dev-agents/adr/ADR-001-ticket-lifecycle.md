@@ -1,6 +1,9 @@
 # ADR-001: Ticket lifecycle and definition of done
 
-Date: 2026-10-20. Status: accepted
+Date: 2026-10-20. Status: accepted. Amended by [ADR-007](./ADR-007-run-branch-and-run-config.md),
+which replaced `merge_gate` with a run branch and a person's merge of the run, and by
+[ADR-008](./ADR-008-run-completes-its-tickets.md): in a run, a ticket's merge and finish happen on
+the run branch, `done` names where it was verified, and gates are classified by target and impact.
 
 ## Context
 

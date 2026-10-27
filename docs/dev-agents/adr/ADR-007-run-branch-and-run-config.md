@@ -1,7 +1,10 @@
 # ADR-007: A run merges into its own branch, and a person merges the run
 
 Date: 2026-10-26. Status: accepted. Amends [ADR-006](./ADR-006-delegated-run-authority.md):
-`merge_gate` and the run record are replaced.
+`merge_gate` and the run record are replaced. Amended by
+[ADR-008](./ADR-008-run-completes-its-tickets.md): tickets finish on the run branch before the
+person's merge, the closing round is gone, and a same-run blocker needs its finish to find no failed
+gate. The run branch, the run config, its stores, `--run`, and the person's merge stay.
 
 ## Context
 
