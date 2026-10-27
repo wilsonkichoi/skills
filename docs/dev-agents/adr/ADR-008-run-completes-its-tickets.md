@@ -85,7 +85,9 @@ Option 3 (maintainer, 2026-10-26).
   PR from and into the run branch, reviewed and merged like any ticket PR, and the ticket is
   finished again; passing on the rerun, it counts as passed and is reported as intermittent, with a
   `Discovered:` item. A readiness failure in a `done` ticket gets a repair ticket through
-  `wkc-backlog`; the `done` ticket stays `done`.
+  `wkc-backlog`; the `done` ticket stays `done`. With `New prerequisites: run` and admission budget
+  left, the repair joins the run without a blocker edge to the completed ticket. Otherwise it
+  stays at `backlog` and the run PR stays a draft.
 - **Cleanup.** Each grant names its cleanup. The run cleans up after readiness and before any stop
   it controls, also past its time limit. After a stop it does not control, the report names what
   may still be up, and a resumed run cleans up first.

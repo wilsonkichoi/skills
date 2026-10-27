@@ -666,7 +666,8 @@ Outside a run, nothing here applies: every skill asks for approval as it always 
 
 The scope is one ticket, one wave, or a milestone. A wave is the frontier inside the milestone when
 the run starts: every ticket whose blockers are all met, so none depends on another. Ticket and wave
-runs record their ticket ids and never grow; a milestone run takes each new wave as it appears.
+runs record their ticket ids. Only prerequisites and readiness repairs admitted by step 3 can join
+that scope; a milestone run also takes each new wave as it appears.
 
 1. **Before, in one round of questions:** the scope; a review of the work in scope that names its
    readiness problems (SPEC not approved, open decision or spike tickets in scope) and its blind
@@ -720,9 +721,11 @@ runs record their ticket ids and never grow; a milestone run takes each new wave
 3. **Then new work:** take the frontier tickets in scope, no more than the ticket budget has left.
    The graph is read fresh each time: tickets and edges a run added count like the rest, and a
    blocker counts as met by the rules in Unattended calls. With `New prerequisites: run`, a
-   new ticket that blocks a ticket in scope joins the scope and is moved to `ready`, with a
-   `Decision (wkc-yolo):` comment; it runs when it reaches the frontier, not first or last. With
-   `record only`, it stays at `backlog`, and the ticket it blocks waits. Other new tickets, such as
+   new ticket that blocks a ticket in scope, or repairs a readiness failure from step 5, joins the
+   scope and is moved to `ready`, with a `Decision (wkc-yolo):` comment. Both use the same admission
+   budget and run when they reach the frontier, not first or last. A readiness repair needs no
+   blocker edge to a `done` ticket. With `record only`, it stays at `backlog`; a blocked ticket
+   waits, and an unresolved readiness failure keeps the run PR a draft. Other new tickets, such as
    later-milestone work, stay at `backlog` and out of the run. Admitting a ticket means posting
    `Run: <run config ref>` on it with `wkc-tracker comment` before anything else; adopted tickets
    get the same comment. A ticket may be adopted from another run only when that run has stopped, as
@@ -754,8 +757,10 @@ runs record their ticket ids and never grow; a milestone run takes each new wave
    tickets that joined the run, less the tickets the person left out at kickoff and the release
    tickets made under `Moved by the person:`. A failure in a ticket not yet `done` gets that
    ticket's follow-up. A failure in a `done` ticket, or between tickets, becomes a repair ticket
-   through `wkc-backlog`, related to the `done` ticket, which stays `done`; it joins the run by the
-   `New prerequisites` line. After any merge, readiness starts again at the new head. The run is
+   through `wkc-backlog`, related to the affected tickets, which keep their status. Step 3 admits
+   the repair when `New prerequisites: run` and the remaining budget allow it, then continues its
+   implementation, review, merge, and finish. Otherwise the repair stays at `backlog` and readiness
+   remains failed. After any merge, readiness starts again at the new head. The run is
    **ready** only when every required ticket is `done` and every one of those checks passed at the
    current head; a passing `test_command` alone never makes it ready. Then clean up every granted
    environment. Then open one PR from the run branch into the default branch, ready for review when
@@ -780,10 +785,14 @@ runs record their ticket ids and never grow; a milestone run takes each new wave
    never carries: any secret incident, first, and the push protection status the kickoff accepted.
    Offer `wkc-retro` on the run.
 6. **After the run PR:** once it is merged or closed without merging, the person starts `wkc-yolo`
-   on the run again. It posts one outcome comment on each ticket of the run, lists the release
-   tickets and production steps left with `wkc-implement finish <id>` for each, retires the run
-   config with `wkc-tracker run close <ref>`, reports, and offers `wkc-retro`. It asks nothing
-   about production: that is the person's work, after the merge, through a manual finish.
+   on the run again. It posts one outcome comment on each ticket of the run and lists the work
+   left. A new release ticket follows the manual lifecycle: move it to `ready` when groomed,
+   implement it with `wkc-implement <id>`, review and merge its PR, then run
+   `wkc-implement finish <id>`. An existing ticket with a merged handoff PR and production gates
+   left uses manual `finish` after the run PR merges. It retires the run config with
+   `wkc-tracker run close <ref>`, reports, and offers `wkc-retro`. It asks nothing about production:
+   that is separately authorized work after the merge. A closed, unmerged run authorizes none of
+   those production steps.
 
    ```
    Run outcome (wkc-yolo): merged | closed without merging
@@ -1153,7 +1162,10 @@ None.
   Risks). Replaced the closing round and its `--authorized` steps, "A ticket stays `in-review` after
   its merge into the run branch", a same-run blocker met on merge alone, the follow-up to the
   default branch under a run, "A run PR closed without merging leaves its tickets `in-review`", and
-  "holds limits only". Follows the PRD revision of the same day. Review M4 (#74).
+  "holds limits only". Readiness repairs join the run under `New prerequisites: run` and the
+  admission budget without adding blockers to completed tickets. New release tickets follow the
+  manual implementation lifecycle before `finish`. Follows the PRD revision of the same day.
+  Review M4 (#74).
 
 - 2026-10-26: Run branch and run config (maintainer review of PR #78; ADR-007). A run merges only
   into its own run branch and ends with one run PR that a person merges; release and deploy steps
