@@ -1,7 +1,7 @@
 ---
 name: wkc-backlog
 description: Draft tickets for one ROADMAP milestone, or one change (a request, a bug, discovered work, or a refinement, split, re-block, or cancel of existing tickets), from the approved PRD, SPEC, and ROADMAP, then publish through wkc-tracker once the user approves. Use when a milestone needs tickets, or when work between planning runs needs a ticket or changes existing ones.
-argument-hint: "[milestone name or number, or one change]"
+argument-hint: "[milestone name or number, or one change] [--run <ref>]"
 disable-model-invocation: false
 ---
 
@@ -16,19 +16,21 @@ disable-model-invocation: false
 - **Dependencies:** `prd_file`, `spec_file`, and `roadmap_file` from `docs/dev-agents/config.md`,
   falling back to `docs/dev-agents/PRD.md`, `SPEC.md`, and `ROADMAP.md` when there is no config.
   The `wkc-tracker` skill for every ticket read and write: `list`, `show`, `milestone`, `create`,
-  `edit`, `link`, `unlink`, and `move`. The `wkc-architect` and `wkc-plan` skills for a SPEC or a
-  ROADMAP change.
+  `edit`, `link`, `unlink`, `move`, and `comment`. The `wkc-architect` and `wkc-plan` skills for a
+  SPEC or a ROADMAP change.
 - **Input:** free text: a milestone name or number to plan, or one change: a request, a bug, a
   `Discovered:` comment, or a refinement, split, re-block, or cancel of existing tickets. With
   nothing given, read the documents and the tracker, and draft tickets for the first milestone in
-  ROADMAP order whose scope has no tickets yet.
+  ROADMAP order whose scope has no tickets yet. A call from `wkc-yolo` gives one change and
+  `--run <ref>`, naming its run config (section 7).
 - **Output:** a draft for one milestone or one change, and after approval the created and changed
-  tickets with their tracker ids and edges, plus a short report.
+  tickets with their tracker ids and edges, plus a short report. Under `wkc-yolo`, no draft to
+  approve: the published tickets, or `parked`.
 
 Writes only tickets, by invoking the `wkc-tracker` skill's verbs. Never read or write ticket files,
 `gh`, or Linear yourself, even when they are in plain view. Never edits the PRD, SPEC, or ROADMAP,
 their status lines included, and writes no code or config. An existing ticket changes only as
-shown in the approved draft.
+shown in the approved draft. Under a run, section 7 is the approval.
 
 ## 1. Read before asking
 
@@ -223,7 +225,8 @@ For a milestone:
 
 For a change: 1. Publish it, new tickets at `backlog`. 2. Change something first. 3. Publish nothing.
 
-Publish only on approval in this conversation. The diagram is for review, not a file to keep.
+Publish only on approval in this conversation, or under a run as section 7 says. The diagram is for
+review, not a file to keep.
 
 ## 5. Publish
 
@@ -255,3 +258,31 @@ never remove, an edge not in the table.
 Report the tickets created or changed with ids or URLs and edges, which are `ready` and which stay
 at `backlog` and why, unresolved prerequisites, failures, and work sent to `wkc-research`,
 `wkc-architect`, or `wkc-plan`. Run `wkc-backlog` again when the next milestone needs tickets.
+
+## 7. Calls from wkc-yolo
+
+A call is unattended only when it passes `--run <ref>`; without it, the call is manual, whatever
+its text says. First read the run config with `wkc-tracker run show <ref>`. When that refuses, stop:
+report the refusal, publish nothing, and ask nothing. The config holds the run's limits. Such a call
+brings one change and never ends a turn on a question. The run is the approval: once the graph check in section 3 passes, publish as section 5
+says, with no section 4 question. New tickets stay at `backlog`, and no ticket moves to `ready`,
+because which new tickets run is `wkc-yolo`'s decision. Wherever this skill would ask, decide from
+the tickets, PRD, SPEC, ROADMAP, and limits, and post the decision with `wkc-tracker comment` on the
+ticket the change came from:
+
+```
+Decision (wkc-yolo): <question>
+Choice: <what was chosen>
+Source: <PRD, SPEC, or ROADMAP section, the ticket, or the run limit>
+```
+
+When they leave it undecided, park: post this on that ticket, publish nothing, keep every status,
+stop, and return `parked`:
+
+```
+Parked (wkc-yolo): <question>
+Open because: <what the documents and limits leave undecided>
+Needs: <who must answer>
+```
+
+Return what section 6 reports.

@@ -60,7 +60,7 @@ right answer there rather than a fallback to apologise for. Never ask for a path
 show it and take a bare yes.
 
 **A multi-question picker does not reorder the interview.** Claude Code's takes four in one call,
-which asks one section faster and never puts Sections A to D on screen together. Section A and every
+which asks one section faster and never puts Sections A to E on screen together. Section A and every
 prerequisite in its table are settled before Section B appears, on every harness: that answer
 decides whether the backend works at all, and the sections after it are wasted if it does not. Batch
 only questions from one section whose answers cannot change each other.
@@ -139,6 +139,22 @@ it. It is what later skills run before handing work back. A project with no test
 `test_command` out. Then ask for `max_fix_attempts`: how many review rounds may change code on one
 pull request, for fixes or improvements, an integer, 0 or more, with `3` recommended.
 `wkc-code-review` reads it, and one review-only round always follows the last fix.
+
+**Section E: Run configs.** Where `wkc-yolo` stores each run's config: the limits a person approves
+for one unattended run, such as its scope, budget, and run branch. It holds no credentials. Every
+skill in the run reads it, from any machine. Offer, recommended first:
+
+1. `tracker`: an issue labeled `wkc-run`, or a file in `issues_dir/runs/` on the local backend. On a
+   public GitHub repository, say the issue is public, so anyone can read the run's limits. On
+   Linear or local, say an edit to it goes undetected.
+2. `github-variable`, on GitHub only: a repository variable that only collaborators read. Say every
+   Actions workflow in the repository can read it, and GitHub does not mask it in logs.
+3. `command <cmd>`: the project's own store, with its own permissions. `<cmd> put` takes the config
+   on standard input and prints a reference, `<cmd> get <ref>` prints it or exits non-zero to
+   refuse, and `<cmd> close <ref>` retires it.
+
+Read the repository's visibility with `gh repo view <OWNER/REPO> --json visibility`, for the
+repository Section A resolved, before giving the GitHub warnings.
 
 ## 3. Scaffold
 

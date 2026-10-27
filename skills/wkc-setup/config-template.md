@@ -10,6 +10,7 @@ spec_file: docs/dev-agents/SPEC.md
 roadmap_file: docs/dev-agents/ROADMAP.md
 test_command: "npm test"                    # run before handing work back
 max_fix_attempts: 3                         # integer, 0 or more; default 3. Review rounds that may change code on one PR
+run_config: tracker                         # tracker / github-variable / command <cmd>; default tracker. Where wkc-yolo stores run configs
 ---
 
 # Project development conventions

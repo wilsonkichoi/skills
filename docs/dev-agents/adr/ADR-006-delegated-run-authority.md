@@ -1,6 +1,7 @@
 # ADR-006: Delegated run authority, with security enforced in layers
 
-Date: 2026-10-24. Status: accepted
+Date: 2026-10-24. Status: accepted. Amended by [ADR-007](./ADR-007-run-branch-and-run-config.md):
+a run merges only into its own run branch, `merge_gate` is gone, and the run record became the run config.
 
 ## Context
 

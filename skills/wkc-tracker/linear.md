@@ -5,6 +5,7 @@
 - Tools
 - Reading rules
 - Per verb: next, create, edit, link, unlink, assign, milestones (ensure, close, list, show), duplicate
+- Run configs
 
 Use the official Linear MCP server. Scope every call with `linear_team` from
 `docs/dev-agents/config.md`, and with `linear_project` wherever the tool takes a project. Never
@@ -204,3 +205,18 @@ save_issue { id: <id>, duplicateOf: <original> }
 
 Verify with `get_issue` on both: the issue is Duplicate with `duplicateOf` set, and the original
 carries every relation you said would move.
+
+## Run configs
+
+An issue with the label `wkc-run` is a run config, never a ticket. Drop it from every list, the
+frontier, and milestone counts, and refuse a ticket verb on one.
+
+`run create`: when the team lacks the `wkc-run` label, create it. Then `save_issue` in `linear_team`
+with the title `Run config: <Run branch>`, the label, the text as its description, and no project,
+milestone, or assignee. Its identifier is the reference.
+
+`run show <id>`: `get_issue`. Refuse when it is missing or lacks the label. Compare the text by
+meaning, as **Reading rules** says. The tools cannot show whether a description was edited, so an
+edit goes undetected; `wkc-setup` says so when it asks for `run_config`.
+
+`run close <id>`: move it to `Done`. It stays readable with `run show`.

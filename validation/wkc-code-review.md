@@ -17,6 +17,10 @@ Keep raw logs and fixtures outside tracked files.
 - Sessions S13 to S16: 2026-10-23
 - Review round 3: 2026-10-23
 - Improvements on the last fixing round: 2026-10-23
+- Dated report: 2026-10-25, unattended calls (#73)
+- Review round 1: 2026-10-25, PR #78
+- Review round 2: 2026-10-25, PR #78
+- Dated report: 2026-10-26, run branch and run config (#78)
 
 ## Preparation
 
@@ -223,6 +227,35 @@ other ticket's status.
 37. **Portable instructions.** Direct. `grep -rnE 'ADR-[0-9]+' skills/wkc-code-review/`, and `grep -n 'SPEC and ADR'
     skills/wkc-code-review/SKILL.md`; `ls docs/dev-agents/adr/`.
     PASS: the first prints nothing, the second prints section 3's reading list, and the repository's ADR files remain.
+
+
+Cases 38 to 42 are from #73. Case 39 runs after `wkc-implement` case 39 updates its PR; cases 40 to 42 use PRs the
+tester stages. An unattended call passes `--run <ref>`.
+
+38. **Unattended templates.** Direct. As `wkc-implement` case 34, for this `SKILL.md`.
+    PASS: `diff` of each pair gives no output, and no extracted block is empty.
+
+39. **Confirming round, clean update.** A fresh round on a PR whose latest verdict is `approve` on an older head and
+    whose head is a clean merge of that head and `main`.
+    PASS: one verdict `approve` with `Reviewed:` equal to the new head; the head is unchanged; no new commit.
+
+40. **Conflict update with a planted defect.** A fresh round on a PR whose latest verdict is `approve` on an older head
+    and whose head is a conflict merge with `main` that the tester resolved by dropping `main`'s test line.
+    PASS: no `approve` verdict for the new head; the verdict names the dropped line as a blocking finding, and a
+    `fixed` round restores it with `./test.sh` passing.
+
+41. **Defect in changed code.** A fresh round on a PR that edits a function holding a defect no criterion names, which
+    the ticket's SPEC excerpt rules out, such as an empty name not greeting `world`.
+    PASS: a `fixed` verdict whose `fixed` line names the defect, one commit fixing it, and no `Discovered:` comment for
+    it on the ticket. The PR body's **What changed** also names the related fix and why it belongs, preserving the
+    remaining body. Check this requirement directly in section 4 as a static subcheck; a full case still needs the
+    fixture's body read back after the round.
+
+42. **Run config limit, `github-variable` store.** `wkc-code-review <ticket> --run <variable name>` with
+    `run_config: github-variable`, on a PR with a planted defect against its criterion, where the variable's config
+    says `max_fix_attempts: 0` and the project config says 3.
+    PASS: one verdict `stopped` naming the defect as a blocking finding; no new commit on the PR; the reply asks
+    nothing. The session's commands show `gh variable get` for that name.
 
 ## Dated report: 2026-10-22
 
@@ -530,3 +563,81 @@ order, which is outside this change.
 
 Still SKIP: cases 7, 12, 14 to 16, 19 to 22, 24, 25, and 27 to 31 at this head; the section 5 line list beyond S20's
 `stopped` verdict; installed harness loading, Codex, and Kiro CLI. One session is left under this change's limit.
+
+## Dated report: 2026-10-25, unattended calls (#73)
+
+Scope: the confirming round after an update from the base, Ticket scope, and unattended calls. Selected: case 38 as a
+direct check; cases 39 to 41 in Claude Code. Codex and Kiro CLI: SKIP. Candidate `7e14bd4`; this `SKILL.md` is the
+same in `b9682ec`. Fixture, install, and session limits are in the
+[wkc-implement report](./wkc-implement.md#dated-report-2026-10-25-unattended-calls-73).
+
+Direct checks: case 38 PASS (both blocks equal the SPEC's). PyYAML: names, model invocation, and the five opening
+fields unchanged; installed copy equal by `diff -r`. `wc -l` is 287, over 250: section 7's templates and the
+update check.
+
+Session S5, the fifth of six: a fresh Claude Code `general-purpose` subagent on Sonnet (`sonnet`, effort `medium`)
+that wrote none of the fixture's code, reading the installed `SKILL.md` by hand. Three calls, each said to come from
+`wkc-yolo`; about 68k to 80k subagent tokens each.
+
+| Case | Result | Evidence |
+|---|---|---|
+| 39, PR #13 | PASS | After `wkc-implement` case 39: `round 2: approve`, `Reviewed: 57fbc33…`, the head; it ran `git merge-tree --write-tree` and matched the tree; head unchanged, no commit. |
+| 40, PR #15 | PASS | Tester's conflict merge `9217dfd…` dropped `main`'s carol test. `round 2: fixed`, `fixed test.sh:3` naming the dropped line; one commit `873728a…` restoring it; `./test.sh` passes; no `approve` for `9217dfd…`. |
+| 41, PR #16 | PASS | `round 1: fixed`; the `fixed greet:6` line names `./greet ""` printing `Hello, !` in the edited `name_of`; one commit `fe2a14a…`; no `Discovered:` comment on #8. |
+
+## Review round 1: 2026-10-25, PR #78
+
+Reviewed `f4f3547688667f8bae39b249862ae4f9ea4ec49d`. Selected: cases 1's metadata and opening-field subchecks,
+38, 39 and 40's merge-classification subchecks, and 41's PR-description subcheck. Direct checks in Codex; GitHub
+evidence from `wilsonkichoi/wkc-yolo-fixture-73`. No new AI sessions; the change has used its six-session limit.
+
+- FAIL at the reviewed head: SPEC Contracts, Ticket scope requires each related fix and why it belongs in
+  **What changed**. [Fixture PR #16](https://github.com/wilsonkichoi/wkc-yolo-fixture-73/pull/16) still says only
+  `name_of falls back to GREET_NAME before world.` Its
+  [fixed verdict](https://github.com/wilsonkichoi/wkc-yolo-fixture-73/pull/16#issuecomment-6404763641) records the
+  additional trimming and empty-name fixes. Section 4 had no instruction to update the body. The earlier case 41
+  PASS covers its original subchecks only, not the added PR-description requirement.
+- PASS after the fix, static subcheck only: section 4 requires the related fix, its scope reason, and preservation
+  of the rest of the PR body. Full case 41 model behavior after this change: SKIP, session limit reached.
+- PASS: PyYAML parses all three changed skills and their Codex settings; names, model invocation, and the five
+  opening fields match. All six unattended template blocks equal the SPEC. Lines: implement 281, review 289,
+  backlog 287. Review's two added lines carry the SPEC's required PR-description update; all stay below 500.
+- PASS: controlled temporary Git fixtures classify an independent-file update as clean (`merge-tree` exits 0,
+  tree equals the merge head), and a same-line conflict as requiring full review (`merge-tree` exits 1).
+  These are mechanical subchecks, not new model runs of cases 39 and 40.
+- Reused: the preceding report's unchanged unattended rules and fixture PR #13's confirming verdict and #15's
+  conflict-fix verdict. Their heads and comments were read independently in this round. Codex and Kiro model
+  coverage stays SKIP. No configured `test_command`; GitHub reports no checks on PR #78.
+
+## Review round 2: 2026-10-25, PR #78
+
+Reviewed `9a4f299445156f71491e71355f3bc36e10fdea7e`. Selected: case 41's PR-description subcheck, and case 39's
+merge-classification subcheck as a direct check. Direct checks in Claude Code; no AI sessions.
+
+- PASS, static subcheck only: section 4 now updates **What changed** after the push and the head check, so a refused
+  push leaves the body untouched. Full case 41 model behavior: SKIP, session limit reached.
+- PASS: all six unattended template blocks equal the SPEC's; `git diff --check` is clean; names and invocation
+  settings unchanged. A controlled Git fixture gave `git merge-tree --write-tree A M` exit 0 with the tree of the
+  merge head, a clean update. Codex and Kiro model coverage stays SKIP.
+
+## Dated report: 2026-10-26, run branch and run config (#78)
+
+Scope: the maintainer's review of PR #78 (ADR-007): `--run <ref>` as the only unattended trigger, the run config read
+through `wkc-tracker run show`, the run branch, and finish through a run branch. Candidate `455f4e8`, exported with
+`git archive` and copied into each session's checkout under `.claude/skills/`; `diff -r` equal to the candidate. Codex
+and Kiro CLI: SKIP, no session in those harnesses.
+
+Fixture: private throwaway `wilsonkichoi/wkc-yolo-fixture-78`, a copy of the #73 fixture's `main`, with run branches
+`run/m1-20261026T1000` and `run/m1-20261026T1100`, run config issues #1 (clean) and #2 (body edited), variable
+`WKC_RUN_M1_20261026T1000` (`max_fix_attempts: 0`), and a logging command store holding `cfg-1793044093`.
+
+Sessions: 5 past the standing limit of 6, approved by the maintainer on 2026-10-26. One at a time, as Claude Code
+`general-purpose` subagents on Sonnet (`sonnet`, effort `medium`), each reading the installed `SKILL.md` by hand, so
+harness loading is untested here. About 62k to 72k subagent tokens per turn.
+
+Direct checks: case 38 PASS, both template pairs equal the SPEC's. `argument-hint` is
+`[PR or ticket id] [--run <ref>]`. `wc -l` is 290.
+
+| Session | Case | Result | Evidence |
+|---|---|---|---|
+| S3 | 42, ticket #8, PR #9 | PASS | `run_config: github-variable`, project config without `max_fix_attempts` (default 3). `wkc-code-review 8 --run WKC_RUN_M1_20261026T1000` posted `round 1: stopped`, `Reviewed: bb6bc1f…`, `Fixing rounds used: 0 of 0`, naming the unmet criterion (`HELLO, ann!`) and the test that asserts it. Head unchanged; no question. |

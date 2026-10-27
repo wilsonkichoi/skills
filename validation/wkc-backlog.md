@@ -237,6 +237,26 @@ call loads a skill; reading its `SKILL.md` as a file does not.
     PASS: no skill-tool call for `wkc-architect` or `wkc-plan`; the return names the SPEC change; the SPEC,
     ROADMAP, and `issues_dir` are unchanged by checksum. New, from #67.
 
+
+Cases 36 to 39 are from #73. An unattended call passes `--run <ref>`. Before #78's review, case 37 ran with the older
+trigger, a call that said it came from `wkc-yolo` and gave a run record's absolute path.
+
+36. **Unattended templates.** Direct. As `wkc-implement` case 34, for this `SKILL.md`.
+    PASS: `diff` of each pair gives no output, and no extracted block is empty. Also check that **Dependencies** lists
+    `wkc-tracker comment`, which writes the decision and parking comments.
+
+37. **A discovered blocker under a run.** Unattended, with a ticket whose comment is `Discovered: <what>. Out of scope
+    because <why>. Blocks this ticket: yes.` and its evidence lines.
+    PASS: one new ticket at `backlog`, its **Notes** carrying the evidence lines; the carrier is blocked by it; the
+    carrier's status and holder are unchanged; the reply asks nothing.
+
+38. **Manual call unchanged.** The same kind of comment on another ticket, called without `--run`.
+    PASS: the reply ends on the approval question; the issue count is unchanged.
+
+39. **`command` store.** Case 37 with `run_config: command <cmd>`, where the fixture command logs each call, and
+    `--run <ref>` naming a config that `<cmd> put` stored.
+    PASS: as case 37, and the command's log shows `get <ref>` during the session.
+
 ## Dated report: 2026-10-21
 
 Scope: new skill, split from `wkc-plan` (ADR-004). Selected: cases 1 to 3 as direct checks; 4, 5, 7, 9, 21, 22, 23, 26,
@@ -437,3 +457,54 @@ sessions expose no per-session cost cap.
 
 Raw transcripts, snapshots, and the clones are outside tracked files in `.local/runs/67-invocation/` of the main
 checkout.
+
+## Dated report: 2026-10-25, unattended calls (#73)
+
+Scope: unattended calls. Selected: case 36 as a direct check; cases 37 and 38 in Claude Code. Codex and Kiro CLI:
+SKIP. Candidate `7e14bd4`; this `SKILL.md` is the same in `b9682ec`. Fixture, install, and session limits are in the
+[wkc-implement report](./wkc-implement.md#dated-report-2026-10-25-unattended-calls-73). Case 35 was not rerun: its
+line is unchanged here and #77 replaces it.
+
+Direct checks: case 36 PASS (both blocks equal the SPEC's). PyYAML: names, model invocation, and the five opening
+fields unchanged; installed copy equal by `diff -r`. `wc -l` is 287, over 250: section 7's templates.
+
+Session S6, the sixth of six: a Claude Code `general-purpose` subagent on Sonnet (`sonnet`, effort `medium`),
+reading the installed `SKILL.md` by hand. It ran the manual calls first, including `wkc-implement` case 42, so no
+unattended call came before them. About 68k to 83k subagent tokens per turn.
+
+| Case | Result | Evidence |
+|---|---|---|
+| 38, ticket #10 | PASS | Plain call on a `Blocks this ticket: no` comment: a full draft, then the numbered approval question; issue count 14 before and after; no `wkc-yolo` comment. The tester answered 3. |
+| 37, ticket #9 | PASS | Unattended call on a `Blocks this ticket: yes` comment: #25 created, `OPEN` with no status label, in `M1: CLI`; `grep -F` finds all four evidence lines in its body; #9 blocked by #25, still `in-progress`, same holder; no question; issue count 14 to 15. |
+
+## Review round 1: 2026-10-25, PR #78
+
+Selected: case 36's exact-template and new dependency subchecks, direct in Codex. PASS: both blocks still equal
+the SPEC; **Dependencies** now names `comment`, the verb section 7 uses for decision and parking records.
+PyYAML metadata and Codex invocation settings pass. The preceding Claude Code evidence for cases 37 and 38 is
+reused because their instructions are unchanged. No new AI sessions; six of six were already used. Codex and Kiro
+model coverage stays SKIP.
+
+## Dated report: 2026-10-26, run branch and run config (#78)
+
+Scope: the maintainer's review of PR #78 (ADR-007): `--run <ref>` as the only unattended trigger, the run config read
+through `wkc-tracker run show`, the run branch, and finish through a run branch. Candidate `455f4e8`, exported with
+`git archive` and copied into each session's checkout under `.claude/skills/`; `diff -r` equal to the candidate. Codex
+and Kiro CLI: SKIP, no session in those harnesses.
+
+Fixture: private throwaway `wilsonkichoi/wkc-yolo-fixture-78`, a copy of the #73 fixture's `main`, with run branches
+`run/m1-20261026T1000` and `run/m1-20261026T1100`, run config issues #1 (clean) and #2 (body edited), variable
+`WKC_RUN_M1_20261026T1000` (`max_fix_attempts: 0`), and a logging command store holding `cfg-1793044093`.
+
+Sessions: 5 past the standing limit of 6, approved by the maintainer on 2026-10-26. One at a time, as Claude Code
+`general-purpose` subagents on Sonnet (`sonnet`, effort `medium`), each reading the installed `SKILL.md` by hand, so
+harness loading is untested here. About 62k to 72k subagent tokens per turn.
+
+Direct checks: case 36 PASS, both template pairs equal the SPEC's; **Dependencies** still lists `wkc-tracker comment`.
+`wc -l` is 288.
+
+| Session | Case | Result | Evidence |
+|---|---|---|---|
+| S4 | 39, ticket #10 | PASS | `run_config: command <runcfg.sh>`. `wkc-backlog the Discovered: comment on #10 --run cfg-1793044093`: the command log shows `get cfg-1793044093` at 19:55:52Z. Created #14 at `backlog` with the evidence lines copied into **Notes**; #10 blocked by #14, still `in-progress` and held by `wilsonkichoi`; nothing moved to `ready`; no question. Issue count 9 to 10. |
+
+Not rerun: cases 37 and 38. Case 39 repeats case 37's change under the new trigger.

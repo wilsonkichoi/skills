@@ -625,6 +625,38 @@ written so the leg can run against one you keep.
 
 ---
 
+**A48 run configs in the `tracker` store, from #78.** Direct, then model. Write two run configs with the
+`run create` commands in `github.md` **Run configs**, then edit the second one's body with `gh issue edit --body-file`.
+
+1. Direct: the GraphQL read in **Run configs** shows the label `wkc-run` on both, `lastEditedAt` null on the first and
+   set on the second.
+2. Model, through a caller's `--run <ref>`: `run show` on the first returns its text, and on the second refuses.
+   Covered by `wkc-implement` cases 43 and 44.
+3. Direct: execute the documented `list` and `next` jq queries on the fixture's fresh issue list. Neither issue
+   appears in tickets, frontier, held, check, inconsistent, or the open map. On a controlled mixed milestone page,
+   `milestone show` counts only tickets. All queries keep `rows` equal to the unfiltered page length, including a
+   page containing only run configs. Model behavior is a separate check.
+
+**A49 run configs in the `github-variable` store, from #78.** Direct, then model. Set a variable with the
+`run create` name rule and the exact command from `SKILL.md`, with its text on standard input.
+
+1. Direct: `gh api repos/<R>/actions/variables/<name>` shows `created_at` equal to `updated_at`. A second
+   `gh variable set` on a throwaway name makes `updated_at` later, and `gh variable delete` removes it.
+2. Model: `run show` through `wkc-code-review` case 42 reads it.
+3. Direct: in a checkout whose `origin` is the fixture and whose `upstream` is another repository, the
+   prescribed `run show` read returns the fixture's text, and its `value` equals the text given to `run create`
+   apart from the final newline, which the store drops. The prescribed `run close` command deletes the fixture's
+   variable. Bare `gh variable get` resolves to `upstream` there, which is why every command names the repository.
+
+**A50 run configs in the `command` store, from #78.** Direct, then model. A fixture command implements `put`, `get`,
+and `close` and logs each call.
+
+1. Direct: `put` prints a reference, `get <ref>` prints the text, and `get` on an unknown reference exits non-zero.
+2. Model: `run show` through `wkc-backlog` case 39 calls `get <ref>`.
+
+`run create` and `run close` by a model, and the Linear and local `tracker` stores, are covered when `wkc-yolo` (#74)
+calls them.
+
 ## B. Local backend
 
 Fresh scratch repo, `$wkc-setup`, answer `local`.
@@ -1502,6 +1534,60 @@ here.
 Versions 0.0.9 to 0.0.41 below were development steps on the `feat/tracker` branch. They shipped
 together as 0.0.8, so an entry's version names a branch state, and its skill ref names the exact
 commit it tested.
+
+### 2026-10-26T14:40:02-07:00 PR #78 round 6, focused direct checks
+
+Reviewed `44fca3d57566ed0d28654ea2c2ab402d06e13893`. Selected A49.3 in Claude Code, GitHub backend, fixture
+`wilsonkichoi/wkc-yolo-fixture-78`, gh 2.102.0. No AI sessions.
+
+- A49.3 FAIL at the reviewed head: in a checkout with `origin` the fixture and `upstream` `wilsonkichoi/skills`,
+  `gh repo view` resolves to `wilsonkichoi/skills`, and the prescribed bare `gh variable get
+  WKC_RUN_M1_20261026T1000` prints `variable WKC_RUN_M1_20261026T1000 was not found`.
+- A49.3 PASS after the fix, from the same checkout: the `gh api` name check exits 1 for the free throwaway name
+  `WKC_RUN_REVIEW73_ROUND6`; `gh variable set --repo` exits 0; the `gh api` read returns `created_at` equal to
+  `updated_at`, both `2026-10-26T21:40:02Z`, and a `value` equal to the four-line text without its final newline;
+  the name check then exits 0, so a second create refuses; `gh variable delete --repo` exits 0 and the read then
+  fails. Only `WKC_RUN_M1_20261026T1000` remains on the fixture, as before. Model `run show` on the new read is SKIP:
+  all 12 authorized AI sessions are used.
+
+### 2026-10-26 PR #78 round 4, focused direct checks
+
+Reviewed `701e48def1b77fa707b29598d32617298f7fb629`. Selected A48.3's query subchecks and A49.1's exact create
+command in Codex, GitHub backend. Fixture: existing `wilsonkichoi/wkc-yolo-fixture-78`; controlled JSON pages for
+labels and milestone counts. No new AI sessions; all 12 authorized sessions for this change are used.
+
+- A49.1 create command FAIL at the reviewed head: `gh` 2.102.0 rejects the prescribed `--body-file -` with
+  `unknown flag: --body-file`, exit 1, before any write. The corrected command reads standard input. PASS after
+  the fix: temporary `WKC_RUN_REVIEW73_ROUND4` created, multiline value read back exactly through JSON,
+  `createdAt == updatedAt`; second set made `updatedAt > createdAt`; delete verified with a fresh variable list.
+  Only the fixture's original `WKC_RUN_M1_20261026T1000` remains. These are direct API checks, not model behavior.
+- A48.3 query subchecks FAIL at the reviewed head: the documented queries on the fixture's fresh 9-row open
+  page returned run configs #1 and #2 in `list backlog` and `next`'s `open` map. A controlled milestone page
+  counted 11 records instead of 9 tickets. PASS after the fix: the extracted jq programs exclude both configs,
+  count 9 tickets, and keep the raw row counts. Controlled pages also exclude run configs carrying `ready` or
+  inconsistent status labels, preserve ordinary tickets, and return no tickets from a 200-config page while
+  retaining `rows: 200`. No fixture issue was changed. Full model A48.3 remains SKIP.
+- PASS: tracker metadata, five opening fields, setup's `run_config: tracker`, and `git diff --check`.
+  `SKILL.md` remains 289 lines. Linear/local store behavior and model `run create`/`run close` remain unrun as
+  recorded below. This report does not certify those checks or full harness compatibility.
+
+### 2026-10-26T13:10:00-07:00 Run config stores, #78, direct checks and caller sessions
+
+Fixture `wilsonkichoi/wkc-yolo-fixture-78`, candidate `455f4e8`. No sessions of their own: model reads ran through
+the callers' sessions S1 to S4, reported in the `wkc-implement`, `wkc-code-review`, and `wkc-backlog` runbooks.
+
+| Case | Result | Evidence |
+|---|---|---|
+| A48.1 | PASS, direct | Issues #1 and #2 created with `--label wkc-run`: GraphQL shows the label on both, `lastEditedAt` null on #1 and `2026-10-26T19:48:12Z` on #2 after `gh issue edit --body-file`. |
+| A48.2 | PASS | `run show 1` read through S1; `run show 2` refused through S2. |
+| A48.3 | SKIP | No session ran `list` or `next` on the fixture. |
+| A49.1 | PASS, direct | `WKC_RUN_M1_20261026T1000`: `created_at` equals `updated_at`. Throwaway `WKC_TMP_EDITCHECK` set twice: `updated_at` 2 s later; deleted, then `gh variable get` reports it not found. |
+| A49.2 | PASS | Read through S3. |
+| A50.1 | PASS, direct | `put` printed `cfg-1793044093`; `get` printed the text; `get nope` exited 1. |
+| A50.2 | PASS | `get cfg-1793044093` logged during S4. |
+
+Linear and local `tracker` stores, and `run create` and `run close` by a model: SKIP, covered when `wkc-yolo` (#74)
+calls them.
 
 ### 2026-10-24T18:15:18-07:00 PR #69 round 1, focused direct checks
 
@@ -3030,7 +3116,7 @@ Deviations from the reusable procedure:
   and `.dev/tasks/`, and ran no `git init`. The later `$tracker create` calls then fired the
   project's `tracker` skill in a directory with no `docs/dev-agents/config.md`. That exposed F25.
 
-#### Findings
+## Findings
 
 **F25. `tracker` does not say what to do when `docs/dev-agents/config.md` is missing. (skill defect.)**
 In the void `~/tmp/tracker-b3` attempt, Codex loaded `tracker-b3/.agents/skills/tracker/SKILL.md`.
