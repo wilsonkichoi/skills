@@ -280,7 +280,8 @@ the run branch and the sha. `done` never by itself means the default branch or p
   intermittent, with a `Discovered:` comment for the flaky check.
 - **Verify.** `wkc-implement verify <id> --run <ref>` runs the ticket's local and granted gates at
   the current run branch head and posts their gate comments. It never changes status, so a `done`
-  ticket gets fresh evidence for the readiness check (wkc-yolo run, step 5).
+  ticket gets fresh evidence for the readiness check (wkc-yolo run, step 5). The local backend
+  records these comments on the run PR, as described below.
 - **Evidence** counts only at the sha its gate comment names. A gate already passed at the current
   head is not run again.
 
@@ -302,7 +303,14 @@ checkouts the way code does.
   merges a finish PR.
 - In a run, post-merge writes are committed on the run branch, never on the default branch, so a
   ticket file reads `done` on the default branch only once the run PR merges. The run never pushes
-  the default branch.
+  the default branch. Final readiness evidence is the exception below.
+- For readiness, finish the ticket-file writes first, run `push_check`, push, and open or reuse
+  the run PR as a draft before checking its head. `verify` gate comments and subsequent cleanup
+  comments go on that PR, not in local ticket files. Each names the local ticket path and uses the
+  existing gate or cleanup template. Read each comment back before counting it as recorded.
+  Evidence lookup and resume read those PR comments as well as the earlier local ticket comments.
+  Recording readiness evidence must not create a commit. Any later ticket-file or code commit
+  invalidates readiness and requires checks at the new head; the exact-sha rule is unchanged.
 
 Before branching, `wkc-implement` checks `git status` for uncommitted changes to `prd_file`,
 `spec_file`, `roadmap_file`, ADRs, and `issues_dir`. If it finds any, it stops and asks for them to
@@ -750,7 +758,9 @@ that scope; a milestone run also takes each new wave as it appears.
 5. **Readiness, cleanup, and the run PR:** when anything merged into the run branch, merge the
    remote default branch into it when `git merge-tree --write-tree` shows no conflict, run
    `push_check`, and push; with a conflict, leave the run branch as it is and name the conflict.
-   Finish once more every ticket still `waiting`. Then check readiness at the run branch head:
+   Finish once more every ticket still `waiting`. On the local backend, complete the writes and
+   prepare the draft run PR as Lifecycle, Local backend specifies. Then check readiness at the run
+   branch head:
    `test_command`, `wkc-implement verify <id> --run <ref>` for every required ticket, and every
    pre-production exit-check item a command or check can decide. The required tickets are every
    ticket in scope, the recorded ids or the milestone's tickets, with the prerequisites and repair
@@ -763,9 +773,9 @@ that scope; a milestone run also takes each new wave as it appears.
    remains failed. After any merge, readiness starts again at the new head. The run is
    **ready** only when every required ticket is `done` and every one of those checks passed at the
    current head; a passing `test_command` alone never makes it ready. Then clean up every granted
-   environment. Then open one PR from the run branch into the default branch, ready for review when
-   the run is ready and a draft otherwise, and stop. Never merge it. Its body is the release
-   candidate package:
+   environment. Then open or update the one PR from the run branch into the default branch, ready
+   for review when the run is ready and a draft otherwise, and stop. Never merge it. Its body is
+   the release candidate package:
    - the state, `ready: verified at <sha>` or `draft: not ready`, and the run config's reference;
    - each required ticket with its status, PR, latest verdict, `Verified at` sha, and gates passed,
      failed, or not run, and what is left and who must act;
@@ -853,7 +863,8 @@ before any stop it controls; cleanup is the one action allowed past the time lim
 cleans up first (step 2). After a stop the run does not control, a quota, rate-limit, or
 authentication error or a crash, nothing runs: the session report names each environment that may
 still be up, with its cleanup command, and the environment's own expiry is the backstop. Each
-cleanup posts, on the ticket whose gate last deployed that environment:
+cleanup posts, on the ticket whose gate last deployed that environment, or on the run PR under
+the local readiness exception (Lifecycle, Local backend):
 
 ```
 wkc-yolo cleanup: <environment>
@@ -1119,6 +1130,8 @@ the previous tag. Each port also updates the README roster, the repository map u
   `wkc-tracker next` may still list its dependents.
 - A later merge can break a `done` ticket. Readiness catches it, and the fix is a repair ticket,
   because no verb reopens a terminal ticket.
+- Local readiness evidence lives in run PR comments so recording it cannot change the checked
+  head. Readers must consult the PR as well as local ticket files for that evidence.
 - Readiness reruns every required gate once at the final head, on top of each ticket's own finish.
   Rerunning only the gates a change touched needs a judgment no record can check.
 - A milestone run is ready only when its whole scope is `done`; a budget smaller than the scope, a
@@ -1164,8 +1177,11 @@ None.
   default branch under a run, "A run PR closed without merging leaves its tickets `in-review`", and
   "holds limits only". Readiness repairs join the run under `New prerequisites: run` and the
   admission budget without adding blockers to completed tickets. New release tickets follow the
-  manual implementation lifecycle before `finish`. Follows the PRD revision of the same day.
-  Review M4 (#74).
+  manual implementation lifecycle before `finish`. The maintainer approved a local-backend
+  exception during PR #79 review: finish ticket-file writes and prepare a draft run PR before
+  readiness, then record verification and cleanup evidence in PR comments without changing the
+  checked head. Resume and evidence lookup read both locations. Follows the PRD revision of the
+  same day. Review M4 (#74).
 
 - 2026-10-26: Run branch and run config (maintainer review of PR #78; ADR-007). A run merges only
   into its own run branch and ends with one run PR that a person merges; release and deploy steps

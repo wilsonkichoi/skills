@@ -80,6 +80,12 @@ Option 3 (maintainer, 2026-10-26).
   it names. Otherwise the PR is a draft that names what is unfinished and who must act.
   `wkc-implement verify <id> --run <ref>` reruns a ticket's gates at the head without a status
   change, so a `done` ticket gets fresh evidence.
+- **Local readiness evidence.** Local tracker users keep ticket state in committed files. Before
+  readiness, finish those writes, push under `push_check`, and open or reuse a draft run PR.
+  Verification and subsequent cleanup evidence go in comments on that PR, with the local ticket
+  path, rather than in the ticket files. Readers check both locations. This exception keeps the
+  checked head unchanged when evidence is recorded; every later commit still invalidates it.
+  The maintainer approved it during PR #79 review on 2026-10-26.
 - **Failures.** An environment failure is retried within the grant, then recorded `not run`, and
   the ticket waits. A product failure is rerun once at the same sha: reproduced, it gets a follow-up
   PR from and into the run branch, reviewed and merged like any ticket PR, and the ticket is
@@ -108,6 +114,8 @@ Option 3 (maintainer, 2026-10-26).
   the run PR.
 - A later merge can break a `done` ticket. Readiness catches it, and the fix is a repair ticket,
   because no verb reopens a terminal ticket.
+- Local ticket files alone do not carry final readiness evidence. The run PR carries it so that
+  recording a pass does not create another commit and invalidate that pass.
 - A milestone run is ready only when its whole scope is done. A ticket budget smaller than the
   scope, a parked ticket, or a refused split leaves a draft; kickoff warns about the budget.
 - Delegated planning narrows: `wkc-backlog` under a run may still split tickets, but not move a
