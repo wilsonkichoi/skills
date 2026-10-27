@@ -82,9 +82,11 @@ Option 3 (maintainer, 2026-10-26).
   change, so a `done` ticket gets fresh evidence.
 - **Local readiness evidence.** Local tracker users keep ticket state in committed files. Before
   readiness, finish those writes, push under `push_check`, and open or reuse a draft run PR.
-  Verification and subsequent cleanup evidence go in comments on that PR, with the local ticket
-  path, rather than in the ticket files. Readers check both locations. This exception keeps the
-  checked head unchanged when evidence is recorded; every later commit still invalidates it.
+  Verification evidence, an intermittent check's `Discovered:` item included, and subsequent
+  cleanup evidence go in comments on that PR, with the local ticket path, rather than in the ticket
+  files. That item's ticket is filed after the run PR, because a new ticket file is a commit.
+  Readers check both locations. This exception keeps the checked head unchanged when evidence is
+  recorded; every later commit still invalidates it.
   The maintainer approved it during PR #79 review on 2026-10-26.
 - **Failures.** An environment failure is retried within the grant, then recorded `not run`, and
   the ticket waits. A product failure is rerun once at the same sha: reproduced, it gets a follow-up

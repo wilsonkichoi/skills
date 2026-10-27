@@ -305,9 +305,11 @@ checkouts the way code does.
   ticket file reads `done` on the default branch only once the run PR merges. The run never pushes
   the default branch. Final readiness evidence is the exception below.
 - For readiness, finish the ticket-file writes first, run `push_check`, push, and open or reuse
-  the run PR as a draft before checking its head. `verify` gate comments and subsequent cleanup
-  comments go on that PR, not in local ticket files. Each names the local ticket path and uses the
-  existing gate or cleanup template. Read each comment back before counting it as recorded.
+  the run PR as a draft before checking its head. `verify` gate comments, the `Discovered:`
+  comment for an intermittent check, and subsequent cleanup comments go on that PR, not in local
+  ticket files. Each names the local ticket path and uses the existing gate, Discovered, or cleanup
+  template. Read each comment back before counting it as recorded. A new ticket file is a commit,
+  so `wkc-yolo` hands such a `Discovered:` item to `wkc-backlog` only after the run PR (step 6).
   Evidence lookup and resume read those PR comments as well as the earlier local ticket comments.
   Recording readiness evidence must not create a commit. Any later ticket-file or code commit
   invalidates readiness and requires checks at the new head; the exact-sha rule is unchanged.
@@ -796,13 +798,14 @@ that scope; a milestone run also takes each new wave as it appears.
    Offer `wkc-retro` on the run.
 6. **After the run PR:** once it is merged or closed without merging, the person starts `wkc-yolo`
    on the run again. It posts one outcome comment on each ticket of the run and lists the work
-   left. A new release ticket follows the manual lifecycle: move it to `ready` when groomed,
-   implement it with `wkc-implement <id>`, review and merge its PR, then run
-   `wkc-implement finish <id>`. An existing ticket with a merged handoff PR and production gates
-   left uses manual `finish` after the run PR merges. It retires the run config with
-   `wkc-tracker run close <ref>`, reports, and offers `wkc-retro`. It asks nothing about production:
-   that is separately authorized work after the merge. A closed, unmerged run authorizes none of
-   those production steps.
+   left. On the local backend, it first hands `wkc-backlog` each `Discovered:` item that readiness
+   recorded on the run PR (Lifecycle, Local backend). A new release ticket follows the manual
+   lifecycle: move it to `ready` when groomed, implement it with `wkc-implement <id>`, review and
+   merge its PR, then run `wkc-implement finish <id>`. An existing ticket with a merged handoff PR
+   and production gates left uses manual `finish` after the run PR merges. It retires the run
+   config with `wkc-tracker run close <ref>`, reports, and offers `wkc-retro`. It asks nothing
+   about production: that is separately authorized work after the merge. A closed, unmerged run
+   authorizes none of those production steps.
 
    ```
    Run outcome (wkc-yolo): merged | closed without merging
@@ -1179,9 +1182,10 @@ None.
   admission budget without adding blockers to completed tickets. New release tickets follow the
   manual implementation lifecycle before `finish`. The maintainer approved a local-backend
   exception during PR #79 review: finish ticket-file writes and prepare a draft run PR before
-  readiness, then record verification and cleanup evidence in PR comments without changing the
-  checked head. Resume and evidence lookup read both locations. Follows the PRD revision of the
-  same day. Review M4 (#74).
+  readiness, then record verification evidence, an intermittent check's `Discovered:` item
+  included, and cleanup evidence in PR comments without changing the checked head; that item's
+  ticket is filed after the run PR. Resume and evidence lookup read both locations. Follows the
+  PRD revision of the same day. Review M4 (#74).
 
 - 2026-10-26: Run branch and run config (maintainer review of PR #78; ADR-007). A run merges only
   into its own run branch and ends with one run PR that a person merges; release and deploy steps
