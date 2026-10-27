@@ -51,8 +51,10 @@ Decided by the maintainer on 2026-10-20:
    person merges.
 2. **One milestone runs unattended.** `wkc-yolo` takes a milestone of a real project from the tracker
    frontier to its exit check. It uses only `wkc-` skills. It merges reviewed tickets into its own
-   run branch, and a person reviews the whole run, its decisions and document changes included, and
-   merges it into the default branch (decided 2026-10-24, revised 2026-10-26).
+   run branch, completes each ticket there by the ticket's own definition of done, and verifies the
+   combined run branch before handing it over. A person reviews the whole run, its decisions,
+   document changes, and test evidence included, and merges it into the default branch (decided
+   2026-10-24, revised 2026-10-26).
 3. **Validation stays proportionate.** Each port has a runbook with simple checks that decide PASS
    or FAIL. A simple check that the skill works is enough. Do not build broad test matrices that
    try to cover everything and burn tokens.
@@ -66,9 +68,12 @@ Ranked. Ranking is importance, not delivery order; the ROADMAP sets the order.
    off for review with the tracker updated. `wkc-code-review` judges that pull request against its
    ticket in a fresh context, fixes the blocking findings it raised, and applies worthwhile in-scope
    improvements, with each change reviewed again by a fresh context. After the merge, `wkc-implement
-   finish <id>` runs the ticket's post-merge steps and moves it to `done`. Each ticket carries its
-   own definition of done, because done differs by ticket: review and tests only, plus integration
-   tests, or plus release, deployment, and testing the release (decided 2026-10-20).
+   finish <id>` runs the ticket's post-merge steps and moves it to `done`; in a run, that merge is
+   into the run branch and the steps run there. Each ticket carries its own definition of done,
+   because done differs by ticket: review and tests only, plus integration tests, plus a deployment
+   to a non-production environment, or plus release, deployment, and testing the release (decided
+   2026-10-20, revised 2026-10-26). `done` means the ticket's definition of done was met where the
+   ticket merged. It never by itself means the work is on the default branch or in production.
 2. **Plans follow changes between planning runs.** `wkc-backlog` turns a ROADMAP milestone into
    tickets, and also takes a single request or a piece of discovered work: it judges whether it
    touches tickets, the ROADMAP, the SPEC, or the PRD, sends ROADMAP changes to `wkc-plan` and
@@ -77,18 +82,32 @@ Ranked. Ranking is importance, not delivery order; the ROADMAP sets the order.
    `wkc-plan` absorbing `wkc-backlog`, [ADR-004](./adr/ADR-004-backlog-separate-from-plan.md)).
 3. **A ticket, a wave, or a milestone runs without a person at each step.** `wkc-yolo` asks
    everything in one round before the run: scope, readiness and the blind spots it finds in the
-   work, security posture, and the permissions it needs, including whether it holds delegated
-   planning authority. Then it asks nothing until a person merges its run (decided 2026-10-20,
-   revised 2026-10-26). During the run it works as an engineering team with a technical lead. Within the
+   work, security posture, and the permissions it needs: whether it holds delegated planning
+   authority, and each non-production environment and operation its tickets need, with commands,
+   limits, cleanup, and expiry, which the person grants or refuses. Then it asks nothing more
+   (decided 2026-10-20, revised 2026-10-26). During the run it works as an engineering team with a technical lead. Within the
    PRD's product intent it makes implementation and architecture decisions. With delegated
    authority it also changes the SPEC and its technical requirements, ADRs, the ROADMAP, future
    milestones, tickets, and dependencies when engineering evidence justifies it, with no person
    approving each change (decided 2026-10-24). It records every decision and its reason, and stops
    at the exit check or a limit ([PR #30](https://github.com/wilsonkichoi/skills/pull/30)). It works
    on its own run branch and merges each reviewed ticket there; it never merges into the default
-   branch. At the end it opens one pull request from the run branch, and a person reviews it and
-   makes the final call to merge. After that merge it asks one closing round, which release or
-   deploy steps may run, and then finishes the tickets (decided 2026-10-26). Product intent,
+   branch. Each ticket reaches `done` in the run once its own definition of done is met on the run
+   branch or in a granted non-production environment. At kickoff the run names each ticket whose
+   definition of done needs production and proposes moving that work to a separate release ticket;
+   only the person's approval moves it, and a ticket that still needs production stays open. It
+   also names each criterion that needs a person's confirmation. Only the person's approval moves an
+   acceptance or release approval to the run pull request's review checklist; a required
+   verification stays on its ticket and is never marked passed without evidence. The run then
+   verifies the combined run branch against the milestone's pre-production criteria, with evidence
+   tied to the commit it tested, and opens one pull request from the run branch. It marks that pull
+   request ready, as a verified release candidate, only when every ticket the run must complete is
+   `done` and every required check passed at the current head; otherwise the pull request is a
+   draft that names what is unfinished. A person reviews it and makes the final call to merge.
+   Release, production deployment, and anything else that affects production happen only after that
+   merge, as separate work a person authorizes. A run pull request closed without merging leaves
+   completed tickets `done`, and the run's records show the work never reached the default branch
+   or production (decided 2026-10-26). Product intent,
    security protections, authorization limits, and operational safeguards are outside its
    authority: a person sets them and reviews the outcome.
 4. **What a project learns becomes rules.** An optional `wkc-retro` reviews a finished ticket,
@@ -105,11 +124,13 @@ Ranked. Ranking is importance, not delivery order; the ROADMAP sets the order.
   later (decided 2026-10-20).
 - No per-harness copies or consumer build step.
 - No skill merges, releases, or deploys on its own authority. `wkc-yolo` merges only into its own
-  run branch, never into the default branch. A post-merge step that publishes or deploys runs only
-  when a person authorized it, in a run after the person merged the run (decided 2026-10-26).
+  run branch, never into the default branch. A run acts on a non-production environment only within
+  what the person granted at kickoff, and never on production. A step that affects production runs
+  only after the change reached the default branch and a person authorized it (decided 2026-10-26).
 - No run edits the PRD, closes a milestone, weakens a security protection, authorization limit, or
   operational safeguard, or weakens an acceptance criterion to make failing work pass (decided
-  2026-10-24). That holds on the run branch too.
+  2026-10-24). No run moves a requirement out of a ticket's definition of done without the
+  person's approval (decided 2026-10-26). That holds on the run branch too.
 - No `wkc-fix`, `wkc-qa`, `wkc-verify`, `wkc-git-fu`, or `wkc-create-ticket` skill.
   `wkc-backlog` handles changes between planning runs, and `wkc-code-review` fixes its own findings.
   PR #30 folded verify, git-fu, and create-ticket into the planned skills and left fix and QA off
@@ -143,8 +164,9 @@ Ranked. Ranking is importance, not delivery order; the ROADMAP sets the order.
   skills runs it first, in every mode, and a failed scan blocks the push. An unattended run does not
   start without a working scan. Host push protection and branch protection are separate layers. A
   project without a scan keeps working manually, with a warning. A run's config holds its limits
-  only, never credentials or security posture, and each project chooses where it is stored
-  (decided 2026-10-26).
+  and the non-production grants the person made at kickoff, never credentials or security posture,
+  and each project chooses where it is stored. A stored grant authorizes nothing the person did not
+  grant (decided 2026-10-26).
 - **Delivery:** one port per pull request, validated before the next starts. One patch version per
   pull request ([AGENTS.md Versioning](../../AGENTS.md#versioning)).
 - **Cost:** development cost carries little weight. The maintainer's usage limits do.
@@ -199,6 +221,21 @@ layers are answered by SPEC Delegated run authority and
 [ADR-006](./adr/ADR-006-delegated-run-authority.md).
 
 ## Changes
+
+- 2026-10-26: A run completes each ticket by its own definition of done on the run branch or in a
+  non-production environment granted at kickoff, verifies the combined run branch with evidence tied
+  to the tested commit, and marks its pull request ready only when every ticket it must complete is
+  `done` and every required check passed at the head, otherwise a draft; kickoff proposes moving
+  production work out of tickets that need it, and moving an acceptance or release approval to the
+  run pull request's review checklist, and only the person's approval moves either; a required
+  verification is never marked passed without evidence; production-affecting work follows a
+  person's merge as separate authorized work; a run pull request closed without merging leaves
+  completed tickets `done` with records showing the work is not on the default branch (maintainer,
+  review of proposed ADR-008). Replaced "After that merge it asks one closing round, which release
+  or deploy steps may run, and then finishes the tickets", "asks nothing until a person merges its
+  run", "in a run after the person merged the run", and "holds its limits only". Review: SPEC
+  Ticket, Lifecycle, Unattended calls, Delegated run authority, wkc-yolo run, Failure handling,
+  Security, Requirements; ROADMAP M4; ADR-001, ADR-006, ADR-007; #74.
 
 - 2026-10-26: A run merges only into its own run branch, and a person reviews and merges the run
   into the default branch; release and deploy steps are approved in a closing round after that

@@ -2,6 +2,8 @@
 
 Date: 2026-10-24. Status: accepted. Amended by [ADR-007](./ADR-007-run-branch-and-run-config.md):
 a run merges only into its own run branch, `merge_gate` is gone, and the run record became the run config.
+Amended by [ADR-008](./ADR-008-run-completes-its-tickets.md): moving a requirement out of a
+ticket's definition of done, and a run's non-production grants, are never delegated.
 
 ## Context
 
