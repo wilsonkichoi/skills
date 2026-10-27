@@ -5,6 +5,8 @@ closing round, finish after the run PR merges, and a same-run blocker met on mer
 replaced. Amends [ADR-001](./ADR-001-ticket-lifecycle.md) and
 [ADR-006](./ADR-006-delegated-run-authority.md).
 
+Proposed amendment: [ADR-009](./ADR-009-run-budgets-continuations-and-model-routing.md) (additional-ticket allowance and review continuations).
+
 ## Context
 
 ADR-007 kept every ticket of a run `in-review` until a person merged the run PR. Only then did a
@@ -97,8 +99,9 @@ Option 3 (maintainer, 2026-10-26).
   left, the repair joins the run without a blocker edge to the completed ticket. Otherwise it
   stays at `backlog` and the run PR stays a draft.
 - **Cleanup.** Each grant names its cleanup. The run cleans up after readiness and before any stop
-  it controls, also past its time limit. After a stop it does not control, the report names what
-  may still be up, and a resumed run cleans up first.
+  it controls. ADR-009 removes the elapsed-time run limit; the original cleanup command remains
+  authorized after grant expiry for an already deployed environment. After an uncontrolled stop,
+  the report names what may still be up, and a resumed run cleans up first.
 - **Outcome.** After the run PR merges or closes, `wkc-yolo` on the run posts a
   `Run outcome (wkc-yolo):` comment on each ticket and closes the config. A closed run PR undoes no
   `done`; the person reopens it, supersedes the run with a new run based on its branch, or abandons
@@ -118,8 +121,9 @@ Option 3 (maintainer, 2026-10-26).
   because no verb reopens a terminal ticket.
 - Local ticket files alone do not carry final readiness evidence. The run PR carries it so that
   recording a pass does not create another commit and invalidate that pass.
-- A milestone run is ready only when its whole scope is done. A ticket budget smaller than the
-  scope, a parked ticket, or a refused split leaves a draft; kickoff warns about the budget.
+- A milestone run is ready only when its whole required scope is done. Under ADR-009 the initial
+  scope spends no additional allowance. Unadmitted required work, a parked ticket, or a refused
+  requirement move leaves a draft.
 - Delegated planning narrows: `wkc-backlog` under a run may still split tickets, but not move a
   requirement out of a ticket's definition of done unless the config names that ticket.
 - Projects whose run config lives in a store that cannot detect edits run without shared

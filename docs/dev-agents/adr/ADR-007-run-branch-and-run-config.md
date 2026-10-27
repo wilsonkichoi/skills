@@ -6,6 +6,8 @@ Date: 2026-10-26. Status: accepted. Amends [ADR-006](./ADR-006-delegated-run-aut
 person's merge, the closing round is gone, and a same-run blocker needs its finish to find no failed
 gate. The run branch, the run config, its stores, `--run`, and the person's merge stay.
 
+Proposed amendment: [ADR-009](./ADR-009-run-budgets-continuations-and-model-routing.md) (immutable phases and same-PR continuations).
+
 ## Context
 
 The maintainer's review of PR #78 (2026-10-26) found three gaps in the approved `wkc-yolo` design.

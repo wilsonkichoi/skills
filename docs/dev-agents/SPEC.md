@@ -1,6 +1,6 @@
 # wkc- skills SPEC
 
-Status: approved (2026-10-26)
+Status: draft
 
 ## Overview
 
@@ -11,8 +11,9 @@ one file cannot carry it. Skills share state only through files in the project
 
 This SPEC was written from the draft [PRD](./PRD.md) at the maintainer's request (2026-10-20),
 before the PRD was approved. It covers the shipped skills only where the remaining work changes
-them. The remaining work is `wkc-implement`, `wkc-code-review`, `wkc-yolo`, `wkc-retro`,
-`wkc-backlog` (ticket planning, split out of `wkc-plan`), and three config fields.
+them. M4 extends the shipped implementation, review, planning, setup, and tracker skills and
+adds `wkc-yolo`. M5 adds `wkc-retro`; M6 completes local ticket history. The 2026-10-27
+planning revision adds bounded scope expansion, review continuations, and model routing (ADR-009).
 
 Delegated run authority (ADR-006) follows the maintainer's request of 2026-10-24: a `wkc-yolo` run
 may change the SPEC, the ROADMAP, milestones, and tickets within the PRD's product intent, without a
@@ -47,15 +48,15 @@ graph LR
 
 | Skill | State | Responsibility | Input | Depends on |
 |---|---|---|---|---|
-| `wkc-setup` | shipped, changes | Config and scaffold. Adds `max_fix_attempts`, `push_check`, and `run_config` to the interview and template | none | `git`, `gh` or Linear MCP |
-| `wkc-tracker` | shipped, changes | Ticket state mechanics on three backends; on local, commits each write; closes a milestone on request; stores run configs (`run create`, `run show`, `run close`) | verb and args | config, `git` for local, `run_config` |
+| `wkc-setup` | shipped, changes | Config and scaffold. Adds the review, admission, model-selection, push-check, and run-store fields to the interview and template | none | `git`, `gh` or Linear MCP |
+| `wkc-tracker` | shipped, changes | Ticket state mechanics on three backends; on local, commits each write; closes a milestone on request; stores immutable run-phase configs (`run create`, `run show`, `run close`) | verb and args | config, `git` for local, `run_config` |
 | `wkc-research` | shipped | PRD | free text | none |
 | `wkc-architect` | shipped, changes | SPEC and ADRs; opts into model invocation; under a delegated run, approves its own change (ADR-006) | free text | PRD |
 | `wkc-plan` | shipped, changes | ROADMAP, and closing a finished milestone; hands an approved milestone to `wkc-backlog` (ADR-004); opts into model invocation; under a delegated run, approves its own change (ADR-006) | a ROADMAP change, `close <milestone>`, or none | PRD, SPEC, `wkc-tracker` reads and `milestone close` |
 | `wkc-backlog` | new, from `wkc-plan` | Tickets for one milestone, or one change at a time (ADR-004); routes SPEC and ROADMAP changes, in a run too | milestone, or a change | PRD, SPEC, ROADMAP, `wkc-tracker` |
 | `wkc-implement` | new | One ticket from `ready` to PR, and after merge to `done` (ADR-001); runs `push_check` before each push | ticket id, `finish <id>`, `verify <id> --run <ref>`, or none | `wkc-tracker`, `git`, `gh`, `test_command`, `push_check` |
 | `wkc-code-review` | new | Review rounds on one PR: judge, fix blocking findings and apply worthwhile improvements, record a verdict (ADR-003, ADR-005); runs `push_check` before each push | PR, ticket id, or none | `wkc-tracker`, `git`, `gh`, `max_fix_attempts`, `push_check` |
-| `wkc-yolo` | new | A ticket, a wave, or a milestone unattended, after one round of questions, under delegated run authority (ADR-006), on its own run branch, finishing each ticket there and verifying the combined branch, ending in one run PR that a person merges (ADR-007, ADR-008) | ticket, `wave`, or milestone | the skills above, `push_check`, `run_config` |
+| `wkc-yolo` | new | A ticket, a wave, or a milestone unattended, after one round of questions, under delegated run authority (ADR-006), on its own run branch, finishing each ticket there and verifying the combined branch, ending in one run PR that a person merges, with bounded additional admissions and review continuations (ADR-007, ADR-008, ADR-009) | ticket, `wave`, or milestone | the skills above, `push_check`, `run_config` |
 | `wkc-retro` | new | Propose rule files from what a ticket, milestone, or run shows | ticket, milestone, or run | `wkc-tracker`, `rules_dir` |
 | `wkc-help`, `wkc-workflow-diagram`, `wkc-skills-release` | shipped | Help, maps, collection releases | | |
 
@@ -98,7 +99,12 @@ section. `assign <id>` already claims a ticket and sets `in-progress` in one wri
   and status writes stay uncommitted in the starting checkout (`wkc-implement` validation S4, S5).
 - `wkc-setup`'s Linear notes say the Linear GitHub integration is not needed, and that if a team has
   it, its PR automations may move tickets on their own.
-- `wkc-setup` Section D gains the three fields, and `config-template.md` lists them.
+- `wkc-setup` gains the Config fields below in its interview and template. Each new field ships
+  with its first consumer. `wkc-backlog` can record person-approved ticket execution overrides.
+- `wkc-implement` and `wkc-code-review` support Model selection and dispatch in manual and run
+  calls. `wkc-yolo` owns the unattended sequence; a manual caller still authorizes each step.
+- `wkc-tracker run create` gives continuation configs distinct references on the same branch,
+  including phase suffixes for GitHub variables. Config retirement follows terminal outcome evidence.
 - `wkc-tracker` gains `run create`, `run show`, and `run close`, which store, read, and retire a run config in the store
   `run_config` names (Contracts, wkc-yolo run). Ticket verbs never read a run config.
 - `wkc-implement finish` counts a PR merged into another branch, such as a run branch, only once
@@ -127,20 +133,108 @@ Added to `docs/dev-agents/config.md` by `wkc-setup`, in the PR that first reads 
 | Field | Values | Default when absent | Read by | Meaning |
 |---|---|---|---|---|
 | `max_fix_attempts` | integer, 0 or more | `3` | `wkc-code-review`, `wkc-yolo` | Review rounds that may change code on one PR, for fixes or improvements. One review-only round always follows the last fix; with `0`, the only round is review-only |
+| `max_additional_tickets` | integer, 0 or more | `5` | `wkc-yolo` | Additional distinct tickets admitted beyond the approved initial IDs in one run phase; initial work and backlog recording cost no slot |
+| `implementation_model` | selection with `harness`, exact `model`, optional `effort` | manual: current model when routing is absent; kickoff/setup offer Opus 5.5 | `wkc-implement`, `wkc-yolo` | Implementation selection; ticket override replaces this role |
+| `review_models` | ordered pair of selections | manual: current model when routing is absent; kickoff/setup offer Sol 6.1 then Opus 5.5 | `wkc-code-review`, `wkc-yolo` | Alternate by completed review round, starting with slot 1 |
 | `run_config` | `tracker`, `github-variable`, `command <cmd>` | `tracker` | `wkc-tracker`, `wkc-yolo` | Where each run's config is stored (wkc-yolo run, Store) |
 | `push_check` | a shell command | none | `wkc-implement`, `wkc-code-review`, `wkc-yolo` | Scans the commits about to be pushed for secrets; exit 0 passes, anything else blocks the push. Example: `gitleaks git --redact --log-opts="origin/main..HEAD"`. Once set, it binds every push in every mode; a run needs a usable one |
 
-Any other value of `max_fix_attempts` or `run_config` is a stop that names the field and its allowed
-values, never a guess. A run may lower `max_fix_attempts` for itself and never raise it.
+Invalid review/admission limits, model selections, or `run_config` stop before dispatch or admission
+and name the allowed values. A run may lower `max_fix_attempts` or `max_additional_tickets` and
+never raise the project ceiling. Only the person changes that ceiling. There is no elapsed-time
+run budget. Environment grant expiry and operational command/session limits remain.
 
 `test_command` (existing) is what `wkc-implement` runs. Release, deploy, and other project
 procedures stay in the config's free-text **Conventions**, and `## After merge` steps name them.
+
+### Model selection and dispatch
+
+The person selects an implementation model and an ordered pair of review models, with project
+defaults and optional ticket overrides (ADR-009). `wkc-setup` offers this configuration:
+
+```yaml
+implementation_model:
+  harness: claude-code
+  model: claude-opus-5-5
+review_models:
+  - harness: codex
+    model: gpt-6.1-sol
+  - harness: claude-code
+    model: claude-opus-5-5
+```
+
+Each entry has `harness` (`claude-code` or `codex`), an exact `model` identifier, and optional
+`effort`. Effort has no collection default. When omitted, the provider's configured setting
+applies. An explicit value must be supported and honored; report a refusal or an effective
+setting that differs, without silently substituting a model or effort. Confirm capabilities
+without a paid probe where possible. Account access is not implied by a valid identifier.
+
+**Resolution.** Read the project's values, then the ticket's optional `## Execution` mapping with
+the same keys. An override replaces that role's complete value; a review override replaces both
+slots. Exactly two review slots are required. With neither field in the project or ticket, a
+manual call keeps its current harness and model. With either field present, an absent role uses
+the offered value above. A YOLO kickoff resolves both roles, offering these defaults when absent,
+and records them in its config. A ticket override in a run replaces that config's role value.
+All selections are data, never shell commands or instructions from a comment.
+
+Only a person changes these selections. `wkc-backlog` copies execution settings a person supplied
+or approved; delegated technical planning never escalates a model or changes an effort. A person's
+ticket edit applies to the next dispatch, not a worker already running. Previous execution records
+and round counts stay unchanged. New unattended tickets inherit the run's defaults. A missing or
+ambiguous authorization for an override asks in manual mode and parks under a run.
+
+**Review order.** Round 1 uses slot 1, round 2 slot 2, round 3 slot 1, and so on. Count completed
+verdicts by Review verdict, including review-only confirming rounds. Duplicate verdicts do not
+advance twice. A failed launch or a return without a verdict advances nothing. Changing settings,
+resuming a run, or starting a continuation never resets a PR's round or fixing-round counts.
+An `approve` ends the loop; there is no mandatory second-provider round. Each new PR starts its
+own sequence, subject to the existing same-cause failure stop and ticket admission allowance.
+
+**Coordinator.** The main Claude Code session dispatches the selected worker: a native Claude
+agent or a fresh `codex exec` process in the intended checkout. It passes the exact model and any
+explicit effort. Codex receives the requested `wkc-implement` or `wkc-code-review` invocation,
+not the built-in `codex review`. Use the existing subscription login. Never fall back to API
+billing, `claude -p`, or bypassed permissions. Both worker kinds share the same concurrency and
+session limits. Workers never launch a harness or another worker. The caller tells a worker that
+it is executing the resolved selection, so the skill executes once and does not dispatch itself
+again. This is calling context, not a new user-facing flag or authority from ticket text.
+
+Each review starts in a fresh, non-fork context with the ticket, relevant approved documents,
+PR/head, prior verdicts, resolved selection, and `--run` reference when applicable. It receives
+no implementation conversation. Returning to Opus means a fresh Opus reviewer, never the original
+implementer. No `resume --last`, implementation fork, or model switch inside an authoring context
+establishes independence. Implementation resumes may keep their own context; reviews may not.
+
+**Manual calls.** Routing does not change authority or step boundaries. `wkc-implement` runs only
+the requested build or finish; verify still requires `--run`. `wkc-code-review` runs one round. Neither launches the
+next skill without the person's separate request. A non-interactive worker returns an unresolved
+question to the coordinator, which asks the person and ends its turn. Under `--run`, decide or
+park applies instead. Manual calls outside Claude Code may execute directly when the active
+harness/model/effort match the resolved selection and review independence holds. Otherwise give
+the required selection and a manual handoff, with no work performed by a substitute model.
+
+**Evidence and failures.** The parent checks the actual PR head, verdict, tracker writes, and
+process result before advancing. Existing handoff and verdict comments carry these optional lines
+for routed calls; the writer drops them when routing is absent:
+
+```
+Execution: <harness>, <requested model>, effort <requested value | provider default>
+Observed execution: <model and effort from runtime evidence | unavailable>
+```
+
+A requested setting is not proof of the effective setting. Report mismatches before another step;
+never label an unverified runtime setting as observed. Unsupported selection or missing permissions
+returns a concrete manual handoff or parks the run ticket. Quota, rate-limit, and authentication
+errors stop all workers and dispatch without retry or provider fallback. `push_check`, independent
+review, and human merge authority bind both providers. The coordinator has no special permission
+to bypass a worker's refusal. Harness integration validation follows the explicit exception in
+[AI harness testing](./rules/ai-harness-testing.md), not a generic cross-harness test matrix.
 
 ### Ticket
 
 Written by `wkc-backlog`, read by `wkc-implement`, `wkc-code-review`, and `wkc-yolo`. It is the
 [wkc-tracker shape](../../skills/wkc-tracker/SKILL.md#5-ticket-shape) plus `## Why` and
-`## After merge`. Drop a section that would say nothing. A work ticket, titled `<area>: <outcome in a few words>`:
+`## After merge`, plus optional `## Execution` for model overrides. Drop a section that would say nothing. A work ticket, titled `<area>: <outcome in a few words>`:
 
 ```markdown
 ## What to build
@@ -155,6 +249,9 @@ Written by `wkc-backlog`, read by `wkc-implement`, `wkc-code-review`, and `wkc-y
 
 ## After merge                           <!-- only when the ticket has post-merge steps -->
 - [ ] <step>, using <command or Conventions entry>. Target: <local | environment name | production>. Check: <expected result>. (needs authorization)
+
+## Execution                             <!-- only person-selected overrides -->
+<implementation_model and/or review_models mapping from Model selection and dispatch>
 
 ## Blocked by
 - #<id>
@@ -385,6 +482,8 @@ Handoff, posted when the PR is up and the ticket moves to `in-review`:
 wkc-implement: in review
 PR: <URL>
 Head: <full sha>
+Execution: <harness>, <requested model>, effort <requested value | provider default>   <!-- routed calls only -->
+Observed execution: <model and effort from runtime evidence | unavailable>           <!-- routed calls only -->
 Checks: <passed> of <total> acceptance criteria passed. Details are in the PR body.
 ```
 
@@ -458,6 +557,8 @@ Reviewed: <full head sha>
 Fixed in: <full sha of the fix commit>     <!-- fixed rounds only -->
 Fixing rounds used: <k> of <max_fix_attempts>
 Independent: yes | no, <why>
+Execution: <harness>, <requested model>, effort <requested value | provider default>   <!-- routed calls only -->
+Observed execution: <model and effort from runtime evidence | unavailable>           <!-- routed calls only -->
 - fixed <file:line> <finding>
 - improved <file:line> <change>
 - open <file:line> <finding>
@@ -466,7 +567,8 @@ Independent: yes | no, <why>
 
 `fixed` lists blocking findings fixed, `improved` the improvements applied, `open` blocking findings
 left, and `suggestion` the improvements not applied and findings the evidence did not confirm.
-Verdicts from before `improved` existed stay valid.
+Verdicts from before `improved` or execution metadata existed stay valid. Routed rounds follow
+Model selection and dispatch; alternating models never replaces the fresh-context requirement.
 
 A `fixed` round makes one commit, in the project's commit convention, or with `fix:` when it has
 none:
@@ -618,14 +720,16 @@ Needs: <who must answer>
   definition of done only for a ticket the config's `Moved by the person:` line names, and only as
   that line says; any other such move parks the ticket with `Needs: a person`.
 - `wkc-implement` branches from the config's run branch and opens its PR against it. A blocker in
-  the same run is met for scheduling once its PR merged into the run branch and its latest finish
+  any phase of the active run's `Continues:` chain is in the same run. It is met for scheduling
+  once its PR merged into the run branch and its latest finish
   there found no failed gate: a gate waiting on an environment does not hold dependents back, and a
   failed one does until its follow-up merges and passes. The run adds no edges for test order; a
   ticket that needs another's deployed behaviour checks it in its own gates.
 - Outside the run, a blocker is met only when `done`, and a `done` ticket whose finish comment names
   a run branch is met only once a PR from that run branch, or from a run whose config supersedes
-  it, merged into the default branch. `wkc-implement` checks this before it claims, and `wkc-yolo`
-  before it admits. `wkc-tracker next` reads status alone and may list such a ticket; the claim
+  it, merged into the default branch. A verified Run outcome names the carrying run PR and config
+  refs; confirm that PR's merged state instead of requiring a retired config. `wkc-implement`
+  checks this before it claims, and `wkc-yolo` before it admits. `wkc-tracker next` reads status alone and may list such a ticket; the claim
   then refuses and names the run PR it waits on.
 - A ticket waiting on a prerequisite is not parked. Parked means a question the documents and
   limits cannot settle; waiting means a blocker, a merge, a merge queue, or an environment that will
@@ -666,7 +770,9 @@ change.
   or a requirement the PRD sets, such as the session budget or the authoring limits. It never
   weakens an acceptance criterion to make failing work pass, and never moves a requirement out of a
   ticket's definition of done beyond what the config's `Moved by the person:` line records
-  (ADR-008). A change that needs one of those parks the ticket that raised it, with
+  (ADR-008). Initial ticket IDs, admission ceilings, model selections, and phase renewal are
+  also person-controlled. Planning never turns new work into free initial work or renews a grant.
+  A change that needs one of those parks the ticket that raised it, with
   `Needs: a person`.
 - **With `Planning: none`,** a SPEC or ROADMAP change parks the ticket that needs it, as before.
 
@@ -674,176 +780,184 @@ Outside a run, nothing here applies: every skill asks for approval as it always 
 
 ### wkc-yolo run
 
-The scope is one ticket, one wave, or a milestone. A wave is the frontier inside the milestone when
-the run starts: every ticket whose blockers are all met, so none depends on another. Ticket and wave
-runs record their ticket ids. Only prerequisites and readiness repairs admitted by step 3 can join
-that scope; a milestone run also takes each new wave as it appears.
+The scope is one ticket, one wave, or a milestone. A wave is the eligible frontier inside a
+milestone at kickoff. Every scope records its initial ticket IDs, including dependent tickets in
+a milestone. Later waves of those IDs are initial work. Adding a ticket to the milestone or
+changing the ROADMAP never adds it to that frozen list. Admission of other work follows step 3.
+The mixed-model run is coordinated by the main Claude Code session (Model selection and dispatch).
 
-1. **Before, in one round of questions:** the scope; a review of the work in scope that names its
-   readiness problems (SPEC not approved, open decision or spike tickets in scope) and its blind
-   spots, such as a criterion no check can decide, a contract or SPEC section a ticket needs that
-   does not exist, tickets that change the same code with no coordination note, or a prerequisite
-   no ticket covers; planning authority, delegated or none, default delegated; whether new
-   prerequisites of tickets in scope run in this run or are only recorded, default run; a budget in
-   tickets or wall-clock time, default none; and the tickets in scope the person already holds,
-   each adopted into the run or left out. The round also classifies every post-merge gate of the
-   tickets in scope, and every exit-check item, by the Gate classes, and shows the list. For each
-   shared non-production environment the work needs, it shows the operations, exact commands,
-   limits, cleanup, and an expiry, and asks the person to grant it or not, default none (Grants). It
-   names each required ticket whose definition of done includes a production-affecting step, and
-   proposes moving those steps, word for word, to a release ticket blocked by it. It names each
-   criterion only a person can confirm: an acceptance or release approval it proposes moving to the
-   run PR's review checklist, and a required engineering verification stays on its ticket and is
-   never marked passed without evidence. Each move happens only on the person's yes, recorded in the
-   config's `Moved by the person:` line. A ticket left with a production-affecting step or a
-   person's confirmation cannot be `done` in the run, and the round says the run PR will then be a
-   draft. When the ticket budget is smaller than the scope, the round says the run cannot be ready.
-   The person may name an earlier run whose run PR closed without merging as one this run
-   supersedes. Security is part of readiness. `push_check` must be
-   configured and usable: the run executes it once on the current branch before the round, and with
-   no command, or any exit but 0, the run does not start and the round shows the output. Push
-   protection is read with
+1. **Before, in one round of questions:** confirm scope and initial IDs; readiness problems and
+   blind spots, such as unapproved documents, open decision tickets, missing contracts, criteria
+   without checks, overlapping changes without coordination notes, and missing prerequisites;
+   planning authority, default delegated; new prerequisites, default run; the additional-ticket
+   allowance, default the project's `max_additional_tickets` (5 when absent); and held tickets,
+   each adopted or left out. Confirm implementation/review defaults and any ticket overrides.
+   Classify each post-merge gate and exit-check item by Gate classes. For each needed shared
+   non-production environment, show exact commands, limits, cleanup, and expiry and ask for its
+   grant, default none. Propose moving production steps word for word to separate release tickets
+   and acceptance/release approvals to the run PR checklist. Required engineering verification
+   stays on its ticket. Only the person's yes moves a requirement, recorded in `Moved by the
+   person:`. A ticket left needing production or a person's confirmation keeps the run PR draft.
+   Exclude approved release tickets and tickets left out from the initial IDs. There is no
+   elapsed-time run budget; command limits, grant expiry, and session limits still apply.
+
+   The person may name a closed, unmerged run to supersede (Run branch). Security is part of
+   readiness. Execute the configured `push_check` once on the current branch before the round.
+   With no command or a non-zero exit, create no branch or config and show the failure.
+   Read push protection with
    `gh api repos/<owner>/<repo> --jq '.security_and_analysis.secret_scanning_push_protection.status // "unverifiable"'`.
-   `enabled` is confirmed on. `disabled` is confirmed off: the round says so, and the person accepts
-   it or stops. `unverifiable` means the read could not tell, never that it is off: GitHub shows the
-   block only to repository admins and organization owners or security managers, and a call that
-   fails for another reason counts the same. The round says why it could not tell, and the person
-   accepts it or stops. With `run_config: tracker` on a public repository, the round says the run
-   config will be public, and with a store that cannot detect an edit, it offers no grants. An
-   authentication error stops everything, as always. After the answers, create the run branch (Run
-   branch), push it, and write the run config with `wkc-tracker run create`. Then `wkc-backlog
-   --run <ref>` makes each move the `Moved by the person:` line names, one at a time: a release
-   ticket at `backlog`, blocked by the original, related to it, its Notes citing the original and the
-   moved text, and out of the run; or the original's criterion rewritten to say the run PR's review
-   checklist carries it. Each move gets a `Decision (wkc-yolo):` comment on the original whose
-   `Source:` is that line. After this round the run asks nothing more.
-2. **Resume first:** before taking new work, and after each ticket merges into the run branch,
-   continue the tickets in scope whose latest `Run:` comment names this run's config and that are
-   not merged into the run branch: admitted but still `ready` (recheck that it is eligible and
-   unheld, then claim it, reusing its comment and budget slot), `in-progress`, `in-review`, and
-   tickets whose discovered blocker is now met. `wkc-implement <id> --run <ref>` continues a build
-   or reports the review state. Nothing is claimed twice. A ticket whose latest `Run:` comment names
-   another config belongs to that run and is skipped. A planning PR that a `Decision (wkc-yolo):`
-   comment names is continued or merged, never written again. A resumed run first cleans up every
-   granted environment that a gate comment shows deployed and no cleanup comment shows removed, and
-   finishes again each ticket whose finish was interrupted. Resume reads the tracker, git, and PR
-   state, never what the run remembers.
-3. **Then new work:** take the frontier tickets in scope, no more than the ticket budget has left.
-   The graph is read fresh each time: tickets and edges a run added count like the rest, and a
-   blocker counts as met by the rules in Unattended calls. With `New prerequisites: run`, a
-   new ticket that blocks a ticket in scope, or repairs a readiness failure from step 5, joins the
-   scope and is moved to `ready`, with a `Decision (wkc-yolo):` comment. Both use the same admission
-   budget and run when they reach the frontier, not first or last. A readiness repair needs no
-   blocker edge to a `done` ticket. With `record only`, it stays at `backlog`; a blocked ticket
-   waits, and an unresolved readiness failure keeps the run PR a draft. Other new tickets, such as
-   later-milestone work, stay at `backlog` and out of the run. Admitting a ticket means posting
-   `Run: <run config ref>` on it with `wkc-tracker comment` before anything else; adopted tickets
-   get the same comment. A ticket may be adopted from another run only when that run has stopped, as
-   its report or its time limit shows. On GitHub and Linear, run them in parallel, at most 5 at
-   once, each in its own worktree and subagent. On the local backend, run one at a time in the
-   directory where the run started, because a branch's ticket files are invisible from `main` until
-   it merges ([local.md](../../skills/wkc-tracker/local.md)). Tickets `wkc-backlog` named as a
-   coordination risk with each other run one at a time. For each: implement against the run
-   branch, review rounds in fresh subagent contexts, then merge the approved head into the run
-   branch. Every call passes `--run <ref>`. Merges run one at a time (see Failure handling). Right
-   after each merge, call `wkc-implement finish <id> --run <ref>` for that ticket (Lifecycle,
-   Finish in a run); a follow-up it opens goes through the same review and merge. Then finish again
-   every ticket of the run whose latest finish is `waiting` on an environment or a dependency, and
-   every ticket whose blocker is now met, so work that became possible is not left behind. Read
-   fresh tracker state before starting each ticket.
-4. **Stop:** a ticket or wave run when every recorded ticket is `done`, parked, or waiting on
-   something no further work in the run can change; a milestone run when every ticket in scope is
-   the same. A spent ticket budget stops new admissions only; admitted tickets still merge or park.
-   Then step 5 runs. Any run at its time limit, at the first quota, rate-limit, or authentication
-   error, or when every remaining ticket is parked or waiting on a prerequisite outside the run, stops
-   too; a stop at its time limit still cleans up (Grants) and opens the run PR as a draft.
-5. **Readiness, cleanup, and the run PR:** when anything merged into the run branch, merge the
-   remote default branch into it when `git merge-tree --write-tree` shows no conflict, run
-   `push_check`, and push; with a conflict, leave the run branch as it is and name the conflict.
-   Finish once more every ticket still `waiting`. On the local backend, complete the writes and
-   prepare the draft run PR as Lifecycle, Local backend specifies. Then check readiness at the run
-   branch head:
-   `test_command`, `wkc-implement verify <id> --run <ref>` for every required ticket, and every
-   pre-production exit-check item a command or check can decide. The required tickets are every
-   ticket in scope, the recorded ids or the milestone's tickets, with the prerequisites and repair
-   tickets that joined the run, less the tickets the person left out at kickoff and the release
-   tickets made under `Moved by the person:`. A failure in a ticket not yet `done` gets that
-   ticket's follow-up. A failure in a `done` ticket, or between tickets, becomes a repair ticket
-   through `wkc-backlog`, related to the affected tickets, which keep their status. Step 3 admits
-   the repair when `New prerequisites: run` and the remaining budget allow it, then continues its
-   implementation, review, merge, and finish. Otherwise the repair stays at `backlog` and readiness
-   remains failed. After any merge, readiness starts again at the new head. The run is
-   **ready** only when every required ticket is `done` and every one of those checks passed at the
-   current head; a passing `test_command` alone never makes it ready. Then clean up every granted
-   environment. Then open or update the one PR from the run branch into the default branch, ready
-   for review when the run is ready and a draft otherwise, and stop. Never merge it. Its body is
-   the release candidate package:
-   - the state, `ready: verified at <sha>` or `draft: not ready`, and the run config's reference;
-   - each required ticket with its status, PR, latest verdict, `Verified at` sha, and gates passed,
-     failed, or not run, and what is left and who must act;
-   - the readiness checks: commands, environments, results, and the sha they ran at;
-   - the exit-check items: passed, not run with why, or after the merge into the default branch;
-   - the release tickets and the review checklist items the person moved at kickoff, unchecked;
-   - grants used and their cleanup results; intermittent checks;
-   - the planning PRs and the documents they changed; every `Decision (wkc-yolo):` comment; the
-     budget used;
+   `enabled` confirms on; `disabled` confirms off; a missing field or failed read is `unverifiable`,
+   with its reason. The person accepts disabled/unverifiable protection or stops. An authentication
+   error stops everything. Say when the tracker config will be public. A store that cannot detect
+   edits offers no grants. After answers, create and push the run branch, then `run create` the
+   immutable config. `wkc-backlog --run <ref>` makes only its approved requirement moves, one at
+   a time, with a `Decision (wkc-yolo):` comment citing `Moved by the person:`. Release tickets
+   stay at `backlog`, outside the run, blocked by and related to their original. Then ask no more
+   during this unattended phase.
+2. **Resume first:** read tracker, git, PRs, and the active config's `Continues:` chain. Continue
+   unfinished tickets whose latest `Run:` comment names any config in that chain. For an admitted
+   `ready` ticket, recheck eligibility and claim without another admission or budget charge.
+   Continue `in-progress` and `in-review` work and tickets whose discovered blocker is now met.
+   `wkc-implement <id> --run <active ref>` builds or reports review state. No ticket is claimed
+   twice. A ticket held by an unrelated config is skipped. Continue a planning PR named by a
+   Decision comment instead of recreating it. Clean up any environment recorded as deployed
+   without recorded cleanup first, then finish interrupted tickets again. Use the active phase's
+   grants for new operations, never an expired predecessor grant. A normal restart keeps the same
+   config, admissions, model-round counts, and remaining allowance.
+3. **Then new work:** reread the graph and take eligible initial tickets and already admitted work.
+   `max_additional_tickets` limits only distinct additional admissions, not the initial scope.
+   With `New prerequisites: run`, a prerequisite of a required ticket or a readiness repair may
+   join while allowance remains. A reused out-of-scope ticket and a split/replacement child not in
+   the initial IDs each cost one slot. Post a Decision comment and move the admitted work to
+   `ready`; it runs when eligible. A repair of a `done` ticket needs no blocker edge to that ticket.
+   With `record only` or no allowance, record the work at `backlog`; required unresolved work
+   keeps readiness failed. Other discoveries stay outside the run. Creating a backlog record
+   does not spend a slot. No split, cancel, park, or transfer refunds one.
+
+   Only the coordinator admits, one at a time. Before dispatch, post and verify
+   `Run: <active run config ref>`. Existing initial tickets get that comment too, without an
+   additional charge. Deduplicate discoveries through `wkc-backlog` before admission. A failed
+   verification stops admission; resume reads whether the comment landed before spending again.
+   Adoption from an unrelated run needs evidence that it stopped, from its report or the person.
+   On GitHub and Linear, use at most 5 workers at once, each in its own worktree. Native Claude
+   workers and Codex processes count together. On local, work one ticket at a time in the starting
+   directory ([local.md](../../skills/wkc-tracker/local.md)). Serialize tickets with recorded
+   coordination risks. Implement against the run branch, review in fresh contexts using the
+   selected alternating models, and merge only the approved head. Every call passes `--run`.
+   Merges run one at a time after the base update and confirming/full review in Failure handling.
+   Immediately `finish <id> --run <active ref>` after each merge. Follow-ups use the same review
+   and merge path. Revisit every run ticket waiting on an environment or dependency after a merge
+   or a blocker becoming met, and before readiness.
+4. **Stop:** when every required ticket is done, parked, or waiting on something no further work
+   in this phase can change, perform step 5. A spent additional allowance stops additional
+   admissions only. Initial and admitted work can finish. Quota, rate-limit, and authentication
+   errors stop all work immediately without retry. Other controlled stops clean up and leave a
+   draft PR when there is merged work. Cleanup handles uncontrolled stops separately below.
+5. **Readiness, cleanup, and the run PR:** when anything merged, merge the remote default branch
+   into the run branch if `git merge-tree --write-tree` shows no conflict, then `push_check` and
+   push. With a conflict, leave it unchanged and report the conflict. Finish waiting tickets once
+   more. On local, complete ticket-file writes and prepare the draft PR as Lifecycle specifies.
+   At this head, run `test_command` when configured, `wkc-implement verify <id> --run <active ref>`
+   for every required ticket, and every pre-production exit-check item a check can decide.
+
+   Required work is the initial IDs plus admitted work across every phase of this run, excluding
+   only work the person explicitly left out or moved to a release ticket. A valid approved split
+   replaces a canceled parent's remaining deliverable with its children; the children still need
+   admission, and the parent is reported as replaced, never done. Milestone changes alone remove
+   no required work. Completed tickets from earlier phases remain in combined verification.
+   Failure on an unfinished ticket follows its follow-up path. Failure in a done ticket or
+   between tickets becomes a related repair ticket through `wkc-backlog`; done stays done. Step 3
+   may admit it within the allowance. Otherwise readiness remains failed. Any merge restarts
+   readiness at the new head. The PR is **ready** only when all required tickets are done and all
+   required checks passed at this head. A passing test suite alone is insufficient.
+
+   Clean up granted environments. Open or update the same run PR, ready or draft according to
+   readiness, and stop. Never merge it. Its release-candidate body contains:
+   - `ready: verified at <sha>` or `draft: not ready`, the active config, and predecessor refs;
+   - each required ticket's status, PR, verdict, execution selection/evidence, `Verified at` sha,
+     and passed, failed, or not-run gates, with what remains and who must act;
+   - readiness commands, environments, results, and tested sha;
+   - exit-check results, including items that must follow the default-branch merge;
+   - approved release tickets and moved review-checklist items, unchecked;
+   - grants, cleanup results, and intermittent checks;
+   - planning PRs, changed documents, every Decision comment, and initial/additional admissions
+     and allowance used per phase;
    - that the run merged nothing into the default branch and changed nothing in production.
 
-   It refers to tickets with `Refs`, never a closing keyword. When the body would pass GitHub's
-   size limit, the per-ticket gate rows go in PR comments that the body links. A commit on the run
-   branch after readiness makes the evidence stale: the body names the validated sha, and
-   `wkc-yolo` on the run, within its time budget, checks readiness again at the new head and
-   rewrites the evidence, or turns the PR back to a draft. The session report adds what the PR body
-   never carries: any secret incident, first, and the push protection status the kickoff accepted.
-   Offer `wkc-retro` on the run.
-6. **After the run PR:** once it is merged or closed without merging, the person starts `wkc-yolo`
-   on the run again. It posts one outcome comment on each ticket of the run and lists the work
-   left. On the local backend, it first hands `wkc-backlog` each `Discovered:` item that readiness
-   recorded on the run PR (Lifecycle, Local backend). A new release ticket follows the manual
-   lifecycle: move it to `ready` when groomed, implement it with `wkc-implement <id>`, review and
-   merge its PR, then run `wkc-implement finish <id>`. An existing ticket with a merged handoff PR
-   and production gates left uses manual `finish` after the run PR merges. It retires the run
-   config with `wkc-tracker run close <ref>`, reports, and offers `wkc-retro`. It asks nothing
-   about production: that is separately authorized work after the merge. A closed, unmerged run
-   authorizes none of those production steps.
+   Use `Refs`, never closing keywords. Large per-ticket tables may live in linked PR comments.
+   A later commit invalidates readiness. On resume, mark the PR draft before changing the result,
+   then verify the new head before restoring ready. No background monitor is implied. The session
+   report, not the PR body, names secret incidents first and the accepted push-protection status.
+   Offer `wkc-retro`. Human review feedback follows Review continuations below.
+6. **After the run PR:** once merged or closed without merging, the person starts `wkc-yolo` on
+   the run again. Post one verified outcome comment on every ticket across its phases and list
+   remaining work. Local readiness discoveries go to `wkc-backlog` now, as Lifecycle specifies.
+   New release tickets follow manual ready, implementation, review, merge, and finish. Only an
+   existing ticket with a merged handoff PR and production gates left goes directly to manual
+   finish after the run PR merges. Production remains separately authorized. Before retiring
+   configs, verify that each outcome names the run branch, run PR, and all config refs whose work
+   it carries. The host's merged PR confirms delivery; no later blocker check needs a deleted
+   variable. Then `run close` each config, report, and offer `wkc-retro`.
 
    ```
    Run outcome (wkc-yolo): merged | closed without merging
    Run PR: <URL>
+   Run branch: <branch>
+   Run configs: <refs, including continued or superseded work carried by this PR>
    Default branch: <merge commit sha> | not merged
    Production: not changed by the run
    ```
 
-   A run PR closed without merging undoes no `done`: each ticket's finish comment names the run
-   branch. The person reopens the PR, which continues this run; supersedes it with a new run (step
-   1); or abandons it, and `wkc-backlog` writes replacement tickets for the work still wanted,
-   related to the old ones, and moves the outside dependents' edges to them. No skill deletes a run
-   branch.
+   Closing without merging undoes no done. The person can reopen the PR; resume with still-readable
+   configs or explicitly authorize a new continuation if a store retired them. Alternatively
+   supersede it with a new branch, or abandon it and have `wkc-backlog` write replacement tickets
+   and redirect outside dependents. Preserve accepted work. No skill deletes the run branch.
 
-**Run config.** The limits are what the person authorized before the run, not counters. The ticket
-budget is the most distinct tickets the run may admit: every ticket with this run's `Run:` comment
-counts, a parked one or one later adopted by another run included, and resuming one costs nothing.
-The latest `Run:` comment on a ticket decides which run resumes it. The time budget runs from the
-config's start time. The tracker records the account, not the run, so the `Run:` comment is what
-ties a ticket to its run; a manual session that sees it knows a run holds the ticket.
+**Review continuations.** Requested changes on an open PR keep that PR and branch. The person
+authorizes the correction scope; `wkc-backlog` creates or reuses tickets in the same milestone.
+Done tickets stay done. A PRD change still needs the person; delegated SPEC/ROADMAP changes stay
+inside product intent. Reuse the active config when scope and remaining authority cover the work.
+Otherwise ask one renewal round for a new phase, then create an immutable config with `Continues:`
+pointing to its predecessor and `Run PR:` naming the same PR. Only the person's approval creates
+new initial correction IDs or replenishes the additional allowance. A restart never does.
 
-The config exists so that every agent in the run acts on the same authorization without asking,
-from any context, worktree, or machine: subagents read it, a resumed run keeps its limits, and the
-person reads afterwards what they authorized. `wkc-yolo` writes it once with `wkc-tracker run
-create`, which returns its reference, and a resumed run names the reference it continues. Nobody
-edits it: `wkc-tracker run show` refuses one edited after it was written. It holds limits and the
-person's kickoff answers only: never credentials, the scan command, push protection status, or
-ticket status.
+The new phase's initial IDs contain approved corrections and unfinished carried work. Earlier
+completed work remains required at readiness. The new config supplies active grants and limits;
+expired grants are not inherited as authorization. Prior admissions remain recorded under their
+old phase; neither review-round counts nor `max_fix_attempts` usage resets. Retain every predecessor
+config while the PR is open. The chain must name the same branch/PR and contain no cycle. If a
+closed run's store retired a config, the verified outcome and run PR provide its historical
+membership; the person supplies all new authority rather than reconstructing old grants.
+An unreadable active config still refuses all work. A missing predecessor without that terminal
+record stops continuation. Continue only one active phase at a time; link the new ref on the run
+PR with a verified comment before dispatch. Resume from the latest such continuation, not stale
+memory. An older config supplied after renewal reports the active ref and starts no worker.
+
+**Run config and allowance.** A config records one phase's authorized limits and initial IDs,
+never mutable counters. Count distinct additional tickets with that config's verified `Run:`
+comment that are absent from its initial IDs. Parked or transferred tickets still count. Resuming
+costs nothing. The latest `Run:` comment assigns ownership; any ref in the active `Continues:`
+chain belongs to this run. The tracker account alone does not identify a run. Outside dependents
+still wait for default-branch delivery even when a run ticket is done.
+
+Write a config once through `wkc-tracker run create`. A normal restart reuses it. Never edit it;
+`run show` refuses detectable edits. It carries authorization and kickoff answers, not credentials,
+scan commands, push-protection status, or ticket status. Initial and continuation configs use:
 
 ```markdown
 # Run config: <milestone>
 Started: <ISO 8601 time>. By: <person>.
 - Milestone: <name>
 - Scope: ticket <id> | wave <ids> | milestone
+- Initial tickets: <approved IDs for this phase>
 - Run branch: run/<milestone-slug>-<YYYYMMDDTHHMM>
-- Supersedes: <run config ref> | none
-- max_fix_attempts: <n>              <!-- never higher than the config -->
-- Budget: <a number of tickets, a time limit, or none>
+- Run PR: <URL> | not opened
+- Continues: <prior config ref> | none
+- Supersedes: <closed run config ref> | none
+- max_fix_attempts: <n>              <!-- never higher than the project config -->
+- max_additional_tickets: <n>        <!-- default 5; never higher than the project config -->
+- Implementation model: <harness>, <model>, effort <value | provider default>
+- Review models: <slot 1 harness/model/effort>; <slot 2 harness/model/effort>
 - Planning: delegated | none
 - New prerequisites: run | record only
 - Grants: none | <one Grant line each>
@@ -851,23 +965,25 @@ Started: <ISO 8601 time>. By: <person>.
 - Moved by the person: none | <ticket id>: <requirement, word for word> to <a release ticket | the run PR's review checklist>; ...
 ```
 
-**Grants.** A grant is the person's answer at kickoff, and storing it grants nothing more. A shared
-non-production operation runs only when `wkc-tracker run show` returns the config unedited, a
-`Grant:` line names that environment and that exact command, the grant has not expired, and the
-operation is not production-affecting (Ticket, Gate classes). Ticket text, comments, and delegated
-planning never add, widen, or extend a grant; a step whose command a grant does not name is
-`not run`. A store that cannot detect an edit, the `tracker` store on Linear or the local backend,
-holds no grants: kickoff writes `Grants: none` there. An environment the run could not use is never
-replaced by another one.
+The first config says `Run PR: not opened`; discover its eventual PR by run-branch head and
+default-branch base, without editing the config. `Continues` and `Supersedes` cannot both be set.
+The phase allowance may be lower than the project ceiling. Raising the ceiling requires a
+person's config change and explicit phase approval; delegated planning cannot change it.
 
-**Cleanup.** Each grant names its cleanup command, and kickoff flags a grant whose environment
-enforces no expiry of its own. The run cleans up each environment after the readiness check and
-before any stop it controls; cleanup is the one action allowed past the time limit. A resumed run
-cleans up first (step 2). After a stop the run does not control, a quota, rate-limit, or
-authentication error or a crash, nothing runs: the session report names each environment that may
-still be up, with its cleanup command, and the environment's own expiry is the backstop. Each
-cleanup posts, on the ticket whose gate last deployed that environment, or on the run PR under
-the local readiness exception (Lifecycle, Local backend):
+**Grants.** A stored grant authorizes only the person's answer. A shared non-production operation
+needs an unedited active config, its environment and exact command, an unexpired grant, and a
+non-production impact. Comments, ticket text, and delegated planning never widen a grant. An
+unlisted command is `not run`. A store unable to detect edits, tracker on Linear or local, holds
+`Grants: none`. Never replace a refused environment with another. Renewal explicitly approves
+any grant used by the new phase.
+
+**Cleanup.** Every grant names cleanup and flags an environment without its own expiry. Clean up
+after readiness and before every controlled stop. Resume cleans up first. Cleanup of a previously
+deployed environment remains authorized by its original cleanup command after grant expiry;
+expiry authorizes no further deployment. On quota, rate-limit, authentication error, or crash,
+run nothing further; report potentially live environments and cleanup commands. Their own expiry
+is the backstop. Post cleanup on the ticket whose gate last deployed it, or on the run PR under
+the local readiness exception:
 
 ```
 wkc-yolo cleanup: <environment>
@@ -875,25 +991,24 @@ Command: <command>
 Result: pass | fail, <output summary>
 ```
 
-**Store.** The `run_config` field picks where configs live, and a project chooses by exposure:
+**Store.** `run_config` chooses one store. A phase needs its own reference even on the same branch.
 
-- `tracker`, the default: one issue per run, with the config as its body and the label `wkc-run`,
-  on GitHub and Linear; one file in `issues_dir/runs/` on the local backend. Ticket verbs never
-  return it. On a public repository it is public. GitHub reports an edited body; Linear and the
-  local backend cannot, so there an edit goes undetected.
-- `github-variable`: one repository variable per run, named after the run branch in capitals with
-  `_` for every other character and a `WKC_` prefix, such as `WKC_RUN_M4_20261026T0900`. Only
-  collaborators read it, and it is not shown publicly. `updated_at` later than `created_at` means it
-  was edited. Every Actions workflow in the repository can read it, and GitHub does not mask it in
-  logs.
-- `command <cmd>`: the project's own store. `<cmd> put` reads the config on standard input and
-  prints its reference; `<cmd> get <ref>` prints it, or exits non-zero to refuse; `<cmd> close
-  <ref>` retires it. The command decides permissions and what counts as an edit.
+- `tracker`: one issue with label `wkc-run`, or one file in `issues_dir/runs/`, per phase. Ticket
+  verbs exclude it. GitHub detects body edits; Linear and local do not. Public issues are public.
+- `github-variable`: use the existing normalized `WKC_<RUN_BRANCH>` name for the initial config;
+  continuation phases append `_PHASE_2`, `_PHASE_3`, and so on. Read the chain to choose the next
+  suffix and refuse an existing variable; never overwrite it. One coordinator writes at a time.
+  Collaborators and Actions workflows can read it. Logs do not mask it. An `updated_at` later than
+  `created_at` is a refusal. Do not delete a predecessor while its run PR is open.
+- `command <cmd>`: `put` accepts text on stdin and returns a distinct reference, `get <ref>`
+  returns text or refuses with non-zero exit, and `close <ref>` retires it. The store controls
+  permission and edit detection. Retention and terminal evidence requirements apply to it too.
 
-**Run branch.** `run/<milestone-slug>-<YYYYMMDDTHHMM>`, from the remote default branch when the run
-starts, or, when the config's `Supersedes:` line names an earlier run, from that run's branch with
-the remote default branch merged in; with a conflict, the run does not start. Ticket branches and planning branches start from it, and their PRs target it. Only the run
-merges into it. Its work reaches the default branch only through a person's merge of the run PR.
+**Run branch.** Initially `run/<milestone-slug>-<YYYYMMDDTHHMM>` starts from the remote default
+branch. Supersession starts a new branch from the closed run's branch with the remote default
+branch merged in; conflict stops before starting. A continuation reuses its predecessor's branch
+and PR. Ticket/planning branches start from and target this branch. Only the run merges there;
+only a person merges its run PR into the default branch.
 
 ### wkc-retro
 
@@ -908,7 +1023,7 @@ changes for `wkc-backlog`, with evidence as Discovered work describes, not rules
 
 No skill keeps its own state. Intent lives in the PRD, SPEC, ADRs, and ROADMAP. Ticket state,
 decisions, verdicts, and discovered work live in the tracker and on PRs. Code lives in git. Rules
-live in `rules_dir`. The one new record is `wkc-yolo`'s run config, one per run, which holds limits
+live in `rules_dir`. The one new record is `wkc-yolo`'s run config, one per authorized phase, which holds limits
 and the person's kickoff answers only and lives in the store `run_config` names.
 
 ## Failure handling
@@ -980,14 +1095,20 @@ and the person's kickoff answers only and lives in the store `run_config` names.
 - Each `SKILL.md` aims for under 150 lines and tries to stay under 250, so a person can read it
   ([AGENTS.md Prose](../../AGENTS.md#prose)). Neither is a hard limit; the Agent Skills
   specification's limit is 500. `wkc-backlog` is expected near 240 (ADR-004).
-- At most 6 extra AI test sessions per change. Runbooks run on Claude Code; Codex and Kiro are SKIP.
+- At most 6 extra AI test sessions per change unless the maintainer approves more. Runbooks run
+  from Claude Code. The explicit mixed-model pilot includes Codex workers only with the approval
+  in AI harness testing; other Codex/Kiro cases remain SKIP. Count every model worker.
 - Each port adds `validation/wkc-<name>.md` with a few simple cases, each with an independent check.
 - `wkc-yolo` merges only into its run branch, runs no production-affecting step, and acts on a
   shared non-production environment only under a kickoff grant. Its run PR is ready for review only
   when every required ticket is `done` and every readiness check passed at its head. Its runbook
   checks this.
-- With `push_check` configured, no push by the skills happens without a pass, in any mode, and a
-  run never pushes without one. The runbooks check it with a planted test credential.
+- With `push_check` configured, no push by either provider happens without a pass, in any mode,
+  and a run never pushes without one. The runbooks check it with a planted test credential.
+- Additional admissions default to five and are counted from recorded IDs across restarts. No
+  worker or planning change resets them. Human-authorized continuations keep one branch and PR.
+- Manual and YOLO model routing honors per-ticket selections and fresh alternating review
+  contexts. Missing access never triggers a provider or billing fallback.
 
 ## Boundaries
 
@@ -1025,13 +1146,18 @@ the previous tag. Each port also updates the README roster, the repository map u
 
 | PRD goal | Delivered by |
 |---|---|
-| 1. Ticket from `ready` to `done` | `wkc-implement`, `wkc-code-review`; Lifecycle, PR body, Review verdict; ticket shape; ADR-001, ADR-003, ADR-005, ADR-008 |
+| 1. Ticket from `ready` to `done` | `wkc-implement`, `wkc-code-review`; Model selection and dispatch; Lifecycle, PR body, Review verdict; ticket shape; ADR-001, ADR-003, ADR-005, ADR-008, ADR-009 |
 | 2. Plans follow changes | `wkc-backlog`; `wkc-plan` for ROADMAP changes and Milestone close; `wkc-architect` for SPEC changes; Discovered work; ADR-004 |
-| 3. Unattended milestone | `wkc-yolo`; Unattended calls; Delegated run authority; Finish in a run; Gate classes; Grants; Push check; `push_check`, `run_config`; ADR-006, ADR-007, ADR-008 |
+| 3. Unattended milestone | `wkc-yolo`; Unattended calls; Delegated run authority; Finish in a run; Gate classes; Grants; Push check; `push_check`, `run_config`, `max_additional_tickets`; Model selection and dispatch; Review continuations; ADR-006, ADR-007, ADR-008, ADR-009 |
 | 4. Learnings become rules | `wkc-retro` |
 | 5. Small and readable | Requirements; Boundaries; one `SKILL.md` per skill |
 
 ## Decisions
+
+- The 2026-10-27 update bounds additional execution at five tickets by default, keeps review/fix
+  limits, adds same-PR human review continuations, and routes configured manual/YOLO workers
+  through Claude Code with alternating review models. [ADR-009](./adr/ADR-009-run-budgets-continuations-and-model-routing.md)
+  records the options and proposed contract details; the user's requirements are settled.
 
 - Ticket lifecycle and definition of done: [ADR-001](./adr/ADR-001-ticket-lifecycle.md).
 - `wkc-backlog` owns tickets and `wkc-plan` the ROADMAP: [ADR-004](./adr/ADR-004-backlog-separate-from-plan.md),
@@ -1080,7 +1206,7 @@ the previous tag. Each port also updates the README roster, the repository map u
   person's merge, which checked integration after the decision it should inform, and over moving
   every ticket to `done` at once at readiness, which held finished tickets on unrelated work
   (maintainer, 2026-10-26).
-- `wkc-yolo`'s limits live in one run config per run, written once, in the store `run_config` names:
+- `wkc-yolo`'s limits live in one immutable config per authorized phase, in the store `run_config` names:
   `tracker` by default, `github-variable`, or the project's own `command`. A call is unattended only
   when it passes `--run <ref>`, and the skill reads the config through `wkc-tracker run show`. Chosen
   over a gitignored file passed by absolute path, which a subagent in another sandbox cannot open,
@@ -1137,8 +1263,18 @@ the previous tag. Each port also updates the README roster, the repository map u
   head. Readers must consult the PR as well as local ticket files for that evidence.
 - Readiness reruns every required gate once at the final head, on top of each ticket's own finish.
   Rerunning only the gates a change touched needs a judgment no record can check.
-- A milestone run is ready only when its whole scope is `done`; a budget smaller than the scope, a
-  parked ticket, or a move the person refused leaves a draft.
+- A milestone run is ready only when its whole required scope is done. Unadmitted required
+  repairs, parked tickets, and refused requirement moves leave a draft. Initial scope is free
+  of the additional allowance; a large approved milestone is not capped at five tickets.
+- Ticket counts are not a token or cost ceiling. They bound scope growth; review limits bound
+  fixing rounds. The person explicitly declined an elapsed-time run budget.
+- A continuation needs readable authority and durable prior-phase membership. GitHub variables
+  need distinct names per phase and retention until terminal outcome records verify.
+- Model and effort availability depend on installed harness versions and account access. The
+  planned mixed-provider pilot has not established that capability in this repository.
+- The manual dispatcher must relay questions rather than infer authority from non-interactive
+  execution. Duplicating dispatch instructions across long skills risks drift; keep role ownership
+  in the existing skills and use a small responsibility split only if implementation requires it.
 - On Linear and the local backend, the `tracker` store cannot detect an edited run config, so it
   holds no grants.
 - The security layers inside the agent's instructions stop mistakes, not an agent that ignores its
@@ -1153,9 +1289,19 @@ the previous tag. Each port also updates the README roster, the repository map u
 
 ## Open unknowns
 
-None.
+- Implementation must verify the installed Claude Code agent interface and Codex CLI can honor
+  selected model/effort, expose runtime evidence where available, and relay manual questions.
+  The documented interfaces and maintainer experience support the design; no mixed-provider
+  integration test ran for this planning change. The model-routing ticket owns this check.
 
 ## Changes
+
+- 2026-10-27: Bound additional admissions with `max_additional_tickets: 5` and explicit initial
+  IDs; removed the total-ticket/time budget. Added immutable same-PR review continuations,
+  per-ticket implementation and alternating review models, Claude Code coordination, and the
+  narrow harness exception (maintainer request; ADR-009). Model/effort defaults, config retention,
+  manual questions, execution evidence, and validation scope are explicit. Review ROADMAP M4
+  and tickets #74, #76, #77, #80, plus the model-routing ticket. Status is draft for final review.
 
 - 2026-10-26: A run completes its tickets and verifies itself before the person's merge
   (maintainer review of proposed ADR-008; ADR-008). `wkc-implement finish <id> --run <ref>` runs
