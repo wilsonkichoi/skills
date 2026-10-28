@@ -1,6 +1,6 @@
 # wkc- skills PRD
 
-Status: draft
+Status: approved (2026-10-28)
 
 ## Problem
 
@@ -285,6 +285,9 @@ in [ADR-009](./adr/ADR-009-run-budgets-continuations-and-model-routing.md). Thei
 and integration validation remain downstream work.
 
 ## Changes
+
+- 2026-10-28: The maintainer approved the PRD, SPEC, and ROADMAP as merged in #82. No
+  requirement changed.
 
 - 2026-10-28: Maintainer decisions after the planning review. `headless_workers` lets a project
   opt into `claude -p`, off by default, which also allows a Codex coordinator. A run without a

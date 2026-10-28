@@ -1,11 +1,11 @@
 # wkc- skills ROADMAP
 
-Status: draft
+Status: approved (2026-10-28)
 
-Updated from the [SPEC](./SPEC.md), previously approved 2026-10-26, and the maintainer's confirmed
-2026-10-27 requirements. The revised planning documents are drafts pending final review. Every
-milestone needs the approved PRD, SPEC, ADRs, and this ROADMAP merged to `main` first:
-`wkc-implement` stops on uncommitted planning documents, and a fresh worktree cannot see them.
+Updated from the [SPEC](./SPEC.md), approved 2026-10-28, and the maintainer's confirmed
+2026-10-27 requirements. Every milestone needs the approved PRD, SPEC, ADRs, and this ROADMAP
+merged to `main` first: `wkc-implement` stops on uncommitted planning documents, and a fresh
+worktree cannot see them.
 
 Validation runs on Claude Code by default. Unrun Codex and Kiro cases are SKIP (PRD Constraints).
 The approved Claude Code-to-Codex workflow may receive explicitly authorized integration validation
@@ -158,6 +158,10 @@ Depends on: M2, because it changes `wkc-implement`; M4, because it covers `wkc-y
 Exit check: on a local-tracker fixture with a GitHub remote, each `wkc-tracker` write is one `chore: wkc-tracker <verb> <id>` commit holding only that ticket's file, with other staged and unstaged changes unchanged and nothing pushed. `wkc-implement` branches before it claims, so the claim and handoff commits are on the ticket's branch and not on the default branch, and it stops on an unpushed `issues_dir` commit on the default branch. After the merge, a rerun makes its post-merge writes on `<type>/<id>-finish` from the merged default branch, and the ticket file on the default branch reads `done` once that branch lands. With no remote, the post-merge writes are commits on the local default branch. A `wkc-yolo` run of two local tickets runs them one at a time and reaches `done` on the run branch before readiness. It pushes the ticket-file commits and opens a draft run PR before verification. Verification and cleanup evidence, an intermittent check's `Discovered:` item included, are read back from PR comments, with the checked HEAD unchanged, and that item's ticket is filed only after the run PR. A later ticket-file or code commit invalidates that evidence. Both tickets reach the default branch only after the person merges the run PR. Ticket files are checked with a YAML parser and `git log`, not from the report. The `wkc-tracker` and `wkc-implement` runbooks cover these cases.
 
 ## Changes
+
+- 2026-10-28: The maintainer approved the ROADMAP with the PRD and SPEC, as merged in #82, so
+  the opening note cites the SPEC as approved. Replaced "previously approved 2026-10-26" and "The
+  revised planning documents are drafts pending final review". No milestone changed.
 
 - 2026-10-28: Maintainer decision: M4's routing exit check has a run without a pair use the
   model and effort the person confirmed at kickoff, recorded on its `Execution:` lines. Still
