@@ -5,6 +5,7 @@ rules_dir: docs/dev-agents/rules/           # promoted learnings, one file per r
 prd_file: docs/dev-agents/PRD.md
 spec_file: docs/dev-agents/SPEC.md
 roadmap_file: docs/dev-agents/ROADMAP.md
+push_check: 'gitleaks git --redact --log-opts="origin/main..HEAD"'  # scans the commits about to be pushed for secrets; exit 0 passes
 ---
 
 # Project development conventions
