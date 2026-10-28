@@ -45,26 +45,10 @@ source tree, no per-harness variants.
 
 ### Collection releases
 
-`wkc-skills-release` publishes this collection only; adopting projects keep their existing release
-and deployment processes. The release rules are code in [`tools/release.mjs`](./tools/release.mjs),
-run by `make release`, and its `REPO` constant is the one repository identity. The skill is a thin
-entry point: it runs the plan, asks for authorization, and runs the publish command the plan printed.
-There is no generic release config because setup config belongs to adopting projects, not collection
-publication.
-The collection uses one `VERSION` and immutable tags for complete snapshots. Per-skill version stamps
-would create competing version records and cannot improve a pin that already selects the entire tree.
-The script runs from the release checkout's own `tools/`, so the code that publishes `main` is
-`main`'s code, with no installed copy to bootstrap or verify. No release hooks, build system, or
-per-harness copies are needed.
-
-`metadata` normally maps strings to strings under the Agent Skills specification. The sole exception
-is `wkc-skills-release`'s boolean `metadata.internal: true`, because the `skills` installer checks
-`metadata.internal === true` to hide it from public discovery and bulk installation. A string
-`"true"` does not work. Explicit installation by name includes it; visibility does not authorize release writes.
-Codex, Claude Code, and Kiro CLI loaded the boolean in the recorded validation runs.
-Recheck compatibility when metadata or supported harness versions change. If a supported harness rejects the boolean,
-remove it from the one shared source and document that direct bulk installation includes the maintainer skill.
-Unavailable checks are SKIP, not proof of incompatibility. Record results in its validation runbook.
+`wkc-skills-release` publishes this collection only. Its release rules, and the one boolean
+`metadata.internal` exception to string-only `metadata`, are in
+[docs/dev-agents/collection-releases.md](docs/dev-agents/collection-releases.md). Read it before
+changing release tooling, `wkc-skills-release`, or a skill's `metadata`.
 
 ## Skills
 
@@ -231,39 +215,8 @@ merge` follows the merge rule above: run it only when the human asked for the me
 
 ## Porting a skill from agent-toolkit
 
-The skills come from `wilsonkichoi/agent-toolkit` one at a time, one pull request each, so every
-one gets read and validated against its runbook before the next starts. `README.md` holds the roster
-and the order.
-
-1. **Read the source** `SKILL.md` and list its dependencies: runtime contracts, `scripts/*.py`,
-   subagent definitions, `assets/`.
-2. **Rule on each dependency** before writing anything. Inline it into `SKILL.md`, keep it as a
-   sibling `.md` in the skill directory, replace it with a call to the `wkc-tracker` skill, or drop it.
-   A ported script needs a written reason.
-3. **Rewrite, do not copy.** Cut agent-toolkit-specific policy on sight: fork contributions,
-   canonical-repository permission boundaries, version migration sections, tuning knobs like
-   `work_in_progress_limit`. `max_fix_attempts` is the exception, kept as a config field by
-   [ADR-003](docs/dev-agents/adr/ADR-003-review-and-fix-rounds.md). Something re-earns its place only when its
-   absence breaks the skill.
-4. **Apply the conventions above**: the [Skill template](#skill-template), every invocation setting,
-   `agents/openai.yaml`.
-5. **Feed the contract back into `wkc-setup`.** A new config field means editing
-   `skills/wkc-setup/config-template.md` and the `wkc-setup` interview in the same pull request. No skill
-   reads a field `wkc-setup` never writes.
-6. **Validate** under [Validation](#validation): establish baseline coverage with the skill's
-   runbook at `validation/wkc-<name>.md`, including installed invocation on each supported harness where available.
-   Run installer and filesystem checks directly in throwaway projects. A runbook is a
-   numbered list of cases, each with an independent check that decides PASS or FAIL, ending in a
-   report. A case that could not run is SKIP and never PASS: an untested claim recorded as a pass is
-   how a defect reaches a user. Cases needing a second terminal, a second account, or a service with
-   no credentials here are marked `[MANUAL]` and are expected to be skipped on an unattended run.
-   Write one for every skill that gets ported.
-
-   Runbooks are tracked and public on purpose. A reviewer can read what the skill was tested against
-   without installing anything, and disagree with the coverage rather than only with the code. The
-   cost is that a runbook rots like any other checked-in file, which is what pre-commit item 5 is
-   for: a stale runbook is worse than none, because it reports PASS.
-7. **Run the pre-commit checklist**, then branch, push, and open the pull request.
+The skills come from `wilsonkichoi/agent-toolkit` one at a time, one pull request each. Follow
+[docs/dev-agents/porting.md](docs/dev-agents/porting.md) when porting one.
 
 Renaming a skill or adding one that is not on the roster is expected. Update the `README.md` roster
 row in the same pull request and note the rename in `CHANGELOG.md`.
