@@ -41,26 +41,25 @@ Outcome: A person runs `wkc-yolo` on a ticket, a wave, or a milestone and approv
 and authority in one kickoff round. The run works without further questions until it stops or the
 person supplies new input. It merges independently reviewed tickets into its own run branch and
 completes each by its own definition of done there or in a granted non-production environment. It
-verifies the combined branch at the current commit and ends with one run PR for the person's
-review and merge. Production work follows that merge. Delegated planning may change technical
-plans and tickets within product intent and safeguards. Additional execution beyond the approved
-initial scope has a configurable allowance of five tickets by default. Requested changes continue
-on the same branch and PR with completed work preserved. Project and ticket model selections also
-work in manual calls. The default implementation uses the latest Opus (`opus`), followed by
-independent review rounds alternating `gpt-6.1-sol` and fresh latest-Opus contexts. A configured secret
-scan blocks unsafe pushes by either provider in every mode.
+verifies the combined branch at the current commit and ends with one run PR for the person's review
+and merge. Production work follows that merge. Delegated planning may change technical plans and
+tickets within product intent and safeguards. Additional execution beyond the approved initial scope
+has a configurable allowance of five tickets by default. Requested changes continue on the same
+branch and PR with completed work preserved. Project and ticket model selections also work in manual
+calls. The default model pair is the latest Opus (`opus`) then `gpt-6.1-sol`, both at `medium`
+effort: Opus builds, and independent review rounds alternate Sol and fresh latest-Opus contexts. A
+configured secret scan blocks unsafe pushes by either provider in every mode.
 
 Scope: PRD goals 1 and 3, model-selection and subscription constraints, and its Security constraint.
 SPEC Config fields, Ticket execution overrides, Lifecycle, Review verdict, Unattended calls,
 Delegated run authority, `wkc-yolo` run, run config/stores, run branch, continuation ownership,
 Ticket scope and Gate classes, Push check, Security, Failure handling, Grants and Cleanup;
-`push_check`, `run_config`, `max_additional_tickets`, implementation and ordered review model
-configuration; ADR-006, ADR-007, ADR-008, and
-[ADR-009](./adr/ADR-009-run-budgets-continuations-and-model-routing.md). Claude Code coordinates
+`push_check`, `run_config`, `max_additional_tickets`, `execution_models`; ADR-006, ADR-007, ADR-008,
+and [ADR-009](./adr/ADR-009-run-budgets-continuations-and-model-routing.md). Claude Code coordinates
 native Claude agents and subscription-authenticated `codex exec` workers. No `claude -p`, API
-billing fallback, nested workers, or workflow effort default is introduced. There is no
-elapsed-time run budget. `max_fix_attempts`, grant expiry, command timeouts, and existing session
-limits remain. A local-backend run end to end is M6's.
+billing fallback, or nested workers are introduced. There is no elapsed-time run budget.
+`max_fix_attempts`, grant expiry, command timeouts, and existing session limits remain. A
+local-backend run end to end is M6's.
 
 Depends on: M1, M2, M3, M3.1 (`wkc-backlog` invokes `wkc-architect` and `wkc-plan`), PRs #75, #78,
 and #79, and approval and merge of the revised PRD, SPEC, ROADMAP, ADR amendments, and narrow
@@ -89,12 +88,13 @@ Instruction-following checks use only explicitly authorized sessions within the 
   remains draft. Delegated planning cannot relabel added work as initial scope, change the PRD,
   raise the allowance, escalate models, renew grants, or weaken safeguards. Without delegated
   planning, a needed planning change parks its ticket. Duplicate discoveries share one ticket.
-- Project defaults and a ticket override select the expected implementation and review roles.
-  A completed `fixed` round advances the next review slot. Review-only rounds also advance it.
-  Duplicate verdicts and failed launches do not advance it. Approval ends the loop. An interrupted
-  run reconstructs the next slot from recorded verdicts. Later model edits affect the next
-  dispatch and preserve fixing-round usage. The final review-only round still follows the last
-  allowed fixing round. Reviewers use fresh contexts and no implementation conversation.
+- A project pair and a ticket's pair select the expected models: the first builds, and review rounds
+  alternate starting with the second. A completed `fixed` round passes the next round to the other
+  model. Review-only rounds also advance it. Duplicate verdicts and failed launches do not advance
+  it. Approval ends the loop. An interrupted run reconstructs the next model from recorded verdicts.
+  Later model edits affect the next dispatch and preserve fixing-round usage. The final review-only
+  round still follows the last allowed fixing round. Reviewers use fresh contexts and no
+  implementation conversation.
 - Configured manual implementation and review calls honor their model selections while preserving
   one requested step and approval questions. With no routing configuration, existing manual
   behavior remains in the invoking harness. An unsupported coordinator or setting gives a blocked result or

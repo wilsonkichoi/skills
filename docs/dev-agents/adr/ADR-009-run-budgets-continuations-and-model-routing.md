@@ -75,14 +75,19 @@ following contract details for final review:
   Verify outcome comments naming the carrying PR and config refs before retirement so delivery
   can be checked without a deleted config. A closed run can be reopened with fresh authority
   using those records; no old grant is reconstructed as new permission.
-- Project `implementation_model` and `review_models` select a model and optional effort per role.
-  Ticket `## Execution` values replace named roles. The ticket owns its selection: each dispatch
-  reads it, and a run config never freezes it, so anyone who can edit the ticket can change a
-  running run's next model. Setup offers the latest Opus, through the `opus` alias, for build, and
-  Sol 6.1 then the latest Opus for review. The maintainer chose the alias over a pinned ID on
-  2026-10-27, after review found that a Claude Code agent call accepts only an alias. Effort has no
-  collection default. An absent manual route preserves the current harness. Only a person changes
+- Project `execution_models` is one ordered pair of selections, each a harness, model, and effort.
+  The first model builds, and review rounds alternate between the two, starting with the second. A
+  ticket's `## Execution` pair replaces it whole, so a ticket can put GPT first without breaking the
+  turns. The ticket owns its selection: each dispatch reads it, and a run config never freezes it,
+  so anyone who can edit the ticket can change a running run's next model. Setup offers the latest
+  Opus, through the `opus` alias, then Sol 6.1. The maintainer chose the alias over a pinned ID on
+  2026-10-27, after review found that a Claude Code agent call accepts only an alias. Effort
+  defaults to `medium`. An absent manual route preserves the current harness. Only a person changes
   selections; technical delegation is not model escalation.
+- Separate implementation and review fields were replaced by the pair, because a ticket that
+  overrode only the build model could have that model review its own build first. Other
+  harnesses, such as Kiro CLI or OpenCode, join through a SPEC change that defines their dispatch
+  contract.
 - Alternate by completed review round, including confirming rounds. An approval stops the loop.
   Duplicate verdicts and failed launches do not advance it. Every review uses a fresh context,
   even when returning to the implementation model. `max_fix_attempts` keeps its existing meaning.
@@ -125,6 +130,8 @@ subscription access or end-to-end behavior. The model-routing ticket owns that v
 - [Codex non-interactive reference](https://learn.chatgpt.com/docs/developer-commands#codex-exec)
   and local `codex-cli 0.164.0` help, read 2026-10-27: model selection, working directory, stdin,
   JSON output, and last-message output are exposed. No model session was launched.
+  `codex-cli 0.165.0` accepts `--yolo` as an alias of `--dangerously-bypass-approvals-and-sandbox`
+  (checked 2026-10-27 with `--version`, no session).
 - [Claude Code subagents](https://code.claude.com/docs/en/sub-agents) and
   [model configuration](https://code.claude.com/docs/en/model-config), read 2026-10-27: native
   non-fork agents have fresh contexts, model selection is supported, and effort controls depend

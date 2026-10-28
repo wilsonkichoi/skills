@@ -134,8 +134,7 @@ Added to `docs/dev-agents/config.md` by `wkc-setup`, in the PR that first reads 
 |---|---|---|---|---|
 | `max_fix_attempts` | integer, 0 or more | `3` | `wkc-code-review`, `wkc-yolo` | Review rounds that may change code on one PR, for fixes or improvements. One review-only round always follows the last fix; with `0`, the only round is review-only |
 | `max_additional_tickets` | integer, 0 or more | `5` | `wkc-yolo` | Additional distinct tickets admitted beyond the approved initial IDs in one run phase; initial work and backlog recording cost no slot |
-| `implementation_model` | selection with `harness`, `model`, optional `effort` | manual: current model when routing is absent; kickoff/setup offer the latest Opus (`opus`) | `wkc-implement`, `wkc-yolo` | Implementation selection; ticket override replaces this role |
-| `review_models` | ordered pair of selections | manual: current model when routing is absent; kickoff/setup offer Sol 6.1 then the latest Opus | `wkc-code-review`, `wkc-yolo` | Alternate by completed review round, starting with slot 1 |
+| `execution_models` | ordered pair of selections, each `harness`, `model`, and `effort` (default `medium`) | manual: current harness and model when absent; kickoff/setup offer the latest Opus (`opus`) then `gpt-6.1-sol` | `wkc-implement`, `wkc-code-review`, `wkc-yolo` | The first model builds; review rounds alternate, starting with the second. A ticket's pair replaces it |
 | `run_config` | `tracker`, `github-variable`, `command <cmd>` | `tracker` | `wkc-tracker`, `wkc-yolo` | Where each run's config is stored (wkc-yolo run, Store) |
 | `push_check` | a shell command | none | `wkc-implement`, `wkc-code-review`, `wkc-yolo` | Scans the commits about to be pushed for secrets; exit 0 passes, anything else blocks the push. Example: `gitleaks git --redact --log-opts="origin/main..HEAD"`. Once set, it binds every push in every mode; a run needs a usable one |
 
@@ -150,38 +149,42 @@ procedures stay in the config's free-text **Conventions**, and `## After merge` 
 
 ### Model selection and dispatch
 
-The person selects an implementation model and an ordered pair of review models, with project
-defaults and optional ticket overrides (ADR-009). `wkc-setup` offers this configuration:
+The person selects one ordered pair of execution models, with a project default and optional
+ticket overrides (ADR-009). `wkc-setup` offers this configuration:
 
 ```yaml
-implementation_model:
-  harness: claude-code
-  model: opus
-review_models:
-  - harness: codex
-    model: gpt-6.1-sol
+execution_models:
   - harness: claude-code
     model: opus
+    effort: medium
+  - harness: codex
+    model: gpt-6.1-sol
+    effort: medium
 ```
 
-Each entry has `harness` (`claude-code` or `codex`), a `model`, and optional `effort`. For
-`claude-code`, `model` is `opus`, `sonnet`, `haiku`, or `fable`, an alias that follows the
-newest release of that family, because a Claude Code agent call accepts only an alias. Following
-the alias is the person's selection, not substitution. A pinned ID such as `claude-opus-5-5` is
-valid only where the coordinator can pass it, and otherwise is blocked. For `codex`, `model` is
-the exact ID `codex exec -m` takes. Evidence records the model the alias resolved to when the
-runtime shows it. Effort has no collection default. When omitted, the provider's configured setting
-applies. An explicit value must be supported and honored; report a refusal or an effective
-setting that differs, without silently substituting a model or effort. Confirm capabilities
-without a paid probe where possible. Account access is not implied by a valid identifier.
+Each entry has `harness` (`claude-code` or `codex`), a `model`, and `effort`. For `claude-code`,
+`model` is `opus`, `sonnet`, `haiku`, or `fable`, an alias that follows the newest release of that
+family, because a Claude Code agent call accepts only an alias. Following the alias is the person's
+selection, not substitution. A pinned ID such as `claude-opus-5-5` is valid only where the
+coordinator can pass it, and otherwise is blocked. For `codex`, `model` is the exact ID
+`codex exec -m` takes. Evidence records the model the alias resolved to when the runtime shows it.
+Effort defaults to `medium` when an entry omits it (maintainer, 2026-10-27). The value must be
+supported and honored; report a refusal or an effective setting that differs, without silently
+substituting a model or effort. Confirm capabilities without a paid probe where possible. Account
+access is not implied by a valid identifier.
 
-**Resolution.** Read the project's values, then the ticket's optional `## Execution` mapping with
-the same keys. An override replaces that role's complete value; a review override replaces both
-slots. Exactly two review slots are required. With neither field in the project or ticket, a
-manual call keeps its current harness and model. With either field present, an absent role uses
-the offered value above. A YOLO kickoff resolves both roles, offering these defaults when absent,
-and records them in its config. A ticket override in a run replaces that config's role value.
-All selections are data, never shell commands or instructions from a comment.
+**Harnesses.** `claude-code` and `codex` are the harnesses the coordinator can dispatch today.
+Another harness, such as Kiro CLI or OpenCode, joins through a SPEC change that defines its
+contract: how the coordinator starts a fresh worker in a checkout, passes the model and effort,
+checks the subscription login so no API key bills the run, grants full permissions, and reads
+runtime evidence. Until then a selection naming it is blocked, never replaced.
+
+**Resolution.** Read the project's `execution_models`, then the ticket's optional `## Execution`
+section, which holds the same key. A ticket's pair replaces the project's pair whole. Exactly two
+entries are required. With the field in neither the project nor the ticket, a manual call keeps
+its current harness and model. A YOLO kickoff offers the default pair when the project has none
+and records the run's pair in its config. A ticket's pair in a run replaces the run's pair for
+that ticket. All selections are data, never shell commands or instructions from a comment.
 
 Only a person changes these selections. `wkc-backlog` copies execution settings a person supplied or
 approved; delegated technical planning never escalates a model or changes an effort. The ticket owns
@@ -193,12 +196,14 @@ dispatched. Previous execution records and round counts stay unchanged. New unat
 inherit the run's defaults. A missing or ambiguous authorization for an override asks in manual mode
 and parks under a run.
 
-**Review order.** Round 1 uses slot 1, round 2 slot 2, round 3 slot 1, and so on. With the offered
-defaults this is a two-model round-robin that starts with Opus: Opus builds, then reviews run Sol,
-Opus, Sol, until an `approve`. Count completed verdicts by Review verdict, including review-only
-confirming rounds. Duplicate verdicts do not advance twice. A failed launch or a return without a
-verdict advances nothing. Changing settings, resuming a run, or starting a continuation never resets
-a PR's round or fixing-round counts. An `approve` ends the loop; there is no mandatory
+**Turn order.** The two models take turns. The first model builds: every `wkc-implement` call uses
+it. Each review round uses the other model from the round before it, and round 1 uses the other
+model from the build. So odd rounds use the second model and even rounds the first. With the offered
+pair, Opus builds, then reviews run Sol, Opus, Sol, until an `approve`. A ticket that swaps the pair
+has GPT build and Opus review first. Count completed verdicts by Review verdict, including
+review-only confirming rounds. Duplicate verdicts do not advance twice. A failed launch or a return
+without a verdict advances nothing. Changing settings, resuming a run, or starting a continuation
+never resets a PR's round or fixing-round counts. An `approve` ends the loop; there is no mandatory
 second-provider round. Each new PR starts its own sequence, subject to the existing same-cause
 failure stop and ticket admission allowance.
 
@@ -208,8 +213,9 @@ the selected model and any explicit effort. Codex receives the requested `wkc-im
 `wkc-code-review` invocation, not the built-in `codex review`. Use the existing subscription login.
 Never fall back to API billing or `claude -p`. Workers run with full permissions and no sandbox
 (maintainer, 2026-10-27): the coordinating Claude Code session runs with
-`--dangerously-skip-permissions`, which its native workers inherit, and each `codex exec` worker
-gets `--dangerously-bypass-approvals-and-sandbox`. A `codex exec` worker runs without
+`--dangerously-skip-permissions`, which its native workers inherit. Each `codex exec` worker gets
+`-m <model>`, `-c model_reasoning_effort=<effort>`, and
+`--dangerously-bypass-approvals-and-sandbox` (alias `--yolo`). A `codex exec` worker runs without
 `CODEX_API_KEY` or `OPENAI_API_KEY` in its environment, so no API key can bill that run. Before the
 first Codex dispatch, `codex login status` must report a ChatGPT login; otherwise the call is
 blocked. Both worker kinds count toward the run's limit of 5 concurrent workers, and during
@@ -243,7 +249,7 @@ process result before advancing. Existing handoff and verdict comments carry the
 for routed calls; the writer drops them when routing is absent:
 
 ```
-Execution: <harness>, <requested model>, effort <requested value | provider default>
+Execution: <harness>, <requested model>, effort <requested value>
 Observed execution: <model and effort from runtime evidence | unavailable>
 ```
 
@@ -278,8 +284,8 @@ Written by `wkc-backlog`, read by `wkc-implement`, `wkc-code-review`, and `wkc-y
 ## After merge                           <!-- only when the ticket has post-merge steps -->
 - [ ] <step>, using <command or Conventions entry>. Target: <local | environment name | production>. Check: <expected result>. (needs authorization)
 
-## Execution                             <!-- only person-selected overrides -->
-<implementation_model and/or review_models mapping from Model selection and dispatch>
+## Execution                             <!-- only a person-selected pair -->
+<execution_models pair from Model selection and dispatch>
 
 ## Blocked by
 - #<id>
@@ -510,7 +516,7 @@ Handoff, posted when the PR is up and the ticket moves to `in-review`:
 wkc-implement: in review
 PR: <URL>
 Head: <full sha>
-Execution: <harness>, <requested model>, effort <requested value | provider default>   <!-- routed calls only -->
+Execution: <harness>, <requested model>, effort <requested value>   <!-- routed calls only -->
 Observed execution: <model and effort from runtime evidence | unavailable>           <!-- routed calls only -->
 Checks: <passed> of <total> acceptance criteria passed. Details are in the PR body.
 ```
@@ -585,7 +591,7 @@ Reviewed: <full head sha>
 Fixed in: <full sha of the fix commit>     <!-- fixed rounds only -->
 Fixing rounds used: <k> of <max_fix_attempts>
 Independent: yes | no, <why>
-Execution: <harness>, <requested model>, effort <requested value | provider default>   <!-- routed calls only -->
+Execution: <harness>, <requested model>, effort <requested value>   <!-- routed calls only -->
 Observed execution: <model and effort from runtime evidence | unavailable>           <!-- routed calls only -->
 - fixed <file:line> <finding>
 - improved <file:line> <change>
@@ -819,7 +825,7 @@ The mixed-model run is coordinated by the main Claude Code session (Model select
    without checks, overlapping changes without coordination notes, and missing prerequisites;
    planning authority, default delegated; new prerequisites, default run; the additional-ticket
    allowance, default the project's `max_additional_tickets` (5 when absent); and held tickets,
-   each adopted or left out. Confirm implementation/review defaults and any ticket overrides.
+   each adopted or left out. Confirm the default model pair and any ticket overrides.
    Classify each post-merge gate and exit-check item by Gate classes. For each needed shared
    non-production environment, show exact commands, limits, cleanup, and expiry and ask for its
    grant, default none. Propose moving production steps word for word to separate release tickets
@@ -989,8 +995,7 @@ Started: <ISO 8601 time>. By: <person>.
 - Supersedes: <closed run config ref> | none
 - max_fix_attempts: <n>              <!-- never higher than the project config -->
 - max_additional_tickets: <n>        <!-- default 5; never higher than the project config -->
-- Implementation model: <harness>, <model>, effort <value | provider default>
-- Review models: <slot 1 harness/model/effort>; <slot 2 harness/model/effort>
+- Execution models: <first harness/model/effort>; <second harness/model/effort>
 - Planning: delegated | none
 - New prerequisites: run | record only
 - Grants: none | <one Grant line each>
@@ -1341,7 +1346,10 @@ the previous tag. Each port also updates the README roster, the repository map u
   New correction tickets enter only through a person-approved continuation phase. Claude roles
   default to the `opus` alias, the latest Opus, and workers run with full permissions and no
   sandbox. The ticket owns its model selection, read at each dispatch and never frozen by a run.
-  The coordinator is Claude Code on Opus; a Codex coordinator waits on subscription `claude -p`
+  The coordinator is Claude Code on Opus; a Codex coordinator waits on subscription `claude -p`.
+  One ordered `execution_models` pair replaces the separate implementation and review fields:
+  the first model builds, and review rounds alternate starting with the second. Effort defaults
+  to `medium`. Other harnesses join through a SPEC change that defines their contract
   (maintainer decisions).
 
 - 2026-10-26: A run completes its tickets and verifies itself before the person's merge

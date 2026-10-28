@@ -67,8 +67,9 @@ Ranked. Ranking is importance, not delivery order; the ROADMAP sets the order.
    branch, build, stay current with `main`, resolve conflicts, run the acceptance checks, and hand
    off for review with the tracker updated. `wkc-code-review` judges that pull request against its
    ticket in a fresh context, fixes the blocking findings it raised, and applies worthwhile in-scope
-   improvements, with each change reviewed again by a fresh context. Projects can select the
-   implementation model and two alternating review models. Each ticket can override those roles.
+   improvements, with each change reviewed again by a fresh context. Projects can select an
+   ordered pair of models: the first builds, and review rounds alternate between the two, starting
+   with the second. Each ticket can override the pair.
    The same selection works for manual calls and unattended runs. A configured manual call still
    performs only its requested step and keeps its approval boundaries (decided 2026-10-27).
    After the merge, `wkc-implement
@@ -175,15 +176,16 @@ Ranked. Ranking is importance, not delivery order; the ROADMAP sets the order.
   count against the same concurrency and session limits. Workers cannot delegate or launch another
   harness ([token usage](./rules/token-usage.md), [AI harness testing](./rules/ai-harness-testing.md);
   decided 2026-10-27).
-- **Model selection** (decided 2026-10-27): the default implementation model is the latest Opus,
-  selected by the `opus` alias. Reviews alternate `gpt-6.1-sol` and a fresh latest-Opus context,
-  beginning with Sol. The alias follows each new Opus release by the maintainer's choice; that is
-  their selection, not automatic substitution. A pinned ID such as `claude-opus-5-5` is valid where
-  the harness can honor it. Approval ends the loop. Effort is optional, with no workflow default
-  selected. A provider's configured behavior applies when effort is omitted. Project and ticket
+- **Model selection** (decided 2026-10-27): the default pair is the latest Opus, selected by the
+  `opus` alias, then `gpt-6.1-sol`. Opus builds, and reviews alternate `gpt-6.1-sol` and a fresh
+  latest-Opus context, beginning with Sol. The alias follows each new Opus release by the
+  maintainer's choice; that is their selection, not automatic substitution. A pinned ID such as
+  `claude-opus-5-5` is valid where the harness can honor it. Approval ends the loop. Effort defaults
+  to `medium` for both models, and a selection may name another supported value. Project and ticket
   selections may change the next dispatch. The ticket owns its selection, and a run never freezes
   it. They do not reset review limits or grant unattended authority. Projects without routing
-  configuration keep their existing manual behavior in Claude Code, Codex, or Kiro CLI.
+  configuration keep their existing manual behavior in Claude Code, Codex, or Kiro CLI. More
+  harnesses, such as Kiro CLI or OpenCode, may join the routed workflow later.
 - **Subscription execution** (maintainer, 2026-10-27): Claude Code on the latest Opus coordinates
   the mixed-model workflow. Claude work uses its native agents. Codex work uses `codex exec` with
   the user's existing subscription login. The maintainer reports that `codex exec` works and
@@ -274,14 +276,14 @@ and integration validation remain downstream work.
 ## Changes
 
 - 2026-10-27: Added a default allowance of five additional executed tickets beyond the approved
-  initial scope, same-PR review continuations that preserve completed work, and project/ticket
-  model selection for manual and unattended work. Recorded Claude Code coordination, subscription
-  execution, alternating independent reviews, optional effort, and the narrow cross-harness
-  exception (maintainer decisions). Replaced the blanket cross-harness constraint and unbounded
-  scope-expansion wording. No elapsed-time run budget is added. Review: SPEC Config fields,
-  Ticket, Review verdict, Unattended calls, wkc-yolo run, Run config/stores, Failure handling,
-  Security; ROADMAP M4; ADR-003, ADR-005, ADR-007, ADR-008, ADR-009; #74, #76, #77, #80 and the
-  model-routing implementation ticket. Status is draft pending final review.
+  initial scope, same-PR review continuations that preserve completed work, and project/ticket model
+  selection for manual and unattended work. Recorded Claude Code coordination, subscription
+  execution, alternating independent reviews, a `medium` effort default, and the narrow
+  cross-harness exception (maintainer decisions). Replaced the blanket cross-harness constraint and
+  unbounded scope-expansion wording. No elapsed-time run budget is added. Review: SPEC Config
+  fields, Ticket, Review verdict, Unattended calls, wkc-yolo run, Run config/stores, Failure
+  handling, Security; ROADMAP M4; ADR-003, ADR-005, ADR-007, ADR-008, ADR-009; #74, #76, #77, #80
+  and the model-routing implementation ticket. Status is draft pending final review.
 
 - 2026-10-26: A run completes each ticket by its own definition of done on the run branch or in a
   non-production environment granted at kickoff, verifies the combined run branch with evidence tied
