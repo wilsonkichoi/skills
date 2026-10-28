@@ -11,6 +11,7 @@ roadmap_file: docs/dev-agents/ROADMAP.md
 test_command: "npm test"                    # run before handing work back
 max_fix_attempts: 3                         # integer, 0 or more; default 3. Review rounds that may change code on one PR
 run_config: tracker                         # tracker / github-variable / command <cmd>; default tracker. Where wkc-yolo stores run configs
+push_check: 'gitleaks git --redact --log-opts="origin/main..HEAD"'  # shell command; default none. Scans the commits about to be pushed for secrets; exit 0 passes, anything else blocks the push
 ---
 
 # Project development conventions

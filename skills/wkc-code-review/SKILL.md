@@ -16,7 +16,7 @@ disable-model-invocation: false
   on a person's request. A model runs it only when a person or `wkc-yolo` asked for that work.
   `wkc-implement` never starts it, because the review must not run in the context that wrote the code.
 - **Dependencies:** `docs/dev-agents/config.md`: `max_fix_attempts`, `issue_tracker`,
-  `test_command`, `context_file`, `rules_dir`, `prd_file`, `spec_file`, and the **Conventions**
+  `test_command`, `push_check`, `context_file`, `rules_dir`, `prd_file`, `spec_file`, and the **Conventions**
   body. The `wkc-tracker` skill for every ticket read and write: `show`, `list`, and `comment`.
   `git`, and `gh` against a GitHub remote. The `wkc-backlog` skill for work found out of scope.
 - **Input:** a pull request (number or URL) or a ticket id, which is the preferred input: tickets
@@ -114,8 +114,13 @@ Check the implementation and the tests, in this order:
 - **Acceptance criteria**, each at its stated bar. Name any criterion with no supporting change.
   `## After merge` steps are not judged here.
 - **SPEC compliance**: a deviation from a cited contract is a finding even when the code works.
-- **Correctness** of the code itself, including error paths and security where the diff touches
-  input, secrets, or permissions.
+- **Correctness** of the code itself, including error paths.
+- **Security**, in every round, whatever `push_check` reported: a credential or secret in the diff
+  or in any commit of the pull request (`git log -p origin/<baseRefName>..H`), an authentication or
+  authorization defect, sensitive data logged, stored, or sent where it should not be, and network
+  calls the ticket does not need. A secret is named by its file and line, never by its value.
+  Name each new or changed dependency in a verdict line: a finding when the ticket does not need it,
+  otherwise a `suggestion` line saying why the ticket needs it.
 - **Tests** check the specified behaviour and its important edge cases. A weakened or deleted
   assertion is a finding. A correct test failing on a code defect is evidence for that defect, not a
   separate test defect. A test that contradicts the SPEC is wrong, and correcting it is a fix.
@@ -209,8 +214,19 @@ wkc-code-review round <n> on <PR URL>, reviewed <full head sha>.
 - <file:line> <finding>
 ```
 
-List every fix and improvement in its body. Push it to the pull request's branch with `git push
-origin HEAD:refs/heads/<headRefName>`, never with force. A refused push means the head moved: post
+List every fix and improvement in its body.
+
+**Push check.** Before every push to a remote, run `push_check` in the worktree holding the commit.
+This binds every session that runs this skill: a person's, a native subagent, `codex exec`, or
+`claude -p`. Never pass `--no-verify`, disable a hook, or skip the check. A non-zero exit blocks
+the push. Remove the finding from the round's unpushed commit, run the check again, and push only
+on a pass. Name the file, line, and rule, never the value, in reports, comments, and commit
+messages. The same finding failing again with no new evidence stops the round: post nothing and
+report it; under a run, park. With no `push_check`, a manual push goes ahead and the report warns
+that no push check is configured; under a run, park instead of pushing.
+
+Push the commit to the pull request's branch with `git push origin HEAD:refs/heads/<headRefName>`,
+never with force. A refused push means the head moved: post
 nothing and report it. Confirm the new head with `gh pr view <n> --json headRefOid`. Then, for each
 related fix allowed by section 3's scope rule, update the pull request body's **What changed** to
 name the fix and why it belongs, preserving the rest of the body. With no pull request, push the
