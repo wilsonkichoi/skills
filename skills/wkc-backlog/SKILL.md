@@ -293,9 +293,9 @@ Needs: <who must answer>
 such as a production step, runs only for a ticket the config's `Moved by the person:` line names,
 and only as that line says. Any other such move parks that ticket with `Needs: a person` and
 changes nothing. For a move to a release ticket, create one at `backlog`, blocked by and related to
-the original. The moved text goes word for word into its `## After merge`, never into its
-criteria, and into its **Notes** with the original's id. Then `edit` the original to drop
-that text and list the release ticket under `## Related`. A move to the run PR's review checklist
+the original. Copy the moved text word for word into both its `## After merge` and its
+**Notes**, never into its criteria. Then `edit` the original to drop that text and list the
+release ticket under `## Related`. A move to the run PR's review checklist
 drops the text from the original and returns it to `wkc-yolo`. Post the decision on the original,
 with a `Source:` that names the `Moved by the person:` line.
 

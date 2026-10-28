@@ -525,3 +525,25 @@ Direct checks: case 36 PASS, both template pairs equal the SPEC's; **Dependencie
 | S4 | 39, ticket #10 | PASS | `run_config: command <runcfg.sh>`. `wkc-backlog the Discovered: comment on #10 --run cfg-1793044093`: the command log shows `get cfg-1793044093` at 19:55:52Z. Created #14 at `backlog` with the evidence lines copied into **Notes**; #10 blocked by #14, still `in-progress` and held by `wilsonkichoi`; nothing moved to `ready`; no question. Issue count 9 to 10. |
 
 Not rerun: cases 37 and 38. Case 39 repeats case 37's change under the new trigger.
+
+## Dated report: 2026-10-28, run completion (#80)
+
+Scope: `Target:` on `## After merge` steps and the `Moved by the person:` rule under a run. Selected: cases 40 to 42 in
+Claude Code; case 36 as a direct check. Candidates `d2ce5e1` (S5) and `d2de36a` (S6), each exported with `git archive`
+and installed with `skills` 1.7.4. Codex and Kiro CLI: SKIP, no session in those harnesses.
+
+Fixture: `wilsonkichoi/wkc-run-finish-fixture-80`, as in the `wkc-implement` report of this date. Run config #15 names
+#12 on `Moved by the person:`; #38 (`Continues: #16`) names #37. #11, #12, and #37 each carry the same production
+`## After merge` step. Sessions: S5 and S6 of the change's 6, Claude Code `general-purpose` subagents on Sonnet
+(`sonnet`, effort `medium`), reading the installed `SKILL.md` by hand.
+
+Direct check: case 36 PASS, both unattended blocks equal the SPEC's. `wc -l` is 302, over 250: the requirement-move
+paragraph (9 lines) carries a SPEC contract the section cannot shed.
+
+| Session | Case | Result | Evidence |
+|---|---|---|---|
+| S5 | 40 | PASS | New ticket #35 at `backlog`; its one `## After merge` step reads `Target: staging`. |
+| S5, turn 2 | 41, #11 | PASS | One `Parked (wkc-yolo):` comment, `Needs: a person`; the body equals the tester's copy by `diff`; issue count 17 before and after. |
+| S5, turn 3, `d2ce5e1` | 42, #12 | PASS, with a defect | Release ticket #36 at `backlog`, blocked by #12, the step word for word in **Notes**; #12 lost the step and lists #36; one Decision citing the line. But #36 carried the release as an acceptance criterion, a pre-merge check that runs production, without `(needs authorization)`. Fixed in `d2de36a`: the moved text goes into the release ticket's `## After merge`, never its criteria. |
+| S6, `d2de36a` | 42, #37 | FAIL | Release ticket #39 at `backlog`, blocked by #37, the step word for word in `## After merge`, no criteria; #37 lost the step; one Decision citing #38's line. But #39's **Notes** say only "Moved from #37 by the person", not the text: the wording "into its **Notes** with the original's id" read two ways. Fixed after S6: "Copy the moved text word for word into both its `## After merge` and its **Notes**, never into its criteria." That wording is not run: the change has used its 6 sessions. |
+

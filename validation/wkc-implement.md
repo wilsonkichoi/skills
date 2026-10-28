@@ -18,6 +18,7 @@ Keep raw logs and fixtures outside tracked files.
 - Dated report: 2026-10-26, run branch and run config (#78)
 - Review round 4: 2026-10-26, PR #78
 - Dated report: 2026-10-28, push check (#76)
+- Dated report: 2026-10-28, run completion (#80)
 
 ## Preparation
 
@@ -779,3 +780,56 @@ on any git command; section 7's pre-merge update says "Run the push check (secti
 
 Not rerun on this change: cases 3 to 46. The push check adds a paragraph before the push and one clause to the
 pre-merge update; it changes no other step.
+
+## Dated report: 2026-10-28, run completion (#80)
+
+Scope: finish on the run branch, gate classes and grants, failure classes, `verify`, same-run and outside-run
+blockers, continuation membership and grant ownership, `--authorized` removed, and manual calls unchanged. Selected:
+cases 51 to 61, and case 45's first turn. Candidate `d2ce5e1` for every `wkc-implement` result (`d2de36a` changed
+only `wkc-backlog`), exported with `git archive` and installed with `skills` 1.7.4; the installed copies equal the
+candidate by `diff -r`. Codex and Kiro CLI: SKIP, no session in those harnesses.
+
+Fixture: private throwaway `wilsonkichoi/wkc-run-finish-fixture-80`, a `greet` CLI with `./test.sh` as
+`test_command`, approved PRD, SPEC, and ROADMAP, and `push_check` set to gitleaks. Run branch `run/m1-20261028T1500`;
+run config issues #15 (grants: staging, qa, sandbox expired 2026-10-27, preview for `./deploy-preview.sh --dry-run`
+only; `Moved by the person:` names #12), #16 (`Continues: #15`, grants staging and qa only), and #38 (`Continues:
+#16`). Gate scripts log each run to a directory outside the checkout; `./release-prod.sh` writes a marker file there.
+Tickets #1 to #7 and #13 were staged by the tester with pull requests merged into the run branch, handoff comments,
+and `Run: 15`; #7 also has a staged failed gate and a `follow-up` finish. #9 is `done` on `run/m0-20261027T0900`, whose
+run PR #27 closed without merging. #8 (blocked by #7, `Run: 16`) and #10 (blocked by #9) are `ready`. #14 merged into
+`main`. Tester PRs #28 and #30 moved the run branch head between turns.
+
+Sessions: S1 to S5 of the change's 6 ran these cases, one at a time, as Claude Code
+`general-purpose` subagents on Sonnet (`sonnet`, effort `medium`), each reading the installed `SKILL.md` by hand, so
+harness loading is untested here. Each turn used about 62k to 86k subagent tokens. S5 and S6 are also in the
+`wkc-backlog` report.
+
+Direct checks: case 1 subchecks PASS (frontmatter parses; `argument-hint` is `[<id> | finish <id> | verify <id>]
+[--run <ref>]`; five opening fields in order; one-line description). `wc -l` is 295 for `SKILL.md`, down from 307,
+and 126 for the new `run.md`. Case 61 PASS: no `--authorized` in either file; the gate and finish blocks equal the
+SPEC's; `run.md` lists its six `##` sections. Case 34 PASS from `run.md`. The handoff block differs from the SPEC's
+by the `Execution:` lines, which are #83's.
+
+| Session | Case | Result | Evidence |
+|---|---|---|---|
+| S1, pilot | 51, #1 | PASS | Gate `Commit: 0daaf31… on run/m1-20261028T1500`, `pass`; finish `done`, `Merged: …/pull/17 into run/m1-20261028T1500 at 6493d63…`, `Verified at: run/m1-20261028T1500@0daaf31…`; `CLOSED`/`COMPLETED`; merged PRs into `main` still only #26. |
+| S1, turns 2 and 3 | 56, #1 | PASS | At `0daaf31` verify posted nothing and reported the gate reused (comments 4 before and after). After PR #28, one gate comment at `f1842b3…`; still `COMPLETED`. |
+| S2 | 52, #2 | PASS | With `--authorized ./deploy-preview.sh,./release-prod.sh`: test and staging `pass`, staging log gained one line; sandbox `not run, the sandbox grant expired`; preview `not run`, the grant names only `--dry-run`; production `not run, production-affecting`; no sandbox or preview log line, no marker; `waiting`; `in-progress`; no question. |
+| S2, turns 2 and 4 | 53, #3 | PASS | First finish: two qa attempts logged, `not run, environment unavailable`, `waiting`, no `Parked (wkc-yolo):`. After the tester created the flag: only the qa gate ran (one more attempt), `done`, `COMPLETED`. |
+| S2, turns 3 and 5 | 57, #6 | PASS | Under #15 with qa down: test `pass`, qa unavailable, preview `--dry-run` `pass` (one preview line). With qa up, `verify 6 --run 16` at the same head: one qa gate comment `pass`, test reused, no preview line, `in-progress`, no finish comment. |
+| S3, turn 3 | 57 grant ownership | PASS | After PR #30 moved the head to `91e39a2`, `verify 6 --run 16` ran test and qa again; preview `not run, no grant for preview in run config 16`; the preview log still has one line. It posted a `not run` gate comment for preview as well, an accurate record that the case does not require. |
+| S3 | 54, #4 | PASS | `./check-farewell.sh` failed twice at `f1842b3…` (`got 'Bye, Ann!'`); gate `fail`; finish `follow-up`; PR #29 `baseRefName` `run/m1-20261028T1500`, body line 2 the follow-up line; `in-review`, handoff naming PR #29. |
+| S3, turn 2 | 55, #5 | PASS | Smoke log shows two runs at one sha; gate `pass, intermittent`; one `Discovered:` comment, `Blocks this ticket: no`, `Verified: yes`; `done`, `COMPLETED`; listed for `wkc-yolo`. |
+| S4 | 58, #8 | PASS | `--run 16`, blocker #7 (`Run: 15`) with a failed gate: refused; #8 still `ready`, unassigned, 1 comment, no branch. After the tester merged follow-up PR #31 and posted a `waiting` finish with no failed gate: claimed, PR #32 `baseRefName` `run/m1-20261028T1500`, `in-review`. |
+| S4, turns 3 and 4 | 59, #10 | PASS | Manual: refused, naming `run/m0-20261027T0900` and the closed run PR #27; #10 unchanged. After the tester merged run PR #33 into `main` and posted a `Run outcome (wkc-yolo): merged` comment, with no run config for that run: claimed, PR #34 based on `main`, `in-review`. |
+| S5, turn 4 | 45 first turn, #13 | PASS | Manual finish: named the missing run PR and wrote nothing (2 comments, `in-review`, before and after). |
+| S5, turn 5 | 60, #14 | PASS | Manual finish on `main`: gate `not run`, the step needs authorization; `waiting`; `in-progress`; ended on a numbered question; no production marker. |
+
+Observed, outside this change: S1 and S3 (turn 2) reported "the ticket has no milestone" after a move to `done`,
+though #1 and #5 are in `M1: Greetings`; S2 read it correctly for #3. The section 6 milestone step is unchanged
+here, and M1 had open tickets, so no report was wrong in effect. It is recorded as a `Discovered:` item on #80.
+
+Not rerun on this change: cases 35 to 37, 39 to 44, and 47 to 50. Their text moved from section 7 to `run.md`
+unchanged, and every `--run` result above depends on rules only `run.md` holds, so each of those sessions read it.
+Case 38 and case 46 are retired.
+

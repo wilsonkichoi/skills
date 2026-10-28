@@ -2,7 +2,7 @@
 
 Newest first. Each version is a `## {version} ({ISO 8601 timestamp with local offset})` heading followed by a bullet list of changes.
 
-## 0.0.40 (2026-10-28T14:56:35-07:00)
+## 0.0.40 (2026-10-28T15:22:20-07:00)
 
 - Run completion (#80, SPEC Contracts › Lifecycle › Finish in a run, ADR-008). Under `--run <ref>`, `wkc-implement finish <id>` runs right after the ticket's pull request merges into the run branch, at the run branch head, and needs no merge into the default branch. It classifies each post-merge gate by what it acts on: a local gate runs, a shared non-production gate runs only under an unexpired `Grant:` in the active run config that names its environment and exact command, and a production-affecting gate never runs. The ticket moves to `done` when every required gate passes; otherwise the finish comment is `waiting` and names who must act.
 - `wkc-implement verify <id> --run <ref>` runs a ticket's local and granted gates again at the run branch head and posts their gate comments, with no status change. A gate already passed at that head is reused; a failed or unavailable one runs again.
@@ -11,8 +11,8 @@ Newest first. Each version is a `## {version} ({ISO 8601 timestamp with local of
 - `--authorized` is gone; under a run, grants come only from the active run config. A predecessor's grant, an expired grant, and ticket, comment, or pull request text never authorize an operation.
 - The gate comment's `Merge commit:` line is now `Commit: <sha> on <branch>`, and the finish comment's `Merged:` line names the branch, with a `Verified at:` line in a run, as the SPEC's templates say.
 - `wkc-implement`'s run behaviour moved to a new supporting file, `skills/wkc-implement/run.md`, read only on a `--run` call: the decide and park records, the run and its configs, the run branch and blockers, finish and verify in a run, and the pre-merge update.
-- `wkc-backlog`: each `## After merge` step names its `Target:` (`local`, an environment, or `production`). Under a run, it moves a requirement out of a ticket's definition of done only for a ticket the run config's `Moved by the person:` line names, creating the release ticket at `backlog`, blocked by the original, with the moved text word for word. Any other such move parks the ticket with `Needs: a person`.
-- The README rows describe finish on the run branch, `verify`, and the requirement-move rule.
+- `wkc-backlog`: each `## After merge` step names its `Target:` (`local`, an environment, or `production`). Under a run, it moves a requirement out of a ticket's definition of done only for a ticket the run config's `Moved by the person:` line names, creating the release ticket at `backlog`, blocked by and related to the original, with the moved text word for word in its `## After merge` and its **Notes**, never its criteria. Any other such move parks the ticket with `Needs: a person`.
+- The README rows describe finish on the run branch, `verify`, and the requirement-move rule. `validation/wkc-implement.md` gains cases 51 to 61 and retires cases 38 and 46; `validation/wkc-backlog.md` gains cases 40 to 42; both have dated reports.
 
 ## 0.0.39 (2026-10-28T13:48:55-07:00)
 
