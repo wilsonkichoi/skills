@@ -76,7 +76,7 @@ following contract details for final review:
   can be checked without a deleted config. A closed run can be reopened with fresh authority
   using those records; no old grant is reconstructed as new permission.
 - Project `execution_models` is one ordered pair of selections, each a harness, model, and effort.
-  The first model builds, and review rounds alternate between the two, starting with the second. A
+  The first model builds, and each review uses the other model from the preceding step (below). A
   ticket's `## Execution` pair replaces it whole, so a ticket can put GPT first without breaking the
   turns. The ticket owns its selection: each dispatch reads it, and a run config never freezes it,
   so anyone who can edit the ticket can change a running run's next model. Setup offers the latest

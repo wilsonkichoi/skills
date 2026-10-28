@@ -229,7 +229,8 @@ fixed verdict under the selection that did that work before another round starts
 
 **Coordinator.** The main Claude Code session, running the latest Opus, dispatches the selected
 worker: a native Claude agent or a fresh `codex exec` process in the intended checkout. It passes
-the selected model and any explicit effort. Codex receives the requested `wkc-implement` or
+the selected model and the resolved effort, `medium` when the entry omits it, to both worker
+kinds. Codex receives the requested `wkc-implement` or
 `wkc-code-review` invocation, not the built-in `codex review`. Use the existing subscription login.
 Never fall back to API billing or `claude -p`. Workers run with full permissions and no sandbox
 (maintainer, 2026-10-27): the coordinating Claude Code session runs with
@@ -1018,6 +1019,13 @@ record stops continuation. Continue only one active phase at a time; link the ne
 PR with a verified comment before dispatch. Resume from the latest such continuation, not stale
 memory. An older config supplied after renewal reports the active ref and starts no worker.
 
+The phase comment on the run PR, one per continuation:
+
+```
+wkc-yolo phase: <active run config ref>
+Continues: <prior config ref>
+```
+
 **Run config and allowance.** A config records one phase's authorized limits and initial IDs,
 never mutable counters. Count distinct additional tickets with that config's verified `Run:`
 comment that are absent from its initial IDs. Parked or transferred tickets still count. Resuming
@@ -1380,8 +1388,21 @@ the previous tag. Each port also updates the README roster, the repository map u
 - Claude Code lowers an unsupported effort to the highest supported level, and
   `CLAUDE_CODE_EFFORT_LEVEL` overrides a subagent's effort. Implementation must report either
   case as a mismatch between requested and effective effort.
+- The Claude Code documentation shows the permission mode only to the person, in the status bar.
+  It names no source a skill can read, and the person can leave bypass mode during the session.
+  Settings files show `sandbox.enabled` and `permissions.disableBypassPermissionsMode`, but not a
+  `--settings` or `--dangerously-skip-permissions` launch flag. Implementation must name the source
+  that establishes the coordinator's mode and sandbox state before dispatch. What the coordinator
+  does when no source can is an open decision: block routed dispatch, or dispatch and record the
+  mode as unverified.
 
 ## Changes
+
+- 2026-10-28: Planning review of `5677c39`: the coordinator passes the resolved effort, `medium`
+  by default, to native workers as well as Codex, replacing "any explicit effort". The run PR's
+  continuation comment gets a literal template, `wkc-yolo phase:`. Open unknowns add the
+  coordinator's unobservable permission mode and sandbox state. Review tickets #74 and #83. The
+  documents remain draft.
 
 - 2026-10-27: Planning review of `73e059f`: select the next reviewer from the preceding completed
   step instead of odd/even verdict numbers; record pre-merge update execution for resume. Honor

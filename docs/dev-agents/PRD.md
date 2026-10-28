@@ -68,8 +68,9 @@ Ranked. Ranking is importance, not delivery order; the ROADMAP sets the order.
    off for review with the tracker updated. `wkc-code-review` judges that pull request against its
    ticket in a fresh context, fixes the blocking findings it raised, and applies worthwhile in-scope
    improvements, with each change reviewed again by a fresh context. Projects can select an
-   ordered pair of models: the first builds, and review rounds alternate between the two, starting
-   with the second. Each ticket can override the pair.
+   ordered pair of models: the first builds, and each review uses the other model from the
+   preceding build, update, or review step, so the first review uses the second. Each ticket can
+   override the pair.
    The same selection works for manual calls and unattended runs. A configured manual call still
    performs only its requested step and keeps its approval boundaries (decided 2026-10-27).
    After the merge, `wkc-implement
@@ -177,7 +178,8 @@ Ranked. Ranking is importance, not delivery order; the ROADMAP sets the order.
   harness ([token usage](./rules/token-usage.md), [AI harness testing](./rules/ai-harness-testing.md);
   decided 2026-10-27).
 - **Model selection** (decided 2026-10-27): the default pair is the latest Opus, selected by the
-  `opus` alias, then `gpt-6.1-sol`. Opus builds, and reviews alternate `gpt-6.1-sol` and a fresh
+  `opus` alias, then `gpt-6.1-sol`. Opus builds, and each review uses the other model from the
+  preceding step: with no update in between, reviews alternate `gpt-6.1-sol` and a fresh
   latest-Opus context, beginning with Sol. The alias follows each new Opus release by the
   maintainer's choice; that is their selection, not automatic substitution. A pinned ID such as
   `claude-opus-5-5` is valid where the harness can honor it. Approval ends the loop. Effort defaults
@@ -274,6 +276,10 @@ in [ADR-009](./adr/ADR-009-run-budgets-continuations-and-model-routing.md). Thei
 and integration validation remain downstream work.
 
 ## Changes
+
+- 2026-10-28: Planning review of `5677c39`. Goal 1 and the Model selection constraint state the
+  preceding-step reviewer rule instead of unconditional alternation, which a pre-merge update
+  breaks. Status stays draft.
 
 - 2026-10-27: Added a default allowance of five additional executed tickets beyond the approved
   initial scope, same-PR review continuations that preserve completed work, and project/ticket model

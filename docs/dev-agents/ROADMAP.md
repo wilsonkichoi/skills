@@ -47,7 +47,8 @@ tickets within product intent and safeguards. Additional execution beyond the ap
 has a configurable allowance of five tickets by default. Requested changes continue on the same
 branch and PR with completed work preserved. Project and ticket model selections also work in manual
 calls. The default model pair is the latest Opus (`opus`) then `gpt-6.1-sol`, both at `medium`
-effort: Opus builds, and independent review rounds alternate Sol and fresh latest-Opus contexts. A
+effort: Opus builds, and each independent review uses the other model from the preceding build,
+update, or review step, starting with Sol, then a fresh latest-Opus context. A
 configured secret scan blocks unsafe pushes by either provider in every mode.
 
 Scope: PRD goals 1 and 3, model-selection and subscription constraints, and its Security constraint.
@@ -88,8 +89,8 @@ Instruction-following checks use only explicitly authorized sessions within the 
   remains draft. Delegated planning cannot relabel added work as initial scope, change the PRD,
   raise the allowance, escalate models, renew grants, or weaken safeguards. Without delegated
   planning, a needed planning change parks its ticket. Duplicate discoveries share one ticket.
-- A project pair and a ticket's pair select the expected models: the first builds, and review rounds
-  alternate starting with the second. A completed `fixed` round passes the next round to the other
+- A project pair and a ticket's pair select the expected models: the first builds, and each review
+  uses the other model from the preceding completed step. A completed `fixed` round passes the next round to the other
   model. Review-only rounds also advance it. Duplicate verdicts and failed launches do not advance
   it. Approval ends the loop. An interrupted run reconstructs the next model from recorded
   build/update and review steps. A pre-merge Opus update after Sol approval is reviewed by Sol,
@@ -149,6 +150,9 @@ Depends on: M2, because it changes `wkc-implement`; M4, because it covers `wkc-y
 Exit check: on a local-tracker fixture with a GitHub remote, each `wkc-tracker` write is one `chore: wkc-tracker <verb> <id>` commit holding only that ticket's file, with other staged and unstaged changes unchanged and nothing pushed. `wkc-implement` branches before it claims, so the claim and handoff commits are on the ticket's branch and not on the default branch, and it stops on an unpushed `issues_dir` commit on the default branch. After the merge, a rerun makes its post-merge writes on `<type>/<id>-finish` from the merged default branch, and the ticket file on the default branch reads `done` once that branch lands. With no remote, the post-merge writes are commits on the local default branch. A `wkc-yolo` run of two local tickets runs them one at a time and reaches `done` on the run branch before readiness. It pushes the ticket-file commits and opens a draft run PR before verification. Verification and cleanup evidence, an intermittent check's `Discovered:` item included, are read back from PR comments, with the checked HEAD unchanged, and that item's ticket is filed only after the run PR. A later ticket-file or code commit invalidates that evidence. Both tickets reach the default branch only after the person merges the run PR. Ticket files are checked with a YAML parser and `git log`, not from the report. The `wkc-tracker` and `wkc-implement` runbooks cover these cases.
 
 ## Changes
+
+- 2026-10-28: Planning review of `5677c39`. M4's outcome and routing exit check state the
+  preceding-step reviewer rule instead of unconditional alternation. Still draft.
 
 - 2026-10-27: Expanded M4 for the maintainer's confirmed additional-ticket allowance, same-PR
   review continuations, and project/ticket model selection in manual and unattended calls.
