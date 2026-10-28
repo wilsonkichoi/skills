@@ -102,7 +102,7 @@ Give new tickets draft ids such as T1 and T2, kept apart from tracker ids. A wor
 - [ ] A person confirms <what>.          <!-- only when a person's sign-off is part of done -->
 
 ## After merge                           <!-- only when the ticket has post-merge steps -->
-- [ ] <step>, using <command or Conventions entry>. Check: <expected result>. (needs authorization)
+- [ ] <step>, using <command or Conventions entry>. Target: <local | environment name | production>. Check: <expected result>. (needs authorization)
 
 ## Blocked by
 - #<id>
@@ -152,12 +152,16 @@ Options: <each with its gains and costs>. Who decides: a person | `wkc-architect
   happen at a different time: an infra change that must land first becomes a blocker ticket; a
   release bundling several tickets becomes its own ticket blocked by them. Testing and validating a
   change never become their own ticket. Otherwise one ticket is one outcome, sized for one pull request.
+  Moving a requirement out of an existing ticket changes its definition of done, which only the
+  person approves, in a run too.
 - Criteria someone else can check: a command and its output, a request and its response, a file,
   or a manual check for what only a person can judge. Broad criteria, like error handling, list
   cases, but never invent consequential behaviour to add one.
 - Integration tests that can run before merge are acceptance criteria. Tests that need the merged
   or deployed build are `## After merge` checks.
 - Every step that publishes, deploys, or touches a shared environment ends with `(needs authorization)`.
+- `Target:` names what a step acts on, so a run can classify it: `local`, the environment's name,
+  or `production`.
 - Later skills judge choices against **Why**. With no PRD or SPEC behind a change, cite the request.
 - A ticket that sets up the project or its tooling is done when that tooling is shown working, such
   as its test runner passing a real test, not when the files exist.
@@ -284,5 +288,14 @@ Parked (wkc-yolo): <question>
 Open because: <what the documents and limits leave undecided>
 Needs: <who must answer>
 ```
+
+**Moving a requirement.** A change that moves a requirement out of a ticket's definition of done,
+such as a production step, runs only for a ticket the config's `Moved by the person:` line names,
+and only as that line says. Any other such move parks that ticket with `Needs: a person` and
+changes nothing. For a move to a release ticket, create one at `backlog`, blocked by and related to
+the original, with the moved text word for word in its **Notes**. Then `edit` the original to drop
+that text and list the release ticket under `## Related`. A move to the run PR's review checklist
+drops the text from the original and returns it to `wkc-yolo`. Post the decision on the original,
+with a `Source:` that names the `Moved by the person:` line.
 
 Return what section 6 reports.
