@@ -2,6 +2,8 @@
 
 Date: 2026-10-20. Status: accepted, amended by [ADR-005](./ADR-005-review-rounds-improve-code.md) (suggestions, counting, independence)
 
+Proposed amendment: [ADR-009](./ADR-009-run-budgets-continuations-and-model-routing.md) (model selection and alternating rounds).
+
 ## Context
 
 PR #30 dropped `wkc-fix`. Correcting review findings was left to the `wkc-implement` port, with a

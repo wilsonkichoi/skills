@@ -1,11 +1,15 @@
 # wkc- skills ROADMAP
 
-Status: approved (2026-10-26)
+Status: draft
 
-Planned from the [SPEC](./SPEC.md), approved 2026-10-22. Every milestone needs the PRD, SPEC, ADRs, and this ROADMAP merged to `main` first:
+Updated from the [SPEC](./SPEC.md), previously approved 2026-10-26, and the maintainer's confirmed
+2026-10-27 requirements. The revised planning documents are drafts pending final review. Every
+milestone needs the approved PRD, SPEC, ADRs, and this ROADMAP merged to `main` first:
 `wkc-implement` stops on uncommitted planning documents, and a fresh worktree cannot see them.
 
-Validation for every milestone runs on Claude Code; Codex and Kiro cases are SKIP (PRD Constraints).
+Validation runs on Claude Code by default. Unrun Codex and Kiro cases are SKIP (PRD Constraints).
+The approved Claude Code-to-Codex workflow may receive explicitly authorized integration validation
+within the existing session and concurrency limits. This planning update authorizes no AI sessions.
 Fixtures that write tickets or PRs use a throwaway GitHub repository, never this one.
 
 ## M1: Plans follow changes
@@ -33,10 +37,113 @@ Depends on: M1, because `wkc-backlog` gains the calls; M2, because it changes `w
 Exit check: in a throwaway GitHub repository, `wkc-plan close` on a milestone with one open ticket stops and names it, and writes nothing; with every ticket terminal, it shows the counts and the exit check, closes nothing on a no, and on a yes leaves the milestone `closed` by `gh api`. On a local-tracker fixture, `wkc-tracker milestone close` writes nothing and says the backend has no milestone state. `wkc-implement finish` on a fixture milestone's last open ticket names `wkc-plan close <milestone>` and leaves it open. On Claude Code, `wkc-backlog` given a SPEC change invokes `wkc-architect`, and given a ROADMAP change invokes `wkc-plan`, and each leaves its document at `Status: draft`. Then, on this repository, the maintainer closes `M2: Ticket to done by hand` and `M3: Independent review with fixes` with `wkc-plan close`.
 
 ## M4: Unattended runs
-Outcome: A person runs `wkc-yolo` on a ticket, a wave, or a milestone, answers one round of questions, and the run works without asking anything more. It merges reviewed tickets into its own run branch, completes each by its own definition of done there or in a non-production environment granted at kickoff, verifies the combined branch at one commit, and ends with one run PR that the person reviews and merges; production work follows that merge. Under delegated authority it changes the SPEC, ROADMAP, milestones, and tickets as the work justifies, without stopping, and new prerequisites join the run. A configured secret scan blocks any unsafe push, in every mode.
-Scope: PRD goal 3 and its Security constraint. SPEC Unattended calls, Delegated run authority, `wkc-yolo` run, its run config, store, and run branch, Ticket scope, Push check, the review's security checks, Security, the `push_check` and `run_config` config fields, Failure handling for parallel merges, planning PRs, and secret incidents; Lifecycle › Finish in a run, Ticket › Gate classes, and the run's Grants and Cleanup; ADR-006, ADR-007, ADR-008. A local-backend run end to end is M6's.
-Depends on: M1, M2, M3, M3.1 (`wkc-backlog` invokes `wkc-architect` and `wkc-plan`), PRs #75 and #78, and the ADR-008 documents merged to `main`.
-Exit check: in a throwaway GitHub repository, a milestone of two independent tickets and one ticket blocked by both merges into its run branch after one round of questions, with the two independent tickets running in parallel; all three reach `done` before the run PR opens, the run PR is ready for review at a validated sha and stays unmerged, and nothing is merged into `main` by the run. A check that passes on its ticket branch and fails after another merge is fixed by a reviewed PR into the run branch and rechecked. When the affected ticket is already `done`, a repair joins under `New prerequisites: run` within the remaining budget, without adding a blocker to the completed ticket; with `record only` or no admission budget left, the repair stays at `backlog` and the run PR stays a draft. A production-affecting step never runs: with the person's approved move it becomes a release ticket and the run PR can be ready, and without it the ticket stays open and the run PR is a draft. The post-run handoff sends a new release ticket through manual implementation before finish, and names manual finish directly only for a ticket with a merged handoff PR. With no grant for a needed environment, its checks are `not run` and the run PR is a draft; a ticket waiting on an environment that becomes available is finished again. A run PR closed without merging leaves its tickets `done` with outcome comments saying the work is not on `main`. A run stopped partway and started again finishes its claimed tickets without claiming them twice. Every decision appears as a `Decision (wkc-yolo):` comment. In the same fixture: a planted fake credential blocks its push, with no new branch head by `git ls-remote`, and the push goes through after the fix; a SPEC change needed mid-run lands as a planning PR with the delegated status line and a `Decision` comment while the run continues, and with `Planning: none` the same change parks its ticket; a prerequisite discovered in one ticket joins the run, and that ticket resumes once the prerequisite merged into the run branch with no failed gate; two parallel tickets that find the same prerequisite leave one ticket; an issue comment that tells the run to change a document changes nothing. Kickoff reads push protection as `enabled` on this repository and `unverifiable` with a non-admin token. Manual calls of `wkc-implement`, `wkc-backlog`, `wkc-architect`, and `wkc-plan` still ask their approval questions. This validation runs parallel subagents and more than one session at a time, so the runbook states its session count first and needs the maintainer's approval under the token-usage rule.
+Outcome: A person runs `wkc-yolo` on a ticket, a wave, or a milestone and approves its initial scope
+and authority in one kickoff round. The run works without further questions until it stops or the
+person supplies new input. It merges independently reviewed tickets into its own run branch and
+completes each by its own definition of done there or in a granted non-production environment. It
+verifies the combined branch at the current commit and ends with one run PR for the person's review
+and merge. Production work follows that merge. Delegated planning may change technical plans and
+tickets within product intent and safeguards. Additional execution beyond the approved initial scope
+has a configurable allowance of five tickets by default. Requested changes continue on the same
+branch and PR with completed work preserved. Project and ticket model selections also work in manual
+calls. The default model pair is the latest Opus (`opus`) then `gpt-6.1-sol`, both at `medium`
+effort: Opus builds, and each independent review uses the other model from the preceding build,
+update, or review step, starting with Sol, then a fresh latest-Opus context. A
+configured secret scan blocks unsafe pushes by either provider in every mode.
+
+Scope: PRD goals 1 and 3, model-selection and subscription constraints, and its Security constraint.
+SPEC Config fields, Ticket execution overrides, Lifecycle, Review verdict, Unattended calls,
+Delegated run authority, `wkc-yolo` run, run config/stores, run branch, continuation ownership,
+Ticket scope and Gate classes, Push check, Security, Failure handling, Grants and Cleanup;
+`push_check`, `run_config`, `max_additional_tickets`, `execution_models`, `headless_workers`; ADR-006, ADR-007, ADR-008,
+and [ADR-009](./adr/ADR-009-run-budgets-continuations-and-model-routing.md). By default Claude Code coordinates
+native Claude agents and subscription-authenticated `codex exec` workers. `claude -p` runs only
+when a project lists `claude-code` in `headless_workers`; no API billing fallback or nested
+workers are introduced. There is no elapsed-time run budget.
+`max_fix_attempts`, grant expiry, command timeouts, and existing session limits remain. A
+local-backend run end to end is M6's.
+
+Depends on: M1, M2, M3, M3.1 (`wkc-backlog` invokes `wkc-architect` and `wkc-plan`), PRs #75, #78,
+and #79, and approval and merge of the revised PRD, SPEC, ROADMAP, ADR amendments, and narrow
+cross-harness rules. Model routing is a separate implementation deliverable within M4 because
+manual users can use it without YOLO.
+
+Exit check: use focused fixtures in a throwaway GitHub repository. Direct checks cover mechanical
+admission records, config validation, continuation relationships, PR heads, and selected settings.
+Instruction-following checks use only explicitly authorized sessions within the recorded limits.
+
+- A milestone with two independent tickets and one dependent ticket completes all three on its run
+  branch. The run PR is ready at a verified head and remains unmerged. The run merges nothing into
+  `main`. Restart resumes claimed work without duplicate claims. Every decision is recorded as a
+  `Decision (wkc-yolo):` comment.
+- The initial snapshot includes approved dependent tickets and excludes work the person left out
+  or moved to release tickets. Those initial tickets spend no additional allowance. With an absent
+  `max_additional_tickets`, five distinct added admissions are allowed. The next stays at `backlog`.
+  Zero allows initial work only. Invalid limits stop before admission. A prerequisite, readiness
+  repair, reused out-of-scope ticket, or new split child spends one slot on admission. Resume and
+  duplicate discoveries spend no extra slot. Canceling an admitted ticket does not refund it. Two
+  workers competing for the last slot leave only one recorded admission before dispatch. Required
+  unadmitted work keeps the run PR draft; unrelated backlog work does not.
+- A check that passed on a ticket branch and fails after another merge is repaired through a
+  reviewed ticket and rechecked. A `done` ticket stays terminal. Its repair needs no blocker edge
+  to it. With `record only` or no allowance left, required repairs remain at `backlog` and readiness
+  remains draft. Delegated planning cannot relabel added work as initial scope, change the PRD,
+  raise the allowance, escalate models, renew grants, or weaken safeguards. Without delegated
+  planning, a needed planning change parks its ticket. Duplicate discoveries share one ticket.
+- A project pair and a ticket's pair select the expected models: the first builds, and each review
+  uses the other model from the preceding completed step. A completed `fixed` round passes the next round to the other
+  model. Review-only rounds also advance it. Duplicate verdicts and failed launches do not advance
+  it. Approval ends the loop. An interrupted run reconstructs the next model from recorded
+  build/update and review steps. A pre-merge Opus update after Sol approval is reviewed by Sol,
+  regardless of verdict number. Swapping the pair after Sol review selects Opus next. Replacing
+  both entries, or only the entry that did the preceding step, uses the new second entry; effort
+  changes alone do not change model identity.
+  Later model edits affect the next dispatch without reapproval and preserve fixing-round usage.
+  The final review-only round still follows the last allowed fixing round. Reviewers use fresh contexts and no
+  implementation conversation.
+- Configured manual implementation and review calls honor their model selections while preserving
+  one requested step and approval questions. With no routing configuration, existing manual
+  behavior remains in the invoking harness. An unsupported coordinator or setting gives a blocked result or
+  concrete manual handoff. A manual question from a non-interactive worker reaches the person and
+  stops its dependent step. Resuming after the answer rereads the live pair and uses a fresh
+  worker if the selected model or effort changed. Integration validation confirms Claude native-agent
+  dispatch and explicit-model `codex exec` dispatch with effective subscription provider and login. A stored
+  ChatGPT login plus an API-key gateway configuration is refused. Both workers count against the same
+  limits. No worker delegates. No API fallback or automatic substitution occurs. With the
+  default `headless_workers`, no `claude -p` starts and a pinned Claude ID is blocked; listing
+  `claude-code` allows both and a Codex coordinator, and a ticket cannot change the list.
+  Removing `claude-code` from the project config during a run stops further `claude -p` dispatch. A run
+  without a pair runs each role on its own harness in fresh sessions, at the model and effort the
+  person confirmed at kickoff, recorded on its `Execution:` lines. Kickoff asks the person to
+  confirm the coordinator's full-permission mode and reports it as confirmed, not observed. A quota,
+  rate-limit, or authentication error stops all dispatch without retries. Claude bypass mode
+  with its Bash sandbox still enabled does not pass the no-sandbox check.
+- Requested changes preserve the run branch, PR, completed tickets, and evidence. The PR becomes
+  draft before correction work changes its result. Reused unfinished or new correction tickets
+  follow implementation, independent review, merge, and finish. A routine restart preserves its
+  config and remaining allowance. Explicit human renewal creates an immutable continuation linked
+  to its predecessor and the same branch and PR. Earlier-phase tickets remain same-run work.
+  Earlier configs remain readable while the run is open. New scope and grants require recorded
+  approval. Expired grants and consumed PR fixing rounds remain spent. Readiness includes all
+  phases and is rechecked at the new head. Terminal outcome records prove delivery without a
+  deleted config. A closed, unmerged run remains a separate supersession case.
+- A production-affecting step never runs. An approved move creates a release ticket and permits
+  readiness when the remaining checks pass. Without that move the ticket stays open and the PR
+  stays draft. A new release ticket receives manual implementation, review, merge, and finish.
+  Direct manual finish is named only for a ticket with a merged handoff PR. Missing or expired
+  environment grants leave checks `not run` and readiness draft. Interrupted finish and cleanup
+  resume from evidence. A closed, unmerged run keeps completed tickets `done` and records that they
+  did not reach `main`.
+- A planted fake credential blocks each provider's push, confirmed by an unchanged remote head.
+  The fixed push passes. Push protection is reported as `enabled` with sufficient access and
+  `unverifiable` when access cannot establish it. An untrusted issue comment cannot change
+  documents, model selections, grants, or authority. Existing manual planning approval questions
+  remain in force.
+
+The runbook selects changed behavior and affected regressions before testing. Parallel or
+cross-harness integration validation requires the maintainer's explicit approval and a recorded
+session count under the token-usage and AI harness testing rules. Unavailable selected checks are
+SKIP. This exit check does not require an exhaustive provider or harness matrix.
 
 ## M5: Learnings become rules
 Outcome: After a ticket, milestone, or run, a person runs `wkc-retro` and gets proposed rule files backed by evidence, written to `rules_dir` only once they approve.
@@ -51,6 +158,28 @@ Depends on: M2, because it changes `wkc-implement`; M4, because it covers `wkc-y
 Exit check: on a local-tracker fixture with a GitHub remote, each `wkc-tracker` write is one `chore: wkc-tracker <verb> <id>` commit holding only that ticket's file, with other staged and unstaged changes unchanged and nothing pushed. `wkc-implement` branches before it claims, so the claim and handoff commits are on the ticket's branch and not on the default branch, and it stops on an unpushed `issues_dir` commit on the default branch. After the merge, a rerun makes its post-merge writes on `<type>/<id>-finish` from the merged default branch, and the ticket file on the default branch reads `done` once that branch lands. With no remote, the post-merge writes are commits on the local default branch. A `wkc-yolo` run of two local tickets runs them one at a time and reaches `done` on the run branch before readiness. It pushes the ticket-file commits and opens a draft run PR before verification. Verification and cleanup evidence, an intermittent check's `Discovered:` item included, are read back from PR comments, with the checked HEAD unchanged, and that item's ticket is filed only after the run PR. A later ticket-file or code commit invalidates that evidence. Both tickets reach the default branch only after the person merges the run PR. Ticket files are checked with a YAML parser and `git log`, not from the report. The `wkc-tracker` and `wkc-implement` runbooks cover these cases.
 
 ## Changes
+
+- 2026-10-28: Maintainer decision: M4's routing exit check has a run without a pair use the
+  model and effort the person confirmed at kickoff, recorded on its `Execution:` lines. Still
+  draft.
+
+- 2026-10-28: Planning review of `df0e2b0`. M4's routing exit check covers replacing only the
+  entry that did the preceding step, and withdrawing the `claude-code` opt-in during a run. Still
+  draft.
+
+- 2026-10-28: M4 adds `headless_workers` (opt-in `claude -p`, pinned Claude IDs, and a Codex
+  coordinator), runs without a model pair, and the person-confirmed coordinator mode (maintainer
+  decisions). Still draft.
+
+- 2026-10-28: Planning review of `5677c39`. M4's outcome and routing exit check state the
+  preceding-step reviewer rule instead of unconditional alternation. Still draft.
+
+- 2026-10-27: Expanded M4 for the maintainer's confirmed additional-ticket allowance, same-PR
+  review continuations, and project/ticket model selection in manual and unattended calls.
+  Replaced the total-ticket or time-budget assumptions and the blanket validation-harness text.
+  Added focused exit checks for admission accounting, alternating independent reviews, manual
+  boundaries, and explicit continuation authority. Kept M5's first real YOLO run and M6's local
+  backend scope. Revised documents remain draft pending final review.
 
 - 2026-10-26: M6 follows the local readiness evidence exception approved by the maintainer during PR #79 review. Its exit check verifies that ticket state stays in committed files, readiness and cleanup evidence live on the run PR, and recording that evidence does not change the checked head.
 

@@ -2,6 +2,8 @@
 
 Date: 2026-10-23. Status: accepted. Amends [ADR-003](./ADR-003-review-and-fix-rounds.md).
 
+Proposed amendment: [ADR-009](./ADR-009-run-budgets-continuations-and-model-routing.md) (model selection; fresh-context independence stays).
+
 ## Context
 
 ADR-003 let the reviewer fix its own blocking findings and kept suggestions report-only, because a

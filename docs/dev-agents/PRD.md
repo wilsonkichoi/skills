@@ -1,6 +1,6 @@
 # wkc- skills PRD
 
-Status: approved (2026-10-26)
+Status: draft
 
 ## Problem
 
@@ -67,7 +67,13 @@ Ranked. Ranking is importance, not delivery order; the ROADMAP sets the order.
    branch, build, stay current with `main`, resolve conflicts, run the acceptance checks, and hand
    off for review with the tracker updated. `wkc-code-review` judges that pull request against its
    ticket in a fresh context, fixes the blocking findings it raised, and applies worthwhile in-scope
-   improvements, with each change reviewed again by a fresh context. After the merge, `wkc-implement
+   improvements, with each change reviewed again by a fresh context. Projects can select an
+   ordered pair of models: the first builds, and each review uses the other model from the
+   preceding build, update, or review step, so the first review uses the second. Each ticket can
+   override the pair.
+   The same selection works for manual calls and unattended runs. A configured manual call still
+   performs only its requested step and keeps its approval boundaries (decided 2026-10-27).
+   After the merge, `wkc-implement
    finish <id>` runs the ticket's post-merge steps and moves it to `done`; in a run, that merge is
    into the run branch and the steps run there. Each ticket carries its own definition of done,
    because done differs by ticket: review and tests only, plus integration tests, plus a deployment
@@ -90,7 +96,14 @@ Ranked. Ranking is importance, not delivery order; the ROADMAP sets the order.
    authority it also changes the SPEC and its technical requirements, ADRs, the ROADMAP, future
    milestones, tickets, and dependencies when engineering evidence justifies it, with no person
    approving each change (decided 2026-10-24). It records every decision and its reason, and stops
-   at the exit check or a limit ([PR #30](https://github.com/wilsonkichoi/skills/pull/30)). It works
+   at the exit check or a limit ([PR #30](https://github.com/wilsonkichoi/skills/pull/30)). The
+   approved initial ticket scope does not spend its allowance for additional tickets. That
+   configurable allowance, `max_additional_tickets`, defaults to five. Discovered prerequisites,
+   readiness repairs, and new replacement or split tickets spend it when admitted for execution.
+   Filing backlog work does not.
+   A restart preserves admissions and remaining allowance. The coordinator records each admission
+   before dispatch, so parallel workers cannot spend the same slot. There is no elapsed-time run
+   budget. Review/fix limits and non-production grant expiry still apply (decided 2026-10-27). It works
    on its own run branch and merges each reviewed ticket there; it never merges into the default
    branch. Each ticket reaches `done` in the run once its own definition of done is met on the run
    branch or in a granted non-production environment. At kickoff the run names each ticket whose
@@ -107,7 +120,13 @@ Ranked. Ranking is importance, not delivery order; the ROADMAP sets the order.
    Release, production deployment, and anything else that affects production happen only after that
    merge, as separate work a person authorizes. A run pull request closed without merging leaves
    completed tickets `done`, and the run's records show the work never reached the default branch
-   or production (decided 2026-10-26). Product intent,
+   or production (decided 2026-10-26). Requested changes on an open run PR normally continue
+   on that branch and PR. Completed tickets and their evidence remain intact. Corrections become
+   new tickets in the same milestone, or reuse unfinished tickets that already cover them.
+   Required planning changes use their responsible skills. The PR returns to draft while its
+   result changes, and readiness is checked again at its new head. A person explicitly approves
+   an immutable continuation config when new scope or grants need approval. A restart never resets
+   budgets, consumed fixing rounds, or grants (decided 2026-10-27). Product intent,
    security protections, authorization limits, and operational safeguards are outside its
    authority: a person sets them and reviews the outcome.
 4. **What a project learns becomes rules.** An optional `wkc-retro` reviews a finished ticket,
@@ -147,10 +166,48 @@ Ranked. Ranking is importance, not delivery order; the ROADMAP sets the order.
 
 - **Harnesses:** Claude Code, Codex, and Kiro CLI, from one source tree, through the `npx skills`
   installer with each agent named by `-a` ([AGENTS.md Distribution](../../AGENTS.md#distribution)).
-- **Validation harness** (decided 2026-10-20): runbooks run on Claude Code only. Codex and Kiro cases
-  are SKIP. The maintainer uses Codex and Kiro while dogfooding, and feeds what breaks back as fixes.
-- **AI session budget:** at most 6 extra AI test sessions per change. No harness launches another
-  harness ([token usage](./rules/token-usage.md), [AI harness testing](./rules/ai-harness-testing.md)).
+- **Validation harness:** runbooks run on Claude Code by default. Unrun Codex and Kiro cases are
+  SKIP. The maintainer uses them while dogfooding and feeds failures back as fixes (decided
+  2026-10-20). Integration validation for the approved Claude Code-to-Codex workflow is a narrow
+  exception that needs explicit approval and follows the existing session limits (decided
+  2026-10-27).
+- **AI session budget:** at most 6 extra AI test sessions per change. Arbitrary cross-harness
+  launches and nested workers remain prohibited. The approved model-routing workflow permits
+  Claude Code to coordinate native Claude agents and non-interactive `codex exec` workers, and,
+  under the `headless_workers` opt-in, `claude -p` workers or a Codex coordinator. Every worker
+  counts against the same concurrency and session limits. Workers cannot delegate or launch another
+  harness ([token usage](./rules/token-usage.md), [AI harness testing](./rules/ai-harness-testing.md);
+  decided 2026-10-27).
+- **Model selection** (decided 2026-10-27): the default pair is the latest Opus, selected by the
+  `opus` alias, then `gpt-6.1-sol`. Opus builds, and each review uses the other model from the
+  preceding step: with no update in between, reviews alternate `gpt-6.1-sol` and a fresh
+  latest-Opus context, beginning with Sol. The alias follows each new Opus release by the
+  maintainer's choice; that is their selection, not automatic substitution. A pinned ID such as
+  `claude-opus-5-5` is valid where the harness can honor it. Approval ends the loop. Effort defaults
+  to `medium` for both models, and a selection may name another supported value. Project and ticket
+  selections may change the next dispatch. The ticket owns its selection, and a run never freezes
+  it. They do not reset review limits or grant unattended authority. Projects without routing
+  configuration keep their existing manual behavior in Claude Code, Codex, or Kiro CLI. A
+  `wkc-yolo` run without a pair runs every role on its own harness and model, each build and review
+  in a fresh session: a native subagent first, otherwise that harness's own headless CLI
+  (maintainer, 2026-10-28). More harnesses, such as Kiro CLI or OpenCode, may join the routed
+  workflow later.
+- **Subscription execution** (maintainer, 2026-10-27): Claude Code on the latest Opus coordinates
+  the mixed-model workflow. Claude work uses its native agents. Codex work uses `codex exec` with
+  the user's existing subscription login. The maintainer reports that `codex exec` works and
+  `claude -p` is unreliable with their subscription. This is their operating constraint, not a
+  universal product claim. The workflow does not use API billing fallback, authentication
+  changes, or automatic model substitution. `claude -p` runs only when the project lists
+  `claude-code` in `headless_workers`, which is off by default. That opt-in accepts the login
+  `claude -p` uses, API billing included; it is the person's choice, not a fallback. It lets a
+  Codex session coordinate Claude workers and a Claude Code coordinator pass a pinned Claude model
+  ID. The maintainer's projects leave it off and use native agents (maintainer, 2026-10-28).
+  Unsupported settings or coordinators
+  produce a blocked result or concrete manual handoff. Quota, rate-limit, or authentication errors
+  stop all worker dispatch. Workers run with full permissions and no sandbox (maintainer,
+  2026-10-27). No skill can read its session's permission mode, so the person launches the
+  coordinator with full permissions, and adopter documentation says how. The secret scan,
+  independent review, and the person's merge remain the safeguards.
 - **Authoring:** `wkc-` identifiers, the five opening fields, manual invocation by default, and a
   `SKILL.md` ideally under 150 lines and under 250 for a person reading it. Neither is a hard
   limit; the Agent Skills specification allows 500 (decided 2026-10-20). A skill has no
@@ -207,6 +264,10 @@ Ranked. Ranking is importance, not delivery order; the ROADMAP sets the order.
   contract and its observed failure.
 - The maintainer's answers on 2026-10-20 to the `wkc-research` and `wkc-architect` interviews.
 - The `agent-toolkit` sources linked from the drafts were not read for this PRD.
+- The maintainer's confirmed decisions on 2026-10-27, recorded in the planning handoff for bounded
+  additional admissions, review continuations, and per-ticket implementation and review models.
+  [ADR-009](./adr/ADR-009-run-budgets-continuations-and-model-routing.md) records their proposed
+  technical contract. These decisions do not approve this draft or authorize integration tests.
 - The maintainer's architecture change request of 2026-10-24 for full engineering autonomy under
   `wkc-yolo`, and their answers on [PR #75](https://github.com/wilsonkichoi/skills/pull/75): delegated
   planning, required secret scanning for runs, and push protection as a separate layer.
@@ -218,9 +279,32 @@ contract from issue #15, commit before handoff, correcting review findings, the 
 discovered work, how `wkc-yolo` calls the other skills, and where a run's limits are kept. Still
 open there: a first real check of the Linear integration. Delegated run authority and the security
 layers are answered by SPEC Delegated run authority and
-[ADR-006](./adr/ADR-006-delegated-run-authority.md).
+[ADR-006](./adr/ADR-006-delegated-run-authority.md). The 2026-10-27 requirements for additional
+admissions, continuation authority, model dispatch, and manual approval boundaries are specified
+in [ADR-009](./adr/ADR-009-run-budgets-continuations-and-model-routing.md). Their implementation
+and integration validation remain downstream work.
 
 ## Changes
+
+- 2026-10-28: Maintainer decisions after the planning review. `headless_workers` lets a project
+  opt into `claude -p`, off by default, which also allows a Codex coordinator. A run without a
+  pair runs each role on its own harness in fresh sessions. The person launches the coordinator
+  with full permissions, and documentation tells adopters how. Replaced "does not use
+  `claude -p`" and the deferred Codex coordinator. Status stays draft.
+
+- 2026-10-28: Planning review of `5677c39`. Goal 1 and the Model selection constraint state the
+  preceding-step reviewer rule instead of unconditional alternation, which a pre-merge update
+  breaks. Status stays draft.
+
+- 2026-10-27: Added a default allowance of five additional executed tickets beyond the approved
+  initial scope, same-PR review continuations that preserve completed work, and project/ticket model
+  selection for manual and unattended work. Recorded Claude Code coordination, subscription
+  execution, alternating independent reviews, a `medium` effort default, and the narrow
+  cross-harness exception (maintainer decisions). Replaced the blanket cross-harness constraint and
+  unbounded scope-expansion wording. No elapsed-time run budget is added. Review: SPEC Config
+  fields, Ticket, Review verdict, Unattended calls, wkc-yolo run, Run config/stores, Failure
+  handling, Security; ROADMAP M4; ADR-003, ADR-005, ADR-007, ADR-008, ADR-009; #74, #76, #77, #80
+  and the model-routing implementation ticket. Status is draft pending final review.
 
 - 2026-10-26: A run completes each ticket by its own definition of done on the run branch or in a
   non-production environment granted at kickoff, verifies the combined run branch with evidence tied
