@@ -103,10 +103,13 @@ following contract details for final review:
   no pair runs every role on its own harness in fresh sessions, native subagents first. The
   person launches the coordinator in bypass mode, because no skill can read its session's
   permission mode. Workers never delegate or launch another harness.
-  Native and external workers share limits. Use subscription login, not API or provider fallback. An
+  Native and external workers share limits. Codex workers use subscription login. The explicit
+  `claude -p` opt-in accepts its existing login and billing; no worker switches login or uses a
+  billing fallback. An
   unavailable model is reported, never substituted. Workers run with full permissions and no sandbox
-  (maintainer, 2026-10-27). Claude's permission mode and sandbox setting are checked separately,
-  including the outer environment of a Codex process. The worker's effective provider and login
+  (maintainer, 2026-10-27). Kickoff records the person's confirmation of the coordinator's permission
+  mode, never an observation. Visible sandbox and managed-policy settings are checked separately,
+  including the outer environment of a Codex process. A Codex worker's effective provider and login
   must establish subscription routing before each launch or resume; clearing two API-key
   variables alone is insufficient. `push_check`, review, and the person's merge stay.
 - Manual calls keep their step boundaries and questions. Non-interactive execution grants no
