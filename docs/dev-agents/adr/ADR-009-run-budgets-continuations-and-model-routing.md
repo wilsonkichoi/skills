@@ -75,20 +75,24 @@ following contract details for final review:
   Verify outcome comments naming the carrying PR and config refs before retirement so delivery
   can be checked without a deleted config. A closed run can be reopened with fresh authority
   using those records; no old grant is reconstructed as new permission.
-- Project `implementation_model` and `review_models` select a model and optional effort per
-  role. Ticket `## Execution` values replace named roles. Setup offers the latest Opus, through the
-  `opus` alias, for build, and Sol 6.1 then the latest Opus for review. The maintainer chose the
-  alias over a pinned ID on 2026-10-27, after review found that a Claude Code agent call accepts
-  only an alias. Effort has no collection default. An absent manual route preserves
-  the current harness. Only a person changes selections; technical delegation is not model escalation.
+- Project `implementation_model` and `review_models` select a model and optional effort per role.
+  Ticket `## Execution` values replace named roles. The ticket owns its selection: each dispatch
+  reads it, and a run config never freezes it, so anyone who can edit the ticket can change a
+  running run's next model. Setup offers the latest Opus, through the `opus` alias, for build, and
+  Sol 6.1 then the latest Opus for review. The maintainer chose the alias over a pinned ID on
+  2026-10-27, after review found that a Claude Code agent call accepts only an alias. Effort has no
+  collection default. An absent manual route preserves the current harness. Only a person changes
+  selections; technical delegation is not model escalation.
 - Alternate by completed review round, including confirming rounds. An approval stops the loop.
   Duplicate verdicts and failed launches do not advance it. Every review uses a fresh context,
   even when returning to the implementation model. `max_fix_attempts` keeps its existing meaning.
-- The main Claude Code session dispatches all workers. Workers never delegate or launch another
-  harness. Native and external workers share limits. Use subscription login, not API or provider
-  fallback. An unavailable model is reported, never substituted. Workers run with full
-  permissions and no sandbox (maintainer, 2026-10-27), because a sandboxed Codex worker cannot
-  commit, push, or write the tracker. `push_check`, review, and the person's merge stay.
+- The main Claude Code session, on the latest Opus, dispatches all workers. A Codex coordinator,
+  with GPT building first, is deferred until Claude Code supports subscription use of `claude -p`,
+  which it would need to start Claude workers. Workers never delegate or launch another harness.
+  Native and external workers share limits. Use subscription login, not API or provider fallback. An
+  unavailable model is reported, never substituted. Workers run with full permissions and no sandbox
+  (maintainer, 2026-10-27), because a sandboxed Codex worker cannot commit, push, or write the
+  tracker. `push_check`, review, and the person's merge stay.
 - Manual calls keep their step boundaries and questions. Non-interactive execution grants no
   autonomous authority. `--run` remains the only unattended-call marker.
 - Model-routing integration validation needs explicit approval of its fixture, session count,

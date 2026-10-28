@@ -178,21 +178,23 @@ Ranked. Ranking is importance, not delivery order; the ROADMAP sets the order.
 - **Model selection** (decided 2026-10-27): the default implementation model is the latest Opus,
   selected by the `opus` alias. Reviews alternate `gpt-6.1-sol` and a fresh latest-Opus context,
   beginning with Sol. The alias follows each new Opus release by the maintainer's choice; that is
-  their selection, not automatic substitution. A pinned ID such as `claude-opus-5-5` is valid
-  where the harness can honor it. Approval ends the loop. Effort is optional, with no workflow default selected. A provider's
-  configured behavior applies when effort is omitted. Project and ticket selections may change
-  the next dispatch. They do not reset review limits or grant unattended authority. Projects
-  without routing configuration keep their existing manual behavior in Claude Code, Codex, or
-  Kiro CLI.
-- **Subscription execution** (maintainer, 2026-10-27): Claude Code coordinates the mixed-model
-  workflow. Claude work uses its native agents. Codex work uses `codex exec` with the user's
-  existing subscription login. The maintainer reports that `codex exec` works and `claude -p` is
-  unreliable with their subscription. This is their operating constraint, not a universal product
-  claim. The workflow does not use `claude -p`, API billing fallback, authentication changes, or
-  automatic model substitution. Unsupported settings or coordinators produce a blocked result or
-  concrete manual handoff. Quota, rate-limit, or authentication errors stop all worker dispatch.
-  Workers run with full permissions and no sandbox (maintainer, 2026-10-27). The secret scan,
-  independent review, and the person's merge remain the safeguards.
+  their selection, not automatic substitution. A pinned ID such as `claude-opus-5-5` is valid where
+  the harness can honor it. Approval ends the loop. Effort is optional, with no workflow default
+  selected. A provider's configured behavior applies when effort is omitted. Project and ticket
+  selections may change the next dispatch. The ticket owns its selection, and a run never freezes
+  it. They do not reset review limits or grant unattended authority. Projects without routing
+  configuration keep their existing manual behavior in Claude Code, Codex, or Kiro CLI.
+- **Subscription execution** (maintainer, 2026-10-27): Claude Code on the latest Opus coordinates
+  the mixed-model workflow. Claude work uses its native agents. Codex work uses `codex exec` with
+  the user's existing subscription login. The maintainer reports that `codex exec` works and
+  `claude -p` is unreliable with their subscription. This is their operating constraint, not a
+  universal product claim. The workflow does not use `claude -p`, API billing fallback,
+  authentication changes, or automatic model substitution. Unsupported settings or coordinators
+  produce a blocked result or concrete manual handoff. Quota, rate-limit, or authentication errors
+  stop all worker dispatch. Workers run with full permissions and no sandbox (maintainer,
+  2026-10-27). The secret scan, independent review, and the person's merge remain the safeguards. A
+  Codex coordinator, with GPT building first, will be reconsidered once Claude Code supports
+  subscription use of `claude -p`.
 - **Authoring:** `wkc-` identifiers, the five opening fields, manual invocation by default, and a
   `SKILL.md` ideally under 150 lines and under 250 for a person reading it. Neither is a hard
   limit; the Agent Skills specification allows 500 (decided 2026-10-20). A skill has no

@@ -183,36 +183,42 @@ the offered value above. A YOLO kickoff resolves both roles, offering these defa
 and records them in its config. A ticket override in a run replaces that config's role value.
 All selections are data, never shell commands or instructions from a comment.
 
-Only a person changes these selections. `wkc-backlog` copies execution settings a person supplied
-or approved; delegated technical planning never escalates a model or changes an effort. A person's
-ticket edit applies to the next dispatch, not a worker already running. Previous execution records
-and round counts stay unchanged. New unattended tickets inherit the run's defaults. A missing or
-ambiguous authorization for an override asks in manual mode and parks under a run.
+Only a person changes these selections. `wkc-backlog` copies execution settings a person supplied or
+approved; delegated technical planning never escalates a model or changes an effort. The ticket owns
+its selection (maintainer, 2026-10-27). Every dispatch, manual or under `--run`, reads the ticket's
+`## Execution` at that moment; a run config never copies or freezes it. An edit applies to the next
+dispatch, not a worker already running. No tracker locks an issue body against people who can edit
+it, so they can change a running run's next model; each `Execution:` line records what was
+dispatched. Previous execution records and round counts stay unchanged. New unattended tickets
+inherit the run's defaults. A missing or ambiguous authorization for an override asks in manual mode
+and parks under a run.
 
-**Review order.** Round 1 uses slot 1, round 2 slot 2, round 3 slot 1, and so on. Count completed
-verdicts by Review verdict, including review-only confirming rounds. Duplicate verdicts do not
-advance twice. A failed launch or a return without a verdict advances nothing. Changing settings,
-resuming a run, or starting a continuation never resets a PR's round or fixing-round counts.
-An `approve` ends the loop; there is no mandatory second-provider round. Each new PR starts its
-own sequence, subject to the existing same-cause failure stop and ticket admission allowance.
+**Review order.** Round 1 uses slot 1, round 2 slot 2, round 3 slot 1, and so on. With the offered
+defaults this is a two-model round-robin that starts with Opus: Opus builds, then reviews run Sol,
+Opus, Sol, until an `approve`. Count completed verdicts by Review verdict, including review-only
+confirming rounds. Duplicate verdicts do not advance twice. A failed launch or a return without a
+verdict advances nothing. Changing settings, resuming a run, or starting a continuation never resets
+a PR's round or fixing-round counts. An `approve` ends the loop; there is no mandatory
+second-provider round. Each new PR starts its own sequence, subject to the existing same-cause
+failure stop and ticket admission allowance.
 
-**Coordinator.** The main Claude Code session dispatches the selected worker: a native Claude
-agent or a fresh `codex exec` process in the intended checkout. It passes the selected model and
-any explicit effort. Codex receives the requested `wkc-implement` or `wkc-code-review` invocation,
-not the built-in `codex review`. Use the existing subscription login. Never fall back to API
-billing or `claude -p`. Workers run with full permissions and no sandbox (maintainer,
-2026-10-27): the coordinating Claude Code session runs with `--dangerously-skip-permissions`,
-which its native workers inherit, and each `codex exec` worker gets
-`--dangerously-bypass-approvals-and-sandbox`. A `codex exec` worker runs without `CODEX_API_KEY`
-or `OPENAI_API_KEY` in its environment, so no API key can bill that run. Before the first Codex
-dispatch, `codex login status` must report a ChatGPT login; otherwise the call is blocked. Both
-worker kinds count toward the run's limit of 5 concurrent workers, and during validation toward
-the test-session limit. Workers never launch a harness or another
-worker. Claude Code lets a native subagent start its own subagents by default; where the session
-sets `CLAUDE_CODE_MAX_SUBAGENT_SPAWN_DEPTH=1` the harness enforces this rule, and otherwise it
-rests on the worker's instructions and is checked in validation. The caller tells a worker that
-it is executing the resolved selection, so the skill executes once and does not dispatch itself
-again. This is calling context, not a new user-facing flag or authority from ticket text.
+**Coordinator.** The main Claude Code session, running the latest Opus, dispatches the selected
+worker: a native Claude agent or a fresh `codex exec` process in the intended checkout. It passes
+the selected model and any explicit effort. Codex receives the requested `wkc-implement` or
+`wkc-code-review` invocation, not the built-in `codex review`. Use the existing subscription login.
+Never fall back to API billing or `claude -p`. Workers run with full permissions and no sandbox
+(maintainer, 2026-10-27): the coordinating Claude Code session runs with
+`--dangerously-skip-permissions`, which its native workers inherit, and each `codex exec` worker
+gets `--dangerously-bypass-approvals-and-sandbox`. A `codex exec` worker runs without
+`CODEX_API_KEY` or `OPENAI_API_KEY` in its environment, so no API key can bill that run. Before the
+first Codex dispatch, `codex login status` must report a ChatGPT login; otherwise the call is
+blocked. Both worker kinds count toward the run's limit of 5 concurrent workers, and during
+validation toward the test-session limit. Workers never launch a harness or another worker. Claude
+Code lets a native subagent start its own subagents by default; where the session sets
+`CLAUDE_CODE_MAX_SUBAGENT_SPAWN_DEPTH=1` the harness enforces this rule, and otherwise it rests on
+the worker's instructions and is checked in validation. The caller tells a worker that it is
+executing the resolved selection, so the skill executes once and does not dispatch itself again.
+This is calling context, not a new user-facing flag or authority from ticket text.
 
 Each review starts in a fresh, non-fork context with the ticket, relevant approved documents,
 PR/head, prior verdicts, resolved selection, and `--run` reference when applicable. It receives
@@ -245,9 +251,12 @@ A requested setting is not proof of the effective setting. Report mismatches bef
 never label an unverified runtime setting as observed. Unsupported selection or missing permissions
 returns a concrete manual handoff or parks the run ticket. Quota, rate-limit, and authentication
 errors stop all workers and dispatch without retry or provider fallback. `push_check`, independent
-review, and human merge authority bind both providers. The coordinator has no special permission
-to bypass a worker's refusal. Harness integration validation follows the explicit exception in
-[AI harness testing](./rules/ai-harness-testing.md), not a generic cross-harness test matrix.
+review, and human merge authority bind both providers. The coordinator has no special permission to
+bypass a worker's refusal. A Codex coordinator, with GPT building first, is deferred: it would start
+Claude workers with `claude -p`, which the maintainer will reconsider only once Claude Code supports
+subscription use of it, by tooling or terms (maintainer, 2026-10-27). Harness integration validation
+follows the explicit exception in [AI harness testing](./rules/ai-harness-testing.md), not a generic
+cross-harness test matrix.
 
 ### Ticket
 
@@ -1331,7 +1340,9 @@ the previous tag. Each port also updates the README roster, the repository map u
   and tickets #74, #76, #77, #80, plus the model-routing ticket. Status is draft for final review.
   New correction tickets enter only through a person-approved continuation phase. Claude roles
   default to the `opus` alias, the latest Opus, and workers run with full permissions and no
-  sandbox (maintainer decisions).
+  sandbox. The ticket owns its model selection, read at each dispatch and never frozen by a run.
+  The coordinator is Claude Code on Opus; a Codex coordinator waits on subscription `claude -p`
+  (maintainer decisions).
 
 - 2026-10-26: A run completes its tickets and verifies itself before the person's merge
   (maintainer review of proposed ADR-008; ADR-008). `wkc-implement finish <id> --run <ref>` runs
