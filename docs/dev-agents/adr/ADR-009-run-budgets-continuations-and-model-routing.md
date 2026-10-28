@@ -100,9 +100,10 @@ following contract details for final review:
   opt-in accepts their login and billing, and it lets a Codex session coordinate and a Claude Code
   coordinator pass a pinned Claude ID (maintainer, 2026-10-28). The switch is project config only,
   because a per-model or per-ticket switch would let a ticket edit turn on API billing. A run with
-  no pair runs every role on its own harness in fresh sessions, native subagents first. The
-  person launches the coordinator in bypass mode, because no skill can read its session's
-  permission mode. Workers never delegate or launch another harness.
+  no pair runs every role on its own harness in fresh sessions, native subagents first, at the
+  model and effort the person confirms at kickoff, because a session cannot reliably read them
+  (maintainer, 2026-10-28). The person launches the coordinator in bypass mode, because no
+  skill can read its session's permission mode. Workers never delegate or launch another harness.
   Native and external workers share limits. Codex workers use subscription login. The explicit
   `claude -p` opt-in accepts its existing login and billing; no worker switches login or uses a
   billing fallback. An

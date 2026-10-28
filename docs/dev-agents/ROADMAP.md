@@ -113,7 +113,8 @@ Instruction-following checks use only explicitly authorized sessions within the 
   default `headless_workers`, no `claude -p` starts and a pinned Claude ID is blocked; listing
   `claude-code` allows both and a Codex coordinator, and a ticket cannot change the list.
   Removing `claude-code` from the project config during a run stops further `claude -p` dispatch. A run
-  without a pair runs each role on its own harness in fresh sessions. Kickoff asks the person to
+  without a pair runs each role on its own harness in fresh sessions, at the model and effort the
+  person confirmed at kickoff, recorded on its `Execution:` lines. Kickoff asks the person to
   confirm the coordinator's full-permission mode and reports it as confirmed, not observed. A quota,
   rate-limit, or authentication error stops all dispatch without retries. Claude bypass mode
   with its Bash sandbox still enabled does not pass the no-sandbox check.
@@ -157,6 +158,10 @@ Depends on: M2, because it changes `wkc-implement`; M4, because it covers `wkc-y
 Exit check: on a local-tracker fixture with a GitHub remote, each `wkc-tracker` write is one `chore: wkc-tracker <verb> <id>` commit holding only that ticket's file, with other staged and unstaged changes unchanged and nothing pushed. `wkc-implement` branches before it claims, so the claim and handoff commits are on the ticket's branch and not on the default branch, and it stops on an unpushed `issues_dir` commit on the default branch. After the merge, a rerun makes its post-merge writes on `<type>/<id>-finish` from the merged default branch, and the ticket file on the default branch reads `done` once that branch lands. With no remote, the post-merge writes are commits on the local default branch. A `wkc-yolo` run of two local tickets runs them one at a time and reaches `done` on the run branch before readiness. It pushes the ticket-file commits and opens a draft run PR before verification. Verification and cleanup evidence, an intermittent check's `Discovered:` item included, are read back from PR comments, with the checked HEAD unchanged, and that item's ticket is filed only after the run PR. A later ticket-file or code commit invalidates that evidence. Both tickets reach the default branch only after the person merges the run PR. Ticket files are checked with a YAML parser and `git log`, not from the report. The `wkc-tracker` and `wkc-implement` runbooks cover these cases.
 
 ## Changes
+
+- 2026-10-28: Maintainer decision: M4's routing exit check has a run without a pair use the
+  model and effort the person confirmed at kickoff, recorded on its `Execution:` lines. Still
+  draft.
 
 - 2026-10-28: Planning review of `df0e2b0`. M4's routing exit check covers replacing only the
   entry that did the preceding step, and withdrawing the `claude-code` opt-in during a run. Still

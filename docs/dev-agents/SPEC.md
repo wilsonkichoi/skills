@@ -323,7 +323,7 @@ a manual handoff, with no work performed by a substitute model.
 
 **Evidence and failures.** The parent checks the actual PR head, verdict, tracker writes, and
 process result before advancing. Existing handoff and verdict comments carry these optional lines
-for routed calls; the writer drops them when routing is absent:
+for routed calls and for calls in a run without a pair; the writer drops them otherwise:
 
 ```
 Execution: <harness>, <requested model>, effort <requested value>
@@ -593,8 +593,8 @@ Handoff, posted when the PR is up and the ticket moves to `in-review`:
 wkc-implement: in review
 PR: <URL>
 Head: <full sha>
-Execution: <harness>, <requested model>, effort <requested value>   <!-- routed calls only -->
-Observed execution: <model and effort from runtime evidence | unavailable>           <!-- routed calls only -->
+Execution: <harness>, <requested model>, effort <requested value>   <!-- routed calls and runs without a pair -->
+Observed execution: <model and effort from runtime evidence | unavailable>           <!-- routed calls and runs without a pair -->
 Checks: <passed> of <total> acceptance criteria passed. Details are in the PR body.
 ```
 
@@ -682,8 +682,8 @@ Reviewed: <full head sha>
 Fixed in: <full sha of the fix commit>     <!-- fixed rounds only -->
 Fixing rounds used: <k> of <max_fix_attempts>
 Independent: yes | no, <why>
-Execution: <harness>, <requested model>, effort <requested value>   <!-- routed calls only -->
-Observed execution: <model and effort from runtime evidence | unavailable>           <!-- routed calls only -->
+Execution: <harness>, <requested model>, effort <requested value>   <!-- routed calls and runs without a pair -->
+Observed execution: <model and effort from runtime evidence | unavailable>           <!-- routed calls and runs without a pair -->
 - fixed <file:line> <finding>
 - improved <file:line> <change>
 - open <file:line> <finding>
@@ -913,7 +913,15 @@ A run with a model pair is coordinated as Model selection and dispatch says. A r
 records `Execution models: none` and runs every role on the coordinator's own harness and model,
 in any supported harness (maintainer, 2026-10-28). Each build and review starts in a fresh
 session: a native subagent first, otherwise that harness's headless CLI when `headless_workers`
-lists it. A harness with neither cannot give an independent review, so kickoff stops.
+lists it. A harness with neither cannot give an independent review, so kickoff stops. A session
+cannot reliably read its own model and effort, so kickoff asks the person to confirm them and the
+config records the answer as `Coordinator model:` (maintainer, 2026-10-28). Every worker gets the
+confirmed effort. A headless worker also gets the confirmed model:
+`codex exec -m <model> -c model_reasoning_effort=<effort>`, or
+`kiro-cli chat --model <model> --effort <effort>`. A native
+Claude subagent gets the model when it is an alias, and otherwise inherits the session model.
+Handoff and verdict comments carry the `Execution:` lines with that confirmed selection, and a
+runtime model that differs from it is reported as a mismatch.
 
 1. **Before, in one round of questions:** confirm scope and initial IDs; readiness problems and
    blind spots, such as unapproved documents, open decision tickets, missing contracts, criteria
@@ -921,7 +929,8 @@ lists it. A harness with neither cannot give an independent review, so kickoff s
    planning authority, default delegated; new prerequisites, default run; the additional-ticket
    allowance, default the project's `max_additional_tickets` (5 when absent); and held tickets,
    each adopted or left out. Confirm the default model pair or none, any ticket overrides, the
-   headless workers, and that the coordinator runs with full permissions and no sandbox.
+   headless workers, and that the coordinator runs with full permissions and no sandbox. With no
+   pair, also confirm the coordinator's harness, model, and effort.
    Classify each post-merge gate and exit-check item by Gate classes. For each needed shared
    non-production environment, show exact commands, limits, cleanup, and expiry and ask for its
    grant, default none. Propose moving production steps word for word to separate release tickets
@@ -1099,6 +1108,7 @@ Started: <ISO 8601 time>. By: <person>.
 - max_fix_attempts: <n>              <!-- never higher than the project config -->
 - max_additional_tickets: <n>        <!-- default 5; never higher than the project config -->
 - Execution models: <first harness/model/effort>; <second harness/model/effort> | none
+- Coordinator model: <harness>, <model>, effort <effort> | not used   <!-- with no pair: the person's confirmed answer -->
 - Headless workers: <harnesses> | none   <!-- never more than the project config -->
 - Planning: delegated | none
 - New prerequisites: run | record only
@@ -1444,12 +1454,17 @@ the previous tag. Each port also updates the README roster, the repository map u
 - Implementation must confirm that a `--settings` sandbox override takes effect for a `claude -p`
   worker below managed settings, and what model evidence `--output-format json` reports. Neither
   was run for this planning change.
-- A run without a pair uses the coordinator's own model for every role. A native Claude subagent
-  inherits the session model, but a headless worker, such as `codex exec`, uses its configured
-  default unless the coordinator passes a model. How the coordinator establishes its own model
-  and effort, and what effort a worker gets, is undecided (planning review of `df0e2b0`).
+- Implementation must confirm that `kiro-cli chat --no-interactive` honors `--model` and
+  `--effort` for a run without a pair. Local `kiro-cli 2.33.0` help lists both; no session ran.
 
 ## Changes
+
+- 2026-10-28: Maintainer decision on the open item from the planning review of `df0e2b0`. In a
+  run without a pair, kickoff asks the person to confirm the coordinator's harness, model, and
+  effort, and the config records them as `Coordinator model:`. Headless workers get that model and
+  effort explicitly, native Claude subagents get the effort and an alias model, and handoff and
+  verdict comments carry the `Execution:` lines (wkc-yolo run, step 1, Run config, Evidence and
+  failures). Replaced the open unknown. Review tickets #74 and #83. The documents remain draft.
 
 - 2026-10-28: Planning review of `df0e2b0`. Turn order covers a pair edit that leaves the
   preceding model in neither entry, not only one that replaced both. Each dispatch uses only
