@@ -317,9 +317,10 @@ otherwise start a fresh worker in that role. Both paths reread tracker, git, and
 reconcile existing writes. Do not relabel earlier work as performed by the new selection.
 Under `--run`, decide or park applies instead.
 A manual call in Codex coordinates as above when `headless_workers` lists `claude-code`. Other
-manual calls outside Claude Code may execute directly when the active harness/model/effort match
-the resolved selection and review independence holds. Otherwise give the required selection and
-a manual handoff, with no work performed by a substitute model.
+manual calls outside Claude Code may execute directly when the person confirms that the session's
+harness, model, and effort match the resolved selection and review independence holds. A session
+cannot reliably read its own model and effort, so the call asks and never infers a match. Otherwise
+give the required selection and a manual handoff, with no work performed by a substitute model.
 
 **Evidence and failures.** The parent checks the actual PR head, verdict, tracker writes, and
 process result before advancing. Existing handoff and verdict comments carry these optional lines
@@ -1063,7 +1064,11 @@ cover the work. A new correction ticket never joins through step 3 and never spe
 additional allowance: it needs one renewal round for a new phase, then an immutable config with
 `Continues:` pointing to its predecessor and `Run PR:` naming the same PR. Only the person's
 approval creates new initial correction IDs or replenishes the additional allowance. A restart
-never does.
+never does. The renewal round also asks step 1's execution questions again, offering the
+predecessor's answers: the model pair or none, the headless workers within the current project
+config, the coordinator's full-permission launch, and, with no pair, the coordinator's harness,
+model, and effort. The continuing session may be a different launch, so the new config records
+these answers and never copies `Coordinator model:` without asking.
 
 The new phase's initial IDs contain approved corrections and unfinished carried work. Earlier
 completed work remains required at readiness. The new config supplies active grants and limits;
@@ -1458,6 +1463,13 @@ the previous tag. Each port also updates the README roster, the repository map u
   `--effort` for a run without a pair. Local `kiro-cli 2.33.0` help lists both; no session ran.
 
 ## Changes
+
+- 2026-10-28: Planning review of `111bc9c`. A continuation's renewal round asks kickoff's
+  execution questions again, so the new phase's `Coordinator model:` and permission-mode
+  confirmation come from the continuing session (Review continuations). A manual call outside
+  Claude Code executes directly only on the person's confirmation that its session matches the
+  resolved selection, never on an inferred match (Manual calls). Review tickets #74 and #83. The
+  documents remain draft.
 
 - 2026-10-28: Maintainer decision on the open item from the planning review of `df0e2b0`. In a
   run without a pair, kickoff asks the person to confirm the coordinator's harness, model, and
