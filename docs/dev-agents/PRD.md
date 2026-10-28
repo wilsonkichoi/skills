@@ -173,8 +173,9 @@ Ranked. Ranking is importance, not delivery order; the ROADMAP sets the order.
   2026-10-27).
 - **AI session budget:** at most 6 extra AI test sessions per change. Arbitrary cross-harness
   launches and nested workers remain prohibited. The approved model-routing workflow permits
-  Claude Code to coordinate native Claude agents and non-interactive `codex exec` workers. Both
-  count against the same concurrency and session limits. Workers cannot delegate or launch another
+  Claude Code to coordinate native Claude agents and non-interactive `codex exec` workers, and,
+  under the `headless_workers` opt-in, `claude -p` workers or a Codex coordinator. Every worker
+  counts against the same concurrency and session limits. Workers cannot delegate or launch another
   harness ([token usage](./rules/token-usage.md), [AI harness testing](./rules/ai-harness-testing.md);
   decided 2026-10-27).
 - **Model selection** (decided 2026-10-27): the default pair is the latest Opus, selected by the
@@ -186,19 +187,27 @@ Ranked. Ranking is importance, not delivery order; the ROADMAP sets the order.
   to `medium` for both models, and a selection may name another supported value. Project and ticket
   selections may change the next dispatch. The ticket owns its selection, and a run never freezes
   it. They do not reset review limits or grant unattended authority. Projects without routing
-  configuration keep their existing manual behavior in Claude Code, Codex, or Kiro CLI. More
-  harnesses, such as Kiro CLI or OpenCode, may join the routed workflow later.
+  configuration keep their existing manual behavior in Claude Code, Codex, or Kiro CLI. A
+  `wkc-yolo` run without a pair runs every role on its own harness and model, each build and review
+  in a fresh session: a native subagent first, otherwise that harness's own headless CLI
+  (maintainer, 2026-10-28). More harnesses, such as Kiro CLI or OpenCode, may join the routed
+  workflow later.
 - **Subscription execution** (maintainer, 2026-10-27): Claude Code on the latest Opus coordinates
   the mixed-model workflow. Claude work uses its native agents. Codex work uses `codex exec` with
   the user's existing subscription login. The maintainer reports that `codex exec` works and
   `claude -p` is unreliable with their subscription. This is their operating constraint, not a
-  universal product claim. The workflow does not use `claude -p`, API billing fallback,
-  authentication changes, or automatic model substitution. Unsupported settings or coordinators
+  universal product claim. The workflow does not use API billing fallback, authentication
+  changes, or automatic model substitution. `claude -p` runs only when the project lists
+  `claude-code` in `headless_workers`, which is off by default. That opt-in accepts the login
+  `claude -p` uses, API billing included; it is the person's choice, not a fallback. It lets a
+  Codex session coordinate Claude workers and a Claude Code coordinator pass a pinned Claude model
+  ID. The maintainer's projects leave it off and use native agents (maintainer, 2026-10-28).
+  Unsupported settings or coordinators
   produce a blocked result or concrete manual handoff. Quota, rate-limit, or authentication errors
   stop all worker dispatch. Workers run with full permissions and no sandbox (maintainer,
-  2026-10-27). The secret scan, independent review, and the person's merge remain the safeguards. A
-  Codex coordinator, with GPT building first, will be reconsidered once Claude Code supports
-  subscription use of `claude -p`.
+  2026-10-27). No skill can read its session's permission mode, so the person launches the
+  coordinator with full permissions, and adopter documentation says how. The secret scan,
+  independent review, and the person's merge remain the safeguards.
 - **Authoring:** `wkc-` identifiers, the five opening fields, manual invocation by default, and a
   `SKILL.md` ideally under 150 lines and under 250 for a person reading it. Neither is a hard
   limit; the Agent Skills specification allows 500 (decided 2026-10-20). A skill has no
@@ -276,6 +285,12 @@ in [ADR-009](./adr/ADR-009-run-budgets-continuations-and-model-routing.md). Thei
 and integration validation remain downstream work.
 
 ## Changes
+
+- 2026-10-28: Maintainer decisions after the planning review. `headless_workers` lets a project
+  opt into `claude -p`, off by default, which also allows a Codex coordinator. A run without a
+  pair runs each role on its own harness in fresh sessions. The person launches the coordinator
+  with full permissions, and documentation tells adopters how. Replaced "does not use
+  `claude -p`" and the deferred Codex coordinator. Status stays draft.
 
 - 2026-10-28: Planning review of `5677c39`. Goal 1 and the Model selection constraint state the
   preceding-step reviewer rule instead of unconditional alternation, which a pre-merge update

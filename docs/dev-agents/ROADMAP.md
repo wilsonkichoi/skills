@@ -55,10 +55,11 @@ Scope: PRD goals 1 and 3, model-selection and subscription constraints, and its 
 SPEC Config fields, Ticket execution overrides, Lifecycle, Review verdict, Unattended calls,
 Delegated run authority, `wkc-yolo` run, run config/stores, run branch, continuation ownership,
 Ticket scope and Gate classes, Push check, Security, Failure handling, Grants and Cleanup;
-`push_check`, `run_config`, `max_additional_tickets`, `execution_models`; ADR-006, ADR-007, ADR-008,
-and [ADR-009](./adr/ADR-009-run-budgets-continuations-and-model-routing.md). Claude Code coordinates
-native Claude agents and subscription-authenticated `codex exec` workers. No `claude -p`, API
-billing fallback, or nested workers are introduced. There is no elapsed-time run budget.
+`push_check`, `run_config`, `max_additional_tickets`, `execution_models`, `headless_workers`; ADR-006, ADR-007, ADR-008,
+and [ADR-009](./adr/ADR-009-run-budgets-continuations-and-model-routing.md). By default Claude Code coordinates
+native Claude agents and subscription-authenticated `codex exec` workers. `claude -p` runs only
+when a project lists `claude-code` in `headless_workers`; no API billing fallback or nested
+workers are introduced. There is no elapsed-time run budget.
 `max_fix_attempts`, grant expiry, command timeouts, and existing session limits remain. A
 local-backend run end to end is M6's.
 
@@ -107,7 +108,11 @@ Instruction-following checks use only explicitly authorized sessions within the 
   worker if the selected model or effort changed. Integration validation confirms Claude native-agent
   dispatch and explicit-model `codex exec` dispatch with effective subscription provider and login. A stored
   ChatGPT login plus an API-key gateway configuration is refused. Both workers count against the same
-  limits. No worker delegates. No API fallback or automatic substitution occurs. A quota,
+  limits. No worker delegates. No API fallback or automatic substitution occurs. With the
+  default `headless_workers`, no `claude -p` starts and a pinned Claude ID is blocked; listing
+  `claude-code` allows both and a Codex coordinator, and a ticket cannot change the list. A run
+  without a pair runs each role on its own harness in fresh sessions. Kickoff asks the person to
+  confirm the coordinator's full-permission mode and reports it as confirmed, not observed. A quota,
   rate-limit, or authentication error stops all dispatch without retries. Claude bypass mode
   with its Bash sandbox still enabled does not pass the no-sandbox check.
 - Requested changes preserve the run branch, PR, completed tickets, and evidence. The PR becomes
@@ -150,6 +155,10 @@ Depends on: M2, because it changes `wkc-implement`; M4, because it covers `wkc-y
 Exit check: on a local-tracker fixture with a GitHub remote, each `wkc-tracker` write is one `chore: wkc-tracker <verb> <id>` commit holding only that ticket's file, with other staged and unstaged changes unchanged and nothing pushed. `wkc-implement` branches before it claims, so the claim and handoff commits are on the ticket's branch and not on the default branch, and it stops on an unpushed `issues_dir` commit on the default branch. After the merge, a rerun makes its post-merge writes on `<type>/<id>-finish` from the merged default branch, and the ticket file on the default branch reads `done` once that branch lands. With no remote, the post-merge writes are commits on the local default branch. A `wkc-yolo` run of two local tickets runs them one at a time and reaches `done` on the run branch before readiness. It pushes the ticket-file commits and opens a draft run PR before verification. Verification and cleanup evidence, an intermittent check's `Discovered:` item included, are read back from PR comments, with the checked HEAD unchanged, and that item's ticket is filed only after the run PR. A later ticket-file or code commit invalidates that evidence. Both tickets reach the default branch only after the person merges the run PR. Ticket files are checked with a YAML parser and `git log`, not from the report. The `wkc-tracker` and `wkc-implement` runbooks cover these cases.
 
 ## Changes
+
+- 2026-10-28: M4 adds `headless_workers` (opt-in `claude -p`, pinned Claude IDs, and a Codex
+  coordinator), runs without a model pair, and the person-confirmed coordinator mode (maintainer
+  decisions). Still draft.
 
 - 2026-10-28: Planning review of `5677c39`. M4's outcome and routing exit check state the
   preceding-step reviewer rule instead of unconditional alternation. Still draft.

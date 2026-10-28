@@ -95,9 +95,14 @@ following contract details for final review:
   Review-only rounds count as completed steps. An approval stops the loop. Duplicate verdicts
   and failed launches do not advance it. Every review uses a fresh context,
   even when returning to the implementation model. `max_fix_attempts` keeps its existing meaning.
-- The main Claude Code session, on the latest Opus, dispatches all workers. A Codex coordinator,
-  with GPT building first, is deferred until Claude Code supports subscription use of `claude -p`,
-  which it would need to start Claude workers. Workers never delegate or launch another harness.
+- The main Claude Code session, on the latest Opus, dispatches all workers by default. A project
+  may list `claude-code` in `headless_workers`, off by default, to allow `claude -p` workers. That
+  opt-in accepts their login and billing, and it lets a Codex session coordinate and a Claude Code
+  coordinator pass a pinned Claude ID (maintainer, 2026-10-28). The switch is project config only,
+  because a per-model or per-ticket switch would let a ticket edit turn on API billing. A run with
+  no pair runs every role on its own harness in fresh sessions, native subagents first. The
+  person launches the coordinator in bypass mode, because no skill can read its session's
+  permission mode. Workers never delegate or launch another harness.
   Native and external workers share limits. Use subscription login, not API or provider fallback. An
   unavailable model is reported, never substituted. Workers run with full permissions and no sandbox
   (maintainer, 2026-10-27). Claude's permission mode and sandbox setting are checked separately,

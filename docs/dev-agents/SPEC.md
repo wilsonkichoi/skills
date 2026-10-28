@@ -135,12 +135,14 @@ Added to `docs/dev-agents/config.md` by `wkc-setup`, in the PR that first reads 
 | `max_fix_attempts` | integer, 0 or more | `3` | `wkc-code-review`, `wkc-yolo` | Review rounds that may change code on one PR, for fixes or improvements. One review-only round always follows the last fix; with `0`, the only round is review-only |
 | `max_additional_tickets` | integer, 0 or more | `5` | `wkc-yolo` | Additional distinct tickets admitted beyond the approved initial IDs in one run phase; initial work and backlog recording cost no slot |
 | `execution_models` | ordered pair of selections, each `harness`, `model`, and `effort` (default `medium`) | manual: current harness and model when absent; kickoff/setup offer the latest Opus (`opus`) then `gpt-6.1-sol` | `wkc-implement`, `wkc-code-review`, `wkc-yolo` | The first model builds; each review uses the other model from the preceding completed build/update or review step. A ticket's pair replaces it |
+| `headless_workers` | list of `claude-code`, `codex`, `kiro-cli` | `[codex, kiro-cli]` | `wkc-implement`, `wkc-code-review`, `wkc-yolo` | Harnesses whose headless CLI a coordinator may start as a worker: `claude -p`, `codex exec`, `kiro-cli chat --no-interactive`. Project config only. Listing `claude-code` accepts the login `claude -p` uses, API billing included (Model selection and dispatch, Headless workers) |
 | `run_config` | `tracker`, `github-variable`, `command <cmd>` | `tracker` | `wkc-tracker`, `wkc-yolo` | Where each run's config is stored (wkc-yolo run, Store) |
 | `push_check` | a shell command | none | `wkc-implement`, `wkc-code-review`, `wkc-yolo` | Scans the commits about to be pushed for secrets; exit 0 passes, anything else blocks the push. Example: `gitleaks git --redact --log-opts="origin/main..HEAD"`. Once set, it binds every push in every mode; a run needs a usable one |
 
-Invalid review/admission limits, model selections, or `run_config` stop before dispatch or admission
-and name the allowed values. A run may lower `max_fix_attempts` or `max_additional_tickets` and
-never raise the project ceiling. Only the person changes that ceiling. There is no elapsed-time
+Invalid review/admission limits, model selections, headless workers, or `run_config` stop before
+dispatch or admission and name the allowed values. A run may lower `max_fix_attempts` or
+`max_additional_tickets`, or drop a harness from `headless_workers`, and never raise the project
+ceiling or add a harness. Only the person changes that ceiling. There is no elapsed-time
 run budget. Environment grant expiry, command limits, the run's limit of 5 concurrent workers,
 and quota, rate-limit, and authentication stops remain.
 
@@ -166,7 +168,8 @@ Each entry has `harness` (`claude-code` or `codex`), a `model`, and `effort`. Fo
 `model` is `opus`, `sonnet`, `haiku`, or `fable`, an alias that follows the newest release of that
 family, because a Claude Code agent call accepts only an alias. Following the alias is the person's
 selection, not substitution. A pinned ID such as `claude-opus-5-5` is valid only where the
-coordinator can pass it, and otherwise is blocked. For `codex`, `model` is the exact ID
+coordinator can pass it: through `claude -p --model` when `headless_workers` lists `claude-code`.
+Otherwise it is blocked. For `codex`, `model` is the exact ID
 `codex exec -m` takes. Evidence records the model the alias resolved to when the runtime shows it.
 Effort defaults to `medium` when an entry omits it (maintainer, 2026-10-27). The value must be
 supported and honored; report a refusal or an effective setting that differs, without silently
@@ -177,7 +180,28 @@ access is not implied by a valid identifier.
 Another harness, such as Kiro CLI or OpenCode, joins through a SPEC change that defines its
 contract: how the coordinator starts a fresh worker in a checkout, passes the model and effort,
 checks the subscription login so no API key bills the run, grants full permissions, and reads
-runtime evidence. Until then a selection naming it is blocked, never replaced.
+runtime evidence. Until then a selection naming it is blocked, never replaced. `kiro-cli` is not
+a routed harness yet; `headless_workers` lists it only for runs without a pair.
+
+**Headless workers.** A coordinator starts each worker in a fresh session: its own harness's
+native subagent first, and a headless CLI only for a harness `headless_workers` lists. A routed
+Codex entry always runs through `codex exec`, so a project that drops `codex` cannot route to
+Codex. `claude-code` is off by default. Listing it is the person's choice to let `claude -p` use
+whatever login it finds, API billing included, so it is not a billing fallback. The coordinator
+never changes or switches a login (maintainer, 2026-10-28). The list is project config only: a
+ticket's `## Execution` cannot set it, delegated planning never changes it, and a run records it
+at kickoff and may drop harnesses but never add one. A per-model or per-ticket switch was
+rejected, because a ticket edit could then turn on API billing.
+
+A `claude -p` worker runs in the intended checkout with `--model <model>`, an alias or pinned ID,
+`--effort <effort>`, `--dangerously-skip-permissions`, `--settings
+'{"sandbox":{"enabled":false}}'`, and `--disallowed-tools Agent`, with the prompt on standard
+input and `--output-format json` for runtime evidence. It never uses `--continue`, and resumes
+only its own session with `--resume <id>`. Managed settings that force the sandbox or disable
+bypass mode make it unsupported. A Claude Code coordinator uses native agents for alias
+selections and `claude -p` only for a pinned ID. A `kiro-cli chat --no-interactive` worker gets
+`--trust-all-tools`. Push checks, fresh-context review, and every other rule here bind every
+worker kind.
 
 **Resolution.** Read the project's `execution_models`, then the ticket's optional `## Execution`
 section, which holds the same key. A ticket's pair replaces the project's pair whole. Exactly two
@@ -227,18 +251,32 @@ is not permission to guess a model or reset a counter. Reporting status, finish,
 not change the implementation/review turn. A worker that committed a review fix must record its
 fixed verdict under the selection that did that work before another round starts.
 
-**Coordinator.** The main Claude Code session, running the latest Opus, dispatches the selected
-worker: a native Claude agent or a fresh `codex exec` process in the intended checkout. It passes
-the selected model and the resolved effort, `medium` when the entry omits it, to both worker
-kinds. Codex receives the requested `wkc-implement` or
-`wkc-code-review` invocation, not the built-in `codex review`. Use the existing subscription login.
-Never fall back to API billing or `claude -p`. Workers run with full permissions and no sandbox
+**Coordinator.** By default the main Claude Code session, running the latest Opus, coordinates.
+When `headless_workers` lists `claude-code`, a Codex session may coordinate instead: it starts
+Claude workers with `claude -p` and Codex workers with `codex exec`, and it runs with
+`--dangerously-bypass-approvals-and-sandbox`, because its own sandbox would constrain them
+(maintainer, 2026-10-28). The coordinator dispatches the selected worker in the intended
+checkout: a native Claude agent, a fresh `codex exec` process, or a `claude -p` process (Headless
+workers). It passes the selected model and the resolved effort, `medium` when the entry omits it,
+to every worker kind. Each worker receives the requested `wkc-implement` or `wkc-code-review`
+invocation; Codex never runs the built-in `codex review`. Codex workers use the existing
+subscription login. Never fall back to API billing, and never start `claude -p` unless `headless_workers` lists
+`claude-code`. Workers run with full permissions and no sandbox
 (maintainer, 2026-10-27): the coordinating Claude Code session runs with
 `--dangerously-skip-permissions`, which its native workers inherit, and with effective
-`sandbox.enabled: false`. Permission mode alone does not disable the Bash sandbox. Check both
-settings before native or external dispatch; an outer Claude sandbox would also constrain the
-Codex process it launches. If managed settings prevent this mode, report the unsupported
-configuration rather than claiming an unsandboxed worker. Each `codex exec` worker gets
+`sandbox.enabled: false`. Permission mode alone does not disable the Bash sandbox, and an outer
+Claude sandbox would also constrain the Codex process it launches. No documented interface lets a
+skill read its session's permission mode, and the person can leave bypass mode during a session.
+So the person launches the coordinator in that mode: `claude --dangerously-skip-permissions`, or
+`permissions.defaultMode: "bypassPermissions"` in the user's `~/.claude/settings.json`. Claude
+Code ignores bypass in a project's `.claude/settings.json` and `.claude/settings.local.json`.
+`wkc-setup`, the skills' README, and the `wkc-yolo` kickoff tell adopters this. Kickoff asks the
+person to confirm the mode and records the answer in the session report as confirmed by the
+person, never as observed. The coordinator reads `sandbox.enabled` and
+`permissions.disableBypassPermissionsMode` from the settings files it can see, managed settings
+included. A setting that forces the sandbox or disables bypass mode makes routed dispatch
+unsupported, and is reported rather than claiming an unsandboxed worker. A manual call needs no
+confirmation: a native worker in another mode prompts the person. Each `codex exec` worker gets
 `-m <model>`, `-c model_reasoning_effort=<effort>`, and
 `--dangerously-bypass-approvals-and-sandbox` (alias `--yolo`). Before every Codex launch or
 resume, check the effective provider and authentication in the worker's checkout, environment,
@@ -249,7 +287,7 @@ Reject API-key provider/gateway overrides, including provider `env_key`, bearer 
 credential headers, or an unverified custom endpoint. A ChatGPT login alone does not establish
 which provider `exec` will use. Inspect routing metadata without printing credential values;
 never change the saved login or probe with a paid request. Failure blocks the call, with no
-API-billing fallback. Both worker kinds count toward the run's limit of 5 concurrent workers,
+API-billing fallback. Every worker kind counts toward the run's limit of 5 concurrent workers,
 and during validation toward the test-session limit. Workers never launch a harness or another worker. Claude
 Code lets a native subagent start its own subagents by default; where the session sets
 `CLAUDE_CODE_MAX_SUBAGENT_SPAWN_DEPTH=1` the harness enforces this rule, and otherwise it rests on
@@ -273,7 +311,8 @@ again. Resume that worker's own session only if it can honor the now-selected mo
 otherwise start a fresh worker in that role. Both paths reread tracker, git, and PR state and
 reconcile existing writes. Do not relabel earlier work as performed by the new selection.
 Under `--run`, decide or park applies instead.
-Manual calls outside Claude Code may execute directly when the active harness/model/effort match
+A manual call in Codex coordinates as above when `headless_workers` lists `claude-code`. Other
+manual calls outside Claude Code may execute directly when the active harness/model/effort match
 the resolved selection and review independence holds. Otherwise give the required selection and
 a manual handoff, with no work performed by a substitute model.
 
@@ -291,9 +330,9 @@ never label an unverified runtime setting as observed. Unsupported selection or 
 returns a concrete manual handoff or parks the run ticket. Quota, rate-limit, and authentication
 errors stop all workers and dispatch without retry or provider fallback. `push_check`, independent
 review, and human merge authority bind both providers. The coordinator has no special permission to
-bypass a worker's refusal. A Codex coordinator, with GPT building first, is deferred: it would start
-Claude workers with `claude -p`, which the maintainer will reconsider only once Claude Code supports
-subscription use of it, by tooling or terms (maintainer, 2026-10-27). Harness integration validation
+bypass a worker's refusal. The maintainer's projects leave `claude-code` out of `headless_workers`,
+because `claude -p` is unreliable with their subscription, and coordinate from Claude Code
+(maintainer, 2026-10-28). Harness integration validation
 follows the explicit exception in [AI harness testing](./rules/ai-harness-testing.md), not a generic
 cross-harness test matrix.
 
@@ -851,8 +890,8 @@ change.
   or a requirement the PRD sets, such as the session budget or the authoring limits. It never
   weakens an acceptance criterion to make failing work pass, and never moves a requirement out of a
   ticket's definition of done beyond what the config's `Moved by the person:` line records
-  (ADR-008). Initial ticket IDs, admission ceilings, model selections, and phase renewal are
-  also person-controlled. Planning never turns new work into free initial work or renews a grant.
+  (ADR-008). Initial ticket IDs, admission ceilings, model selections, headless workers, and
+  phase renewal are also person-controlled. Planning never turns new work into free initial work or renews a grant.
   A change that needs one of those parks the ticket that raised it, with
   `Needs: a person`.
 - **With `Planning: none`,** a SPEC or ROADMAP change parks the ticket that needs it, as before.
@@ -865,14 +904,19 @@ The scope is one ticket, one wave, or a milestone. A wave is the eligible fronti
 milestone at kickoff. Every scope records its initial ticket IDs, including dependent tickets in
 a milestone. Later waves of those IDs are initial work. Adding a ticket to the milestone or
 changing the ROADMAP never adds it to that frozen list. Admission of other work follows step 3.
-The mixed-model run is coordinated by the main Claude Code session (Model selection and dispatch).
+A run with a model pair is coordinated as Model selection and dispatch says. A run without one
+records `Execution models: none` and runs every role on the coordinator's own harness and model,
+in any supported harness (maintainer, 2026-10-28). Each build and review starts in a fresh
+session: a native subagent first, otherwise that harness's headless CLI when `headless_workers`
+lists it. A harness with neither cannot give an independent review, so kickoff stops.
 
 1. **Before, in one round of questions:** confirm scope and initial IDs; readiness problems and
    blind spots, such as unapproved documents, open decision tickets, missing contracts, criteria
    without checks, overlapping changes without coordination notes, and missing prerequisites;
    planning authority, default delegated; new prerequisites, default run; the additional-ticket
    allowance, default the project's `max_additional_tickets` (5 when absent); and held tickets,
-   each adopted or left out. Confirm the default model pair and any ticket overrides.
+   each adopted or left out. Confirm the default model pair or none, any ticket overrides, the
+   headless workers, and that the coordinator runs with full permissions and no sandbox.
    Classify each post-merge gate and exit-check item by Gate classes. For each needed shared
    non-production environment, show exact commands, limits, cleanup, and expiry and ask for its
    grant, default none. Propose moving production steps word for word to separate release tickets
@@ -1049,7 +1093,8 @@ Started: <ISO 8601 time>. By: <person>.
 - Supersedes: <closed run config ref> | none
 - max_fix_attempts: <n>              <!-- never higher than the project config -->
 - max_additional_tickets: <n>        <!-- default 5; never higher than the project config -->
-- Execution models: <first harness/model/effort>; <second harness/model/effort>
+- Execution models: <first harness/model/effort>; <second harness/model/effort> | none
+- Headless workers: <harnesses> | none   <!-- never more than the project config -->
 - Planning: delegated | none
 - New prerequisites: run | record only
 - Grants: none | <one Grant line each>
@@ -1153,6 +1198,8 @@ and the person's kickoff answers only and lives in the store `run_config` names.
 ## Security
 
 - Credentials stay in `gh auth` and the Linear MCP server. No skill reads, stores, or prints them.
+- No skill changes a harness login. `claude -p` runs only when the project lists `claude-code` in
+  `headless_workers`, and that opt-in is the person's acceptance of its login and billing.
 - Merging into the default branch is always a person's, in a run too. Publishing and deploying need
   a person's authorization. A run acts on a shared non-production environment only under a kickoff
   grant (wkc-yolo run, Grants), and never runs a production-affecting step: that follows the
@@ -1200,7 +1247,8 @@ and the person's kickoff answers only and lives in the store `run_config` names.
 - Additional admissions default to five and are counted from recorded IDs across restarts. No
   worker or planning change resets them. Human-authorized continuations keep one branch and PR.
 - Manual and YOLO model routing honors per-ticket selections and fresh alternating review
-  contexts. Missing access never triggers a provider or billing fallback.
+  contexts. Missing access never triggers a provider or billing fallback. `claude -p` runs only
+  under the project's `headless_workers` opt-in.
 
 ## Boundaries
 
@@ -1388,15 +1436,21 @@ the previous tag. Each port also updates the README roster, the repository map u
 - Claude Code lowers an unsupported effort to the highest supported level, and
   `CLAUDE_CODE_EFFORT_LEVEL` overrides a subagent's effort. Implementation must report either
   case as a mismatch between requested and effective effort.
-- The Claude Code documentation shows the permission mode only to the person, in the status bar.
-  It names no source a skill can read, and the person can leave bypass mode during the session.
-  Settings files show `sandbox.enabled` and `permissions.disableBypassPermissionsMode`, but not a
-  `--settings` or `--dangerously-skip-permissions` launch flag. Implementation must name the source
-  that establishes the coordinator's mode and sandbox state before dispatch. What the coordinator
-  does when no source can is an open decision: block routed dispatch, or dispatch and record the
-  mode as unverified.
+- Implementation must confirm that a `--settings` sandbox override takes effect for a `claude -p`
+  worker below managed settings, and what model evidence `--output-format json` reports. Neither
+  was run for this planning change.
 
 ## Changes
+
+- 2026-10-28: Maintainer decisions after the planning review of `5677c39`. New `headless_workers`
+  field, default `[codex, kiro-cli]`: listing `claude-code` allows `claude -p` workers, pinned
+  Claude IDs, and a Codex coordinator, and accepts their login and billing. A run without a model
+  pair records `Execution models: none` and runs every role on its own harness in fresh sessions.
+  The person launches the coordinator in bypass mode; kickoff records the person's confirmation,
+  and adopter documentation says how (Config fields, Model selection and dispatch, Delegated run
+  authority, wkc-yolo run, Security, Requirements, Open unknowns). Replaced the deferred Codex
+  coordinator, "never ... `claude -p`", the pre-dispatch permission-mode check, and the open
+  permission-mode decision. Review tickets #74, #76, #77, and #83.
 
 - 2026-10-28: Planning review of `5677c39`: the coordinator passes the resolved effort, `medium`
   by default, to native workers as well as Codex, replacing "any explicit effort". The run PR's
