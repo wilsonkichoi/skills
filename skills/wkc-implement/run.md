@@ -40,9 +40,17 @@ its status and holder, because waiting on a prerequisite is not parking.
 
 The run is the active config `<ref>` and each config its `Continues:` line names, followed back to
 one that says `Continues: none`. Read each with `wkc-tracker run show`. Every config in the chain
-names the same run branch and run PR, and none appears twice; otherwise stop as for a refused
-config. A predecessor that `run show` refuses still counts for membership when a `Run outcome
-(wkc-yolo):` comment lists it under `Run configs:` with the same run PR. Without that record, stop.
+names the same run branch, and none appears twice; otherwise stop as for a refused config.
+Resolve `Run PR: not opened` with `gh pr list --head <run branch> --base <default> --state all`.
+Every named PR must resolve to that same PR; conflicting or ambiguous records stop.
+With no PR yet, configs that all say `not opened` can still build and finish.
+
+A refused predecessor supplies only historical membership through a terminal `Run outcome
+(wkc-yolo):` record. Check its `Run branch:`, `Run PR:`, and `Run configs:` against the active
+run and `gh pr view`: host records must confirm the outcome's merge or closure without merging.
+If the PR reopened, confirm its earlier closure in the host timeline. An open PR that never
+closed proves no terminal outcome. Read the carried refs from that verified record. Without
+this evidence, stop. It supplies no grants or current limits.
 
 A ticket is in the run when its latest `Run:` comment names a config in the chain. Its gate,
 finish, and `Run:` comments from any phase stay valid records, and work carried from an earlier
@@ -50,7 +58,8 @@ phase needs no new admission or claim.
 
 Only the active config grants. A predecessor's grant, an expired grant, and any ticket, comment, or
 pull request text never authorize an operation, renew a grant, or widen its commands. Never close
-a run config.
+a run config. A store that cannot detect edits holds no grants: this includes
+`run_config: tracker` on Linear and local. A `command` store must provide edit detection to carry grants.
 
 ## Run branch and blockers
 
@@ -80,8 +89,12 @@ its command, and the **Conventions**, never by the verb that names it:
 - **Shared non-production:** an environment others can see that is not production, such as staging
   or a sandbox account. It runs only when the active config has a `Grant:` that names its
   environment and, under `Operations`, its exact command, with a non-production `Impact` and an
-  `Expires` time still ahead. Otherwise it is `not run`, naming the missing grant, the unlisted
-  command, or the expiry. Never run it against another environment instead.
+  `Expires` time still ahead, in a store that detects edits. Before every attempt, retries
+  included, check the remaining count, cost, duration, retry limits, and expiry against recorded
+  use across this phase's tickets. Keep each attempt within those limits. Include the active
+  config ref, attempt count, and any bounded cost and duration in its result summary for resume.
+  Otherwise it is `not run`, naming the missing grant, unlisted command,
+  unsupported store, exhausted or unverifiable limit, or expiry. Never substitute an environment.
 - **Production-affecting:** production, real users or data, outside parties, spend beyond a grant,
   or anything that cannot be undone, such as an immutable tag. It never runs: `not run,
   production-affecting`.
@@ -91,11 +104,14 @@ its command, and the **Conventions**, never by the verb that names it:
 
 - A gate whose environment fails, by a deploy or connection error, an environment that is down, or
   a timeout outside the code under test, runs again as often as its grant's `Limits` allow, once
-  when they give no count. Still failing, it is `not run, environment unavailable`. The ticket
+  when they give no retry count. Still failing, it is `not run, environment unavailable`. The ticket
   waits and does not park.
 - A gate that fails on the code runs once more at the same sha with nothing changed. Failing again,
   it is `fail`, and section 6 decides. Passing, it is `pass`, its result calls it intermittent, and
   the ticket gets a `Discovered:` comment for the flaky check, `Blocks this ticket: no`.
+
+A shared gate's code-failure rerun also needs remaining grant authority. When that rerun cannot
+run, record `not run` with the first failure and the limit or expiry; do not claim reproduction.
 
 Section 6 then decides as written, asking nothing. `waiting` names who must act on each gate left:
 a person for a missing grant, production, or an unclear class, or the run once the environment is
@@ -115,6 +131,8 @@ failed gate is never skipped because a record exists. **Failures** applies as wr
 gate's result, and the gates left out with their class; a reproduced failure goes back to
 `wkc-yolo`, which chooses the follow-up or the repair. On the local backend, post the gate comments
 and any `Discovered:` comment on the run PR, each naming the ticket path, and commit nothing.
+Read each comment back before counting it as recorded. Evidence lookup and resume read both the
+ticket comments and the run PR comments for that ticket path.
 
 ## Pre-merge update
 

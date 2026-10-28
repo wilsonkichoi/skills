@@ -19,6 +19,7 @@ Keep raw logs and fixtures outside tracked files.
 - Review round 4: 2026-10-26, PR #78
 - Dated report: 2026-10-28, push check (#76)
 - Dated report: 2026-10-28, run completion (#80)
+- Review round 1: 2026-10-28, PR #87
 
 ## Preparation
 
@@ -363,6 +364,34 @@ error while a flag file is absent, a check the merged code fails, and a smoke te
 61. **Run text, static.** Direct. `grep -n -- '--authorized' skills/wkc-implement/SKILL.md skills/wkc-implement/run.md`
     gives no output; the gate and finish blocks in `SKILL.md` equal the SPEC's by `diff`; `run.md` has a `## Contents`
     list naming its `##` sections.
+
+62. **Continuation after the run PR opens.** The immutable initial config says `Run PR: not opened`; a continuation
+    names the actual PR from the same run branch to the default branch. Finish or verify a carried ticket.
+    PASS: the initial reference resolves to that PR without an edit, and the call proceeds. Conflicting named PRs
+    or branches stop without writes. With no PR yet and all configs saying `not opened`, build and finish still work.
+
+63. **Retired predecessor evidence.** A predecessor is unavailable. Its outcome lists the carried refs, branch, and
+    PR. Try a comment claiming closure while the PR never closed, then a real closed-unmerged PR, then that PR reopened.
+    PASS: the false terminal claim stops; verified prior closure supplies membership only, including after reopening.
+    No grants or limits are reconstructed. For outside-run delivery, a merged carrying PR with the wrong base or
+    an outcome that does not carry the blocker's config leaves the blocker unmet; a matching default-branch merge
+    releases it without reading the retired config.
+
+64. **Grant store cannot detect edits.** With `run_config: tracker` on Linear and local, supply a syntactically valid,
+    unexpired staging grant. Also test a command store that cannot detect edits.
+    PASS: local gates run; staging is `not run` with the unsupported-store reason, and its marker is absent.
+
+65. **Grant limits bind every attempt.** On the GitHub fixture, use a staging grant with zero remaining operations;
+    then one with one operation left and a gate that fails on code. Exercise environment retries after expiry and
+    with a total count exhausted on another ticket. A grant without a retry count permits at most one environment retry.
+    PASS: no forbidden attempt runs; the gate is `not run` with its reason. A code failure with no authorized rerun
+    is not called reproduced. Result summaries record the active ref, attempts, and bounded cost and duration so a
+    resumed call counts prior use. Unknown use does not count as unused authority.
+
+66. **Local verify evidence reads.** With local tickets and an edit-detecting command store, verify at one head twice.
+    PASS: the first call posts and reads back gate comments on the run PR naming the ticket path, with no commit or
+    status change; the second reuses that pass. An unavailable result on the PR is retried when permitted. Comments
+    for another ticket path or sha supply no pass.
 
 ## Dated report: 2026-10-21
 
@@ -833,3 +862,40 @@ Not rerun on this change: cases 35 to 37, 39 to 44, and 47 to 50. Their text mov
 unchanged, and every `--run` result above depends on rules only `run.md` holds, so each of those sessions read it.
 Case 38 and case 46 are retired.
 
+## Review round 1: 2026-10-28, PR #87
+
+Reviewed `b1e57d8157be125a3ba8f9c6d8380b3884ea5c59` against #80 and SPEC Lifecycle, Unattended calls,
+Review continuations, Grants, and ADR-008. Independent session. Selected direct checks: case 1's metadata,
+opening-field and link subchecks, case 61, case 34, and static inspection of the affected contracts. Case 1's
+250-line target is exceeded, not passed: `SKILL.md` is 297 lines (reviewed head: 295; base: 307). The two added
+lines validate carried delivery records. `run.md` is 144 lines with its six sections listed; backlog is 302.
+
+Verified findings in the reviewed head:
+
+- `run.md:42`: literal equality of every `Run PR:` rejects the SPEC's initial `not opened` plus a later named PR.
+  The original fixture's configs #15 and #16 both say `not opened` by a fresh read of their unedited bodies,
+  so its continuation result does not exercise that transition. Resolve the placeholder by branch and default base.
+- `run.md:44` and `SKILL.md:104`: a matching outcome comment alone substitutes for an unavailable predecessor,
+  and the delivery fallback checks only `MERGED`. A false closure record on a never-closed PR could supply membership;
+  a carrying PR merged into another integration branch could release an outside dependent. Require terminal host
+  history, carried membership, and a carrying merge into the default branch. Reopened runs retain verified prior closure.
+- `run.md:81`: an unexpired environment/command match permits a shared gate even with `run_config: tracker` on
+  Linear or local, whose backend explicitly cannot detect edits. Reject grants from such stores, as Grants requires.
+- `run.md:83,96`: the operation predicate omits count, cost, and duration, and the code-failure rerun is unconditional.
+  One remaining operation followed by a code failure could execute a second unauthorized operation. Check limits
+  and expiry on every attempt, record bounded use for resume, and report an unavailable rerun without claiming reproduction.
+
+Improvements: local verify reads back run-PR evidence and consults it alongside ticket comments, as the Local
+backend contract requires. Backlog case 42 now checks the moved step's actual destinations and related links.
+
+Direct results: PASS for both skills' frontmatter and invocation YAML, opening fields, description constraints,
+and relative file links; gate/finish and both Decision/Parked pairs equal the SPEC; case 61 PASS. Static contract
+inspection confirms the corrections are present; it does not prove instruction following. Version stays 0.0.40,
+one patch above the base, with the existing changelog entry and README updated. `git diff --check origin/main`
+passes. Security review found no secret, added external package, unneeded network call, or sensitive output in the
+change; gitleaks scans the complete PR history before push. The project has no `test_command`; GitHub has no checks.
+
+Behavior for cases 62 to 66: SKIP in Codex and Claude Code because the change used all seven authorized AI test
+sessions (six standing plus the one approved for case 42). Kiro: SKIP, no cross-harness launch authorization.
+No behavior PASS is inferred from static checks or from the original implementation sessions after these instructions
+changed. Backlog's unchanged source retains the separately cited S7 evidence. A fresh session must review the fix commit.

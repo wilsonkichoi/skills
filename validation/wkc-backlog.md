@@ -270,8 +270,9 @@ line names one ticket and one production step, word for word.
     `gh issue view`; the issue count is unchanged.
 
 42. **A move the config names.** Unattended, with a request to make the move `Moved by the person:` records.
-    PASS: one new release ticket at `backlog`, blocked by the original, whose **Notes** carry the moved text word for
-    word; the original no longer carries the step; one `Decision (wkc-yolo):` comment whose `Source:` names the
+    PASS: one new release ticket at `backlog`, blocked by and related to the original, with the moved text word for
+    word in both `## After merge` and **Notes**, never in its criteria; the original drops the step and lists the
+    release ticket under `## Related`; one `Decision (wkc-yolo):` comment whose `Source:` names the
     `Moved by the person:` line.
 
 ## Dated report: 2026-10-21
@@ -548,3 +549,10 @@ paragraph (9 lines) carries a SPEC contract the section cannot shed.
 | S6, `d2de36a` | 42, #37 | FAIL | Release ticket #39 at `backlog`, blocked by #37, the step word for word in `## After merge`, no criteria; #37 lost the step; one Decision citing #38's line. But #39's **Notes** say only "Moved from #37 by the person", not the text: the wording "into its **Notes** with the original's id" read two ways. Fixed after S6 in `92b3a6a`: "Copy the moved text word for word into both its `## After merge` and its **Notes**, never into its criteria." |
 | S7, `92b3a6a` | 42, #40 | PASS | Seventh session, approved by the maintainer on 2026-10-28 for this rerun only. Run config #41 (`Continues: #38`) names #40. Release ticket #42 at `backlog`, blocked by #40, related to it; the step word for word in both `## After merge` and **Notes**; no acceptance criteria. #40 lost its `## After merge` and lists #42. One `Decision (wkc-yolo):` comment, `Source: Run config #41, the Moved by the person: line for #40`. No production marker; the issue count rose by one, 23 to 24. |
 
+## Review round 1: 2026-10-28, PR #87
+
+Case 42's PASS criteria now include the two destinations, the exclusion from criteria, and the related links.
+Reused evidence: S7 above at `92b3a6a`, GitHub fixture, Claude Code Sonnet, effort medium. The skill source,
+fixture, and harness configuration for that observation are unchanged. No new AI session ran.
+Case 36's template pairs were compared directly with the SPEC again: PASS. Codex and Kiro behavior remain SKIP
+as in the original report; this static check makes no compatibility claim.

@@ -17,7 +17,7 @@ disable-model-invocation: false
   branch. Callers are people, `wkc-yolo`, and a model acting on a person's request. A model runs it only when a person or `wkc-yolo` asked for that
   work. It never starts `wkc-code-review`, because the review must not run in the context that
   wrote the code.
-- **Dependencies:** `docs/dev-agents/config.md`: `issue_tracker`, `test_command`, `push_check`,
+- **Dependencies:** `docs/dev-agents/config.md`: `issue_tracker`, `run_config`, `test_command`, `push_check`,
   `context_file`, `rules_dir`, `prd_file`, `spec_file`, `roadmap_file`, `issues_dir`, and the
   **Conventions** body.
   The `wkc-tracker` skill for every ticket read and write: `show`, `list`, `next`, `assign`,
@@ -101,8 +101,10 @@ Take nothing unasked.
 ticket. A `done` blocker whose latest finish comment names a run branch, on its `Merged:` or
 `Verified at:` line, is met only once that work reached the default branch: a pull request from
 that run branch merged into it, by `gh pr list --head <run branch> --base <default> --state
-merged`, or the run PR on the blocker's latest `Run outcome (wkc-yolo):` comment is `MERGED` by `gh
-pr view`. A closed, unmerged run PR proves nothing. Under a run, a blocker in the same run is met
+merged`, or a verified `Run outcome (wkc-yolo):` on the blocker names its config among the carried
+`Run configs:` and its carrying PR is `MERGED` into the default branch by `gh pr view`.
+Confirm that PR's head is the outcome's `Run branch:`. A closed, unmerged run PR proves nothing.
+Under a run, a blocker in the same run is met
 as section 7 says. A ticket the caller already holds, `in-progress` or `in-review`, is not claimed
 again: continue its branch. When its pull request is already open, go to section 5 and post only
 the handoff writes that are missing, each verified. Any other ticket must be `ready` with no
