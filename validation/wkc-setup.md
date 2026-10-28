@@ -51,3 +51,12 @@ sessions went to the callers.
 |---|---|---|
 | 4 | PASS, direct | Section E lists `tracker`, `github-variable`, and `command <cmd>`, `tracker` first, with the public-issue, undetected-edit, and Actions-workflow warnings; PyYAML parses `run_config` as `tracker`; the picker rule names Sections A to E. |
 | 5 | SKIP | No session left in the approved budget to run the interview. |
+
+## Dated report: 2026-10-28, push check field (#76)
+
+Scope: Section D's `push_check` question and the template line. Candidate `8592d7e`. No AI sessions: the change's
+sessions went to the callers.
+
+| Case | Result | Evidence |
+|---|---|---|
+| 6 | PASS, direct | `grep -n push_check` shows Section D lines 143 and 150 and template line 14. Section D offers the gitleaks command first with `command -v gitleaks`, then the project's own command and none, and says a manual push without one only warns. PyYAML parses the template value as `gitleaks git --redact --log-opts="origin/main..HEAD"`, and its comment says default none. |
