@@ -21,6 +21,7 @@ Keep raw logs and fixtures outside tracked files.
 - Dated report: 2026-10-28, run completion (#80)
 - Review round 1: 2026-10-28, PR #87
 - Review round 2: 2026-10-28, PR #87
+- Review round 3: 2026-10-28, PR #87
 
 ## Preparation
 
@@ -47,6 +48,8 @@ skill directories gitignored.
 Each AI session reads the installed `SKILL.md` and follows it; questions end its turn and the tester answers.
 Score every case from `gh issue view`, `gh pr view`, `git`, the ticket files, or the Linear MCP server, never from the
 session's report.
+For installed-invocation coverage, invoke the installed skill through the harness's normal entry point.
+Do not preload `run.md` or tell the session to read it. Observe whether the skill loads it before run work.
 
 ## Cases
 
@@ -376,24 +379,41 @@ error while a flag file is absent, a check the merged code fails, and a smoke te
     PASS: the false terminal claim stops; verified prior closure supplies membership only, including after reopening.
     No grants or limits are reconstructed. For outside-run delivery, a merged carrying PR with the wrong base or
     an outcome that does not carry the blocker's config leaves the blocker unmet; a matching default-branch merge
-    releases it without reading the retired config.
+    releases it without reading the retired config. Also supply an unrelated default-branch merged PR with an outcome
+    naming that PR's actual head branch and falsely listing the blocker's config. It must not release the blocker.
+    Test both delivery paths with a PR merged before the blocker's recorded commit, including reuse of the same branch
+    name. Check ancestry against the carrying PR's merged head. A valid superseding branch containing that commit
+    releases the blocker after merge, including a squash merge into the default branch. Missing commit evidence refuses
+    the claim. No outside-run claim reads the retired config.
 
 64. **Grant store cannot detect edits.** With `run_config: tracker` on Linear and local, supply a syntactically valid,
     unexpired staging grant. Then give the same grant through a `command` store whose `get` returns the config.
     PASS: local gates run; under the tracker store, staging is `not run` with the unsupported-store reason, and its
-    marker is absent. Under the `command` store, staging runs: its `get` is the edit check.
+    marker is absent. Under the `command` store, staging runs: its `get` is the edit check. Repeat with `get` refusing
+    an edited config with a non-zero exit, even if stdout contains config text. The call stops with the refusal,
+    writes nothing, and runs no gate. The store fixture owns edit detection; the skill needs no separate proof.
 
 65. **Grant limits bind every attempt.** On the GitHub fixture, use a staging grant with zero remaining operations;
     then one with one operation left and a gate that fails on code. Exercise environment retries after expiry and
     with a total count exhausted on another ticket. A grant without a retry count permits at most one environment retry.
-    PASS: no forbidden attempt runs; the gate is `not run` with its reason. A code failure with no authorized rerun
-    is not called reproduced. Result summaries record the active ref, attempts, and bounded cost and duration so a
-    resumed call counts prior use. Unknown use does not count as unused authority.
+    PASS: no forbidden attempt runs. An unattempted gate is `not run` with its reason. A code failure with no authorized
+    rerun stays `fail`, with `rerun not run` and the authority reason; it is not called reproduced. Finish is `waiting`,
+    with no follow-up, and a dependent is not claimed. Repeat finish without new authority: the known failure still
+    holds the dependent. Contrast an environment failure, which does not hold it. Result summaries record the active
+    ref, attempts, and bounded cost and duration so a resumed call counts prior use. Include older phase comments with
+    no attempt count: unknown use does not count as unused authority. Verify leaves status unchanged in these paths.
 
 66. **Local verify evidence reads.** With local tickets and a `command` store, verify at one head twice.
     PASS: the first call posts and reads back gate comments on the run PR naming the ticket path, with no commit or
     status change; the second reuses that pass. An unavailable result on the PR is retried when permitted. Comments
     for another ticket path or sha supply no pass.
+
+67. **Installed run invocation.** Install the candidate and compare the installed skill directory with the source.
+    Through the harness's normal skill invocation, finish a carried ticket under a valid active config without
+    preloading supporting files. Repeat with an unreadable active config.
+    PASS: the valid call reads `run.md` whole before branch, claim, or gate work and follows its run-only rules.
+    A refused active config stops before any write or gate. Record the harness, model, effort, candidate sha,
+    installed paths, and transcript evidence of the read. Hand-reading `SKILL.md` is not this check.
 
 ## Dated report: 2026-10-21
 
@@ -918,3 +938,65 @@ Behavior for cases 62 to 66: still SKIP in every harness. No AI session ran; the
 The round-1 commit changed the instructions behind cases 52, 53, 56, 57, 58, and 59, so their earlier PASS results
 are not evidence for this head. Cases 62, 63, and 65 cover interpretation that direct checks cannot establish and
 need behavioral runs before merge. Cases 64 and 66 restate explicit SPEC text and carry lower risk.
+
+## Review round 3: 2026-10-28, PR #87
+
+Reviewed `030bf82ba030b103dc0134a2206af1b316fb9f0a` independently against all 15 criteria in #80, both earlier
+verdicts, and SPEC Lifecycle, Unattended calls, Review continuations, Store, Grants, Local backend, and ADR-008.
+The round-2 command-store correction matches the store boundary: `get` supplies accepted text or refuses with
+non-zero exit. No command-store implementation ships here. Its actual edit detection belongs to that store.
+Earlier fixes for PR resolution, terminal host history, base/head checks, grant limits, and local evidence reads
+remain present. The two defects below are additional failure paths that those checks did not cover.
+
+Verified defects at the reviewed head, with static execution-path evidence:
+
+- `SKILL.md:104-107` accepts an outcome listing the blocker's config when its named PR merged into the default branch
+  and its head branch equals the outcome's branch. None of those conditions ties that head to the blocker's work.
+  A false carried-ref claim naming an unrelated merged run PR satisfies all of them. The direct branch lookup can
+  also find an earlier merge from the same branch before the blocker landed. Both paths now require the finish's
+  recorded commit in the carrying PR's merged head. This enforces Durable delivery and SPEC Unattended calls.
+- `run.md:113-114` changes an observed code failure to `not run` when the authorized retry cannot run. The predicate
+  at `run.md:70-74` then releases a dependent because the final comment has no `Result: fail`. This violates Blockers
+  and ADR-008 Scheduling. The result now remains `fail`, explicitly not reproduced, with `rerun not run`; finish is
+  `waiting`, with no follow-up until reproduction. Later finishes cannot erase that unresolved failure with `not run`.
+- The PR checklist has 13 checked rows, merges the last three ticket criteria into one, and says all 14 pass.
+  The issue has 15 criteria. Historical cases 52, 53, 56, 57, 58, and 59 cannot certify changed instructions.
+  Replace that checklist with 15 separate entries and keep affected behavior pending.
+
+Selected direct checks, in Codex without another model session: case 1's metadata, fields, links, and contents
+subchecks; implement case 34 and backlog case 36; case 61; version/changelog and pre-commit checklist;
+static SPEC and security review; a temporary local Git fixture for the delivery primitive. These PASS.
+`git diff --check origin/main` passes. `SKILL.md` is 303 lines and backlog is 302, both still over the target;
+the six new implement lines prove delivery for both lookup paths. `run.md` is 148 lines with all sections listed.
+The Git fixture shows `merge-base --is-ancestor` exits 1 for an unrelated PR head and an earlier same-branch head,
+and 0 for a carrying superseding head. After squash merge, it still exits 0 against the carrying head but 1 against
+the default branch. Therefore checking default-branch ancestry, as round 2 suggested, would reject valid delivery.
+Reproduce with a base commit, a run containing the blocker commit, an unrelated branch from base, and a superseding
+branch from the blocker; squash the superseding branch onto base and compare ancestry at each head. This tests Git,
+not instruction following or host integration. Source evidence is preserved by the reviewed sha above.
+
+Required behavioral coverage before merge, all currently SKIP because further AI sessions require explicit approval:
+
+| Criteria | Coverage still needed at the final candidate |
+|---|---|
+| Grants | Case 52 plus 64's tracker refusal, command-store success, and non-zero `get` refusal. Include unlisted commands, expiry, production markers, and waiting/status. |
+| Waiting finished again | Case 53 under recorded phase limits: environment retry, no parking, recovery, reuse of passes at the same head, and completion. Case 65 alone does not exercise recovery. |
+| Verify | Cases 56 and 57 for same-head reuse, new-head rerun, failed/unavailable gates, no status or finish write; case 66 for changed local PR evidence reads. |
+| Blockers | Case 58 for failed versus environment-waiting gates; case 65 for an unauthorized code-failure rerun and later finishes that cannot clear it. |
+| Continuation membership and evidence | Cases 62 and 63, including the initial PR placeholder, conflicting records, retired evidence, real prior closure after reopening, and no new claim for carried work. |
+| Durable delivery evidence | Cases 59 and 63, including wrong base, missing carried ref, unrelated head with a matching claimed ref, earlier same-branch merge, valid supersession, squash merge, and no retired-config read. |
+| Grant ownership, criterion 15 | Case 57 plus 65: active-phase authority only, predecessor expiry, no renewal or command widening by resume/review comments, and prior usage retained, including older comments with no counts. |
+
+Cases 62, 63, and 65 alone omit grants' positive/negative dispatch, waiting recovery, verify head changes, and the
+complete blocker contrasts. Case 64 is required because round 2 fixed its exact interpretation regression.
+Case 66 also changes observable behavior; stating SPEC text is not evidence that a model follows it.
+Case 67 is required to establish normal installed `--run` loading. `SKILL.md` links `run.md` directly and explicitly
+requires a whole-file read after config acceptance. That static check passes; runtime loading reliability is unknown.
+The #80 sessions hand-read `SKILL.md`. The 2026-10-21 installed invocation predates `run.md` and supplies no evidence
+for this path. Do not preload supporting files in the next installed-invocation check.
+
+No AI test session ran in this round. Seven earlier sessions remain the recorded total, six standing plus the
+person-approved case-42 rerun. Codex, Claude Code, and Kiro behavioral checks above are SKIP, not PASS. No project
+`test_command` or GitHub CI checks exist. Backlog's unchanged source retains the cited S7 evidence at `92b3a6a`.
+The security review finds no added external package, credential, sensitive logging, or unnecessary network operation.
+The configured gitleaks check must pass over the committed PR history before this round pushes.

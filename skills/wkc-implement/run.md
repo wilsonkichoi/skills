@@ -68,10 +68,11 @@ request with `--base <run branch>`. A follow-up for a failed gate does the same,
 reviews and merges it as any ticket pull request.
 
 A blocker in the run is met once its pull request merged into the run branch and its latest finish
-there found no failed gate: no `Result: fail` among the gate comments posted for that finish. A
-gate `not run` does not hold the ticket back. A failed one holds it until a follow-up merges and a
-later finish passes it. A blocker with no finish since that merge is unmet. A blocker outside the
-run follows section 2.
+there found no failed gate. A gate waiting on an environment does not hold the ticket back.
+A code failure awaiting an authorized rerun still holds it. A later `not run` never clears an
+unresolved code failure. A reproduced failure holds it until a follow-up merges and a later finish
+passes it. A blocker with no finish since that merge is unmet. A blocker outside the run follows
+section 2.
 
 ## Finish in a run
 
@@ -111,9 +112,12 @@ its command, and the **Conventions**, never by the verb that names it:
   the ticket gets a `Discovered:` comment for the flaky check, `Blocks this ticket: no`.
 
 A shared gate's code-failure rerun also needs remaining grant authority. When that rerun cannot
-run, record `not run` with the first failure and the limit or expiry; do not claim reproduction.
+run, keep the gate `fail` with the observed code failure, `rerun not run`, and the limit or expiry.
+Do not claim reproduction. Finish posts `waiting`, keeps the ticket `in-progress`, and names who
+must authorize the rerun. Open no follow-up until the failure reproduces. A later finish that
+cannot run the gate retains that unresolved failure; only later passing evidence resolves it.
 
-Section 6 then decides as written, asking nothing. `waiting` names who must act on each gate left:
+Otherwise section 6 decides as written, asking nothing. `waiting` names who must act on each gate left:
 a person for a missing grant, production, or an unclear class, or the run once the environment is
 back. Finished again, finish runs only the gates with no pass at the current head; a head that
 moved runs every gate again.

@@ -104,6 +104,12 @@ that run branch merged into it, by `gh pr list --head <run branch> --base <defau
 merged`, or a verified `Run outcome (wkc-yolo):` on the blocker names its config among the carried
 `Run configs:` and its carrying PR is `MERGED` into the default branch by `gh pr view`.
 Confirm that PR's head is the outcome's `Run branch:`. A closed, unmerged run PR proves nothing.
+For either path, fetch the carrying PR's merged head sha. The blocker's latest finish's
+`Verified at:` sha, or its `Merged:` sha when no `Verified at:` exists, must be an ancestor of
+that head (`git merge-base --is-ancestor <blocker sha> <carrying PR head sha>`). Branch names and
+carried config refs alone do not prove that this PR contains the blocker's work. Check the PR's
+head, not ancestry of the default branch's merge commit, so squash and rebase merges count.
+Missing commits or an unconfirmed ancestry leave the blocker unmet, with the missing evidence named.
 Under a run, a blocker in the same run is met
 as section 7 says. A ticket the caller already holds, `in-progress` or `in-review`, is not claimed
 again: continue its branch. When its pull request is already open, go to section 5 and post only
