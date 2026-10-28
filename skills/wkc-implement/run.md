@@ -68,8 +68,8 @@ request with `--base <run branch>`. A follow-up for a failed gate does the same,
 reviews and merges it as any ticket pull request.
 
 A blocker in the run is met once its pull request merged into the run branch and its latest finish
-there found no failed gate. A gate waiting on an environment does not hold the ticket back.
-A code failure awaiting an authorized rerun still holds it. A later `not run` never clears an
+there found no failed gate. A gate `not run`, for any reason, does not hold the ticket back.
+A code failure awaiting an authorized rerun is `fail` and holds it. A later `not run` never clears an
 unresolved code failure. A reproduced failure holds it until a follow-up merges and a later finish
 passes it. A blocker with no finish since that merge is unmet. A blocker outside the run follows
 section 2.

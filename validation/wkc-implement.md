@@ -349,8 +349,9 @@ error while a flag file is absent, a check the merged code fails, and a smoke te
 
 58. **Same-run blocker with a failed gate.** `wkc-implement <N> --run <second ref>` on a `ready` ticket blocked by a
     ticket of the first phase whose pull request merged into the run branch and whose latest finish has a failed gate.
-    Then the tester stages a merged follow-up and a later finish whose gates are `pass` and `not run, environment
-    unavailable`, and the same session runs it again.
+    Then the tester stages a merged follow-up and a later finish in which the gate that failed is `pass` and a
+    different gate is `not run, environment unavailable`, and the same session runs it again. A later finish in which
+    the failed gate itself is `not run` must still refuse; case 65 covers that path.
     PASS: the first run refuses and leaves labels, assignees, and comments unchanged; the second claims the ticket and
     reaches `in-review` with a pull request whose `baseRefName` is the run branch.
 
@@ -400,8 +401,9 @@ error while a flag file is absent, a check the merged code fails, and a smoke te
     rerun stays `fail`, with `rerun not run` and the authority reason; it is not called reproduced. Finish is `waiting`,
     with no follow-up, and a dependent is not claimed. Repeat finish without new authority: the known failure still
     holds the dependent. Contrast an environment failure, which does not hold it. Result summaries record the active
-    ref, attempts, and bounded cost and duration so a resumed call counts prior use. Include older phase comments with
-    no attempt count: unknown use does not count as unused authority. Verify leaves status unchanged in these paths.
+    ref, attempts, and bounded cost and duration so a resumed call counts prior use. Include comments from earlier in
+    the active phase with no attempt count: unknown use does not count as unused authority. A predecessor phase's use
+    does not consume the active phase's limits. Verify leaves status unchanged in these paths.
 
 66. **Local verify evidence reads.** With local tickets and a `command` store, verify at one head twice.
     PASS: the first call posts and reads back gate comments on the run PR naming the ticket path, with no commit or
@@ -1000,3 +1002,39 @@ person-approved case-42 rerun. Codex, Claude Code, and Kiro behavioral checks ab
 `test_command` or GitHub CI checks exist. Backlog's unchanged source retains the cited S7 evidence at `92b3a6a`.
 The security review finds no added external package, credential, sensitive logging, or unnecessary network operation.
 The configured gitleaks check must pass over the committed PR history before this round pushes.
+
+## Review round 4: 2026-10-28, PR #87
+
+Reviewed `e31f7f8a7e098bd29a96e4bab6904718f428ba77` independently against #80's 15 criteria, the three earlier
+verdicts, and SPEC Lifecycle, Unattended calls, Review continuations, Grants, Store, and ADR-008. The round-3 fixes
+and the round-2 command-store fix are present and match the SPEC. The skill trusts `run show` and adds no store check.
+
+Verified test defects, fixed: case 58 let the later finish mark the previously failed gate `not run, environment
+unavailable` and still expected a claim, which the round-3 rule refuses. It now names which gate passes. Case 65's
+"older phase comments" could mean a predecessor phase, whose use the active phase's limits never count (SPEC Review
+continuations; `run.md` counts this phase's tickets). It now says the active phase and checks predecessor use.
+Improvements: `run.md` again says any `not run` gate leaves a dependent free, which round 3 narrowed to environment
+waits; `SKILL.md` fetches the carrying head through `pull/<n>/head`, which `git ls-remote` shows on this remote.
+
+Direct checks PASS: case 61; gate, finish, Decision, and Parked blocks equal the SPEC's; `git diff --check`;
+gitleaks over the PR history. A local Git fixture repeated round 3's result: `merge-base --is-ancestor` exits 1 for
+an earlier same-branch head and an unrelated head, 0 for a superseding head, 1 for the default branch after a
+squash, and 128 for a missing commit, which the skill treats as unmet. This checks Git, not model behavior.
+
+Minimum behavioral plan for the final candidate, Claude Code only, run one at a time after an independent round
+clears the head. Codex and Kiro stay SKIP. Cases 54, 55, 60, and 45's first turn keep their recorded evidence:
+their paths are local or manual and unchanged.
+
+| Session | Cases | Criteria |
+|---|---|---|
+| S8, pilot | 67 and 62: installed invocation, carried-ticket finish under a continuation, refused config | 1, 13, loading |
+| S9 | 52, 64 (GitHub tracker and `command` store, non-zero `get`), 65 dispatch limits | 2, 7 |
+| S10 | 53, 56, 57, with predecessor and expired grants | 3, 4, 5, 15 |
+| S11 | 58, 65 failure holds and environment contrast | 4, 6 |
+| S12 | 63 membership: false, real, and reopened closure; carried work not claimed again | 13 |
+| S13 | 59 and 63 delivery: wrong base, missing ref, unrelated head, earlier merge, squash supersession, missing commit | 14 |
+| S14 | 66 and 64's local tracker refusal | 2, 5 |
+
+S8 needs the candidate installed in the fixture checkout and a Claude Code session started there: a subagent
+of another session sees that session's installed skills. Budget: 7 sessions and 1 retry. Case 64 on Linear is SKIP unless the person adds a session: its rule is the
+same line as local. No AI session ran in this round.
