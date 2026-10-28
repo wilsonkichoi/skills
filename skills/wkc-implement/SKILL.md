@@ -161,8 +161,9 @@ never as passed. Post-merge gates do not run here.
 
 **Push check.** Before every `git push`, in a build, a follow-up, or the pre-merge update, run
 `push_check` in the checkout holding the commits. This binds every session that runs this skill: a person's, a native
-subagent, `codex exec`, or `claude -p`. Never pass `--no-verify`, disable a hook, or skip the
-check. A non-zero exit blocks the push. Remove the finding from the unpushed commits, rewriting
+subagent, `codex exec`, or `claude -p`. Never pass `--no-verify` to any git command, disable a
+hook, or skip the check; a hook that puts the finding back is the same finding failing again. A
+non-zero exit blocks the push. Remove the finding from the unpushed commits, rewriting
 this branch's unpushed commits when it is in their history, run the check again, and push only on a
 pass. Name the file, line, and rule, never the value, in reports, comments, and commit messages.
 The same finding failing again with no new evidence stops the build; under a run, it parks. With no

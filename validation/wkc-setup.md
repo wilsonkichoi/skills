@@ -1,7 +1,8 @@
 # wkc-setup validation
 
-Follow [Validation](../AGENTS.md#validation). This catalog covers the review-round field added by #54 and the
-`run_config` field added by #78. It does not claim baseline coverage of the rest of setup.
+Follow [Validation](../AGENTS.md#validation). This catalog covers the review-round field added by #54, the
+`run_config` field added by #78, and the `push_check` field added by #76. It does not claim baseline coverage of the
+rest of setup.
 
 ## Cases
 
@@ -23,6 +24,12 @@ Follow [Validation](../AGENTS.md#validation). This catalog covers the review-rou
 5. **Write the store.** In a throwaway public GitHub project, run setup and choose `github-variable`.
    PASS: the warning about the public repository appears before the choice is taken, and the written config holds
    `run_config: github-variable`.
+
+6. **Push check field.** Direct. `grep -n push_check skills/wkc-setup/SKILL.md skills/wkc-setup/config-template.md`,
+   and parse the template's YAML frontmatter.
+   PASS: Section D asks for `push_check`, offers the gitleaks command first with a check that `gitleaks` is installed,
+   then the project's own command and none, and says a manual push without one only warns. PyYAML parses the template
+   value as the gitleaks command string, and its comment says the default is none.
 
 ## Dated report: 2026-10-22
 
