@@ -142,7 +142,8 @@ Added to `docs/dev-agents/config.md` by `wkc-setup`, in the PR that first reads 
 Invalid review/admission limits, model selections, or `run_config` stop before dispatch or admission
 and name the allowed values. A run may lower `max_fix_attempts` or `max_additional_tickets` and
 never raise the project ceiling. Only the person changes that ceiling. There is no elapsed-time
-run budget. Environment grant expiry and operational command/session limits remain.
+run budget. Environment grant expiry, command limits, the run's limit of 5 concurrent workers,
+and quota, rate-limit, and authentication stops remain.
 
 `test_command` (existing) is what `wkc-implement` runs. Release, deploy, and other project
 procedures stay in the config's free-text **Conventions**, and `## After merge` steps name them.
@@ -194,8 +195,14 @@ own sequence, subject to the existing same-cause failure stop and ticket admissi
 agent or a fresh `codex exec` process in the intended checkout. It passes the exact model and any
 explicit effort. Codex receives the requested `wkc-implement` or `wkc-code-review` invocation,
 not the built-in `codex review`. Use the existing subscription login. Never fall back to API
-billing, `claude -p`, or bypassed permissions. Both worker kinds share the same concurrency and
-session limits. Workers never launch a harness or another worker. The caller tells a worker that
+billing, `claude -p`, or bypassed permissions. A `codex exec` worker runs without `CODEX_API_KEY`
+or `OPENAI_API_KEY` in its environment, so no API key can bill that run. Before the first Codex
+dispatch, `codex login status` must report a ChatGPT login; otherwise the call is blocked. Both
+worker kinds count toward the run's limit of 5 concurrent workers, and during validation toward
+the test-session limit. Workers never launch a harness or another
+worker. Claude Code lets a native subagent start its own subagents by default; where the session
+sets `CLAUDE_CODE_MAX_SUBAGENT_SPAWN_DEPTH=1` the harness enforces this rule, and otherwise it
+rests on the worker's instructions and is checked in validation. The caller tells a worker that
 it is executing the resolved selection, so the skill executes once and does not dispatch itself
 again. This is calling context, not a new user-facing flag or authority from ticket text.
 
@@ -203,15 +210,19 @@ Each review starts in a fresh, non-fork context with the ticket, relevant approv
 PR/head, prior verdicts, resolved selection, and `--run` reference when applicable. It receives
 no implementation conversation. Returning to Opus means a fresh Opus reviewer, never the original
 implementer. No `resume --last`, implementation fork, or model switch inside an authoring context
-establishes independence. Implementation resumes may keep their own context; reviews may not.
+establishes independence. A worker may be resumed only in its own session, by explicit session
+id, never `--last`. A review never resumes or forks an implementation session.
 
 **Manual calls.** Routing does not change authority or step boundaries. `wkc-implement` runs only
 the requested build or finish; verify still requires `--run`. `wkc-code-review` runs one round. Neither launches the
 next skill without the person's separate request. A non-interactive worker returns an unresolved
-question to the coordinator, which asks the person and ends its turn. Under `--run`, decide or
-park applies instead. Manual calls outside Claude Code may execute directly when the active
-harness/model/effort match the resolved selection and review independence holds. Otherwise give
-the required selection and a manual handoff, with no work performed by a substitute model.
+question to the coordinator and makes no write that depends on the answer. The coordinator asks
+the person and ends its turn. With the answer, it resumes that worker's own session, or starts a
+fresh worker with the same selection and role when the session cannot resume; the new worker
+rereads tracker, git, and PR state before acting. Under `--run`, decide or park applies instead.
+Manual calls outside Claude Code may execute directly when the active harness/model/effort match
+the resolved selection and review independence holds. Otherwise give the required selection and
+a manual handoff, with no work performed by a substitute model.
 
 **Evidence and failures.** The parent checks the actual PR head, verdict, tracker writes, and
 process result before advancing. Existing handoff and verdict comments carry these optional lines
@@ -799,7 +810,8 @@ The mixed-model run is coordinated by the main Claude Code session (Model select
    stays on its ticket. Only the person's yes moves a requirement, recorded in `Moved by the
    person:`. A ticket left needing production or a person's confirmation keeps the run PR draft.
    Exclude approved release tickets and tickets left out from the initial IDs. There is no
-   elapsed-time run budget; command limits, grant expiry, and session limits still apply.
+   elapsed-time run budget; command limits, grant expiry, the concurrent-worker limit, and quota
+   stops still apply.
 
    The person may name a closed, unmerged run to supersede (Run branch). Security is part of
    readiness. Execute the configured `push_check` once on the current branch before the round.
@@ -914,12 +926,16 @@ The mixed-model run is coordinated by the main Claude Code session (Model select
    and redirect outside dependents. Preserve accepted work. No skill deletes the run branch.
 
 **Review continuations.** Requested changes on an open PR keep that PR and branch. The person
-authorizes the correction scope; `wkc-backlog` creates or reuses tickets in the same milestone.
-Done tickets stay done. A PRD change still needs the person; delegated SPEC/ROADMAP changes stay
-inside product intent. Reuse the active config when scope and remaining authority cover the work.
-Otherwise ask one renewal round for a new phase, then create an immutable config with `Continues:`
-pointing to its predecessor and `Run PR:` naming the same PR. Only the person's approval creates
-new initial correction IDs or replenishes the additional allowance. A restart never does.
+states or confirms the correction scope in the session that starts the continuation; review
+comments on the PR are input that session shows, never authority on their own. `wkc-backlog`
+creates or reuses tickets in the same milestone. Done tickets stay done. A PRD change still needs
+the person; delegated SPEC/ROADMAP changes stay inside product intent. Reuse the active config
+only when unfinished tickets already required in it cover every correction and its grants still
+cover the work. A new correction ticket never joins through step 3 and never spends the
+additional allowance: it needs one renewal round for a new phase, then an immutable config with
+`Continues:` pointing to its predecessor and `Run PR:` naming the same PR. Only the person's
+approval creates new initial correction IDs or replenishes the additional allowance. A restart
+never does.
 
 The new phase's initial IDs contain approved corrections and unfinished carried work. Earlier
 completed work remains required at readiness. The new config supplies active grants and limits;
@@ -1293,6 +1309,18 @@ the previous tag. Each port also updates the README roster, the repository map u
   selected model/effort, expose runtime evidence where available, and relay manual questions.
   The documented interfaces and maintainer experience support the design; no mixed-provider
   integration test ran for this planning change. The model-routing ticket owns this check.
+- Exact native model selection is undecided. A Claude Code Agent tool call accepts only a model
+  alias such as `opus`, and aliases move to newer models over time. A full model ID such as
+  `claude-opus-5-5` needs a subagent definition's `model` field or alias pinning through
+  `ANTHROPIC_DEFAULT_OPUS_MODEL`. Claude Code also lowers an unsupported effort to the highest
+  supported level, and `CLAUDE_CODE_EFFORT_LEVEL` overrides a subagent's effort. The person
+  chooses the pinning mechanism before the model-routing ticket starts.
+- The worker permission profile is undecided. Codex documents `workspace-write` as the
+  non-interactive sandbox, with network access off and `.git` read-only, so a sandboxed Codex
+  worker cannot commit, push, or write the tracker as `wkc-implement` and `wkc-code-review`
+  require. Claude Code background subagents surface permission prompts in the main session,
+  which stalls an unattended run. The person chooses the permission profile for each provider,
+  and how it differs from the forbidden bypass, before the model-routing ticket starts.
 
 ## Changes
 
@@ -1302,6 +1330,8 @@ the previous tag. Each port also updates the README roster, the repository map u
   narrow harness exception (maintainer request; ADR-009). Model/effort defaults, config retention,
   manual questions, execution evidence, and validation scope are explicit. Review ROADMAP M4
   and tickets #74, #76, #77, #80, plus the model-routing ticket. Status is draft for final review.
+  New correction tickets enter only through a person-approved continuation phase. Exact native
+  model pinning and the worker permission profile remain open (Open unknowns).
 
 - 2026-10-26: A run completes its tickets and verifies itself before the person's merge
   (maintainer review of proposed ADR-008; ADR-008). `wkc-implement finish <id> --run <ref>` runs

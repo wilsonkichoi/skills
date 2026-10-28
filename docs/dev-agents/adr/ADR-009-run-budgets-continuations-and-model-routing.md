@@ -66,9 +66,11 @@ following contract details for final review:
   deliverable in readiness, never claims the canceled parent is done.
 - Initial and admitted work can finish after the allowance is spent. A required unadmitted
   prerequisite or repair keeps the PR draft. There is no elapsed-time run budget.
-- Human review corrections reuse the branch and PR. Reuse existing authority where sufficient;
-  otherwise the person approves a continuation phase. `Continues` differs from `Supersedes`.
-  Every phase remains part of final readiness, and existing review/fix counts remain.
+- Human review corrections reuse the branch and PR. The person states or confirms them in the
+  continuing session; PR comments alone authorize nothing. Reuse the active config only when
+  unfinished tickets already in it cover the corrections. A new correction ticket needs a
+  continuation phase the person approves and never spends the additional allowance.
+  `Continues` differs from `Supersedes`. Every phase remains part of final readiness, and existing review/fix counts remain.
 - Keep predecessor configs while the PR is open. Give GitHub variables unique phase suffixes.
   Verify outcome comments naming the carrying PR and config refs before retirement so delivery
   can be checked without a deleted config. A closed run can be reopened with fresh authority
@@ -118,4 +120,8 @@ subscription access or end-to-end behavior. The model-routing ticket owns that v
 - [Claude Code subagents](https://code.claude.com/docs/en/sub-agents) and
   [model configuration](https://code.claude.com/docs/en/model-config), read 2026-10-27: native
   non-fork agents have fresh contexts, model selection is supported, and effort controls depend
-  on installed version. Account access and exact runtime settings require validation.
+  on installed version. Account access and exact runtime settings require validation. An Agent
+  tool call accepts only a model alias, and native subagents may nest by default; the SPEC's Open
+  unknowns record the exact-model and worker-permission decisions this leaves.
+- [Codex agent approvals and security](https://learn.chatgpt.com/docs/agent-approvals-security),
+  read 2026-10-27: `workspace-write` has network access off and keeps `.git` read-only.
