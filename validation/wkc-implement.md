@@ -799,7 +799,7 @@ and `Run: 15`; #7 also has a staged failed gate and a `follow-up` finish. #9 is 
 run PR #27 closed without merging. #8 (blocked by #7, `Run: 16`) and #10 (blocked by #9) are `ready`. #14 merged into
 `main`. Tester PRs #28 and #30 moved the run branch head between turns.
 
-Sessions: S1 to S5 of the change's 6 ran these cases, one at a time, as Claude Code
+Sessions: S1 to S5 of the change's 7 (6 standing plus 1 the maintainer approved for `wkc-backlog` case 42) ran these cases, one at a time, as Claude Code
 `general-purpose` subagents on Sonnet (`sonnet`, effort `medium`), each reading the installed `SKILL.md` by hand, so
 harness loading is untested here. Each turn used about 62k to 86k subagent tokens. S5 and S6 are also in the
 `wkc-backlog` report.
