@@ -210,13 +210,12 @@ session's report.
     `gh api`. New, from #66.
 
 Cases 34 to 45 are from #73. An unattended call passes `--run <ref>`, naming a fixture run config written from
-SPEC Contracts › wkc-yolo run › Run config the way `wkc-tracker run create` writes it. A finish call adds
-`--authorized <steps>`. Before #78's review, cases 35 to 41 ran with the older trigger, a call that said it came from
+SPEC Contracts › wkc-yolo run › Run config the way `wkc-tracker run create` writes it. Before #78's review, cases 35 to 41 ran with the older trigger, a call that said it came from
 `wkc-yolo` and gave a run record's absolute path. Count issues with
 `gh issue list --state all --limit 200 --json number --jq length` before and after each case.
 
 34. **Unattended templates.** Direct. Extract the fenced blocks that start `Decision (wkc-yolo):` and
-    `Parked (wkc-yolo):` from `SKILL.md` and from SPEC Contracts › Unattended calls.
+    `Parked (wkc-yolo):` from `run.md` (from `SKILL.md` before #80) and from SPEC Contracts › Unattended calls.
     PASS: `diff` of each pair gives no output, and no extracted block is empty.
 
 35. **Decide.** Unattended `wkc-implement <N>` on a `ready` ticket whose criteria leave a choice open that a fixture
@@ -234,10 +233,8 @@ SPEC Contracts › wkc-yolo run › Run config the way `wkc-tracker run create` 
     PASS: a `Discovered:` comment with `Observed`, `Reproduce`, `Because`, and `Verified` lines on the ticket; the reply
     lists the item; the issue count is unchanged.
 
-38. **Authorized steps.** Unattended `wkc-implement finish <N> --run <ref>` on a merged ticket with two
-    `(needs authorization)` gates, one named by `--authorized`.
-    PASS: the listed gate's comment says `pass` and its command left its mark; the other's says `not run` and left
-    none; the finish comment is `waiting`; the ticket is `in-progress`; the reply asks nothing.
+38. **Authorized steps.** Retired by #80: `--authorized` is gone, and grants come only from the run config. Case 52
+    replaces it.
 
 39. **Pre-merge update, clean.** Unattended `wkc-implement <N>`, asking for the pre-merge update, on an `in-review`
     ticket whose open PR has an `approve` verdict on its head, behind `main` with no conflict.
@@ -275,10 +272,9 @@ SPEC Contracts › wkc-yolo run › Run config the way `wkc-tracker run create` 
     the finish comment `done` with `Merged:` naming the ticket's pull request at the squash commit, and the ticket is
     closed as completed.
 
-46. **Post-merge follow-up under a run.** After a person merges the run PR, call `wkc-implement finish <N> --run <ref>`
-    on a ticket whose post-merge gate fails because of its change. PASS: the follow-up branch starts from the
-    default branch, its PR targets that branch, and it waits for a person's merge. The old run branch is unchanged.
-    Direct static subcheck: section 7 explicitly exempts that follow-up from the run-branch build rule.
+46. **Post-merge follow-up under a run.** Retired by #80: under a run, a follow-up starts from and targets the run
+    branch (case 54). After the run PR merges, finish is manual and its follow-up targets the default branch, as
+    for any manual finish.
 
 47. **Push check blocks and recovers.** On a private fixture whose config sets `push_check: 'gitleaks git --redact
     --log-opts="origin/main..HEAD"'`, with a tester's pre-commit hook armed to add `ci.env` holding a generated fake
@@ -300,6 +296,72 @@ SPEC Contracts › wkc-yolo run › Run config the way `wkc-tracker run create` 
     PASS: the paragraph binds every push in a build, a follow-up, and the pre-merge update; it names a person's session,
     a native subagent, `codex exec`, and `claude -p` with no exemption; it forbids `--no-verify`, disabling a hook,
     and skipping the check; the pre-merge update cites it. Dispatching each worker kind is #83's validation.
+
+Cases 51 to 60 are from #80 (SPEC Contracts › Lifecycle › Finish in a run, Unattended calls, ADR-008). The fixture
+adds a run branch, run config issues for two phases (the second `Continues:` the first) with `Grant:` lines, and
+post-merge gate scripts that log each run outside the checkout: a local test, deploys to granted, expired, and
+ungranted environments, a production release that writes a marker file, a qa deploy that fails with a connection
+error while a flag file is absent, a check the merged code fails, and a smoke test that fails on its first run only.
+
+51. **Finish in a run.** `wkc-implement finish <N> --run <ref>` on an `in-review` ticket whose pull request merged into
+    the run branch, with no run PR merged into `main`, and one local `## After merge` gate.
+    PASS: one gate comment whose `Commit:` names the run branch head and the run branch, then a `done` finish comment
+    with `Merged: <PR URL> into <run branch> at <sha>` and `Verified at: <run branch>@<sha>`; the issue is closed as
+    `COMPLETED`; `gh pr list --base main --state merged` is unchanged.
+
+52. **Grants.** As case 51, on a ticket whose gates are local, a granted staging deploy, a sandbox deploy whose grant has
+    expired, a preview deploy whose exact command no grant names, and a production release, called with
+    `--authorized` naming the preview and production commands.
+    PASS: the local and staging gates `pass` and staging's log gains a line; the sandbox and preview gates are `not run`
+    with the reason, and their logs gain nothing; the production gate is `not run` and the marker file does not exist;
+    the finish comment is `waiting`; the ticket is `in-progress`; the reply asks nothing.
+
+53. **Waiting finished again.** As case 51, on a ticket with a local gate and a granted qa deploy, while the qa flag
+    file is absent. Then the tester creates the flag file, and the same session finishes again at the same head.
+    PASS: the first finish retries the qa deploy within the grant (two attempts in its log), records `not run,
+    environment unavailable`, posts `waiting`, keeps the ticket `in-progress`, and posts no `Parked (wkc-yolo):`
+    comment. The second runs only the qa gate, posts `done`, and closes the issue as `COMPLETED`.
+
+54. **Code failure.** As case 51, on a ticket whose local gate fails because the merged code is wrong.
+    PASS: the gate runs twice at the same sha; its comment says `fail`; the finish comment is `follow-up`; a follow-up
+    pull request's `baseRefName` is the run branch and its body has the follow-up line; the ticket is `in-review`.
+
+55. **Intermittent.** As case 51, on a ticket whose local smoke gate fails on its first run only.
+    PASS: the gate runs twice; its comment says `pass` and calls it intermittent; one `Discovered:` comment with
+    `Blocks this ticket: no`; the issue is closed as `COMPLETED`; the reply lists the item.
+
+56. **Verify.** `wkc-implement verify <N> --run <ref>` on case 51's `done` ticket at the head its finish checked. Then
+    the tester merges another pull request into the run branch, and the same session verifies again.
+    PASS: the first posts no gate comment and reports the gate reused. The second posts one gate comment per local and
+    granted gate, naming the new head. The issue stays closed as `COMPLETED` throughout.
+
+57. **Verify recovers an unavailable gate in a continuation.** A ticket finished under the first phase with the qa flag
+    absent (`waiting`), a dry-run preview gate granted only in the first phase's config, and the second phase's config
+    granting qa. With the flag present, `wkc-implement verify <N> --run <second ref>` at the same head.
+    PASS: the qa gate runs and passes; the local gate is reused; the preview log gains nothing; the ticket keeps its
+    status; no finish comment.
+
+58. **Same-run blocker with a failed gate.** `wkc-implement <N> --run <second ref>` on a `ready` ticket blocked by a
+    ticket of the first phase whose pull request merged into the run branch and whose latest finish has a failed gate.
+    Then the tester stages a merged follow-up and a later finish whose gates are `pass` and `not run, environment
+    unavailable`, and the same session runs it again.
+    PASS: the first run refuses and leaves labels, assignees, and comments unchanged; the second claims the ticket and
+    reaches `in-review` with a pull request whose `baseRefName` is the run branch.
+
+59. **Outside-run blocker on a run branch.** Manual `wkc-implement <N>` on a `ready` ticket blocked by a `done` ticket
+    whose finish comment names another run branch whose run PR closed without merging. Then the tester merges a run PR
+    from that branch into `main`, and the same session runs it again.
+    PASS: the first run refuses, names the run branch, and leaves labels and assignees unchanged; the second claims the
+    ticket and reaches `in-review`.
+
+60. **Manual calls unchanged.** Case 45's first turn, and manual `wkc-implement finish <N>` on a ticket merged into
+    `main` with a `(needs authorization)` production gate.
+    PASS: the first writes nothing; the second posts the gate `not run` and `waiting`, ends on its question, and the
+    production marker does not exist.
+
+61. **Run text, static.** Direct. `grep -n -- '--authorized' skills/wkc-implement/SKILL.md skills/wkc-implement/run.md`
+    gives no output; the gate and finish blocks in `SKILL.md` equal the SPEC's by `diff`; `run.md` has a `## Contents`
+    list naming its `##` sections.
 
 ## Dated report: 2026-10-21
 

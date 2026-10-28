@@ -257,6 +257,23 @@ trigger, a call that said it came from `wkc-yolo` and gave a run record's absolu
     `--run <ref>` naming a config that `<cmd> put` stored.
     PASS: as case 37, and the command's log shows `get <ref>` during the session.
 
+Cases 40 to 42 are from #80 (SPEC Contracts › Ticket, Unattended calls). The run config's `Moved by the person:`
+line names one ticket and one production step, word for word.
+
+40. **Target on an After merge step.** Unattended, with a request for a new ticket whose work must be deployed to a
+    shared environment after merge.
+    PASS: the new ticket is at `backlog`, and each `## After merge` step carries `Target:`.
+
+41. **A move the config does not name.** Unattended, with a request to move a ticket's production step to a release
+    ticket, where `Moved by the person:` names a different ticket.
+    PASS: one `Parked (wkc-yolo):` comment with `Needs: a person` on that ticket; its body is unchanged by
+    `gh issue view`; the issue count is unchanged.
+
+42. **A move the config names.** Unattended, with a request to make the move `Moved by the person:` records.
+    PASS: one new release ticket at `backlog`, blocked by the original, whose **Notes** carry the moved text word for
+    word; the original no longer carries the step; one `Decision (wkc-yolo):` comment whose `Source:` names the
+    `Moved by the person:` line.
+
 ## Dated report: 2026-10-21
 
 Scope: new skill, split from `wkc-plan` (ADR-004). Selected: cases 1 to 3 as direct checks; 4, 5, 7, 9, 21, 22, 23, 26,
