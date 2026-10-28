@@ -1,6 +1,6 @@
 # wkc- skills SPEC
 
-Status: draft
+Status: approved (2026-10-28)
 
 ## Overview
 
@@ -1463,6 +1463,9 @@ the previous tag. Each port also updates the README roster, the repository map u
   `--effort` for a run without a pair. Local `kiro-cli 2.33.0` help lists both; no session ran.
 
 ## Changes
+
+- 2026-10-28: The maintainer approved the SPEC with the PRD and ROADMAP, as merged in #82. No
+  contract changed.
 
 - 2026-10-28: Planning review of `111bc9c`. A continuation's renewal round asks kickoff's
   execution questions again, so the new phase's `Coordinator model:` and permission-mode
