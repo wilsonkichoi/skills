@@ -16,8 +16,9 @@ disable-model-invocation: false
   acting on a person's request. A model runs it only when a person or `wkc-yolo` asked for that
   work. It never starts `wkc-code-review`, because the review must not run in the context that
   wrote the code.
-- **Dependencies:** `docs/dev-agents/config.md`: `issue_tracker`, `test_command`, `context_file`,
-  `rules_dir`, `prd_file`, `spec_file`, `roadmap_file`, `issues_dir`, and the **Conventions** body.
+- **Dependencies:** `docs/dev-agents/config.md`: `issue_tracker`, `test_command`, `push_check`,
+  `context_file`, `rules_dir`, `prd_file`, `spec_file`, `roadmap_file`, `issues_dir`, and the
+  **Conventions** body.
   The `wkc-tracker` skill for every ticket read and write: `show`, `list`, `next`, `assign`,
   `comment`, `move`, and `milestone show`. `git`, and `gh` against a GitHub remote for pull requests. The
   `wkc-backlog` skill for work found out of scope.
@@ -158,6 +159,17 @@ caused by this change is fixed and run again. A failure that cannot be fixed, a 
 criterion only a person can confirm are reported as not passed, with the output or the reason, and
 never as passed. Post-merge gates do not run here.
 
+**Push check.** Before every `git push`, in a build, a follow-up, or the pre-merge update, run
+`push_check` in the checkout holding the commits. This binds every session that runs this skill: a person's, a native
+subagent, `codex exec`, or `claude -p`. Never pass `--no-verify` to any git command, disable a
+hook, or skip the check; a hook that puts the finding back is the same finding failing again. A
+non-zero exit blocks the push. Remove the finding from the unpushed commits, rewriting
+this branch's unpushed commits when it is in their history, run the check again, and push only on a
+pass. Name the file, line, and rule, never the value, in reports, comments, and commit messages.
+The same finding failing again with no new evidence stops the build; under a run, it parks. With no
+`push_check`, a manual push goes ahead and the report warns that no push check is configured;
+under a run, park instead of pushing.
+
 Push the branch and open the pull request with this body, filled in, and the ticket's title:
 
 ```markdown
@@ -289,6 +301,7 @@ whose latest `Run:` comment names `<ref>` is met once its pull request has merge
 **Pre-merge update**, when the call asks for it. On the pull request's branch, in its own worktree,
 run `git fetch` and `git merge origin/<base>`; never rebase or force-push. A head that already has
 the base changes nothing. Resolve a conflict so both sides keep their intent. Rerun section 4's
-checks and fix a failure the update caused; one that cannot be fixed parks. Push, confirm the head
+checks and fix a failure the update caused; one that cannot be fixed parks. Run the push check
+(section 4), push, confirm the head
 with `gh pr view`, and post no second handoff: the ticket stays `in-review`. Return the new head,
 and whether the merge was clean or needed a conflict fix.

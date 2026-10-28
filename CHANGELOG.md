@@ -2,6 +2,14 @@
 
 Newest first. Each version is a `## {version} ({ISO 8601 timestamp with local offset})` heading followed by a bullet list of changes.
 
+## 0.0.39 (2026-10-28T13:48:55-07:00)
+
+- Push check (#76, SPEC Contracts › Lifecycle › Push check). The new `push_check` config field holds a shell command that scans the commits about to be pushed for secrets; exit 0 passes. Once it is set, `wkc-implement` and `wkc-code-review` run it in the checkout holding the commits before every push, in every mode and for every session kind: a person's, a native subagent, `codex exec`, or `claude -p`. A failure blocks the push. The skill removes the finding from its own unpushed commits, runs the check again, and pushes only on a pass. It names the file, line, and rule, never the value. No skill passes `--no-verify` to any git command, disables a hook, or skips the check. The same finding failing again with no new evidence stops; under a run, the ticket parks. With no `push_check`, a manual push goes ahead with a warning in the report; under a run, the skill parks instead of pushing.
+- `wkc-code-review` checks every round for the SPEC's security defects, whatever `push_check` reported: a secret in the diff or in any commit of the pull request, an authentication or authorization defect, sensitive data logged, stored, or sent where it should not be, and network calls the ticket does not need. It names each new or changed dependency in a verdict line, as a finding when the ticket does not need it. A secret is named by file and line, never by value.
+- `wkc-setup` Section D asks for `push_check`, offering the gitleaks command first and checking that `gitleaks` is installed. `config-template.md` lists the field, default none.
+- This repository's own `docs/dev-agents/config.md` sets `push_check` to the gitleaks command, because the repository is public.
+- The README rows describe the push check and the security review. `validation/wkc-implement.md`, `validation/wkc-code-review.md`, and `validation/wkc-setup.md` gain the new cases and dated reports.
+
 ## 0.0.38 (2026-10-25T16:00:06-07:00)
 
 - Unattended calls (#73, SPEC Contracts › Unattended calls). A call is unattended only when it passes `--run <ref>`, naming a `wkc-yolo` run config; a call without it is manual, whatever its text says. The skill first reads the config with `wkc-tracker run show <ref>`, and when that refuses it stops, writes nothing, and asks nothing. Under an unattended call, `wkc-implement`, `wkc-code-review`, and `wkc-backlog` never end a turn on a question. Each decides from the ticket, PRD, SPEC, ROADMAP, and run limits and posts a `Decision (wkc-yolo):` comment, or parks the ticket with a `Parked (wkc-yolo):` comment, keeps its status, and returns `parked`. Each `SKILL.md` gains a section 7 with both templates, copied from the SPEC. Manual calls are unchanged.

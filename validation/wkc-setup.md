@@ -1,7 +1,8 @@
 # wkc-setup validation
 
-Follow [Validation](../AGENTS.md#validation). This catalog covers the review-round field added by #54 and the
-`run_config` field added by #78. It does not claim baseline coverage of the rest of setup.
+Follow [Validation](../AGENTS.md#validation). This catalog covers the review-round field added by #54, the
+`run_config` field added by #78, and the `push_check` field added by #76. It does not claim baseline coverage of the
+rest of setup.
 
 ## Cases
 
@@ -24,6 +25,12 @@ Follow [Validation](../AGENTS.md#validation). This catalog covers the review-rou
    PASS: the warning about the public repository appears before the choice is taken, and the written config holds
    `run_config: github-variable`.
 
+6. **Push check field.** Direct. `grep -n push_check skills/wkc-setup/SKILL.md skills/wkc-setup/config-template.md`,
+   and parse the template's YAML frontmatter.
+   PASS: Section D asks for `push_check`, offers the gitleaks command first with a check that `gitleaks` is installed,
+   then the project's own command and none, and says a manual push without one only warns. PyYAML parses the template
+   value as the gitleaks command string, and its comment says the default is none.
+
 ## Dated report: 2026-10-22
 
 Scope: #54's new field only. Selected case 1 directly and cases 2 and 3 as unavailable behavior checks.
@@ -44,3 +51,12 @@ sessions went to the callers.
 |---|---|---|
 | 4 | PASS, direct | Section E lists `tracker`, `github-variable`, and `command <cmd>`, `tracker` first, with the public-issue, undetected-edit, and Actions-workflow warnings; PyYAML parses `run_config` as `tracker`; the picker rule names Sections A to E. |
 | 5 | SKIP | No session left in the approved budget to run the interview. |
+
+## Dated report: 2026-10-28, push check field (#76)
+
+Scope: Section D's `push_check` question and the template line. Candidate `8592d7e`. No AI sessions: the change's
+sessions went to the callers.
+
+| Case | Result | Evidence |
+|---|---|---|
+| 6 | PASS, direct | `grep -n push_check` shows Section D lines 143 and 150 and template line 14. Section D offers the gitleaks command first with `command -v gitleaks`, then the project's own command and none, and says a manual push without one only warns. PyYAML parses the template value as `gitleaks git --redact --log-opts="origin/main..HEAD"`, and its comment says default none. |
