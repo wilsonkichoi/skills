@@ -15,7 +15,8 @@ Count pilots, retries, failed starts, and test subagents against it; do not bypa
 Choose each session's model and reasoning effort to fit the cases it runs, and record them in the report.
 Ask before exceeding the limit or launching another harness for testing. The approved mixed-model
 workflow and its integration pilot follow the narrow exception in [AI harness testing](./ai-harness-testing.md).
-Native agents and external Codex workers share the same session count; a new process is not free.
+Native agents and headless workers (`codex exec`, `claude -p`, `kiro-cli chat --no-interactive`)
+share the same session count; a new process is not free.
 The limit counts sessions, not tokens. Also set a per-session cost cap where the harness has one.
 
 Run one pilot before a batch.

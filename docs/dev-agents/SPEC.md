@@ -190,7 +190,9 @@ Codex. `claude-code` is off by default. Listing it is the person's choice to let
 whatever login it finds, API billing included, so it is not a billing fallback. The coordinator
 never changes or switches a login (maintainer, 2026-10-28). The list is project config only: a
 ticket's `## Execution` cannot set it, delegated planning never changes it, and a run records it
-at kickoff and may drop harnesses but never add one. A per-model or per-ticket switch was
+at kickoff and may drop harnesses but never add one. Each dispatch uses only a harness that both
+the run's list and the current project config name, so removing `claude-code` from the project
+withdraws that opt-in from the next dispatch. A per-model or per-ticket switch was
 rejected, because a ticket edit could then turn on API billing.
 
 A `claude -p` worker runs in the intended checkout with `--model <model>`, an alias or pinned ID,
@@ -226,8 +228,9 @@ that entry from the ticket's current pair. Before a review, read the latest comp
 or review step on this PR and select the other model from the current pair. Compare harness and
 requested model, not effort or old pair position; use observed alias resolution when available.
 The pair must name distinct models. If both entries resolve to the same model, stop. If the
-preceding model matches one entry, use the other. If a ticket edit replaced both entries, use the
-second entry as the review choice; it differs from the preceding model. If the preceding model
+preceding model matches one entry, use the other. If it matches neither, because a ticket edit
+replaced that entry or both, use the second entry as the review choice; it differs from the
+preceding model. If the preceding model
 is unknown, ask in manual mode or park in a run rather than infer it from round parity.
 
 With an unchanged pair and no intervening build, Opus builds, then reviews run Sol, Opus, Sol.
@@ -270,7 +273,9 @@ skill read its session's permission mode, and the person can leave bypass mode d
 So the person launches the coordinator in that mode: `claude --dangerously-skip-permissions`, or
 `permissions.defaultMode: "bypassPermissions"` in the user's `~/.claude/settings.json`. Claude
 Code ignores bypass in a project's `.claude/settings.json` and `.claude/settings.local.json`.
-`wkc-setup`, the skills' README, and the `wkc-yolo` kickoff tell adopters this. Kickoff asks the
+`wkc-setup`, the skills' README, and the `wkc-yolo` kickoff tell adopters this. They also give
+the launch for each other coordinator: `codex --dangerously-bypass-approvals-and-sandbox` for
+Codex, and `kiro-cli chat --trust-all-tools` for a run without a pair in Kiro CLI. Kickoff asks the
 person to confirm the mode and records the answer in the session report as confirmed by the
 person, never as observed. The coordinator reads `sandbox.enabled` and
 `permissions.disableBypassPermissionsMode` from the settings files it can see, managed settings
@@ -1439,8 +1444,21 @@ the previous tag. Each port also updates the README roster, the repository map u
 - Implementation must confirm that a `--settings` sandbox override takes effect for a `claude -p`
   worker below managed settings, and what model evidence `--output-format json` reports. Neither
   was run for this planning change.
+- A run without a pair uses the coordinator's own model for every role. A native Claude subagent
+  inherits the session model, but a headless worker, such as `codex exec`, uses its configured
+  default unless the coordinator passes a model. How the coordinator establishes its own model
+  and effort, and what effort a worker gets, is undecided (planning review of `df0e2b0`).
 
 ## Changes
+
+- 2026-10-28: Planning review of `df0e2b0`. Turn order covers a pair edit that leaves the
+  preceding model in neither entry, not only one that replaced both. Each dispatch uses only
+  harnesses the current project `headless_workers` still lists, so removing `claude-code`
+  withdraws the opt-in mid-run. Adopter documentation names the Codex and Kiro CLI coordinator
+  launches as well as Claude Code's. Open unknowns record how a run without a pair passes the
+  coordinator's model and effort to headless workers. The token-usage rule counts every headless
+  worker kind. Ticket #83 gains these cases and a native blocker, #76, whose `push_check` its
+  Push security criterion checks. The documents remain draft.
 
 - 2026-10-28: Maintainer decisions after the planning review of `5677c39`. New `headless_workers`
   field, default `[codex, kiro-cli]`: listing `claude-code` allows `claude -p` workers, pinned

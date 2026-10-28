@@ -96,7 +96,8 @@ Instruction-following checks use only explicitly authorized sessions within the 
   it. Approval ends the loop. An interrupted run reconstructs the next model from recorded
   build/update and review steps. A pre-merge Opus update after Sol approval is reviewed by Sol,
   regardless of verdict number. Swapping the pair after Sol review selects Opus next. Replacing
-  both entries uses the new second entry; effort changes alone do not change model identity.
+  both entries, or only the entry that did the preceding step, uses the new second entry; effort
+  changes alone do not change model identity.
   Later model edits affect the next dispatch without reapproval and preserve fixing-round usage.
   The final review-only round still follows the last allowed fixing round. Reviewers use fresh contexts and no
   implementation conversation.
@@ -110,7 +111,8 @@ Instruction-following checks use only explicitly authorized sessions within the 
   ChatGPT login plus an API-key gateway configuration is refused. Both workers count against the same
   limits. No worker delegates. No API fallback or automatic substitution occurs. With the
   default `headless_workers`, no `claude -p` starts and a pinned Claude ID is blocked; listing
-  `claude-code` allows both and a Codex coordinator, and a ticket cannot change the list. A run
+  `claude-code` allows both and a Codex coordinator, and a ticket cannot change the list.
+  Removing `claude-code` from the project config during a run stops further `claude -p` dispatch. A run
   without a pair runs each role on its own harness in fresh sessions. Kickoff asks the person to
   confirm the coordinator's full-permission mode and reports it as confirmed, not observed. A quota,
   rate-limit, or authentication error stops all dispatch without retries. Claude bypass mode
@@ -155,6 +157,10 @@ Depends on: M2, because it changes `wkc-implement`; M4, because it covers `wkc-y
 Exit check: on a local-tracker fixture with a GitHub remote, each `wkc-tracker` write is one `chore: wkc-tracker <verb> <id>` commit holding only that ticket's file, with other staged and unstaged changes unchanged and nothing pushed. `wkc-implement` branches before it claims, so the claim and handoff commits are on the ticket's branch and not on the default branch, and it stops on an unpushed `issues_dir` commit on the default branch. After the merge, a rerun makes its post-merge writes on `<type>/<id>-finish` from the merged default branch, and the ticket file on the default branch reads `done` once that branch lands. With no remote, the post-merge writes are commits on the local default branch. A `wkc-yolo` run of two local tickets runs them one at a time and reaches `done` on the run branch before readiness. It pushes the ticket-file commits and opens a draft run PR before verification. Verification and cleanup evidence, an intermittent check's `Discovered:` item included, are read back from PR comments, with the checked HEAD unchanged, and that item's ticket is filed only after the run PR. A later ticket-file or code commit invalidates that evidence. Both tickets reach the default branch only after the person merges the run PR. Ticket files are checked with a YAML parser and `git log`, not from the report. The `wkc-tracker` and `wkc-implement` runbooks cover these cases.
 
 ## Changes
+
+- 2026-10-28: Planning review of `df0e2b0`. M4's routing exit check covers replacing only the
+  entry that did the preceding step, and withdrawing the `claude-code` opt-in during a run. Still
+  draft.
 
 - 2026-10-28: M4 adds `headless_workers` (opt-in `claude -p`, pinned Claude IDs, and a Codex
   coordinator), runs without a model pair, and the person-confirmed coordinator mode (maintainer
