@@ -91,18 +91,24 @@ Instruction-following checks use only explicitly authorized sessions within the 
 - A project pair and a ticket's pair select the expected models: the first builds, and review rounds
   alternate starting with the second. A completed `fixed` round passes the next round to the other
   model. Review-only rounds also advance it. Duplicate verdicts and failed launches do not advance
-  it. Approval ends the loop. An interrupted run reconstructs the next model from recorded verdicts.
-  Later model edits affect the next dispatch and preserve fixing-round usage. The final review-only
-  round still follows the last allowed fixing round. Reviewers use fresh contexts and no
+  it. Approval ends the loop. An interrupted run reconstructs the next model from recorded
+  build/update and review steps. A pre-merge Opus update after Sol approval is reviewed by Sol,
+  regardless of verdict number. Swapping the pair after Sol review selects Opus next. Replacing
+  both entries uses the new second entry; effort changes alone do not change model identity.
+  Later model edits affect the next dispatch without reapproval and preserve fixing-round usage.
+  The final review-only round still follows the last allowed fixing round. Reviewers use fresh contexts and no
   implementation conversation.
 - Configured manual implementation and review calls honor their model selections while preserving
   one requested step and approval questions. With no routing configuration, existing manual
   behavior remains in the invoking harness. An unsupported coordinator or setting gives a blocked result or
   concrete manual handoff. A manual question from a non-interactive worker reaches the person and
-  stops its dependent step. Integration validation confirms Claude native-agent dispatch and
-  explicit-model `codex exec` dispatch with subscription login. Both workers count against the same
+  stops its dependent step. Resuming after the answer rereads the live pair and uses a fresh
+  worker if the selected model or effort changed. Integration validation confirms Claude native-agent
+  dispatch and explicit-model `codex exec` dispatch with effective subscription provider and login. A stored
+  ChatGPT login plus an API-key gateway configuration is refused. Both workers count against the same
   limits. No worker delegates. No API fallback or automatic substitution occurs. A quota,
-  rate-limit, or authentication error stops all dispatch without retries.
+  rate-limit, or authentication error stops all dispatch without retries. Claude bypass mode
+  with its Bash sandbox still enabled does not pass the no-sandbox check.
 - Requested changes preserve the run branch, PR, completed tickets, and evidence. The PR becomes
   draft before correction work changes its result. Reused unfinished or new correction tickets
   follow implementation, independent review, merge, and finish. A routine restart preserves its

@@ -82,22 +82,28 @@ following contract details for final review:
   so anyone who can edit the ticket can change a running run's next model. Setup offers the latest
   Opus, through the `opus` alias, then Sol 6.1. The maintainer chose the alias over a pinned ID on
   2026-10-27, after review found that a Claude Code agent call accepts only an alias. Effort
-  defaults to `medium`. An absent manual route preserves the current harness. Only a person changes
-  selections; technical delegation is not model escalation.
+  defaults to `medium`. An absent manual route preserves the current harness. Skills never change
+  selections on their own. Valid live ticket edits take effect without reapproval or an editor
+  check; technical delegation is not model escalation.
 - Separate implementation and review fields were replaced by the pair, because a ticket that
   overrode only the build model could have that model review its own build first. Other
   harnesses, such as Kiro CLI or OpenCode, join through a SPEC change that defines their dispatch
   contract.
-- Alternate by completed review round, including confirming rounds. An approval stops the loop.
-  Duplicate verdicts and failed launches do not advance it. Every review uses a fresh context,
+- Select each review model from the preceding completed build/update or review step, using the
+  current pair. Round parity is insufficient after a pre-merge update or pair edit. Update
+  execution is recorded alongside handoffs and verdicts so resume makes the same choice.
+  Review-only rounds count as completed steps. An approval stops the loop. Duplicate verdicts
+  and failed launches do not advance it. Every review uses a fresh context,
   even when returning to the implementation model. `max_fix_attempts` keeps its existing meaning.
 - The main Claude Code session, on the latest Opus, dispatches all workers. A Codex coordinator,
   with GPT building first, is deferred until Claude Code supports subscription use of `claude -p`,
   which it would need to start Claude workers. Workers never delegate or launch another harness.
   Native and external workers share limits. Use subscription login, not API or provider fallback. An
   unavailable model is reported, never substituted. Workers run with full permissions and no sandbox
-  (maintainer, 2026-10-27), because a sandboxed Codex worker cannot commit, push, or write the
-  tracker. `push_check`, review, and the person's merge stay.
+  (maintainer, 2026-10-27). Claude's permission mode and sandbox setting are checked separately,
+  including the outer environment of a Codex process. The worker's effective provider and login
+  must establish subscription routing before each launch or resume; clearing two API-key
+  variables alone is insufficient. `push_check`, review, and the person's merge stay.
 - Manual calls keep their step boundaries and questions. Non-interactive execution grants no
   autonomous authority. `--run` remains the only unattended-call marker.
 - Model-routing integration validation needs explicit approval of its fixture, session count,
@@ -139,3 +145,8 @@ subscription access or end-to-end behavior. The model-routing ticket owns that v
   tool call accepts only a model alias, and native subagents may nest by default.
 - [Codex agent approvals and security](https://learn.chatgpt.com/docs/agent-approvals-security),
   read 2026-10-27: `workspace-write` has network access off and keeps `.git` read-only.
+
+- Planning-review verification (2026-10-27): [Codex configuration](https://learn.chatgpt.com/docs/config-file/config-reference)
+  exposes provider selection, provider credentials, and forced login method.
+  [Claude sandboxing](https://code.claude.com/docs/en/sandboxing) distinguishes the shell sandbox
+  from permission mode. These are documentation checks, not runtime or entitlement tests.

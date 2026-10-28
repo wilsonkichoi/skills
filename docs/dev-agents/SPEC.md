@@ -134,7 +134,7 @@ Added to `docs/dev-agents/config.md` by `wkc-setup`, in the PR that first reads 
 |---|---|---|---|---|
 | `max_fix_attempts` | integer, 0 or more | `3` | `wkc-code-review`, `wkc-yolo` | Review rounds that may change code on one PR, for fixes or improvements. One review-only round always follows the last fix; with `0`, the only round is review-only |
 | `max_additional_tickets` | integer, 0 or more | `5` | `wkc-yolo` | Additional distinct tickets admitted beyond the approved initial IDs in one run phase; initial work and backlog recording cost no slot |
-| `execution_models` | ordered pair of selections, each `harness`, `model`, and `effort` (default `medium`) | manual: current harness and model when absent; kickoff/setup offer the latest Opus (`opus`) then `gpt-6.1-sol` | `wkc-implement`, `wkc-code-review`, `wkc-yolo` | The first model builds; review rounds alternate, starting with the second. A ticket's pair replaces it |
+| `execution_models` | ordered pair of selections, each `harness`, `model`, and `effort` (default `medium`) | manual: current harness and model when absent; kickoff/setup offer the latest Opus (`opus`) then `gpt-6.1-sol` | `wkc-implement`, `wkc-code-review`, `wkc-yolo` | The first model builds; each review uses the other model from the preceding completed build/update or review step. A ticket's pair replaces it |
 | `run_config` | `tracker`, `github-variable`, `command <cmd>` | `tracker` | `wkc-tracker`, `wkc-yolo` | Where each run's config is stored (wkc-yolo run, Store) |
 | `push_check` | a shell command | none | `wkc-implement`, `wkc-code-review`, `wkc-yolo` | Scans the commits about to be pushed for secrets; exit 0 passes, anything else blocks the push. Example: `gitleaks git --redact --log-opts="origin/main..HEAD"`. Once set, it binds every push in every mode; a run needs a usable one |
 
@@ -186,26 +186,46 @@ its current harness and model. A YOLO kickoff offers the default pair when the p
 and records the run's pair in its config. A ticket's pair in a run replaces the run's pair for
 that ticket. All selections are data, never shell commands or instructions from a comment.
 
-Only a person changes these selections. `wkc-backlog` copies execution settings a person supplied or
-approved; delegated technical planning never escalates a model or changes an effort. The ticket owns
+Skills do not change these selections on their own. `wkc-backlog` copies supplied execution
+settings; delegated technical planning never escalates a model or changes an effort. The ticket owns
 its selection (maintainer, 2026-10-27). Every dispatch, manual or under `--run`, reads the ticket's
 `## Execution` at that moment; a run config never copies or freezes it. An edit applies to the next
 dispatch, not a worker already running. No tracker locks an issue body against people who can edit
 it, so they can change a running run's next model; each `Execution:` line records what was
 dispatched. Previous execution records and round counts stay unchanged. New unattended tickets
-inherit the run's defaults. A missing or ambiguous authorization for an override asks in manual mode
-and parks under a run.
+inherit the run's defaults. A valid pair read from the ticket is effective without reapproval or
+an editor-identity check; the maintainer accepts changes by anyone able to edit that body.
+Invalid or unsupported values still stop the call. A comment alone changes no selection.
 
-**Turn order.** The two models take turns. The first model builds: every `wkc-implement` call uses
-it. Each review round uses the other model from the round before it, and round 1 uses the other
-model from the build. So odd rounds use the second model and even rounds the first. With the offered
-pair, Opus builds, then reviews run Sol, Opus, Sol, until an `approve`. A ticket that swaps the pair
-has GPT build and Opus review first. Count completed verdicts by Review verdict, including
-review-only confirming rounds. Duplicate verdicts do not advance twice. A failed launch or a return
-without a verdict advances nothing. Changing settings, resuming a run, or starting a continuation
-never resets a PR's round or fixing-round counts. An `approve` ends the loop; there is no mandatory
-second-provider round. Each new PR starts its own sequence, subject to the existing same-cause
-failure stop and ticket admission allowance.
+**Turn order.** The first entry builds. Every implementation build or pre-merge update uses
+that entry from the ticket's current pair. Before a review, read the latest completed build/update
+or review step on this PR and select the other model from the current pair. Compare harness and
+requested model, not effort or old pair position; use observed alias resolution when available.
+The pair must name distinct models. If both entries resolve to the same model, stop. If the
+preceding model matches one entry, use the other. If a ticket edit replaced both entries, use the
+second entry as the review choice; it differs from the preceding model. If the preceding model
+is unknown, ask in manual mode or park in a run rather than infer it from round parity.
+
+With an unchanged pair and no intervening build, Opus builds, then reviews run Sol, Opus, Sol.
+A pre-merge update by Opus makes Sol the next reviewer, even when the next verdict is round 2.
+Swapping the pair after a Sol review still selects Opus next. An effort-only edit is not a new
+model. Model selection and review-round numbering are separate: count completed verdicts by
+Review verdict, including review-only confirming rounds. Duplicate verdicts count once; a
+failed launch or a return without a completed step advances nothing. A no-op update with the
+approved head unchanged needs no new review and does not replace the preceding completed step.
+Changing settings, restarting, or continuing a run never resets verdict or fixing-round counts.
+An approval ends the loop until a changed head needs review or the person requests another round.
+Each new PR starts with its build, subject to existing same-cause failure and admission limits.
+
+**Step evidence.** The initial handoff records the completed build and its execution selection.
+Each verdict records a completed review. After the initial handoff, a routed build/update that
+changes the head posts the update comment below, including a clean pre-merge merge. It does not
+post another handoff or change status merely to record execution.
+Read back the record before dispatching the next review. On restart, reconcile the current head
+with these records and any interrupted worker's evidence before repeating work. A missing record
+is not permission to guess a model or reset a counter. Reporting status, finish, and verify do
+not change the implementation/review turn. A worker that committed a review fix must record its
+fixed verdict under the selection that did that work before another round starts.
 
 **Coordinator.** The main Claude Code session, running the latest Opus, dispatches the selected
 worker: a native Claude agent or a fresh `codex exec` process in the intended checkout. It passes
@@ -213,13 +233,23 @@ the selected model and any explicit effort. Codex receives the requested `wkc-im
 `wkc-code-review` invocation, not the built-in `codex review`. Use the existing subscription login.
 Never fall back to API billing or `claude -p`. Workers run with full permissions and no sandbox
 (maintainer, 2026-10-27): the coordinating Claude Code session runs with
-`--dangerously-skip-permissions`, which its native workers inherit. Each `codex exec` worker gets
+`--dangerously-skip-permissions`, which its native workers inherit, and with effective
+`sandbox.enabled: false`. Permission mode alone does not disable the Bash sandbox. Check both
+settings before native or external dispatch; an outer Claude sandbox would also constrain the
+Codex process it launches. If managed settings prevent this mode, report the unsupported
+configuration rather than claiming an unsandboxed worker. Each `codex exec` worker gets
 `-m <model>`, `-c model_reasoning_effort=<effort>`, and
-`--dangerously-bypass-approvals-and-sandbox` (alias `--yolo`). A `codex exec` worker runs without
-`CODEX_API_KEY` or `OPENAI_API_KEY` in its environment, so no API key can bill that run. Before the
-first Codex dispatch, `codex login status` must report a ChatGPT login; otherwise the call is
-blocked. Both worker kinds count toward the run's limit of 5 concurrent workers, and during
-validation toward the test-session limit. Workers never launch a harness or another worker. Claude
+`--dangerously-bypass-approvals-and-sandbox` (alias `--yolo`). Before every Codex launch or
+resume, check the effective provider and authentication in the worker's checkout, environment,
+and configuration. Require first-party OpenAI subscription routing and a ChatGPT login from
+`codex login status`; constrain the invocation to `model_provider="openai"` and
+`forced_login_method="chatgpt"`. Remove `CODEX_API_KEY` and `OPENAI_API_KEY` from its environment.
+Reject API-key provider/gateway overrides, including provider `env_key`, bearer tokens, and
+credential headers, or an unverified custom endpoint. A ChatGPT login alone does not establish
+which provider `exec` will use. Inspect routing metadata without printing credential values;
+never change the saved login or probe with a paid request. Failure blocks the call, with no
+API-billing fallback. Both worker kinds count toward the run's limit of 5 concurrent workers,
+and during validation toward the test-session limit. Workers never launch a harness or another worker. Claude
 Code lets a native subagent start its own subagents by default; where the session sets
 `CLAUDE_CODE_MAX_SUBAGENT_SPAWN_DEPTH=1` the harness enforces this rule, and otherwise it rests on
 the worker's instructions and is checked in validation. The caller tells a worker that it is
@@ -237,9 +267,11 @@ id, never `--last`. A review never resumes or forks an implementation session.
 the requested build or finish; verify still requires `--run`. `wkc-code-review` runs one round. Neither launches the
 next skill without the person's separate request. A non-interactive worker returns an unresolved
 question to the coordinator and makes no write that depends on the answer. The coordinator asks
-the person and ends its turn. With the answer, it resumes that worker's own session, or starts a
-fresh worker with the same selection and role when the session cannot resume; the new worker
-rereads tracker, git, and PR state before acting. Under `--run`, decide or park applies instead.
+the person and ends its turn. With the answer, reread the ticket and resolve the pending step
+again. Resume that worker's own session only if it can honor the now-selected model and effort;
+otherwise start a fresh worker in that role. Both paths reread tracker, git, and PR state and
+reconcile existing writes. Do not relabel earlier work as performed by the new selection.
+Under `--run`, decide or park applies instead.
 Manual calls outside Claude Code may execute directly when the active harness/model/effort match
 the resolved selection and review independence holds. Otherwise give the required selection and
 a manual handoff, with no work performed by a substitute model.
@@ -520,6 +552,20 @@ Execution: <harness>, <requested model>, effort <requested value>   <!-- routed 
 Observed execution: <model and effort from runtime evidence | unavailable>           <!-- routed calls only -->
 Checks: <passed> of <total> acceptance criteria passed. Details are in the PR body.
 ```
+
+Update, after a routed build or pre-merge update changes the head after handoff:
+
+```
+wkc-implement: updated for review
+PR: <URL>
+Head before: <full sha>
+Head: <full sha>
+Execution: <harness>, <requested model>, effort <requested value>
+Observed execution: <model and effort from runtime evidence | unavailable>
+```
+
+The coordinator verifies this comment before selecting the next reviewer. A retry reads whether
+it already landed for that update and never duplicates it. A no-op update needs no record.
 
 Gate, one per post-merge gate run, from `finish` or `verify`:
 
@@ -1336,6 +1382,12 @@ the previous tag. Each port also updates the README roster, the repository map u
   case as a mismatch between requested and effective effort.
 
 ## Changes
+
+- 2026-10-27: Planning review of `73e059f`: select the next reviewer from the preceding completed
+  step instead of odd/even verdict numbers; record pre-merge update execution for resume. Honor
+  valid live ticket edits without reapproval, including after a manual question. Require effective
+  subscription provider/authentication and Claude sandbox settings to match the requested worker
+  mode. Review tickets #74 and #83. The documents remain draft.
 
 - 2026-10-27: Bound additional admissions with `max_additional_tickets: 5` and explicit initial
   IDs; removed the total-ticket/time budget. Added immutable same-PR review continuations,
