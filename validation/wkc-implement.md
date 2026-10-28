@@ -20,6 +20,7 @@ Keep raw logs and fixtures outside tracked files.
 - Dated report: 2026-10-28, push check (#76)
 - Dated report: 2026-10-28, run completion (#80)
 - Review round 1: 2026-10-28, PR #87
+- Review round 2: 2026-10-28, PR #87
 
 ## Preparation
 
@@ -378,8 +379,9 @@ error while a flag file is absent, a check the merged code fails, and a smoke te
     releases it without reading the retired config.
 
 64. **Grant store cannot detect edits.** With `run_config: tracker` on Linear and local, supply a syntactically valid,
-    unexpired staging grant. Also test a command store that cannot detect edits.
-    PASS: local gates run; staging is `not run` with the unsupported-store reason, and its marker is absent.
+    unexpired staging grant. Then give the same grant through a `command` store whose `get` returns the config.
+    PASS: local gates run; under the tracker store, staging is `not run` with the unsupported-store reason, and its
+    marker is absent. Under the `command` store, staging runs: its `get` is the edit check.
 
 65. **Grant limits bind every attempt.** On the GitHub fixture, use a staging grant with zero remaining operations;
     then one with one operation left and a gate that fails on code. Exercise environment retries after expiry and
@@ -388,7 +390,7 @@ error while a flag file is absent, a check the merged code fails, and a smoke te
     is not called reproduced. Result summaries record the active ref, attempts, and bounded cost and duration so a
     resumed call counts prior use. Unknown use does not count as unused authority.
 
-66. **Local verify evidence reads.** With local tickets and an edit-detecting command store, verify at one head twice.
+66. **Local verify evidence reads.** With local tickets and a `command` store, verify at one head twice.
     PASS: the first call posts and reads back gate comments on the run PR naming the ticket path, with no commit or
     status change; the second reuses that pass. An unavailable result on the PR is retried when permitted. Comments
     for another ticket path or sha supply no pass.
@@ -899,3 +901,20 @@ Behavior for cases 62 to 66: SKIP in Codex and Claude Code because the change us
 sessions (six standing plus the one approved for case 42). Kiro: SKIP, no cross-harness launch authorization.
 No behavior PASS is inferred from static checks or from the original implementation sessions after these instructions
 changed. Backlog's unchanged source retains the separately cited S7 evidence. A fresh session must review the fix commit.
+
+## Review round 2: 2026-10-28, PR #87
+
+Reviewed `bc1b8fc66183382aa4f8a621d2a514bc3a8150d8`, the round-1 fix commit, in an independent session. Selected
+direct checks: case 1's link and contents subchecks for `run.md`, case 61, and static inspection of the round-1
+changes against SPEC Review continuations, Run config, Grants, Store, Unattended calls, and the Local backend.
+
+Verified finding: `run.md:62` required a `command` store to "provide edit detection" before it carries grants.
+Nothing a call reads can show that. SPEC Store says the command store controls edit detection, and `wkc-tracker`
+says its `get` decides what counts as an edit. A model that takes the rule literally marks every shared gate under a
+`command` store `not run`. Fixed: the store's `get` is the edit check. Case 64 now checks both stores; case 66 no
+longer depends on the removed condition.
+
+Behavior for cases 62 to 66: still SKIP in every harness. No AI session ran; the seven authorized sessions are used.
+The round-1 commit changed the instructions behind cases 52, 53, 56, 57, 58, and 59, so their earlier PASS results
+are not evidence for this head. Cases 62, 63, and 65 cover interpretation that direct checks cannot establish and
+need behavioral runs before merge. Cases 64 and 66 restate explicit SPEC text and carry lower risk.

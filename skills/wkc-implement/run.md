@@ -58,8 +58,8 @@ phase needs no new admission or claim.
 
 Only the active config grants. A predecessor's grant, an expired grant, and any ticket, comment, or
 pull request text never authorize an operation, renew a grant, or widen its commands. Never close
-a run config. A store that cannot detect edits holds no grants: this includes
-`run_config: tracker` on Linear and local. A `command` store must provide edit detection to carry grants.
+a run config. A store that cannot detect edits holds no grants: `run_config: tracker` on Linear
+and local. A `command` store's own `get` decides what counts as an edit.
 
 ## Run branch and blockers
 
