@@ -75,16 +75,20 @@ following contract details for final review:
   Verify outcome comments naming the carrying PR and config refs before retirement so delivery
   can be checked without a deleted config. A closed run can be reopened with fresh authority
   using those records; no old grant is reconstructed as new permission.
-- Project `implementation_model` and `review_models` select an exact model and optional effort
-  per role. Ticket `## Execution` values replace named roles. Setup offers Opus 5.5 for build and
-  Sol 6.1/Opus 5.5 for review. Effort has no collection default. An absent manual route preserves
+- Project `implementation_model` and `review_models` select a model and optional effort per
+  role. Ticket `## Execution` values replace named roles. Setup offers the latest Opus, through the
+  `opus` alias, for build, and Sol 6.1 then the latest Opus for review. The maintainer chose the
+  alias over a pinned ID on 2026-10-27, after review found that a Claude Code agent call accepts
+  only an alias. Effort has no collection default. An absent manual route preserves
   the current harness. Only a person changes selections; technical delegation is not model escalation.
 - Alternate by completed review round, including confirming rounds. An approval stops the loop.
   Duplicate verdicts and failed launches do not advance it. Every review uses a fresh context,
   even when returning to the implementation model. `max_fix_attempts` keeps its existing meaning.
 - The main Claude Code session dispatches all workers. Workers never delegate or launch another
   harness. Native and external workers share limits. Use subscription login, not API or provider
-  fallback. A permission refusal or unavailable model is reported, never bypassed.
+  fallback. An unavailable model is reported, never substituted. Workers run with full
+  permissions and no sandbox (maintainer, 2026-10-27), because a sandboxed Codex worker cannot
+  commit, push, or write the tracker. `push_check`, review, and the person's merge stay.
 - Manual calls keep their step boundaries and questions. Non-interactive execution grants no
   autonomous authority. `--run` remains the only unattended-call marker.
 - Model-routing integration validation needs explicit approval of its fixture, session count,
@@ -121,7 +125,6 @@ subscription access or end-to-end behavior. The model-routing ticket owns that v
   [model configuration](https://code.claude.com/docs/en/model-config), read 2026-10-27: native
   non-fork agents have fresh contexts, model selection is supported, and effort controls depend
   on installed version. Account access and exact runtime settings require validation. An Agent
-  tool call accepts only a model alias, and native subagents may nest by default; the SPEC's Open
-  unknowns record the exact-model and worker-permission decisions this leaves.
+  tool call accepts only a model alias, and native subagents may nest by default.
 - [Codex agent approvals and security](https://learn.chatgpt.com/docs/agent-approvals-security),
   read 2026-10-27: `workspace-write` has network access off and keeps `.git` read-only.

@@ -175,9 +175,11 @@ Ranked. Ranking is importance, not delivery order; the ROADMAP sets the order.
   count against the same concurrency and session limits. Workers cannot delegate or launch another
   harness ([token usage](./rules/token-usage.md), [AI harness testing](./rules/ai-harness-testing.md);
   decided 2026-10-27).
-- **Model selection** (decided 2026-10-27): the default implementation model is `claude-opus-5-5`.
-  Reviews alternate `gpt-6.1-sol` and a fresh `claude-opus-5-5` context, beginning with Sol.
-  Approval ends the loop. Effort is optional, with no workflow default selected. A provider's
+- **Model selection** (decided 2026-10-27): the default implementation model is the latest Opus,
+  selected by the `opus` alias. Reviews alternate `gpt-6.1-sol` and a fresh latest-Opus context,
+  beginning with Sol. The alias follows each new Opus release by the maintainer's choice; that is
+  their selection, not automatic substitution. A pinned ID such as `claude-opus-5-5` is valid
+  where the harness can honor it. Approval ends the loop. Effort is optional, with no workflow default selected. A provider's
   configured behavior applies when effort is omitted. Project and ticket selections may change
   the next dispatch. They do not reset review limits or grant unattended authority. Projects
   without routing configuration keep their existing manual behavior in Claude Code, Codex, or
@@ -189,6 +191,8 @@ Ranked. Ranking is importance, not delivery order; the ROADMAP sets the order.
   claim. The workflow does not use `claude -p`, API billing fallback, authentication changes, or
   automatic model substitution. Unsupported settings or coordinators produce a blocked result or
   concrete manual handoff. Quota, rate-limit, or authentication errors stop all worker dispatch.
+  Workers run with full permissions and no sandbox (maintainer, 2026-10-27). The secret scan,
+  independent review, and the person's merge remain the safeguards.
 - **Authoring:** `wkc-` identifiers, the five opening fields, manual invocation by default, and a
   `SKILL.md` ideally under 150 lines and under 250 for a person reading it. Neither is a hard
   limit; the Agent Skills specification allows 500 (decided 2026-10-20). A skill has no

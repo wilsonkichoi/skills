@@ -134,8 +134,8 @@ Added to `docs/dev-agents/config.md` by `wkc-setup`, in the PR that first reads 
 |---|---|---|---|---|
 | `max_fix_attempts` | integer, 0 or more | `3` | `wkc-code-review`, `wkc-yolo` | Review rounds that may change code on one PR, for fixes or improvements. One review-only round always follows the last fix; with `0`, the only round is review-only |
 | `max_additional_tickets` | integer, 0 or more | `5` | `wkc-yolo` | Additional distinct tickets admitted beyond the approved initial IDs in one run phase; initial work and backlog recording cost no slot |
-| `implementation_model` | selection with `harness`, exact `model`, optional `effort` | manual: current model when routing is absent; kickoff/setup offer Opus 5.5 | `wkc-implement`, `wkc-yolo` | Implementation selection; ticket override replaces this role |
-| `review_models` | ordered pair of selections | manual: current model when routing is absent; kickoff/setup offer Sol 6.1 then Opus 5.5 | `wkc-code-review`, `wkc-yolo` | Alternate by completed review round, starting with slot 1 |
+| `implementation_model` | selection with `harness`, `model`, optional `effort` | manual: current model when routing is absent; kickoff/setup offer the latest Opus (`opus`) | `wkc-implement`, `wkc-yolo` | Implementation selection; ticket override replaces this role |
+| `review_models` | ordered pair of selections | manual: current model when routing is absent; kickoff/setup offer Sol 6.1 then the latest Opus | `wkc-code-review`, `wkc-yolo` | Alternate by completed review round, starting with slot 1 |
 | `run_config` | `tracker`, `github-variable`, `command <cmd>` | `tracker` | `wkc-tracker`, `wkc-yolo` | Where each run's config is stored (wkc-yolo run, Store) |
 | `push_check` | a shell command | none | `wkc-implement`, `wkc-code-review`, `wkc-yolo` | Scans the commits about to be pushed for secrets; exit 0 passes, anything else blocks the push. Example: `gitleaks git --redact --log-opts="origin/main..HEAD"`. Once set, it binds every push in every mode; a run needs a usable one |
 
@@ -156,16 +156,21 @@ defaults and optional ticket overrides (ADR-009). `wkc-setup` offers this config
 ```yaml
 implementation_model:
   harness: claude-code
-  model: claude-opus-5-5
+  model: opus
 review_models:
   - harness: codex
     model: gpt-6.1-sol
   - harness: claude-code
-    model: claude-opus-5-5
+    model: opus
 ```
 
-Each entry has `harness` (`claude-code` or `codex`), an exact `model` identifier, and optional
-`effort`. Effort has no collection default. When omitted, the provider's configured setting
+Each entry has `harness` (`claude-code` or `codex`), a `model`, and optional `effort`. For
+`claude-code`, `model` is `opus`, `sonnet`, `haiku`, or `fable`, an alias that follows the
+newest release of that family, because a Claude Code agent call accepts only an alias. Following
+the alias is the person's selection, not substitution. A pinned ID such as `claude-opus-5-5` is
+valid only where the coordinator can pass it, and otherwise is blocked. For `codex`, `model` is
+the exact ID `codex exec -m` takes. Evidence records the model the alias resolved to when the
+runtime shows it. Effort has no collection default. When omitted, the provider's configured setting
 applies. An explicit value must be supported and honored; report a refusal or an effective
 setting that differs, without silently substituting a model or effort. Confirm capabilities
 without a paid probe where possible. Account access is not implied by a valid identifier.
@@ -192,10 +197,13 @@ An `approve` ends the loop; there is no mandatory second-provider round. Each ne
 own sequence, subject to the existing same-cause failure stop and ticket admission allowance.
 
 **Coordinator.** The main Claude Code session dispatches the selected worker: a native Claude
-agent or a fresh `codex exec` process in the intended checkout. It passes the exact model and any
-explicit effort. Codex receives the requested `wkc-implement` or `wkc-code-review` invocation,
+agent or a fresh `codex exec` process in the intended checkout. It passes the selected model and
+any explicit effort. Codex receives the requested `wkc-implement` or `wkc-code-review` invocation,
 not the built-in `codex review`. Use the existing subscription login. Never fall back to API
-billing, `claude -p`, or bypassed permissions. A `codex exec` worker runs without `CODEX_API_KEY`
+billing or `claude -p`. Workers run with full permissions and no sandbox (maintainer,
+2026-10-27): the coordinating Claude Code session runs with `--dangerously-skip-permissions`,
+which its native workers inherit, and each `codex exec` worker gets
+`--dangerously-bypass-approvals-and-sandbox`. A `codex exec` worker runs without `CODEX_API_KEY`
 or `OPENAI_API_KEY` in its environment, so no API key can bill that run. Before the first Codex
 dispatch, `codex login status` must report a ChatGPT login; otherwise the call is blocked. Both
 worker kinds count toward the run's limit of 5 concurrent workers, and during validation toward
@@ -1309,18 +1317,9 @@ the previous tag. Each port also updates the README roster, the repository map u
   selected model/effort, expose runtime evidence where available, and relay manual questions.
   The documented interfaces and maintainer experience support the design; no mixed-provider
   integration test ran for this planning change. The model-routing ticket owns this check.
-- Exact native model selection is undecided. A Claude Code Agent tool call accepts only a model
-  alias such as `opus`, and aliases move to newer models over time. A full model ID such as
-  `claude-opus-5-5` needs a subagent definition's `model` field or alias pinning through
-  `ANTHROPIC_DEFAULT_OPUS_MODEL`. Claude Code also lowers an unsupported effort to the highest
-  supported level, and `CLAUDE_CODE_EFFORT_LEVEL` overrides a subagent's effort. The person
-  chooses the pinning mechanism before the model-routing ticket starts.
-- The worker permission profile is undecided. Codex documents `workspace-write` as the
-  non-interactive sandbox, with network access off and `.git` read-only, so a sandboxed Codex
-  worker cannot commit, push, or write the tracker as `wkc-implement` and `wkc-code-review`
-  require. Claude Code background subagents surface permission prompts in the main session,
-  which stalls an unattended run. The person chooses the permission profile for each provider,
-  and how it differs from the forbidden bypass, before the model-routing ticket starts.
+- Claude Code lowers an unsupported effort to the highest supported level, and
+  `CLAUDE_CODE_EFFORT_LEVEL` overrides a subagent's effort. Implementation must report either
+  case as a mismatch between requested and effective effort.
 
 ## Changes
 
@@ -1330,8 +1329,9 @@ the previous tag. Each port also updates the README roster, the repository map u
   narrow harness exception (maintainer request; ADR-009). Model/effort defaults, config retention,
   manual questions, execution evidence, and validation scope are explicit. Review ROADMAP M4
   and tickets #74, #76, #77, #80, plus the model-routing ticket. Status is draft for final review.
-  New correction tickets enter only through a person-approved continuation phase. Exact native
-  model pinning and the worker permission profile remain open (Open unknowns).
+  New correction tickets enter only through a person-approved continuation phase. Claude roles
+  default to the `opus` alias, the latest Opus, and workers run with full permissions and no
+  sandbox (maintainer decisions).
 
 - 2026-10-26: A run completes its tickets and verifies itself before the person's merge
   (maintainer review of proposed ADR-008; ADR-008). `wkc-implement finish <id> --run <ref>` runs

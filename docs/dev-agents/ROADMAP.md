@@ -46,8 +46,8 @@ review and merge. Production work follows that merge. Delegated planning may cha
 plans and tickets within product intent and safeguards. Additional execution beyond the approved
 initial scope has a configurable allowance of five tickets by default. Requested changes continue
 on the same branch and PR with completed work preserved. Project and ticket model selections also
-work in manual calls. The default implementation uses `claude-opus-5-5`, followed by independent
-review rounds alternating `gpt-6.1-sol` and fresh `claude-opus-5-5` contexts. A configured secret
+work in manual calls. The default implementation uses the latest Opus (`opus`), followed by
+independent review rounds alternating `gpt-6.1-sol` and fresh latest-Opus contexts. A configured secret
 scan blocks unsafe pushes by either provider in every mode.
 
 Scope: PRD goals 1 and 3, model-selection and subscription constraints, and its Security constraint.
