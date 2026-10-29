@@ -409,3 +409,17 @@ session also placed a policy quote after an architect decision question; see the
 
 Chain total: PASS 8, FAIL 2, SKIP 0 across research 3/5/8, architect 3/5/9/11 second half, and plan 3/5/11. The
 failures were research case 5 and plan case 3.
+
+## Dated report: 2026-10-29, delegated planning (#77)
+
+Scope: SPEC Delegated run authority. Selected: case 1's caller, `grep`, and size subchecks as direct checks, and
+cases 37 and 39 in Claude Code. Case 38 is covered by wkc-backlog case 48's reader check for the backlog side; plan's own reader
+sentence was not run in a session: SKIP. Codex and Kiro CLI: SKIP. Candidate, fixture, sessions, and model are in
+the [wkc-backlog report](./wkc-backlog.md#dated-report-2026-10-29-delegated-planning-77).
+
+| Case | Result | Evidence |
+|---|---|---|
+| 1, selected subchecks | PASS, direct | The callers are as in architect case 1. `grep` gives no output. `wc -l` is 167, under 250; past 150 because of section 6, the SPEC's delegation contract. |
+| 37 | PASS | wkc-backlog case 44, S2: M3 was added with the delegated line. |
+| 39 | PASS | S3: `close M2: Export --run`, with every M2 ticket `done`, returned `parked` with `Needs: a person`. `milestone close` did not run, and the ROADMAP hash is unchanged. |
+| Manual | PASS | S5: `wkc-plan` with no run left the ROADMAP at `Status: draft` and ended on section 3's three options. |
