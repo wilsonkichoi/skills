@@ -10,7 +10,7 @@ Newest first. Each version is a `## {version} ({ISO 8601 timestamp with local of
 - `wkc-setup` Section F asks for `execution_models` (default `claude-code`/`opus` then `codex`/`gpt-6.1-sol`, both `medium`) and `headless_workers` (default `[codex, kiro-cli]`), and says how to launch a coordinator in bypass mode. `wkc-backlog`'s ticket template gains `## Execution`, written only with a pair the person gave.
 - `AGENTS.md` records the one cross-skill file read: `wkc-code-review` reads `wkc-implement`'s `routing.md`, so routing has one copy. README gains a Model routing section and updated roster rows.
 - Validation: `wkc-implement` cases 73 to 80, `wkc-code-review` case 62, `wkc-setup` cases 10 and 11, `wkc-backlog` case 53. Case 80, the mixed-provider pilot, needs the person's approval before it runs.
-- Review fixes: routing rejects pairs known to resolve to one model and checks effective Codex configuration layers and top-level endpoint overrides. The question-resume command keeps `-C` before `resume`, with the same model, effort, authentication, and permission flags. Validation distinguishes cases outside the selected scope from SKIP.
+- Review fixes: routing rejects pairs known to resolve to one model and checks effective Codex configuration layers and top-level endpoint overrides. The question-resume command keeps `-C` before `resume`, with the same model, effort, authentication, and permission flags. Validation distinguishes cases outside the selected scope from SKIP. A fresh worker started after a person answers a worker's question gets the question and the answer on an `Answer:` line, so it does not ask again; new `wkc-implement` case 81 dry-runs pending questions with and without a ticket pair edit.
 
 ## 0.0.45 (2026-10-29T12:46:20-07:00)
 

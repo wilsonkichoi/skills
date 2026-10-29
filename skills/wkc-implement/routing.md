@@ -176,8 +176,9 @@ Execution: <harness>, <model>, effort <effort>
 Work in the checkout above. Read the <skill> skill installed in that checkout's harness skill directory and run its steps yourself, once, for this invocation. Do not dispatch, and start no subagent, worker, AI test session, or other harness. Read the ticket, the documents it cites, the pull request, and earlier verdicts yourself. Write the Execution line above on your handoff, update, or verdict. In a manual call, end with a final message starting "Question:" instead of any write that depends on a person's answer.
 ```
 
-A review worker gets nothing else: no implementation conversation, summary, or reasoning. Returning
-to the model that built the change still means a fresh session.
+A review worker gets nothing else but a person's answer (section 7): no implementation
+conversation, summary, or reasoning. Returning to the model that built the change still means a
+fresh session.
 
 ## 6. After the worker
 
@@ -231,8 +232,9 @@ and use this command; `-C` belongs before `resume`, which does not accept it:
 env -u CODEX_API_KEY -u OPENAI_API_KEY codex exec -C <checkout> resume <session id> -m <model> -c model_reasoning_effort=<effort> -c model_provider="openai" -c forced_login_method="chatgpt" --dangerously-bypass-approvals-and-sandbox --json -o <last message file> - < <answer prompt file>
 ```
 
-Otherwise start a fresh worker in that role. Either way, the worker reconciles
-writes that already landed and never repeats one. Earlier work keeps its own `Execution:` record.
+Otherwise start a fresh worker in that role, with section 5's prompt and one more line, `Answer:
+<the worker's question>; <the person's answer>`, so it does not ask again. Either way, the worker
+reconciles writes that already landed and never repeats one. Earlier work keeps its own `Execution:` record.
 A review never resumes or forks an implementation session.
 
 ## 8. Manual calls outside Claude Code, and blocked calls

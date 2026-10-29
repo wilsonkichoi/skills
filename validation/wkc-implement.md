@@ -30,6 +30,7 @@ Keep raw logs and fixtures outside tracked files.
 - Dated report: 2026-10-29, finish runs the backend script (#94)
 - Dated report: 2026-10-29, model routing (#83)
 - Review round 1: 2026-10-29, PR #99
+- Review round 2: 2026-10-29, PR #99
 
 ## Preparation
 
@@ -542,6 +543,18 @@ error while a flag file is absent, a check the merged code fails, and a smoke te
     environment; no worker started a subagent, and the report records whether
     `CLAUDE_CODE_MAX_SUBAGENT_SPAWN_DEPTH=1` was set; the answered question resumed or restarted at the edited
     selection. New, from #83.
+
+81. **Question fixtures.** AI session, dry run, as case 74, manual, with the default pair. In each fixture a worker
+    returned `Question:`, the coordinator relayed it and ended its turn, and the person has answered. Fixtures: an
+    `opus` build worker with nothing changed; a `gpt-6.1-sol` review worker after an `opus` handoff with nothing
+    changed; that review, with the ticket's Codex effort edited to `high` while pending; the build, with the ticket's
+    pair swapped while pending; the review, with the ticket's pair edited to `sonnet` then `opus` while pending.
+    PASS, in order: resume the native agent by its id at `opus`; section 4's checks, then section 7's `codex exec -C
+    <checkout> resume <id>` command at `gpt-6.1-sol`, `medium`; a fresh `codex exec` review at effort `high`; a fresh
+    `codex exec` build at `gpt-6.1-sol`; a fresh native `sonnet` review, because `opus` made the preceding completed
+    step. Each rereads the ticket, git, and the pull request first, and no earlier record is relabeled. Each fresh
+    worker's prompt ends with an `Answer:` line carrying the question and the person's answer. New, from review
+    round 2 of #99.
 
 ## Dated report: 2026-10-21
 
@@ -1435,3 +1448,27 @@ the PR's commit range without a leak. No `test_command` is configured.
 Not established by these checks: model instruction following, alias resolution at runtime, live
 provider routing, and a resumed worker answering a human question. AI behavior in cases 74/77
 and live question relay were outside this round's selected scope. No cross-harness pilot was launched.
+
+## Review round 2: 2026-10-29, PR #99
+
+Attempt: review round 2 on https://github.com/wilsonkichoi/skills/pull/99. Reviewed:
+`215488c8f1cecfa921d8e6ed211f484610f83633`. AI test sessions: 1 of 6. Harness: Claude Code.
+Backend: GitHub.
+
+Selected: new case 81, as one native Claude Code dry run (`opus`, effort `medium`) that read
+`routing.md` at the reviewed head and started nothing. Direct: case 73's template comparisons, case
+76's flags against `claude --help` (2.1.312) and `codex exec resume --help` (`codex-cli 0.165.0`),
+gitleaks over the PR's commits, and `git diff --check`.
+
+| Case | Result | Evidence |
+|---|---|---|
+| 81 | PASS, AI dry run at `215488c` | Resume `opus` by id; resume Codex by section 7's command after section 4; fresh `codex` at `high`; fresh `codex` build; fresh native `sonnet` review. |
+| 73, 76 | PASS, direct | Blocks equal SPEC Contracts; every flag is in the installed help. |
+
+- Fixed: a fresh worker started after a pending question got no copy of the person's answer, and
+  section 5 allowed a review worker nothing beyond its prompt, so it would ask the same question
+  again. The dry run found this in fixtures 3 to 5. Section 7 now adds an `Answer:` line, checked
+  statically after the fix; the dry run predates it.
+
+Still not run: case 78, and case 80's live question relay and `--run` handoff, which need the
+person's approval.
