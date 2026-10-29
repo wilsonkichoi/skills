@@ -48,14 +48,14 @@ graph LR
 
 | Skill | State | Responsibility | Input | Depends on |
 |---|---|---|---|---|
-| `wkc-setup` | shipped, changes | Config and scaffold. Adds the review, admission, model-selection, push-check, and run-store fields to the interview and template | none | `git`, `gh` or Linear MCP |
+| `wkc-setup` | shipped, changes | Config and scaffold. Adds the review, AI test allowance, admission, model-selection, push-check, and run-store fields to the interview and template | none | `git`, `gh` or Linear MCP |
 | `wkc-tracker` | shipped, changes | Ticket state mechanics on three backends; on local, commits each write; closes a milestone on request; stores immutable run-phase configs (`run create`, `run show`, `run close`) | verb and args | config, `git` for local, `run_config` |
 | `wkc-research` | shipped | PRD | free text | none |
 | `wkc-architect` | shipped, changes | SPEC and ADRs; opts into model invocation; under a delegated run, approves its own change (ADR-006) | free text | PRD |
 | `wkc-plan` | shipped, changes | ROADMAP, and closing a finished milestone; hands an approved milestone to `wkc-backlog` (ADR-004); opts into model invocation; under a delegated run, approves its own change (ADR-006) | a ROADMAP change, `close <milestone>`, or none | PRD, SPEC, `wkc-tracker` reads and `milestone close` |
 | `wkc-backlog` | new, from `wkc-plan` | Tickets for one milestone, or one change at a time (ADR-004); routes SPEC and ROADMAP changes, in a run too | milestone, or a change | PRD, SPEC, ROADMAP, `wkc-tracker` |
-| `wkc-implement` | new | One ticket from `ready` to PR, and after merge to `done` (ADR-001); runs `push_check` before each push | ticket id, `finish <id>`, `verify <id> --run <ref>`, or none | `wkc-tracker`, `git`, `gh`, `test_command`, `push_check` |
-| `wkc-code-review` | new | Review rounds on one PR: judge, fix blocking findings and apply worthwhile improvements, record a verdict (ADR-003, ADR-005); runs `push_check` before each push | PR, ticket id, or none | `wkc-tracker`, `git`, `gh`, `max_fix_attempts`, `push_check` |
+| `wkc-implement` | new | One ticket from `ready` to PR, and after merge to `done` (ADR-001); runs `push_check` before each push | ticket id, `finish <id>`, `verify <id> --run <ref>`, or none | `wkc-tracker`, `git`, `gh`, `test_command`, `push_check`, `max_ai_test_sessions_per_attempt` |
+| `wkc-code-review` | new | Review rounds on one PR: judge, fix blocking findings and apply worthwhile improvements, record a verdict (ADR-003, ADR-005); runs `push_check` before each push | PR, ticket id, or none | `wkc-tracker`, `git`, `gh`, `max_fix_attempts`, `max_ai_test_sessions_per_attempt`, `push_check` |
 | `wkc-yolo` | new | A ticket, a wave, or a milestone unattended, after one round of questions, under delegated run authority (ADR-006), on its own run branch, finishing each ticket there and verifying the combined branch, ending in one run PR that a person merges, with bounded additional admissions and review continuations (ADR-007, ADR-008, ADR-009) | ticket, `wave`, or milestone | the skills above, `push_check`, `run_config` |
 | `wkc-retro` | new | Propose rule files from what a ticket, milestone, or run shows | ticket, milestone, or run | `wkc-tracker`, `rules_dir` |
 | `wkc-help`, `wkc-workflow-diagram`, `wkc-skills-release` | shipped | Help, maps, collection releases | | |
@@ -132,15 +132,16 @@ Added to `docs/dev-agents/config.md` by `wkc-setup`, in the PR that first reads 
 
 | Field | Values | Default when absent | Read by | Meaning |
 |---|---|---|---|---|
-| `max_fix_attempts` | integer, 0 or more | `3` | `wkc-code-review`, `wkc-yolo` | Review rounds that may change code on one PR, for fixes or improvements. One review-only round always follows the last fix; with `0`, the only round is review-only |
+| `max_fix_attempts` | integer, 0 or more | `5` | `wkc-code-review`, `wkc-yolo` | Review rounds that may change code on one PR, for fixes or improvements. One review-only round always follows the last fix; with `0`, the only round is review-only. Rounds already used stay counted when the limit or default changes |
+| `max_ai_test_sessions_per_attempt` | integer, 0 or more | `6` | `wkc-implement`, `wkc-code-review`, `wkc-yolo` | Additional AI test sessions one attempt may start: one build, or one review round, the final review-only round included (AI test sessions). A ceiling, never a target; `0` starts none |
 | `max_additional_tickets` | integer, 0 or more | `5` | `wkc-yolo` | Additional distinct tickets admitted beyond the approved initial IDs in one run phase; initial work and backlog recording cost no slot |
 | `execution_models` | ordered pair of selections, each `harness`, `model`, and `effort` (default `medium`) | manual: current harness and model when absent; kickoff/setup offer the latest Opus (`opus`) then `gpt-6.1-sol` | `wkc-implement`, `wkc-code-review`, `wkc-yolo` | The first model builds; each review uses the other model from the preceding completed build/update or review step. A ticket's pair replaces it |
 | `headless_workers` | list of `claude-code`, `codex`, `kiro-cli` | `[codex, kiro-cli]` | `wkc-implement`, `wkc-code-review`, `wkc-yolo` | Harnesses whose headless CLI a coordinator may start as a worker: `claude -p`, `codex exec`, `kiro-cli chat --no-interactive`. Project config only. Listing `claude-code` accepts the login `claude -p` uses, API billing included (Model selection and dispatch, Headless workers) |
 | `run_config` | `tracker`, `github-variable`, `command <cmd>` | `tracker` | `wkc-tracker`, `wkc-yolo` | Where each run's config is stored (wkc-yolo run, Store) |
 | `push_check` | a shell command | none | `wkc-implement`, `wkc-code-review`, `wkc-yolo` | Scans the commits about to be pushed for secrets; exit 0 passes, anything else blocks the push. Example: `gitleaks git --redact --log-opts="origin/main..HEAD"`. Once set, it binds every push in every mode; a run needs a usable one |
 
-Invalid review/admission limits, model selections, headless workers, or `run_config` stop before
-dispatch or admission and name the allowed values. A run may lower `max_fix_attempts` or
+Invalid review/admission limits, AI test allowances, model selections, headless workers, or
+`run_config` stop before dispatch, admission, or any test and name the allowed values. A run may lower `max_fix_attempts` or
 `max_additional_tickets`, or drop a harness from `headless_workers`, and never raise the project
 ceiling or add a harness. Only the person changes that ceiling. There is no elapsed-time
 run budget. Environment grant expiry, command limits, the run's limit of 5 concurrent workers,
@@ -148,6 +149,50 @@ and quota, rate-limit, and authentication stops remain.
 
 `test_command` (existing) is what `wkc-implement` runs. Release, deploy, and other project
 procedures stay in the config's free-text **Conventions**, and `## After merge` steps name them.
+
+### AI test sessions
+
+An AI test session is an additional AI session started to test a change: a test subagent, a
+headless CLI run, or a new interactive session. The session that runs `wkc-implement` or
+`wkc-code-review`, and a routed worker doing that build or review, are not AI test sessions.
+Pilots, retries, failed starts, and test subagents are. Sessions run one at a time.
+
+Each attempt has its own allowance of `max_ai_test_sessions_per_attempt`:
+
+- `build <branch>`: one `wkc-implement` build. A rerun, a restart, or a pre-merge update on that
+  branch continues it. A follow-up PR is a new attempt on its own branch.
+- `review round <n> on <PR URL or branch>`: one `wkc-code-review` round, fixing or review-only. A
+  session that resumes or restarts round `n` continues it, because the round number counts only
+  posted verdicts.
+
+With the defaults, five fixing rounds and the final review-only round give a full loop at most 42
+additional AI test sessions: 6 for the build and 6 for each of the six rounds. Unused allowance
+does not carry forward. The allowance is a ceiling, never a target: a skill selects only the checks
+the change needs, runs direct checks first, and starts no AI test session when direct checks
+suffice.
+
+Before each start, the skill posts this on the ticket with `wkc-tracker comment`. From
+`wkc-implement`:
+
+```
+AI test session: <k> of <limit>
+Attempt: build <branch>
+Checks: <the cases or subchecks this session runs>
+```
+
+From `wkc-code-review`:
+
+```
+AI test session: <k> of <limit>
+Attempt: review round <n> on <PR URL or branch>
+Checks: <the cases or subchecks this session runs>
+```
+
+`k` counts the ticket's records for that attempt, this one included. Posting before the start is
+what makes a failed start count and a restart keep its usage; no counter lives in a session. With
+the allowance spent, the skill starts no more, and a required check still unrun is SKIP, never
+passed. The handoff and the verdict report the attempt's usage on their `AI test sessions:` line.
+A run uses the project's value for every attempt it dispatches.
 
 ### Model selection and dispatch
 
@@ -293,7 +338,7 @@ credential headers, or an unverified custom endpoint. A ChatGPT login alone does
 which provider `exec` will use. Inspect routing metadata without printing credential values;
 never change the saved login or probe with a paid request. Failure blocks the call, with no
 API-billing fallback. Every worker kind counts toward the run's limit of 5 concurrent workers,
-and during validation toward the test-session limit. Workers never launch a harness or another worker. Claude
+and during validation toward the current attempt's AI test allowance. Workers never launch a harness or another worker. Claude
 Code lets a native subagent start its own subagents by default; where the session sets
 `CLAUDE_CODE_MAX_SUBAGENT_SPAWN_DEPTH=1` the harness enforces this rule, and otherwise it rests on
 the worker's instructions and is checked in validation. The caller tells a worker that it is
@@ -597,6 +642,7 @@ Head: <full sha>
 Execution: <harness>, <requested model>, effort <requested value>   <!-- routed calls and runs without a pair -->
 Observed execution: <model and effort from runtime evidence | unavailable>           <!-- routed calls and runs without a pair -->
 Checks: <passed> of <total> acceptance criteria passed. Details are in the PR body.
+AI test sessions: <k> of <limit> for build <branch>. Checks: <the checks they ran, or none>
 ```
 
 Update, after a routed build or pre-merge update changes the head after handoff:
@@ -682,6 +728,7 @@ wkc-code-review round <n>: approve | fixed | stopped
 Reviewed: <full head sha>
 Fixed in: <full sha of the fix commit>     <!-- fixed rounds only -->
 Fixing rounds used: <k> of <max_fix_attempts>
+AI test sessions: <k> of <limit> for round <n>. Checks: <the checks they ran, or none>
 Independent: yes | no, <why>
 Execution: <harness>, <requested model>, effort <requested value>   <!-- routed calls and runs without a pair -->
 Observed execution: <model and effort from runtime evidence | unavailable>           <!-- routed calls and runs without a pair -->
@@ -693,7 +740,8 @@ Observed execution: <model and effort from runtime evidence | unavailable>      
 
 `fixed` lists blocking findings fixed, `improved` the improvements applied, `open` blocking findings
 left, and `suggestion` the improvements not applied and findings the evidence did not confirm.
-Verdicts from before `improved` or execution metadata existed stay valid. Routed rounds follow
+Verdicts from before `improved`, execution metadata, or the `AI test sessions:` line existed stay
+valid. Routed rounds follow
 Model selection and dispatch; alternating models never replaces the fresh-context requirement.
 
 A `fixed` round makes one commit, in the project's commit convention, or with `fix:` when it has
@@ -1073,7 +1121,8 @@ these answers and never copies `Coordinator model:` without asking.
 The new phase's initial IDs contain approved corrections and unfinished carried work. Earlier
 completed work remains required at readiness. The new config supplies active grants and limits;
 expired grants are not inherited as authorization. Prior admissions remain recorded under their
-old phase; neither review-round counts nor `max_fix_attempts` usage resets. Retain every predecessor
+old phase; neither review-round counts, `max_fix_attempts` usage, nor an attempt's AI test
+sessions reset. Retain every predecessor
 config while the PR is open. The chain must name the same branch/PR and contain no cycle. If a
 closed run's store retired a config, the verified outcome and run PR provide its historical
 membership; the person supplies all new authority rather than reconstructing old grants.
@@ -1254,7 +1303,8 @@ and the person's kickoff answers only and lives in the store `run_config` names.
 - Each `SKILL.md` aims for under 150 lines and tries to stay under 250, so a person can read it
   ([AGENTS.md Prose](../../AGENTS.md#prose)). Neither is a hard limit; the Agent Skills
   specification's limit is 500. `wkc-backlog` is expected near 240 (ADR-004).
-- At most 6 extra AI test sessions per change unless the maintainer approves more. Runbooks run
+- At most `max_ai_test_sessions_per_attempt` (6) additional AI test sessions per attempt unless the
+  maintainer approves more (AI test sessions). Runbooks run
   from Claude Code. The explicit mixed-model pilot includes Codex workers only with the approval
   in AI harness testing; other Codex/Kiro cases remain SKIP. Count every model worker.
 - Each port adds `validation/wkc-<name>.md` with a few simple cases, each with an independent check.
@@ -1320,6 +1370,8 @@ the previous tag. Each port also updates the README roster, the repository map u
   records the options and proposed contract details; the user's requirements are settled.
 
 - Ticket lifecycle and definition of done: [ADR-001](./adr/ADR-001-ticket-lifecycle.md).
+- Each build and each review round has its own AI test allowance, counted from ticket records, and
+  `max_fix_attempts` defaults to 5: [ADR-010](./adr/ADR-010-per-attempt-ai-test-allowances.md).
 - `wkc-backlog` owns tickets and `wkc-plan` the ROADMAP: [ADR-004](./adr/ADR-004-backlog-separate-from-plan.md),
   which supersedes [ADR-002](./adr/ADR-002-plan-absorbs-backlog.md).
 - The reviewer fixes its own findings in fresh-context rounds: [ADR-003](./adr/ADR-003-review-and-fix-rounds.md),
@@ -1407,7 +1459,7 @@ the previous tag. Each port also updates the README roster, the repository map u
 - Parallel tickets can conflict at merge; coordination risks from `wkc-backlog` and serialized merges
   limit that. Every merge after the first in a wave costs one more review round.
 - `wkc-yolo` validation runs parallel subagents, which needs the maintainer's approval under
-  [token usage](./rules/token-usage.md): test sessions run one at a time, at most 6 per change.
+  [token usage](./rules/token-usage.md): test sessions run one at a time, within each attempt's allowance.
 - `wkc-yolo` depends on all of the above, on the unattended contract, and on fresh contexts.
 - Delegated approval makes `approved` mean "a run judged it" for marked documents. The marked line,
   the Decision trail, and git history let a person find and revert a change, but nobody reviewed it
@@ -1463,6 +1515,12 @@ the previous tag. Each port also updates the README roster, the repository map u
   `--effort` for a run without a pair. Local `kiro-cli 2.33.0` help lists both; no session ran.
 
 ## Changes
+
+- 2026-10-28: Maintainer decision in #91. `max_fix_attempts` defaults to 5, and the new
+  `max_ai_test_sessions_per_attempt`, default 6, gives each build and each review round its own AI
+  test allowance (Config fields, AI test sessions, Ticket comments from wkc-implement, Review
+  verdict, Requirements; ADR-010). Replaced 6 sessions per change. Fixing rounds already used stay
+  counted.
 
 - 2026-10-28: The maintainer approved the SPEC with the PRD and ROADMAP, as merged in #82. No
   contract changed.

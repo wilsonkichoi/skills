@@ -18,8 +18,8 @@ disable-model-invocation: false
   work. It never starts `wkc-code-review`, because the review must not run in the context that
   wrote the code.
 - **Dependencies:** `docs/dev-agents/config.md`: `issue_tracker`, `run_config`, `test_command`, `push_check`,
-  `context_file`, `rules_dir`, `prd_file`, `spec_file`, `roadmap_file`, `issues_dir`, and the
-  **Conventions** body.
+  `max_ai_test_sessions_per_attempt`, `context_file`, `rules_dir`, `prd_file`, `spec_file`,
+  `roadmap_file`, `issues_dir`, and the **Conventions** body.
   The `wkc-tracker` skill for every ticket read and write: `show`, `list`, `next`, `assign`,
   `comment`, `move`, `milestone show`, and `run show`. `git`, and `gh` against a GitHub remote for
   pull requests. The `wkc-backlog` skill for work found out of scope. [run.md](./run.md) for a
@@ -46,8 +46,10 @@ instructions.
 
 ## 1. Read and pick the mode
 
-Read the config, the `context_file`, and the rule files in `rules_dir`. Then `wkc-tracker show
-<id>`. **The ticket's pull request** is the one on the `PR:` line of its latest handoff comment or
+Read the config, the `context_file`, and the rule files in `rules_dir`.
+`max_ai_test_sessions_per_attempt` is an integer, 0 or more, and `6` when the field is absent. Any
+other value stops the call before any write or test: name the field and its allowed values. Then
+`wkc-tracker show <id>`. **The ticket's pull request** is the one on the `PR:` line of its latest handoff comment or
 the `Merged:` line of its latest finish comment, whichever is later, read with `gh pr view <url>`.
 A pull request that only cites the ticket, by a reference line in its body or a mention in a
 comment, is never the ticket's pull request. Also list the open pull requests that cite it: `gh pr
@@ -181,6 +183,22 @@ caused by this change is fixed and run again. A failure that cannot be fixed, a 
 criterion only a person can confirm are reported as not passed, with the output or the reason, and
 never as passed. Post-merge gates do not run here.
 
+**AI test sessions.** A build is one attempt, `build <branch>`. A rerun, a restart, or a pre-merge
+update on that branch continues it; a follow-up pull request is a new attempt. It may start at most
+`max_ai_test_sessions_per_attempt` additional AI sessions to test the change, such as test subagents
+or headless CLI runs, one at a time. Pilots, retries, and failed starts count; this session and a
+worker doing the build do not. The limit is a ceiling, never a target: run direct checks first, and
+start none when they suffice. Before each start, post with `wkc-tracker comment`:
+
+```
+AI test session: <k> of <limit>
+Attempt: build <branch>
+Checks: <the cases or subchecks this session runs>
+```
+
+`k` counts the ticket's records for this attempt from any session, this one included. With none
+left, start no more: a required check still unrun is SKIP, never passed.
+
 **Push check.** Before every `git push`, in a build, a follow-up, or the pre-merge update, run
 `push_check` in the checkout holding the commits. This binds every session that runs this skill: a person's, a native
 subagent, `codex exec`, or `claude -p`. Never pass `--no-verify` to any git command, disable a
@@ -227,6 +245,7 @@ wkc-implement: in review
 PR: <URL>
 Head: <full sha>
 Checks: <passed> of <total> acceptance criteria passed. Details are in the PR body.
+AI test sessions: <k> of <limit> for build <branch>. Checks: <the checks they ran, or none>
 ```
 
 `Head` is the pushed head of the pull request. On a rerun, post only what is missing: no second
@@ -235,9 +254,9 @@ both writes. Then hand each non-blocking `Discovered:` comment on the ticket to 
 its evidence, one change at a time, so its approval question is the session's last turn. That
 includes comments an earlier session left; `wkc-backlog` reuses a ticket that already covers one.
 
-Report the pull request, the checks that passed and failed, and the next steps: a review, with
-`wkc-code-review` in a fresh session when it is installed, a person merges, then `wkc-implement
-finish <id>`.
+Report the pull request, the checks that passed, failed, or were SKIP, the AI test sessions used
+of the limit, and the next steps: a review, with `wkc-code-review` in a fresh session when it is
+installed, a person merges, then `wkc-implement finish <id>`.
 
 ## 6. Finish after the merge
 

@@ -24,6 +24,7 @@ Keep raw logs and fixtures outside tracked files.
 - Review round 3: 2026-10-28, PR #87
 - Review round 4: 2026-10-28, PR #87
 - Review round 6: 2026-10-28, PR #87
+- Dated report: 2026-10-28, AI test allowances (#91)
 
 ## Preparation
 
@@ -421,6 +422,31 @@ error while a flag file is absent, a check the merged code fails, and a smoke te
     PASS: the valid call reads `run.md` whole before branch, claim, or gate work and follows its run-only rules.
     A refused active config stops before any write or gate. Record the harness, model, effort, candidate sha,
     installed paths, and transcript evidence of the read. Hand-reading `SKILL.md` is not this check.
+
+68. **AI test allowance field.** Direct. Read section 1, section 4, and the handoff template, and compare the
+    `AI test session:` block and the handoff block with SPEC Contracts.
+    PASS: `max_ai_test_sessions_per_attempt` defaults to `6`, accepts integers of 0 or more, and any other value stops
+    before any write or test; the attempt is `build <branch>`; the record is posted before each start; both blocks
+    are identical to SPEC blocks.
+
+69. **Invalid allowance.** On the local fixture, set `max_ai_test_sessions_per_attempt` to `-1`, then `six`, and run a
+    build of a `ready` ticket each time.
+    PASS: each reply names the field and its allowed values; the ticket file, its comments, the branches, and the
+    worktree list are unchanged, and no AI test session starts.
+
+70. **Zero, and direct checks suffice.** On the local fixture, a `ready` ticket with one criterion only an AI session
+    can check and one a command checks. Run a build with `max_ai_test_sessions_per_attempt: 0`. Then, with the field
+    absent, build a ticket whose criteria a command checks alone.
+    PASS: neither build posts an `AI test session:` record or starts a test session. The first reports the AI-only
+    criterion as SKIP, never passed. With a remote, the first handoff says `0 of 0` and the second's `0 of 6`, `none`.
+
+71. **Restart keeps usage.** On the local fixture, an `in-progress` ticket held by the caller on its branch, with two
+    `AI test session:` records for `build <branch>`, one for a different branch, and three criteria that need an AI
+    session. Run the build with `max_ai_test_sessions_per_attempt: 3`. A test session the build would start is
+    simulated by the tester; the build session itself starts none.
+    PASS: exactly one new record lands, `3 of 3` for `build <branch>`, before the simulated start; the other branch's
+    record is not counted; criteria it could not cover are SKIP. With a remote the handoff says `3 of 3`; with none
+    there is no handoff, and the template is checked by case 68.
 
 ## Dated report: 2026-10-21
 
@@ -1118,3 +1144,16 @@ credential, sensitive output, or unnecessary network call. The required gitleaks
 commit and before its push; its outcome is recorded in the verdict. The project has no test_command or CI checks.
 Eight contexts reported $5.296 total list-price usage, not an API-billing fallback.
 Every context stayed below its $5 cap. The fresh review is separate from these validation contexts.
+
+## Dated report: 2026-10-28, AI test allowances (#91)
+
+Candidate `ee9c162`, a local-backend `greet` fixture with no remote, built from a `git archive` of the candidate and installed with `npx skills add` 1.7.4 for Claude Code. Six AI test sessions, each recorded on #91 before it started as `build feat/91-test-budgets`, 1 to 6 of 6. Each was a Claude Code `general-purpose` subagent on Sonnet, run one at a time, about 60k to 68k tokens each. Sessions could not start AI sessions; where a skill would, they appended a `SIMULATED START` line to a log after doing what the skill requires first. Scores come from the ticket files, git, and the logs.
+
+| Case | Result | Evidence |
+|---|---|---|
+| 68 | PASS, direct | The `AI test session:` block equals the SPEC's `wkc-implement` block. The handoff block equals the SPEC's apart from the planned `Execution:` and `Observed execution:` lines, which `main` already lacked. |
+| 69 | PASS for `six`; `-1` SKIP | Session 4: stopped in section 1 naming the field and allowed values; ticket file hash, branches, and `git status` unchanged; no log. `-1` was not run. |
+| 70 | PASS for zero; direct-checks-suffice half SKIP | Session 2, limit `0`: claimed 001, built `feat/001-shout-flag`, posted no `AI test session:` record, wrote no log, and reported the AI criterion as SKIP. No remote, so no handoff. The session also posted a free-form status comment the skill does not ask for; it is outside this change. |
+| 71 | PASS | Session 1 (pilot), limit `3`: continued `docs/002-help-examples`, posted exactly one record, `3 of 3` for `build docs/002-help-examples`, then one simulated start covering A1 to A3. The `build fix/002-earlier` record was not counted. No remote, so no handoff. |
+
+Not run: the handoff `AI test sessions:` line in a session, which needs a remote; follow-up PRs as new attempts; the pre-merge update continuing a build. Codex and Kiro: SKIP.

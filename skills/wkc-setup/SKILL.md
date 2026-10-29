@@ -134,11 +134,16 @@ so later skills read the right files. Defaults are `docs/dev-agents/PRD.md`, `do
 or `CLAUDE.md` for a deliberately Claude-Code-only project. A project with a convention keeps it:
 point `context_file` at the file every harness ultimately reaches, and never invert that.
 
-**Section D: Test command, review rounds, and push check.** Confirm the command inferred in step 1,
+**Section D: Test command, review limits, and push check.** Confirm the command inferred in step 1,
 or ask for it. It is what later skills run before handing work back. A project with no tests leaves
 `test_command` out. Then ask for `max_fix_attempts`: how many review rounds may change code on one
-pull request, for fixes or improvements, an integer, 0 or more, with `3` recommended.
+pull request, for fixes or improvements, an integer, 0 or more, with `5` recommended.
 `wkc-code-review` reads it, and one review-only round always follows the last fix.
+
+Then ask for `max_ai_test_sessions_per_attempt`: how many additional AI sessions one attempt may
+start to test a change, an integer, 0 or more, with `6` recommended. An attempt is one build by
+`wkc-implement` or one review round by `wkc-code-review`, and each has its own allowance. Say it is
+a ceiling, not a target: direct checks come first, and `0` means no AI test sessions.
 
 Then ask for `push_check`: a shell command that scans the commits about to be pushed for secrets,
 where exit 0 passes and anything else blocks the push. Offer, recommended first:

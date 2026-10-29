@@ -9,7 +9,8 @@ prd_file: docs/dev-agents/PRD.md
 spec_file: docs/dev-agents/SPEC.md
 roadmap_file: docs/dev-agents/ROADMAP.md
 test_command: "npm test"                    # run before handing work back
-max_fix_attempts: 3                         # integer, 0 or more; default 3. Review rounds that may change code on one PR
+max_fix_attempts: 5                         # integer, 0 or more; default 5. Review rounds that may change code on one PR
+max_ai_test_sessions_per_attempt: 6         # integer, 0 or more; default 6. AI test sessions one build or one review round may launch
 run_config: tracker                         # tracker / github-variable / command <cmd>; default tracker. Where wkc-yolo stores run configs
 push_check: 'gitleaks git --redact --log-opts="origin/main..HEAD"'  # shell command; default none. Scans the commits about to be pushed for secrets; exit 0 passes, anything else blocks the push
 ---

@@ -5,6 +5,8 @@ rules_dir: docs/dev-agents/rules/           # promoted learnings, one file per r
 prd_file: docs/dev-agents/PRD.md
 spec_file: docs/dev-agents/SPEC.md
 roadmap_file: docs/dev-agents/ROADMAP.md
+max_fix_attempts: 5                         # review rounds that may change code on one PR
+max_ai_test_sessions_per_attempt: 6         # AI test sessions each build or review round may launch
 push_check: 'gitleaks git --redact --log-opts="origin/main..HEAD"'  # scans the commits about to be pushed for secrets; exit 0 passes
 ---
 
