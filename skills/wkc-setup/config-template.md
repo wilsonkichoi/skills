@@ -13,6 +13,14 @@ max_fix_attempts: 5                         # integer, 0 or more; default 5. Rev
 max_ai_test_sessions_per_attempt: 6         # integer, 0 or more; default 6. AI test sessions one build or one review round may launch
 run_config: tracker                         # tracker / github-variable / command <cmd>; default tracker. Where wkc-yolo stores run configs
 push_check: 'gitleaks git --redact --log-opts="origin/main..HEAD"'  # shell command; default none. Scans the commits about to be pushed for secrets; exit 0 passes, anything else blocks the push
+execution_models:                           # ordered pair; default none. The first builds; each review uses the other model from the step before. effort defaults to medium
+  - harness: claude-code                    # claude-code / codex
+    model: opus                             # claude-code: opus / sonnet / haiku / fable; codex: the exact ID codex exec -m takes
+    effort: medium
+  - harness: codex
+    model: gpt-6.1-sol
+    effort: medium
+headless_workers: [codex, kiro-cli]         # claude-code / codex / kiro-cli; default [codex, kiro-cli]. Listing claude-code lets claude -p run with its login, API billing included
 ---
 
 # Project development conventions

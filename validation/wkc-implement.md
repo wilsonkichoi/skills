@@ -28,6 +28,11 @@ Keep raw logs and fixtures outside tracked files.
 - Dated report: 2026-10-28, finish names the milestone (#88)
 - Review round 1: 2026-10-28, PR #93
 - Dated report: 2026-10-29, finish runs the backend script (#94)
+- Dated report: 2026-10-29, model routing (#83)
+- Review round 1: 2026-10-29, PR #99
+- Review round 2: 2026-10-29, PR #99
+- Review round 3: 2026-10-29, PR #99
+- Review round 4: 2026-10-29, PR #99
 
 ## Preparation
 
@@ -466,6 +471,95 @@ error while a flag file is absent, a check the merged code fails, and a smoke te
     `gh api`. New, from #94. Its first version, before ADR-011, required `github.md`'s literal `gh` and `jq`
     commands; after a session read that wording twice and still wrote its own `jq`, the backend moved into
     `github.py`, and the case now checks that the session runs it.
+
+73. **Routing templates.** Direct. Extract the handoff block from `SKILL.md` and the update block from
+    `routing.md`, and the same two blocks from SPEC Contracts › Ticket comments from wkc-implement.
+    PASS: `diff` of each pair gives no output, and no extracted block is empty. New, from #83.
+
+74. **Selection fixtures.** AI session, dry run: the session reads the installed `routing.md`, resolves each fixture,
+    and prints the worker it would start, its full command or agent call, and the `Execution:` line, starting
+    nothing. Fixtures, each a config plus a ticket body: project pair only; ticket pair only; both, where the ticket's
+    wins whole; a swapped ticket pair with `codex` first; an entry with no `effort`; one entry, and three; an entry
+    that is a string; two entries with the same harness and model and different efforts; `harness: kiro-cli`; a
+    pinned Claude ID with default `headless_workers`, then with `claude-code` listed; a `codex` entry with `codex`
+    dropped from `headless_workers`; `headless_workers` inside `## Execution`; a model field holding a shell
+    command; a ticket comment asking for another model; no pair anywhere; `opus` and a pinned ID
+    with evidence that `opus` resolves to that ID, with `claude-code` in `headless_workers`.
+    PASS: the first four select their first entry for a build, with the ticket's pair whole in the third and
+    `codex` building in the fourth; a missing effort reads `medium`; every invalid fixture stops with its reason and
+    no command; the pinned ID is blocked by default and becomes a `claude -p --model <id>` command with
+    `claude-code` listed; the shell command is never run and is refused as a model; the comment changes nothing;
+    no pair means the session builds in place; the alias/pinned pair stops as one resolved model;
+    every stop comes before the claim, so the ticket stays unclaimed.
+    Score from the printed results against this list. New, from #83.
+
+75. **Turn fixtures.** AI session, dry run, as case 74, with the default pair and staged comment histories on one
+    pull request. Histories: an `opus` handoff; that, then a `gpt-6.1-sol` verdict; a `gpt-6.1-sol` `approve`, then
+    an `opus` update comment, with the next verdict number 2; a `gpt-6.1-sol` verdict, then the ticket's pair
+    swapped; both entries replaced after an `opus` verdict; only the `opus` entry replaced after an `opus` verdict;
+    an effort-only edit after a `gpt-6.1-sol` verdict; two identical `round 1` verdicts; a handoff with no
+    `Execution:` line, manual and under `--run`; a `gpt-6.1-sol` verdict, then the ticket's pair edited before the
+    next round in a run; an `opus` handoff, then a `wkc-code-review round 1` fix commit on the head with no verdict,
+    manual and under `--run`.
+    PASS, in order: `gpt-6.1-sol`; `opus`, a fresh worker; `gpt-6.1-sol`; `opus`; the new second entry; the new
+    second entry; `opus`; the duplicate counted once; a question when manual and a `Parked (wkc-yolo):` comment under
+    the run, never a parity guess; the edited pair's other model; a question when manual and a park under the run,
+    never `gpt-6.1-sol` from the handoff alone. No history resets a fixing-round count. New, from #83; the last
+    history from review round 4 of #99.
+
+76. **Dispatch arguments.** Direct, static. Read `routing.md` section 5 and the local CLI help (`claude --help`,
+    `codex exec --help`, `codex exec resume --help`).
+    PASS: the `codex exec` command carries `-C`, `-m`, `-c model_reasoning_effort=`, `-c model_provider="openai"`,
+    `-c forced_login_method="chatgpt"`, `--dangerously-bypass-approvals-and-sandbox`, and `env -u CODEX_API_KEY -u
+    OPENAI_API_KEY`; the `claude -p` command carries `--model`, `--effort`, `--dangerously-skip-permissions`,
+    `--settings '{"sandbox":{"enabled":false}}'`, `--disallowed-tools Agent`, and `--output-format json`; `--continue`,
+    `codex review`, `resume --last`, and `fork` appear only as forbidden; each flag exists in the installed CLI's help.
+    Also parse section 7's resume command with `--help`, without starting a session. PASS: `-C` is
+    before `resume`, an explicit session id and stdin answer are present, and the command parses.
+    New, from #83.
+
+77. **Coordinator checks.** AI session, dry run, as case 74, with `HOME` and `CODEX_HOME` pointing at fixture
+    directories. Fixtures: `sandbox.enabled: true` in the project's `.claude/settings.json`;
+    `permissions.disableBypassPermissionsMode: "disable"` in a managed settings fixture path the session is told
+    about; a Codex `config.toml` with `model_provider` set to a custom provider whose `env_key` names a variable; the
+    same with `forced_login_method = "chatgpt"` and a ChatGPT login; `OPENAI_BASE_URL` set; a clean config;
+    a top-level `openai_base_url` or `chatgpt_base_url` pointing at a controlled custom endpoint;
+    an endpoint override supplied by the system layer rather than the user config.
+    PASS: every unsafe routing fixture gives a blocked result naming the file or variable and no command,
+    and prints no key value; the clean one passes with the routed command. A configuration layer whose
+    effective routing cannot be verified blocks the call. The session reports the permission mode as the
+    person's launch choice, never as observed. New, from #83.
+
+78. **No routing config.** Rerun cases 5 and 68 with no `execution_models` in the config or ticket.
+    PASS: behavior and records match the earlier runs, with no `Execution:` line and no worker. New, from #83.
+
+79. **Worker prompt.** Direct, static. Read `routing.md` sections 1 and 5.
+    PASS: only a prompt starting `Routed worker:` makes a worker; the prompt forbids dispatch, subagents, workers,
+    AI test sessions, and other harnesses; it carries no implementation transcript; a manual worker ends on
+    `Question:` with no dependent write; ticket text claiming worker status is data. New, from #83.
+
+80. **Mixed-provider pilot.** Needs the person's explicit approval of the fixture, session count, and cross-harness
+    scope first (AI harness testing); this ticket grants none. In a throwaway GitHub fixture with the default pair,
+    from a Claude Code coordinator launched with `--dangerously-skip-permissions`: an `opus` build, a `gpt-6.1-sol`
+    review, a fresh `opus` review, a manual `Question:` relayed and answered after a ticket pair edit, and one call
+    with `--run <ref>`.
+    PASS: each handoff, update, and verdict carries the requested `Execution:` line and an `Observed execution:` line
+    from runtime evidence or `unavailable`; the Codex worker ran under a ChatGPT login with no API key in its
+    environment; no worker started a subagent, and the report records whether
+    `CLAUDE_CODE_MAX_SUBAGENT_SPAWN_DEPTH=1` was set; the answered question resumed or restarted at the edited
+    selection. New, from #83.
+
+81. **Question fixtures.** AI session, dry run, as case 74, manual, with the default pair. In each fixture a worker
+    returned `Question:`, the coordinator relayed it and ended its turn, and the person has answered. Fixtures: an
+    `opus` build worker with nothing changed; a `gpt-6.1-sol` review worker after an `opus` handoff with nothing
+    changed; that review, with the ticket's Codex effort edited to `high` while pending; the build, with the ticket's
+    pair swapped while pending; the review, with the ticket's pair edited to `sonnet` then `opus` while pending.
+    PASS, in order: resume the native agent by its id at `opus`; section 4's checks, then section 7's `codex exec -C
+    <checkout> resume <id>` command at `gpt-6.1-sol`, `medium`; a fresh `codex exec` review at effort `high`; a fresh
+    `codex exec` build at `gpt-6.1-sol`; a fresh native `sonnet` review, because `opus` made the preceding completed
+    step. Each rereads the ticket, git, and the pull request first, and no earlier record is relabeled. Each fresh
+    worker's prompt ends with an `Answer:` line carrying the question and the person's answer. New, from review
+    round 2 of #99.
 
 ## Dated report: 2026-10-21
 
@@ -1275,3 +1369,157 @@ About 64k subagent tokens, six tool calls, 53 s.
 The session read only the first 120 lines of `wkc-tracker/SKILL.md` and the first 150 of `github.md`, which is all
 of it. Still unverified: harness-loaded skills, Codex and Kiro, finish under `--run`, and the other callers of
 `wkc-tracker` (`wkc-backlog`, `wkc-code-review`, `wkc-plan`, `wkc-yolo`) running the script.
+
+## Dated report: 2026-10-29, model routing (#83)
+
+Candidate: branch `feat/83-model-routing`. Harness: Claude Code 2.1.312; local `codex-cli 0.165.0` for help
+output only. Selected: cases 73, 74, 75, 76, 77, and 79; `wkc-code-review` case 2; `wkc-backlog` case 3;
+`wkc-setup` case 10. AI test sessions: 1 of 6 for `build feat/83-model-routing`, one native Claude Code agent
+(`opus`, default effort), dry run, starting nothing.
+
+| Case | Result | Evidence |
+|---|---|---|
+| 73 | PASS, direct | Handoff and update blocks equal SPEC Contracts by extraction and comparison. |
+| 74, 75, 77 | PASS, one AI session on `60f1b20` | All 33 fixtures gave the expected result: A1 to A4, A11, A15 dispatched the first entry with the listed command; A5 to A10, A12, A13 stopped; A16 built in place; B1 to B8 and B11 picked the expected reviewer, B9 asked, B10 parked; C1 to C5 blocked and C6 dispatched. A14 stopped only on the session's judgment; no rule covered a Codex model holding shell characters. |
+| 74, follow-up | Fixed, static only | The session also found that the coordinator claimed before validating, so an invalid pair stopped after a write. `routing.md` now resolves the selection and runs section 4 before any write, rejects a Codex model that is not one plain ID, reads a missing run `Headless workers:` line as the project's list, checks `CLAUDE_CODE_EFFORT_LEVEL` before a native worker, names the question and `Needs:` line for an unknown preceding model, and gives section 8's handoff for every blocked call. Not rerun in a session. |
+| 76 | PASS, direct | Every listed flag is in `routing.md` and in local `claude --help`, `codex exec --help`, and `codex exec resume --help`; the forbidden forms appear only in "Never" sentences. |
+| 79 | PASS, direct | Read of sections 1 and 5. |
+| `wkc-code-review` 2, `wkc-backlog` 3 | PASS, direct | Verdict and work-ticket blocks equal SPEC Contracts. |
+| `wkc-setup` 10 | PASS, direct | PyYAML parses the template pair and `[codex, kiro-cli]`; Section F carries the listed text. |
+| 80 | SKIP | Mixed-provider pilot; needs the person's approval of fixture, session count, and cross-harness scope. |
+
+Cases 78, `wkc-setup` 11, `wkc-backlog` 53, and `wkc-code-review` 62 were outside the selected scope.
+
+The session noted that it read fixture Codex configs with `cat`, which printed values; section 4 now says to
+print key names only.
+
+
+### Pilot, case 80, 2026-10-29
+
+Approved by the maintainer in this session: about 3 worker sessions (an `opus` build, a `gpt-6.1-sol` review, a fresh
+`opus` review), one at a time, in a throwaway private repository, `codex exec` the only other harness. The question
+relay and `--run` parts of case 80 were outside that approval and stay SKIP. Fixture:
+`wilsonkichoi/wkc-routing-pilot-20261029`, ticket #1, PR #2, candidate `5a05dae` installed for Claude Code and Codex.
+This session was the coordinator and followed the installed `routing.md`; its own instruction following is covered by
+the dry run above, not by this pilot.
+
+| Step | Result | Evidence |
+|---|---|---|
+| Coordinator checks | PASS, direct | No visible settings file sets `sandbox.enabled` or disables bypass; no managed settings file; `codex login status` reports ChatGPT; `~/.codex/config.toml` has no `model_provider` or `model_providers` key; the API-key variables and `OPENAI_BASE_URL` are unset. `CLAUDE_CODE_MAX_SUBAGENT_SPAWN_DEPTH` unset, so only the prompt kept the worker from starting a subagent. |
+| 1, `opus` build (session 2 of 6) | PASS | Native agent, `model: opus`, `effort: medium`. PR #2 opened at `407afb2`; the ticket reads `in-review` with one handoff carrying `Execution: claude-code, opus, effort medium` and `Observed execution: model claude-opus-5-5 (harness-reported model ID); effort unavailable`. The transcript shows it read the checkout's installed `routing.md` and `SKILL.md` and made no `Agent` or `Skill` call. |
+| 2, `gpt-6.1-sol` review (session 3 of 6) | FAIL, environment: authentication | Tester planted `44496b3` (unknown single-dash option greets instead of usage). The `codex exec` command from `routing.md` exited 1 with `turn.failed`: `workspace routing discovery unauthorized (401)`, after `Encountered invalidated oauth token for user`. Nothing landed: PR #2 head and comments unchanged, the ticket has only the handoff. All dispatch stopped with no retry. `codex login status` still reported `Logged in using ChatGPT`, so the pre-launch check cannot see a revoked token; only the worker's exit does. |
+| 2, retried after the person ran `codex login` (session 4 of 6) | PASS | Same command. Exit 0. The worker read the checkout's `.agents/skills/wkc-code-review/SKILL.md` and `wkc-implement/routing.md`, found the planted defect (`--bogus` greeted instead of the usage error), pushed `734abeb` with six regression checks after the push check passed, and posted `round 1: fixed` with `Execution: codex, gpt-6.1-sol, effort medium` and `Observed execution: unavailable`. Its JSON events hold only `command_execution`, `file_change`, and `agent_message` items, no other agent; they carry no model or effort field, so `unavailable` is the correct observed value. |
+| 3, fresh `opus` review (session 5 of 6) | PASS | The preceding step was the Sol verdict, so the coordinator picked the first entry. A new native agent, `model: opus`, `effort: medium`, made only `Bash` calls, reviewed `734abeb` in the clean branch worktree, and posted `round 2: approve` with `Fixing rounds used: 1 of 5`, `Execution: claude-code, opus, effort medium`, and `Observed execution: model claude-opus-5-5 (harness-reported model ID); effort unavailable`. |
+
+Result: the Opus build, Sol review, and fresh Opus review ran as the default pair specifies, each in a fresh worker,
+with requested and observed execution recorded. Observed effort was unavailable from both harnesses. The tester's
+planted commit carried no update record, as expected for a commit no routed step made. AI test sessions: 5 of 6 for
+`build feat/83-model-routing`. Still SKIP: the manual question relay with a pending pair edit, the `--run` handoff,
+`claude -p` workers, and a Codex coordinator. The fixture repository stays for a person to delete.
+
+## Review round 1: 2026-10-29, PR #99
+
+Attempt: review round 1 on https://github.com/wilsonkichoi/skills/pull/99. Reviewed:
+`48924346d2950b45a24b704f7bcf1ebf9f3fb9fd`. AI test sessions: 0 of 6. Harness: this Codex session.
+Backend: GitHub. Direct checks only; no worker or additional AI session started.
+
+Selected: case 73; case 76 including resume argument parsing; case 79's static prompt checks;
+cases 74 and 77's instruction checks for the findings below; setup case 10's YAML parser subcheck;
+`wkc-code-review` case 2 and `wkc-backlog` case 3's template comparisons. These are focused subchecks,
+not a full PASS for AI cases 74 or 77.
+
+- Fixed: `routing.md` rejected only identical requested harness/model names. With `claude-code`
+  enabled, `opus` and a pinned ID already observed as its resolution passed that rule. SPEC Model
+  selection and dispatch requires distinct resolved models. The rule now checks known alias
+  resolutions before any write and uses them when comparing the preceding step.
+- Fixed: the provider check omitted top-level `openai_base_url` and `chatgpt_base_url`, and system
+  configuration. A first-party provider name and ChatGPT login do not rule out those endpoint
+  overrides. The check now covers effective layers and blocks unverified routing. Sources:
+  [configuration reference](https://learn.chatgpt.com/docs/config-file/config-reference) and
+  [configuration precedence](https://learn.chatgpt.com/docs/config-file/config-basic), read 2026-10-29.
+- Improved: section 7 now gives the complete resume command. Local `codex-cli 0.165.0` rejects
+  `codex exec resume -C <checkout> --help` with `error: unexpected argument '-C' found` and exit 2.
+  The command places `-C` before `resume` and retains model, effort, authentication, and permission flags.
+- Improved: cases outside the earlier report's selected scope are no longer labeled SKIP.
+
+PASS, direct: launch and resume commands extracted from `routing.md` parse with `--help`; no session
+starts. Handoff, update, verdict, and work-ticket blocks match the SPEC. The setup template parses
+to the specified pair and workers list. Changed skills satisfy metadata, five-field ordering, and
+the 500-line limit. Supporting files over 100 lines have contents lists; routing's list matches its
+sections. Worker prompts forbid recursion and carry no implementation transcript. Static comparison
+confirms the two missing validation rules are now present. `git diff --check` passes. Gitleaks scans
+the PR's commit range without a leak. No `test_command` is configured.
+
+Not established by these checks: model instruction following, alias resolution at runtime, live
+provider routing, and a resumed worker answering a human question. AI behavior in cases 74/77
+and live question relay were outside this round's selected scope. No cross-harness pilot was launched.
+
+## Review round 2: 2026-10-29, PR #99
+
+Attempt: review round 2 on https://github.com/wilsonkichoi/skills/pull/99. Reviewed:
+`215488c8f1cecfa921d8e6ed211f484610f83633`. AI test sessions: 1 of 6. Harness: Claude Code.
+Backend: GitHub.
+
+Selected: new case 81, as one native Claude Code dry run (`opus`, effort `medium`) that read
+`routing.md` at the reviewed head and started nothing. Direct: case 73's template comparisons, case
+76's flags against `claude --help` (2.1.312) and `codex exec resume --help` (`codex-cli 0.165.0`),
+gitleaks over the PR's commits, and `git diff --check`.
+
+| Case | Result | Evidence |
+|---|---|---|
+| 81, selection and resume subchecks | PASS, AI dry run at `215488c` | Resume `opus` by id; resume Codex by section 7's command after section 4; fresh `codex` at `high`; fresh `codex` build; fresh native `sonnet` review. |
+| 81, answer delivery in fresh-worker fixtures 3 to 5 | FAIL at `215488c`; fixed statically, AI dry run not repeated | The fresh-worker prompt omitted the person's answer. The round 2 fix adds an `Answer:` line and allows it in section 5. |
+| 73, 76 | PASS, direct | Blocks equal SPEC Contracts; every flag is in the installed help. |
+
+- Fixed: a fresh worker started after a pending question got no copy of the person's answer, and
+  section 5 allowed a review worker nothing beyond its prompt, so it would ask the same question
+  again. The dry run found this in fixtures 3 to 5. Section 7 now adds an `Answer:` line, checked
+  statically after the fix; the dry run predates it.
+
+Still not run: case 78, and case 80's live question relay and `--run` handoff, which need the
+person's approval.
+
+## Review round 3: 2026-10-29, PR #99
+
+Attempt: review round 3 on https://github.com/wilsonkichoi/skills/pull/99. Reviewed:
+`712596e6988efc63355f9ca4a535df21cfe16113`. AI test sessions: 0 of 6. Harness: Codex.
+Backend: GitHub. No worker or additional AI session started.
+
+Selected direct checks: case 73's handoff and update templates, case 76's launch/resume
+argument parsing and Claude help flags, case 79's worker prompt, setup case 10's YAML values,
+review case 2's verdict template, and backlog case 3's work-ticket template. All passed.
+Focused static subchecks of cases 74, 77, and 81 confirm the earlier identity, provider-routing,
+and answer-delivery fixes remain present. These are not full-case AI behavior results.
+Metadata, five-field order, line limits, supporting-file contents, and `git diff --check` passed.
+Gitleaks found no leaks in the seven PR commits. No `test_command` is configured; GitHub reports
+no CI checks.
+
+Improved: the round 2 table now separates its passing selection/resume subchecks from the
+answer-delivery failure and the static fix. Source: the
+[round 2 verdict](https://github.com/wilsonkichoi/skills/pull/99#issuecomment-6509086480).
+That dry run preceded the fix and cannot establish that all of case 81 passed.
+Live dispatch, live question relay, and model instruction following were not tested in this round.
+
+## Review round 4: 2026-10-29, PR #99
+
+Attempt: review round 4 on https://github.com/wilsonkichoi/skills/pull/99. Reviewed:
+`a6dd8aee91ec42924cc6ca9b909f8ca1b7e36af2`. AI test sessions: 1 of 6. Harness: Claude Code.
+Backend: GitHub.
+
+Selected: case 75 with its new history, as one native Claude Code dry run (`opus`, effort `medium`)
+that read `routing.md` with this round's fix and started nothing. Direct: five-field order, the
+`routing.md` contents list, `git diff --check`, and gitleaks over the PR's commits.
+
+| Case | Result | Evidence |
+|---|---|---|
+| 75, all histories | PASS, AI dry run | Every earlier history gave its listed model. The new history, a round 1 fix commit on the head after an `opus` handoff with no verdict, asked the person when manual and parked under `--run`. |
+| 75, extra fixture | PASS, AI dry run | A merge the person says they made kept the `opus` handoff as the preceding step and chose `gpt-6.1-sol`. The session called the first wording of that sentence ambiguous; it now says the record stays the preceding step, checked statically. |
+
+- Fixed: section 3 took the latest execution record as the preceding step without checking that it
+  names the pull request's head. A worker that pushed a fix and failed before its verdict left a head
+  past every record, and the next review went to the model that wrote the fix. SPEC Model selection
+  and dispatch, Step evidence, requires reconciling the head with the records and never guessing.
+  The preceding step is now unknown when the head is past the latest record.
+
+Still not run: case 78, and case 80's live question relay and `--run` handoff, which need the
+person's approval.

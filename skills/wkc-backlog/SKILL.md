@@ -104,6 +104,9 @@ Give new tickets draft ids such as T1 and T2, kept apart from tracker ids. A wor
 ## After merge                           <!-- only when the ticket has post-merge steps -->
 - [ ] <step>, using <command or Conventions entry>. Target: <local | environment name | production>. Check: <expected result>. (needs authorization)
 
+## Execution                             <!-- only a person-selected pair -->
+<execution_models pair from Model selection and dispatch>
+
 ## Blocked by
 - #<id>
 
@@ -163,6 +166,10 @@ Options: <each with its gains and costs>. Who decides: a person | `wkc-architect
 - `Target:` names what a step acts on, so a run can classify it: `local`, the environment's name,
   or `production`.
 - Later skills judge choices against **Why**. With no PRD or SPEC behind a change, cite the request.
+- `## Execution` holds only an `execution_models` key with the ordered pair the person gave for
+  this ticket, copied as given: two entries, each `harness`, `model`, and `effort`, the first
+  building and the other reviewing first. Never choose, change, or drop a pair on your own, and
+  never put `headless_workers` there. A refinement that changes it shows the pair before and after.
 - A ticket that sets up the project or its tooling is done when that tooling is shown working, such
   as its test runner passing a real test, not when the files exist.
 

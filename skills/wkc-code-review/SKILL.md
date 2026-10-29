@@ -16,10 +16,12 @@ disable-model-invocation: false
   on a person's request. A model runs it only when a person or `wkc-yolo` asked for that work.
   `wkc-implement` never starts it, because the review must not run in the context that wrote the code.
 - **Dependencies:** `docs/dev-agents/config.md`: `max_fix_attempts`,
-  `max_ai_test_sessions_per_attempt`, `issue_tracker`,
+  `max_ai_test_sessions_per_attempt`, `execution_models`, `headless_workers`, `issue_tracker`,
   `test_command`, `push_check`, `context_file`, `rules_dir`, `prd_file`, `spec_file`, and the **Conventions**
   body. The `wkc-tracker` skill for every ticket read and write: `show`, `list`, and `comment`.
   `git`, and `gh` against a GitHub remote. The `wkc-backlog` skill for work found out of scope.
+  When a model pair applies, the `wkc-implement` skill's `routing.md`, read from that installed
+  skill's directory, with `claude` or `codex` for the workers it starts.
 - **Input:** a pull request (number or URL) or a ticket id, which is the preferred input: tickets
   run in parallel worktrees, and an explicit target cannot review the wrong pull request. With no
   argument, review the one open pull request whose head is the current branch, which in a worktree
@@ -43,6 +45,12 @@ Read the config, the `context_file`, and the rule files in `rules_dir`. `max_fix
 integer, 0 or more, and `5` when the field is absent. `max_ai_test_sessions_per_attempt` is an
 integer, 0 or more, and `6` when absent. Any other value of either stops the review before any test:
 name the field and its allowed values, and post nothing.
+
+**Routing.** When `execution_models` is in the config, the ticket's `## Execution`, or the run
+config, or the prompt starts `Routed worker:`, read `routing.md` in the installed `wkc-implement`
+skill's directory whole once sections 1 and 2 have found the target and the round. It decides
+whether this session reviews or starts a fresh worker on the other model. When that file is
+missing, stop, post nothing, and name the `wkc-implement` dependency.
 
 **The pull request.** A pull request URL or a number the caller identifies as a pull request is read
 with `gh pr view`. For a bare number on the GitHub tracker, try `gh pr view`; when GitHub says that
@@ -284,13 +292,16 @@ Fixed in: <full sha of the fix commit>     <!-- fixed rounds only -->
 Fixing rounds used: <k> of <max_fix_attempts>
 AI test sessions: <k> of <limit> for round <n>. Checks: <the checks they ran, or none>
 Independent: yes | no, <why>
+Execution: <harness>, <requested model>, effort <requested value>   <!-- routed calls and runs without a pair -->
+Observed execution: <model and effort from runtime evidence | unavailable>           <!-- routed calls and runs without a pair -->
 - fixed <file:line> <finding>
 - improved <file:line> <change>
 - open <file:line> <finding>
 - suggestion <file:line> <note>
 ```
 
-`Reviewed` is `H`. Keep the `Fixed in` line only in a `fixed` round, without the HTML comment. On
+`Reviewed` is `H`. Keep the `Fixed in` line only in a `fixed` round, and the two execution lines
+only in a routed call or a run without a pair, each without its HTML comment. On
 the `Fixing rounds used` line, `k` counts the `fixed` rounds, this one included when it is `fixed`.
 List each blocking finding fixed and each improvement applied in this round, each blocking finding
 left open, and each suggestion not applied, unconfirmed findings included; drop a line kind with

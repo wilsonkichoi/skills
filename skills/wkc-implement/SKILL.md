@@ -18,12 +18,13 @@ disable-model-invocation: false
   work. It never starts `wkc-code-review`, because the review must not run in the context that
   wrote the code.
 - **Dependencies:** `docs/dev-agents/config.md`: `issue_tracker`, `run_config`, `test_command`, `push_check`,
-  `max_ai_test_sessions_per_attempt`, `context_file`, `rules_dir`, `prd_file`, `spec_file`,
-  `roadmap_file`, `issues_dir`, and the **Conventions** body.
+  `max_ai_test_sessions_per_attempt`, `execution_models`, `headless_workers`, `context_file`,
+  `rules_dir`, `prd_file`, `spec_file`, `roadmap_file`, `issues_dir`, and the **Conventions** body.
   The `wkc-tracker` skill for every ticket read and write: `show`, `list`, `next`, `assign`,
   `comment`, `move`, `milestone show`, and `run show`. `git`, and `gh` against a GitHub remote for
   pull requests. The `wkc-backlog` skill for work found out of scope. [run.md](./run.md) for a
-  call with `--run`.
+  call with `--run`. [routing.md](./routing.md) when a model pair applies, with `claude` or `codex`
+  for the workers it starts.
 - **Input:** `<id>`, a ticket id: build, or report the state of its pull request. It never
   finishes. `finish <id>`: finish that ticket after its pull request merged, and nothing else. With
   no argument, report the caller's `in-review` tickets whose handoff pull requests merged, then
@@ -50,7 +51,9 @@ instructions.
 Read the config, the `context_file`, and the rule files in `rules_dir`.
 `max_ai_test_sessions_per_attempt` is an integer, 0 or more, and `6` when the field is absent. Any
 other value stops the call before any write or test: name the field and its allowed values. Then
-`wkc-tracker show <id>`. **The ticket's pull request** is the one on the `PR:` line of its latest handoff comment or
+`wkc-tracker show <id>`. When `execution_models` is in the config, the ticket's `## Execution`, or
+the run config, or the prompt starts `Routed worker:`, read [routing.md](./routing.md) whole before
+a build or a pre-merge update: it decides whether this session builds or starts a worker. **The ticket's pull request** is the one on the `PR:` line of its latest handoff comment or
 the `Merged:` line of its latest finish comment, whichever is later, read with `gh pr view <url>`.
 A pull request that only cites the ticket, by a reference line in its body or a mention in a
 comment, is never the ticket's pull request. Also list the open pull requests that cite it: `gh pr
@@ -245,11 +248,14 @@ Post the handoff with `wkc-tracker comment`, then `wkc-tracker move <id> in-revi
 wkc-implement: in review
 PR: <URL>
 Head: <full sha>
+Execution: <harness>, <requested model>, effort <requested value>   <!-- routed calls and runs without a pair -->
+Observed execution: <model and effort from runtime evidence | unavailable>           <!-- routed calls and runs without a pair -->
 Checks: <passed> of <total> acceptance criteria passed. Details are in the PR body.
 AI test sessions: <k> of <limit> for build <branch>. Checks: <the checks they ran, or none>
 ```
 
-`Head` is the pushed head of the pull request. On a rerun, post only what is missing: no second
+`Head` is the pushed head of the pull request. Keep the two execution lines, without their HTML
+comments, only in a routed call or a run without a pair (routing.md section 6). On a rerun, post only what is missing: no second
 handoff comment for the same pull request. Read the ticket back with `wkc-tracker show` and confirm
 both writes. Then hand each non-blocking `Discovered:` comment on the ticket to `wkc-backlog`, with
 its evidence, one change at a time, so its approval question is the session's last turn. That

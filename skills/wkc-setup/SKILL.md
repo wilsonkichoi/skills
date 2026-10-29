@@ -60,7 +60,7 @@ right answer there rather than a fallback to apologise for. Never ask for a path
 show it and take a bare yes.
 
 **A multi-question picker does not reorder the interview.** Claude Code's takes four in one call,
-which asks one section faster and never puts Sections A to E on screen together. Section A and every
+which asks one section faster and never puts Sections A to F on screen together. Section A and every
 prerequisite in its table are settled before Section B appears, on every harness: that answer
 decides whether the backend works at all, and the sections after it are wasted if it does not. Batch
 only questions from one section whose answers cannot change each other.
@@ -172,6 +172,27 @@ skill in the run reads it, from any machine. Offer, recommended first:
 
 Read the repository's visibility with `gh repo view <OWNER/REPO> --json visibility`, for the
 repository Section A resolved, before giving the GitHub warnings.
+
+**Section F: Execution models.** `execution_models` is one ordered pair: the first model builds,
+and each review uses the other model from the step before. A ticket's `## Execution` replaces it
+for that ticket. Offer, recommended first:
+
+1. `claude-code`, `opus`, effort `medium`, then `codex`, `gpt-6.1-sol`, effort `medium`. `opus`
+   follows the newest Opus.
+2. Another pair of two different models. Each entry is `harness` (`claude-code` or `codex`),
+   `model`, and `effort` (`medium` when left out). A `claude-code` model is `opus`, `sonnet`,
+   `haiku`, or `fable`; a pinned ID works only through `claude -p`.
+3. None: each skill runs in the session that calls it.
+
+Then ask for `headless_workers`, the harnesses whose headless CLI a coordinator may start, with
+`[codex, kiro-cli]` first. Say that listing `claude-code` lets `claude -p` run with whatever login
+it finds, API billing included, and allows a pinned Claude ID and a Codex coordinator.
+
+Workers run with full permissions and no sandbox, and no skill can read its permission mode, so
+say how to launch a coordinator: `claude --dangerously-skip-permissions`, or
+`permissions.defaultMode: "bypassPermissions"` in `~/.claude/settings.json`; a project's settings
+files cannot turn bypass mode on. For Codex, `codex --dangerously-bypass-approvals-and-sandbox`; for
+a `wkc-yolo` run without a pair in Kiro CLI, `kiro-cli chat --trust-all-tools`.
 
 ## 3. Scaffold
 
