@@ -31,6 +31,7 @@ Keep raw logs and fixtures outside tracked files.
 - Dated report: 2026-10-29, model routing (#83)
 - Review round 1: 2026-10-29, PR #99
 - Review round 2: 2026-10-29, PR #99
+- Review round 3: 2026-10-29, PR #99
 
 ## Preparation
 
@@ -1462,7 +1463,8 @@ gitleaks over the PR's commits, and `git diff --check`.
 
 | Case | Result | Evidence |
 |---|---|---|
-| 81 | PASS, AI dry run at `215488c` | Resume `opus` by id; resume Codex by section 7's command after section 4; fresh `codex` at `high`; fresh `codex` build; fresh native `sonnet` review. |
+| 81, selection and resume subchecks | PASS, AI dry run at `215488c` | Resume `opus` by id; resume Codex by section 7's command after section 4; fresh `codex` at `high`; fresh `codex` build; fresh native `sonnet` review. |
+| 81, answer delivery in fresh-worker fixtures 3 to 5 | FAIL at `215488c`; fixed statically, AI dry run not repeated | The fresh-worker prompt omitted the person's answer. The round 2 fix adds an `Answer:` line and allows it in section 5. |
 | 73, 76 | PASS, direct | Blocks equal SPEC Contracts; every flag is in the installed help. |
 
 - Fixed: a fresh worker started after a pending question got no copy of the person's answer, and
@@ -1472,3 +1474,24 @@ gitleaks over the PR's commits, and `git diff --check`.
 
 Still not run: case 78, and case 80's live question relay and `--run` handoff, which need the
 person's approval.
+
+## Review round 3: 2026-10-29, PR #99
+
+Attempt: review round 3 on https://github.com/wilsonkichoi/skills/pull/99. Reviewed:
+`712596e6988efc63355f9ca4a535df21cfe16113`. AI test sessions: 0 of 6. Harness: Codex.
+Backend: GitHub. No worker or additional AI session started.
+
+Selected direct checks: case 73's handoff and update templates, case 76's launch/resume
+argument parsing and Claude help flags, case 79's worker prompt, setup case 10's YAML values,
+review case 2's verdict template, and backlog case 3's work-ticket template. All passed.
+Focused static subchecks of cases 74, 77, and 81 confirm the earlier identity, provider-routing,
+and answer-delivery fixes remain present. These are not full-case AI behavior results.
+Metadata, five-field order, line limits, supporting-file contents, and `git diff --check` passed.
+Gitleaks found no leaks in the seven PR commits. No `test_command` is configured; GitHub reports
+no CI checks.
+
+Improved: the round 2 table now separates its passing selection/resume subchecks from the
+answer-delivery failure and the static fix. Source: the
+[round 2 verdict](https://github.com/wilsonkichoi/skills/pull/99#issuecomment-6509086480).
+That dry run preceded the fix and cannot establish that all of case 81 passed.
+Live dispatch, live question relay, and model instruction following were not tested in this round.
