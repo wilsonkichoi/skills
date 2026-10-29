@@ -1,6 +1,6 @@
 # ADR-003: The reviewer fixes its own findings, in fresh-context rounds
 
-Date: 2026-10-20. Status: accepted, amended by [ADR-005](./ADR-005-review-rounds-improve-code.md) (suggestions, counting, independence)
+Date: 2026-10-20. Status: accepted, amended by [ADR-005](./ADR-005-review-rounds-improve-code.md) (suggestions, counting, independence), and by [ADR-010](./ADR-010-per-attempt-ai-test-allowances.md) (default 5)
 
 Proposed amendment: [ADR-009](./ADR-009-run-budgets-continuations-and-model-routing.md) (model selection and alternating rounds).
 

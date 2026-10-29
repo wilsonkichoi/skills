@@ -422,6 +422,30 @@ error while a flag file is absent, a check the merged code fails, and a smoke te
     A refused active config stops before any write or gate. Record the harness, model, effort, candidate sha,
     installed paths, and transcript evidence of the read. Hand-reading `SKILL.md` is not this check.
 
+68. **AI test allowance field.** Direct. Read section 1, section 4, and the handoff template, and compare the
+    `AI test session:` block and the handoff block with SPEC Contracts.
+    PASS: `max_ai_test_sessions_per_attempt` defaults to `6`, accepts integers of 0 or more, and any other value stops
+    before any write or test; the attempt is `build <branch>`; the record is posted before each start; both blocks
+    are identical to SPEC blocks.
+
+69. **Invalid allowance.** On the local fixture, set `max_ai_test_sessions_per_attempt` to `-1`, then `six`, and run a
+    build of a `ready` ticket each time.
+    PASS: each reply names the field and its allowed values; the ticket file, its comments, the branches, and the
+    worktree list are unchanged, and no AI test session starts.
+
+70. **Zero, and direct checks suffice.** On the local fixture, a `ready` ticket with one criterion only an AI session
+    can check and one a command checks. Run a build with `max_ai_test_sessions_per_attempt: 0`. Then, with the field
+    absent, build a ticket whose criteria a command checks alone.
+    PASS: neither build posts an `AI test session:` record or starts a test session. The first reports the AI-only
+    criterion as SKIP, never passed, and its handoff says `0 of 0`; the second's says `0 of 6`, `none`.
+
+71. **Restart keeps usage.** On the local fixture, an `in-progress` ticket held by the caller on its branch, with two
+    `AI test session:` records for `build <branch>`, one for a different branch, and three criteria that need an AI
+    session. Run the build with `max_ai_test_sessions_per_attempt: 3`. A test session the build would start is
+    simulated by the tester; the build session itself starts none.
+    PASS: exactly one new record lands, `3 of 3` for `build <branch>`; the other branch's record is not counted; the
+    criteria it could not cover are SKIP; the handoff says `3 of 3`.
+
 ## Dated report: 2026-10-21
 
 Scope: new skill, baseline coverage. Selected: cases 1 and 2 as direct checks, cases 3 to 18 in Claude Code. Codex and

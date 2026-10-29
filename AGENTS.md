@@ -181,8 +181,9 @@ Reuse evidence only when the relevant instructions, fixture, and tool or harness
 Unavailable required checks within the selected scope are SKIP, never PASS. Cases outside that scope are not new SKIPs.
 Identify focused subchecks explicitly; a passing subcheck is not a full-case PASS.
 Do not claim complete compatibility from focused checks or count direct checks as model behavior.
-New AI sessions run within the standing session limit in [Token usage](docs/dev-agents/rules/token-usage.md).
-Validation requirements do not authorize sessions past that limit or cross-harness launches.
+New AI test sessions run within each attempt's allowance in [Token usage](docs/dev-agents/rules/token-usage.md).
+Reports name the attempt, the sessions used, the configured limit, and the selected checks.
+Validation requirements do not authorize sessions past that allowance or cross-harness launches.
 
 Prepare only fixtures needed by selected cases. Use local or controlled HTTP fixtures for mechanical checks.
 Use real service fixtures when testing service integration; reuse suitable existing fixtures before creating new ones.

@@ -15,7 +15,8 @@ disable-model-invocation: false
   `fixed` round, every round in a fresh session. Callers are people, `wkc-yolo`, and a model acting
   on a person's request. A model runs it only when a person or `wkc-yolo` asked for that work.
   `wkc-implement` never starts it, because the review must not run in the context that wrote the code.
-- **Dependencies:** `docs/dev-agents/config.md`: `max_fix_attempts`, `issue_tracker`,
+- **Dependencies:** `docs/dev-agents/config.md`: `max_fix_attempts`,
+  `max_ai_test_sessions_per_attempt`, `issue_tracker`,
   `test_command`, `push_check`, `context_file`, `rules_dir`, `prd_file`, `spec_file`, and the **Conventions**
   body. The `wkc-tracker` skill for every ticket read and write: `show`, `list`, and `comment`.
   `git`, and `gh` against a GitHub remote. The `wkc-backlog` skill for work found out of scope.
@@ -39,8 +40,9 @@ request body is the implementer's claim, not evidence.
 ## 1. Read the config and the target
 
 Read the config, the `context_file`, and the rule files in `rules_dir`. `max_fix_attempts` is an
-integer, 0 or more, and `3` when the field is absent. Any other value stops the review: name the
-field and its allowed values, and post nothing.
+integer, 0 or more, and `5` when the field is absent. `max_ai_test_sessions_per_attempt` is an
+integer, 0 or more, and `6` when absent. Any other value of either stops the review before any test:
+name the field and its allowed values, and post nothing.
 
 **The pull request.** A pull request URL or a number the caller identifies as a pull request is read
 with `gh pr view`. For a bare number on the GitHub tracker, try `gh pr view`; when GitHub says that
@@ -86,7 +88,8 @@ report it and post nothing, unless the caller asks for another round on that hea
 
 **Fixing rounds.** Every round that committed code has a `fixed` verdict and used one fixing round,
 whether its change fixed findings, applied improvements, or both. A round that changed nothing used
-none. A fixing round is left while the `fixed` rounds are fewer than `max_fix_attempts`.
+none. A fixing round is left while the `fixed` rounds are fewer than `max_fix_attempts`. Rounds
+already used count against the current limit, whatever limit their verdicts named.
 
 **Independence.** The round is independent when this session wrote none of the pull request's code,
 earlier fix commits included. A fresh session on the same model is independent; this is about the
@@ -156,6 +159,22 @@ valid round. Name each check you could not run in the report, and never present 
 execution path, a reproduction, a focused test, the CI output, or the SPEC, whichever fits. A
 finding the evidence does not confirm is reported as a suggestion that says what is unconfirmed,
 and is never fixed as a defect. Never invent a reproduction or evidence.
+
+**AI test sessions.** This round is one attempt, `review round <n> on <PR URL or branch>`, and a
+session that resumes or restarts round `n` continues it. It may start at most
+`max_ai_test_sessions_per_attempt` additional AI sessions to test the change, such as test subagents
+or headless CLI runs, one at a time. Pilots, retries, and failed starts count; this session and a
+worker running the round do not. The limit is a ceiling, never a target: run direct checks first,
+and start none when they suffice. Before each start, post on the ticket with `wkc-tracker comment`:
+
+```
+AI test session: <k> of <limit>
+Attempt: review round <n> on <PR URL or branch>
+Checks: <the cases or subchecks this session runs>
+```
+
+`k` counts the ticket's records for this attempt from any session, this one included. With none
+left, start no more: a required check still unrun is SKIP, never passed.
 
 **A pattern.** When a finding repeats, such as one handler missing a check its siblings need, look
 for the other instances in the ticket's change and fix the class, not one occurrence. Never extend
@@ -263,6 +282,7 @@ wkc-code-review round <n>: approve | fixed | stopped
 Reviewed: <full head sha>
 Fixed in: <full sha of the fix commit>     <!-- fixed rounds only -->
 Fixing rounds used: <k> of <max_fix_attempts>
+AI test sessions: <k> of <limit> for round <n>. Checks: <the checks they ran, or none>
 Independent: yes | no, <why>
 - fixed <file:line> <finding>
 - improved <file:line> <change>
@@ -270,10 +290,11 @@ Independent: yes | no, <why>
 - suggestion <file:line> <note>
 ```
 
-`Reviewed` is `H`. Keep the `Fixed in` line only in a `fixed` round, without the HTML comment. `k`
-counts the `fixed` rounds, this one included when it is `fixed`. List each blocking finding fixed
-and each improvement applied in this round, each blocking finding left open, and each suggestion
-not applied, unconfirmed findings included; drop a line kind with none. A test written for a fix
+`Reviewed` is `H`. Keep the `Fixed in` line only in a `fixed` round, without the HTML comment. On
+the `Fixing rounds used` line, `k` counts the `fixed` rounds, this one included when it is `fixed`.
+List each blocking finding fixed and each improvement applied in this round, each blocking finding
+left open, and each suggestion not applied, unconfirmed findings included; drop a line kind with
+none. A test written for a fix
 belongs to that fix's line. Read the comments back and confirm the verdict landed.
 
 ## 6. Hand off and report
@@ -282,7 +303,7 @@ Then hand each non-blocking `Discovered:` item from this round to `wkc-backlog`,
 one change at a time, so its approval question is the session's last turn. Under a run, section 7.
 
 Report the verdict, the reviewed sha, the fix commit, the findings, the checks run and their
-results, and the next step:
+results, the AI test sessions used of the limit, and the next step:
 
 - `fixed`: another round, in a fresh session, on the new head. This applies to fixes and
   improvements alike; this session never reviews its own commit.

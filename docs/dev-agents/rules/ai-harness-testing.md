@@ -26,7 +26,7 @@ another worker or harness.
 
 A pilot may exercise a candidate implementation before shipment. It requires explicit approval
 of the fixture, session count, and any concurrent execution before the first launch. A development request or this planning document
-is not that approval. Count every worker kind together against the standing limits.
+is not that approval. Count every worker kind together against the same concurrency limit and test allowance.
 Unrelated harness validation remains in each harness's own session. Quota, rate-limit, or
 authentication errors stop all work without retry.
 

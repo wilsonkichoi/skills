@@ -1,14 +1,14 @@
 # wkc-setup validation
 
 Follow [Validation](../AGENTS.md#validation). This catalog covers the review-round field added by #54, the
-`run_config` field added by #78, and the `push_check` field added by #76. It does not claim baseline coverage of the
+`run_config` field added by #78, the `push_check` field added by #76, and the AI test allowance added by #91. It does not claim baseline coverage of the
 rest of setup.
 
 ## Cases
 
 1. **Review-round field.** Direct. Read Section D and parse the config template's YAML frontmatter.
-   PASS: Section D asks for `max_fix_attempts` as an integer, 0 or more, recommends `3`, and explains the final
-   review-only round. The template contains integer `3` and documents the allowed values and default.
+   PASS: Section D asks for `max_fix_attempts` as an integer, 0 or more, recommends `5`, and explains the final
+   review-only round. The template contains integer `5` and documents the allowed values and default.
    The #54 branch diff adds no `merge_gate`.
 2. **Write the answer.** In a throwaway project, run setup with `max_fix_attempts` missing. Choose `0`, then repeat
    in another fixture choosing `1`.
@@ -30,6 +30,15 @@ rest of setup.
    PASS: Section D asks for `push_check`, offers the gitleaks command first with a check that `gitleaks` is installed,
    then the project's own command and none, and says a manual push without one only warns. PyYAML parses the template
    value as the gitleaks command string, and its comment says the default is none.
+
+7. **AI test allowance field.** Direct. Read Section D and parse the config template's YAML frontmatter.
+   PASS: Section D asks for `max_ai_test_sessions_per_attempt` as an integer, 0 or more, recommends `6`, says each
+   build and each review round has its own allowance, that it is a ceiling, and that `0` starts none. The template
+   parses it as integer `6`, and this repository's config parses `max_fix_attempts: 5` and
+   `max_ai_test_sessions_per_attempt: 6`.
+8. **Existing allowance.** Run setup on a fixture whose config has `max_ai_test_sessions_per_attempt: 2` and no
+   `max_fix_attempts`.
+   PASS: the value stays `2`, setup asks only for the missing `max_fix_attempts`, and the body is unchanged.
 
 ## Dated report: 2026-10-22
 

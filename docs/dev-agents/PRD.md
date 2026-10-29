@@ -171,7 +171,10 @@ Ranked. Ranking is importance, not delivery order; the ROADMAP sets the order.
   2026-10-20). Integration validation for the approved Claude Code-to-Codex workflow is a narrow
   exception that needs explicit approval and follows the existing session limits (decided
   2026-10-27).
-- **AI session budget:** at most 6 extra AI test sessions per change. Arbitrary cross-harness
+- **AI session budget:** each attempt, meaning one build or one review round, the final
+  review-only round included, may start at most `max_ai_test_sessions_per_attempt` additional AI
+  test sessions, default 6. A full loop of five fixing rounds allows at most 42. The allowance is a
+  ceiling, and a restart keeps an attempt's usage (decided 2026-10-28, #91). Arbitrary cross-harness
   launches and nested workers remain prohibited. The approved model-routing workflow permits
   Claude Code to coordinate native Claude agents and non-interactive `codex exec` workers, and,
   under the `headless_workers` opt-in, `claude -p` workers or a Codex coordinator. Every worker
@@ -285,6 +288,10 @@ in [ADR-009](./adr/ADR-009-run-budgets-continuations-and-model-routing.md). Thei
 and integration validation remain downstream work.
 
 ## Changes
+
+- 2026-10-28: Maintainer decision in #91. The AI session budget is per attempt instead of per
+  change, with separate allowances for the build, each fixing round, and the final review.
+  `max_fix_attempts` defaults to 5. Status stays approved.
 
 - 2026-10-28: The maintainer approved the PRD, SPEC, and ROADMAP as merged in #82. No
   requirement changed.

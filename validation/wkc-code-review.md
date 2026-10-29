@@ -64,10 +64,11 @@ other ticket's status.
 
 3. **Config field.** Direct. `grep -n max_fix_attempts` on `skills/wkc-setup/SKILL.md` and
    `skills/wkc-setup/config-template.md`.
-   PASS: Section D asks for it; the template lists it with `integer, 0 or more` and default `3`; the branch diff adds
+   PASS: Section D asks for it; the template lists it with `integer, 0 or more` and default `5`; the branch diff adds
    no `merge_gate`.
 
 4. **Bad config value.** Set `max_fix_attempts: -1`, then `three`, and run a round on an open pull request each time.
+   Repeat with `max_ai_test_sessions_per_attempt: -1` and `six`.
    PASS: each reply stops naming the field and its allowed values; the pull request's comments, head, and the ticket's
    comments are unchanged.
 
@@ -349,6 +350,24 @@ each implementation worktree its `HEAD`, index, `git status --porcelain=2 --untr
     in that worktree; the criteria's commands and `test_command` run only in the detached worktree at `H`; the
     implementation worktree's `HEAD`, index, files, the ignored file's contents, and stash list are unchanged; the
     report names the failed fast-forward.
+
+59. **AI test allowance field.** Direct. Read sections 1, 2, and 3 and the verdict template, and compare the
+    `AI test session:` block and the verdict block with SPEC Contracts.
+    PASS: `max_fix_attempts` defaults to `5` and `max_ai_test_sessions_per_attempt` to `6`, both integers of 0 or
+    more; the attempt is `review round <n> on <PR URL or branch>`; the record is posted on the ticket before each
+    start; earlier fixing rounds count against the current limit; both blocks are identical to SPEC blocks.
+
+60. **Separate allowance, restart, and the new default.** On the local fixture with no remote, a branch with three
+    `fixed` verdicts that say `of 3`, their fix commits, and a fourth commit that adds a defect. The ticket carries
+    six `AI test session:` records for `build <branch>` and one for `review round 4 on <branch>`. Both limit fields
+    are absent. The defect's evidence needs one AI session, which the tester simulates; the round starts none itself.
+    PASS: round 4 finds a fixing round left (3 of 5), posts one record, `2 of 6` for `review round 4 on <branch>`, and
+    its verdict says `Fixing rounds used: 4 of 5` and `AI test sessions: 2 of 6 for round 4`. The build's six
+    records do not reduce the round's allowance.
+
+61. **Zero.** As case 60, with `max_ai_test_sessions_per_attempt: 0`.
+    PASS: no record lands and no test session starts; the check that needed it is SKIP in the verdict and the report,
+    and the verdict says `0 of 0`.
 
 ## Dated report: 2026-10-22
 

@@ -2,6 +2,15 @@
 
 Newest first. Each version is a `## {version} ({ISO 8601 timestamp with local offset})` heading followed by a bullet list of changes.
 
+## 0.0.42 (2026-10-28T22:42:46-07:00)
+
+- New `max_ai_test_sessions_per_attempt` config field, default 6, integers of 0 or more (#91, ADR-010). Each `wkc-implement` build and each `wkc-code-review` round, the final review-only round included, may start that many additional AI test sessions, so a fixing round can test its own fix. With the defaults a full loop allows at most 42. The limit is a ceiling: direct checks come first, and no AI test session starts when they suffice. Any other value stops the call before a test starts.
+- Before each AI test session, the skill posts an `AI test session: <k> of <limit>` comment on the ticket naming its attempt, `build <branch>` or `review round <n> on <PR URL or branch>`, and its checks. The count comes from those records, so pilots, retries, and failed starts count, and a resumed or restarted attempt keeps its usage. Unused allowance does not carry forward, and a required check left unrun is SKIP. The handoff and the verdict gain an `AI test sessions:` line.
+- `max_fix_attempts` defaults to 5 instead of 3. Fixing rounds already used stay counted against the new limit, whatever limit their verdicts named.
+- `wkc-setup` Section D asks for both fields and recommends 5 and 6; `config-template.md` lists them. This repository's config sets them explicitly.
+- The PRD AI session budget, the SPEC (Config fields, a new AI test sessions contract, the handoff and verdict templates, Requirements), the token-usage and AI harness testing rules, `AGENTS.md` Validation, and the README follow. ADR-010 amends ADR-003's default.
+- The `wkc-setup`, `wkc-implement`, and `wkc-code-review` runbooks gain allowance cases.
+
 ## 0.0.41 (2026-10-28T20:43:27-07:00)
 
 - `wkc-code-review` reviews in the implementation worktree when it is safe (#89). A pull request round reuses the worktree that has the PR's branch checked out when the PR is not cross-repository and that worktree is clean and idle: not `locked` or `prunable`, an empty `git status --porcelain`, no merge, rebase, cherry-pick, or `index.lock` in progress, and a `HEAD` that is an ancestor of the reviewed head `H`. A worktree that is behind is fast-forwarded to `H` with `git merge --ff-only --no-overwrite-ignore`, preserving local ignored files. A fix commit lands on the checked-out branch and is pushed from there, so the implementation worktree no longer falls behind after a `fixed` round.
