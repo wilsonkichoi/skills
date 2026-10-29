@@ -145,6 +145,11 @@ start to test a change, an integer, 0 or more, with `6` recommended. An attempt 
 `wkc-implement` or one review round by `wkc-code-review`, and each has its own allowance. Say it is
 a ceiling, not a target: direct checks come first, and `0` means no AI test sessions.
 
+Then ask for `max_additional_tickets`: how many tickets a `wkc-yolo` run phase may admit beyond the
+initial tickets the person approves at kickoff, such as a prerequisite it discovers or a readiness
+repair, an integer, 0 or more, with `5` recommended. Say initial tickets never count against it, and
+`0` runs all of them but admits nothing new. A run may lower it, never raise it.
+
 Then ask for `push_check`: a shell command that scans the commits about to be pushed for secrets,
 where exit 0 passes and anything else blocks the push. Offer, recommended first:
 
@@ -158,8 +163,8 @@ Say that once it is set, `wkc-implement` and `wkc-code-review` run it before eve
 skip it. With none, a manual push only warns, and a `wkc-yolo` run cannot push.
 
 **Section E: Run configs.** Where `wkc-yolo` stores each run's config: the limits a person approves
-for one unattended run, such as its scope, budget, and run branch. It holds no credentials. Every
-skill in the run reads it, from any machine. Offer, recommended first:
+for one unattended run phase, such as its scope, initial tickets, additional-ticket allowance, and
+run branch. It holds no credentials. Every skill in the run reads it, from any machine. Offer, recommended first:
 
 1. `tracker`: an issue labeled `wkc-run`, or a file in `issues_dir/runs/` on the local backend. On a
    public GitHub repository, say the issue is public, so anyone can read the run's limits. On

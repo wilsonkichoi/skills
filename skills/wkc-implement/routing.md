@@ -28,8 +28,9 @@ AI test session, or other harness: a check that needs one is SKIP, with that rea
 the person ends the worker's run instead: its final message starts `Question:`, and it makes no
 write that depends on the answer. Under `--run`, decide or park as the skill says.
 
-**The coordinator** is any other Claude Code session that runs the skill with a pair, or a Codex
-session when `headless_workers` lists `claude-code`; other sessions follow section 8. It runs the
+**The coordinator** is any other Claude Code session that runs the skill with a pair, a Codex
+session when `headless_workers` lists `claude-code`, or under `--run`, the session running a run
+without a pair, in any harness; other sessions follow section 8. It runs the
 skill's reads and mode choice: `wkc-implement` section 1, or `wkc-code-review` sections 1 and 2.
 Before any write, it resolves the selection (section 2) and runs section 4's checks, so a call
 that stops leaves the ticket unclaimed. A build then runs `wkc-implement` section 2, the claim and
@@ -53,8 +54,11 @@ Read these at the moment of each dispatch, never from an earlier read:
 **The pair.** A ticket's pair replaces any other pair whole. Otherwise, under `--run`, the run
 config's pair applies, and outside a run the project's. A run config never copies or freezes a
 ticket's pair. With no pair anywhere, a manual call runs as it always has, in this session, and this
-file stops here. A run without a pair runs as its config's `Coordinator model:` says; the worker
-still writes the `Execution:` lines with that confirmed selection.
+file stops here. A run without a pair, `Execution models: none`, uses its config's `Coordinator
+model:` as the selection for every step, so each build, update, and review still starts a fresh
+worker on the coordinator's own harness (section 5), and the worker writes the `Execution:` lines
+with that confirmed selection. Its harness may be `kiro-cli`. A config with neither a pair nor a
+`Coordinator model:` stops before any write.
 
 **Headless workers.** The project's list, intersected with the run config's under `--run`; a run
 config with no `Headless workers:` line uses the project's list. A ticket
@@ -154,6 +158,11 @@ never a fork, a resumed implementation session, or `--last`.
 | `claude-code`, an alias, coordinator in Claude Code | A native agent, not a fork, `general-purpose`, with `model` the alias and `effort` the resolved effort |
 | `claude-code`, a pinned ID, or a Codex coordinator | `claude -p`, only when `headless_workers` lists `claude-code` |
 | `codex` | `codex exec`, only when `headless_workers` lists `codex` |
+| `kiro-cli`, a run without a pair | `kiro-cli chat --no-interactive`, only when `headless_workers` lists `kiro-cli` |
+
+A run without a pair uses the coordinator's native subagent when its harness has one: a Claude Code
+native agent gets the effort, and the model when it is an alias, otherwise inheriting the session
+model. Without one, it uses the harness's own headless CLI from the table, never another harness's.
 
 ```
 claude -p --model <model> --effort <effort> --dangerously-skip-permissions --settings '{"sandbox":{"enabled":false}}' --disallowed-tools Agent --output-format json < <prompt file>
@@ -163,8 +172,12 @@ claude -p --model <model> --effort <effort> --dangerously-skip-permissions --set
 env -u CODEX_API_KEY -u OPENAI_API_KEY codex exec -C <checkout> -m <model> -c model_reasoning_effort=<effort> -c model_provider="openai" -c forced_login_method="chatgpt" --dangerously-bypass-approvals-and-sandbox --json -o <last message file> - < <prompt file>
 ```
 
-Run `claude -p` from the checkout. Never use `claude -p --continue`, `codex review`, `codex exec
-review`, `resume --last`, or `fork`. A worker in a run counts toward its limit of 5 concurrent
+```
+kiro-cli chat --no-interactive --model <model> --effort <effort> --trust-all-tools "$(cat <prompt file>)"
+```
+
+Run `claude -p` and `kiro-cli` from the checkout. Never use `claude -p --continue`, `codex review`,
+`codex exec review`, `resume --last`, or `fork`. A worker in a run counts toward its limit of 5 concurrent
 workers; every worker kind counts the same. Record whether `CLAUDE_CODE_MAX_SUBAGENT_SPAWN_DEPTH`
 is `1` in the coordinator's environment: with it, Claude Code enforces that a native worker starts
 no subagent; without it, the prompt alone does.

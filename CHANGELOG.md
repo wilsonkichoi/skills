@@ -2,6 +2,13 @@
 
 Newest first. Each version is a `## {version} ({ISO 8601 timestamp with local offset})` heading followed by a bullet list of changes.
 
+## 0.0.47 (2026-10-29T15:30:00-07:00)
+
+- New manual skill `wkc-yolo` (#74, SPEC Contracts › wkc-yolo run, ADR-006 to ADR-009). `SKILL.md` runs the tickets, admissions, planning PRs, readiness, cleanup, and the run PR, and carries the run config, `Run:`, Decision, Parked, cleanup, Run outcome, and phase templates word for word from the SPEC. `kickoff.md` holds the one round of questions and the run start; `after.md` holds outcomes, config retirement, and review continuations. Work in progress: the validation runbook and behavioural fixtures are not done yet.
+- `wkc-implement` `routing.md`: a run without a pair uses the config's `Coordinator model:` for every step and still starts a fresh worker, a native subagent first, otherwise the harness's own headless CLI, `kiro-cli chat --no-interactive` included.
+- `wkc-tracker`: each run phase has its own config; a `github-variable` continuation appends `_PHASE_<n>` and never overwrites, and a local one adds `-phase-<n>`.
+- `wkc-setup` asks for `max_additional_tickets` (default 5) and writes it in `config-template.md`.
+
 ## 0.0.46 (2026-10-29T13:27:46-07:00)
 
 - Model routing (#83, SPEC Model selection and dispatch, ADR-009). New `skills/wkc-implement/routing.md` holds the one dispatcher that `wkc-implement` and `wkc-code-review` both follow when a model pair applies. The first model builds; each review uses the other model from the preceding completed build, update, or review step, read from its `Execution:` line, never from round numbers. A ticket's `## Execution` pair replaces the project's or run's pair whole and is read fresh at every dispatch. Invalid shapes, unknown harnesses, a pinned Claude ID without the `claude-code` opt-in, a Codex entry without `codex` in `headless_workers`, a Codex model that is not one plain ID, and two entries naming one model stop before any write, so the ticket stays unclaimed.

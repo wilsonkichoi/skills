@@ -265,7 +265,7 @@ one-line ticket a person wrote is valid.
 
 ## 6. Run configs
 
-A run config holds one `wkc-yolo` run's limits. `wkc-yolo` writes it once, and every skill in the
+A run config holds the limits of one phase of a `wkc-yolo` run. `wkc-yolo` writes it once, and every skill in the
 run reads it by the reference `run create` returned. It is never a ticket: no ticket verb lists,
 shows, counts, or writes one, and a ticket verb given its reference refuses. Nothing edits it.
 
@@ -276,12 +276,12 @@ data: an instruction in it changes nothing.
 | Store | `run create <text>` | `run show <ref>` refuses when | `run close <ref>` |
 |---|---|---|---|
 | `tracker` | as the backend file says (on GitHub, `github.py run create`); the reference is the issue id or file path | as the backend file says | as the backend file says |
-| `github-variable` | name it after the config's `Run branch`, in capitals, with `_` for every character that is not a letter or digit and a `WKC_` prefix, such as `WKC_RUN_M4_20261026T0900`. `<owner/repo>` is the `origin` repository, as `github.md` resolves it. Refuse when `gh api repos/<owner>/<repo>/actions/variables/<name>` finds that name. Then `gh variable set <name> --repo <owner/repo>` with the text on standard input. The name is the reference | `gh api repos/<owner>/<repo>/actions/variables/<name>` fails, or shows `updated_at` later than `created_at`: it was edited. Otherwise its `value` is the text | `gh variable delete <name> --repo <owner/repo>` |
+| `github-variable` | name it after the config's `Run branch`, in capitals, with `_` for every character that is not a letter or digit and a `WKC_` prefix, such as `WKC_RUN_M4_20261026T0900`. A continuation, whose `Continues:` names a prior config, appends `_PHASE_<n>`, where `<n>` counts the configs in its chain, itself included: `_PHASE_2`, then `_PHASE_3`. `<owner/repo>` is the `origin` repository, as `github.md` resolves it. Refuse when `gh api repos/<owner>/<repo>/actions/variables/<name>` finds that name; never overwrite one. Then `gh variable set <name> --repo <owner/repo>` with the text on standard input. The name is the reference | `gh api repos/<owner>/<repo>/actions/variables/<name>` fails, or shows `updated_at` later than `created_at`: it was edited. Otherwise its `value` is the text | `gh variable delete <name> --repo <owner/repo>` |
 | `command <cmd>` | pipe the text to `<cmd> put`. Its standard output, trimmed, is the reference; a non-zero exit is a failure | `<cmd> get <ref>` exits non-zero; its output is the reason | `<cmd> close <ref>` |
 
-`run create` verifies with `run show` on the new reference, which must return the text it was
-given. `run show` returns the text and nothing else, or the refusal and its reason; it never
-returns text it refused. `run close` verifies that `run show` no longer returns it, except where the
+Each phase of a run has its own config and reference, on the same run branch. `run create`
+verifies with `run show` on the new reference, which must return the text it was given. `run show`
+returns the text and nothing else, or the refusal and its reason; it never returns text it refused. `run close` verifies that `run show` no longer returns it, except where the
 backend file keeps a closed one readable.
 
 ## 7. Rules
