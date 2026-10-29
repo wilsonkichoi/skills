@@ -665,7 +665,8 @@ section edits and dependency parsing around fenced code (including fence-like co
 tab-indented markers that cannot open or close a fence),
 each `assign` form and its tie-break, half-landed and silently dropped writes,
 failed writes that are not retried, post-write read failures returning exit 3, concurrent closure,
-run configs refused as edge targets, cycles through complete lists, duplicates and other repositories,
+run configs refused as edge targets, pull request targets refused before any ticket write,
+cycles through complete lists, duplicates and other repositories,
 and text kept off the command line.
 
 **A52 `github.py` from an installed copy, from #94.** Direct. Install the candidate into an empty directory with
@@ -679,6 +680,9 @@ edge; the bare claim, and a second claim refused; a terminal move with no status
 clears the edges and the milestone; a duplicate with its original; milestone ensure, show, and close, with a refused
 ensure of the closed one; run create, show, and close; a run config refused by `show` and missing from `list`; a
 ticket refused by `run close`; and a missing issue refused by `show` and by `run show`.
+Also give a pull request number to `show`, `edit`, `assign`, `move`, `comment`, `link`, and `unlink`.
+Each exits 1 with a pull request refusal. An independent `gh pr view` confirms that its title,
+body, state, labels, assignees, and comments are unchanged.
 
 ## B. Local backend
 
@@ -1557,6 +1561,47 @@ here.
 Versions 0.0.9 to 0.0.41 below were development steps on the `feat/tracker` branch. They shipped
 together as 0.0.8, so an entry's version names a branch state, and its skill ref names the exact
 commit it tested.
+
+### 2026-10-29T10:26:25-07:00 PR #95 review round 7
+
+Attempt: `review round 7 on https://github.com/wilsonkichoi/skills/pull/95`.
+Reviewed `576649703af1002e01cec5bf079f48670426fa40` independently. The maintainer authorized one
+additional fixing round, making the limit seven, and a throwaway GitHub repository. Selected A51,
+focused A52 subchecks for pull request refusal and ordinary issue operations, and static checks.
+GitHub backend; direct checks in Codex. AI test sessions: **0 of 6**.
+
+- **A51 PASS:** 89 existing tests passed before changes. The new regression test failed on all
+  seven subchecks against the reviewed implementation. All 90 tests pass with the shared read fix.
+- **Live reproduction:** `comment 1` through the reviewed script returned exit 0 and
+  `commented: true` on [fixture PR #1](https://github.com/wilsonkichoi/wkc-review95-round7-20261029/pull/1).
+  An independent `gh pr view` read confirmed the comment text:
+  `Round 7 reproduction: a ticket comment incorrectly reaches this pull request.`
+  `gh issue view` returns a pull request with dependency data, so the old ticket check accepted it.
+- **A52 focused subchecks PASS:** installed a local candidate snapshot with `npx skills add` into
+  an empty directory for `claude-code`, then ran the installed script from `/`. Its SHA256 was
+  `0261cd3f5d362e6db32b843cac8f4fe74a7c4e286cb84ba069627566296f05f5`, equal to the fixed source.
+  `show`, `edit`, `assign`, `move`, `comment`, `link`, and `unlink` on fixture PR #1 all exited 1
+  with a pull request refusal. Independent before and after `gh pr view` snapshots were equal for
+  title, body, state, labels, assignees, and comments.
+- **Ordinary issue regression subchecks PASS:** all verb names ran successfully on fixture issues
+  #2 to #4 and milestone `Round 7: Exact milestone`. Independent `gh issue view` reads confirmed
+  exact quoted and Unicode create text, #3's initial body, blocker and milestone, its claim and
+  assignment, its exact comment, and its edited body with no blockers or milestone. Independent
+  reads confirmed #2 `CLOSED` `COMPLETED`, #3 `CLOSED` `DUPLICATE`, and no status labels.
+  Cycle, second claim, second unlink, terminal reopen, closed milestone ensure, ticket/run-config
+  confusion, and missing issue refusals exited 1. Closed run configs remained readable. The direct
+  executable form ran `milestone list`. An independent milestones read confirmed it closed.
+
+Static metadata, opening field order, line ceiling, supporting contents, branch version/changelog,
+and `git diff --check` passed. Security review and the history scan found no secret, authorization
+defect, sensitive-data destination, or unrelated network call. The only new dependency remains
+`uv`, approved by ADR-011; Python dependencies remain standard library only.
+
+This is focused A52 evidence, not a full-case PASS: independent reads did not check every
+intermediate link or assignment write. Case 72 was not rerun. Its earlier report applies to its
+recorded candidate. Harness loading, cross-harness behavior, and finish under `--run` remain
+unestablished. There is no configured `test_command`, and GitHub reports no PR checks. The private
+fixture remains available as durable evidence. Raw command logs stay outside the repository.
 
 ### 2026-10-29T10:02:16-07:00 PR #95 review round 5
 

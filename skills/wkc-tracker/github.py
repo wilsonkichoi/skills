@@ -430,6 +430,8 @@ class GitHub:
             if "Could not resolve to an issue" in error.detail or "not found" in error.detail.lower():
                 refuse(f"{self.repo}#{number} does not exist", gh=error.detail)
             raise
+        if re.search(r"/pull/\d+$", raw.get("url", "")):
+            refuse(f"{self.repo}#{number} is a pull request, not a ticket")
         return issue_from_gh(raw, self.repo)
 
     def node(self, ref: Ref) -> Issue:

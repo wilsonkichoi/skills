@@ -103,6 +103,8 @@ comments: on a public repository anyone can comment.
 - Lists read every issue unfiltered, never through `--label`, `--milestone`, or `--search`, and
   raise the limit until a page comes back short. Run configs, labeled `wkc-run`, never appear in a
   list, the frontier, or a count, and a ticket verb refuses one.
+- Ticket verbs refuse pull request numbers before writing. `gh issue view` can return a pull
+  request, so the script checks its URL before treating it as a ticket.
 - A milestone is matched by exact title against every milestone, closed ones included, read in full.
 - A blocker is met only when it is `done`, or a duplicate whose chain ends at `done`. Blockers are
   read in full with their repository; a duplicate chain that loops or breaks is unmet.

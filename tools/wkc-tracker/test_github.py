@@ -796,6 +796,31 @@ class Parsing(unittest.TestCase):
 class RealGitHub(unittest.TestCase):
     """The real class with gh stubbed: paging and argument handling."""
 
+    def test_ticket_verbs_refuse_pull_requests_before_writing(self):
+        raw = {"number": 1, "title": "A pull request", "state": "OPEN", "stateReason": "",
+               "labels": [], "assignees": [], "milestone": None, "body": "PR body",
+               "blockedBy": {"nodes": [], "totalCount": 0}, "comments": [],
+               "url": "https://github.com/o/r/pull/1"}
+        verbs = (["show", "1"], ["edit", "1", "--title", "new"], ["assign", "1", "alice"],
+                 ["move", "1", "ready"], ["comment", "1", "--body-file", "-"],
+                 ["link", "1", "2"], ["unlink", "1", "2"])
+        for verb in verbs:
+            with self.subTest(verb=verb):
+                f = FakeGitHub()
+                f.add(1)
+                f.add(2)
+                reader = g.GitHub(REPO)
+                output = io.StringIO()
+                with mock.patch.object(reader, "gh_json", return_value=raw), \
+                     mock.patch.object(f, "issue", side_effect=reader.issue), \
+                     mock.patch.object(sys, "stdin", io.StringIO("A comment")), \
+                     redirect_stdout(output):
+                    code = g.main(verb, gh=f)
+                result = json.loads(output.getvalue())
+                self.assertEqual((code, result.get("error")), (1, "refused"))
+                self.assertIn("pull request", result["message"])
+                self.assertEqual(f.writes, [])
+
     def test_issue_list_raises_the_limit_on_a_full_page(self):
         rows = [{"number": n, "title": "", "state": "OPEN", "labels": [], "assignees": [],
                  "blockedBy": {"nodes": [], "totalCount": 0}} for n in range(1, 701)]
