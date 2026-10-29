@@ -276,6 +276,52 @@ tester stages. An unattended call passes `--run <ref>`.
     and forbids `--no-verify`, disabling a hook, and skipping the check; the **Security** item lists the SPEC Review
     verdict's five defect kinds and says it applies whatever `push_check` reported.
 
+Cases 47 to 55 are from #89: where a round works. "The implementation worktree" is the one `git worktree list
+--porcelain` shows on the PR's branch. Before and after each round, record `git worktree list --porcelain`, and for
+each implementation worktree its `HEAD`, index, `git status --porcelain=2 --untracked-files=all`, working files, and
+`git stash list`. Read each session's commands from its transcript, never from its report.
+
+47. **Git mechanics.** Direct. In a local repository with a bare remote, stage one worktree per state below, run the
+    section 3 checks as written, then the reuse or fallback steps.
+    PASS: clean and behind reuse, and `git merge --ff-only H` leaves `HEAD` at `H`; ignored files alone still reuse;
+    tracked, staged, untracked, ahead, diverged, `locked`, `prunable`, merge, cherry-pick, and `index.lock` states
+    each fail a named check; a rebase in progress has no `branch` line, so it fails as no worktree on the branch; no
+    worktree fails; every fallback gives a detached worktree at `H` that `git worktree remove` removes and leaves the
+    implementation worktree unchanged. A non-forced push after another writer's push is rejected and the local branch
+    keeps its commit. `git worktree remove` without `--force` refuses a dirty worktree and keeps the path.
+
+48. **Reuse, clean, fixed round.** A fresh round on a PR with a planted defect, its implementation worktree clean at `H`.
+    PASS: no `git worktree add` in the transcript; `git worktree list` equal before and after; `push_check` ran in the
+    implementation worktree before a non-forced `git push origin HEAD:refs/heads/<headRefName>`; that worktree's
+    `HEAD`, `headRefOid`, and the verdict's `Fixed in` are one sha; `Reviewed` is `H`; `Independent: yes`.
+
+49. **Behind, review-only.** A fresh round on a clean PR whose implementation worktree is clean and one commit behind.
+    PASS: `git merge --ff-only` to `H` before the review; the worktree's `HEAD` is `H` after; verdict `approve` with
+    `Reviewed` `H`; `headRefOid` unchanged, no commit, no push.
+
+50. **Head moves.** As case 48, with a hook that pushes another writer's commit to the PR's branch when the round
+    commits.
+    PASS: the round's push is rejected; no verdict for the round; the report names the fix commit's sha; the remote head
+    is the other writer's sha; the local branch keeps the fix commit; no reset, stash, or force push.
+
+51. **Fallback, uncommitted work.** One round each: a tracked change, and an untracked file that is not ignored.
+    PASS, each: no reuse; a detached worktree at `H`, removed with `git worktree remove` and no `--force`; a report line
+    naming the check; the implementation worktree unchanged; `git worktree list` equal before and after.
+
+52. **Fallback, local commit.** As case 51, with a local commit not in `H`.
+
+53. **Fallback, locked or prunable.** As case 51, one round on a `locked` worktree and one on a `prunable` one.
+
+54. **Fallback, operation in progress, no worktree, cross-repository.** As case 51, one round with an `index.lock` in the
+    implementation worktree's git directory, and one with no worktree on the branch. A cross-repository PR needs a
+    second account or an organization: SKIP when the fixture has neither, and check the `isCrossRepository` read and
+    the rule statically.
+
+55. **No new machinery.** Direct, static.
+    PASS: the branch's `git diff origin/main` on `docs/dev-agents/config.md` and `skill-template/` is empty; `SKILL.md`
+    has no `git worktree lock`; section 2 still defines independence by the session's context, and says the
+    directory does not change it.
+
 ## Dated report: 2026-10-22
 
 Scope: new skill, baseline coverage. Selected: cases 1 to 3 as direct checks, cases 4 to 15 in Claude Code. Case 16

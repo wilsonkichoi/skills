@@ -98,8 +98,7 @@ Never claim independence this session does not have.
 
 Read the ticket's **What to build**, **Why**, **Acceptance criteria**, **After merge**, and
 **Notes**, the SPEC and ADR sections they cite, the diff (`gh pr diff <n>`), the checks (`gh pr
-checks <n>`), and enough surrounding code to judge the diff in context. Run the criteria's commands
-and `test_command` where a judgment needs them.
+checks <n>`), and enough surrounding code to judge the diff in context.
 
 **Where to work.** Fetch `H` with `git fetch origin pull/<n>/head`. Reuse the worktree that `git
 worktree list --porcelain` shows on `branch refs/heads/<headRefName>` when the pull request is not
@@ -110,7 +109,8 @@ merge --ff-only H` before the review starts. When a check fails, or with no pull
 temporary detached worktree at `H` (`git worktree add --detach <path> H`) and report which check
 failed. When the round ends, remove that worktree with `git worktree remove <path>`, never
 `--force`, and report a removal that fails, with its path. Never switch, stash, reset, or clean a
-checkout, and never commit someone else's changes.
+checkout, and never commit someone else's changes. Read the checks' results before running anything
+in a worktree; then run the criteria's commands and `test_command` there, where a judgment needs them.
 
 **An update from the base.** When the latest verdict is `approve` on an older head `A`, and `H` is a
 merge whose parents are `A` and a commit `M` on the base branch (`git merge-base --is-ancestor M
