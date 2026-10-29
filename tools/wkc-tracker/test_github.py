@@ -524,6 +524,24 @@ class Edit(unittest.TestCase):
                     g.cmd_edit(self.f, 1, None, "## Notes\nNew notes.\n", None, False)
                     self.assertEqual(self.f.issues[ref(1)]["body"], body.replace("Real notes.", "New notes."))
 
+    def test_section_edits_keep_untouched_line_endings_and_unicode_separators(self):
+        for newline in ("\r\n", "\r", "\n"):
+            with self.subTest(newline=repr(newline)):
+                prefix = "## What to build" + newline + "Keep café\u2028and this.\u0085" + newline + newline
+                suffix = "## Related\nKeep mixed line endings.\r\n"
+                self.f.issues[ref(1)]["body"] = prefix + "## Notes" + newline + "Old." + newline + newline + suffix
+                g.cmd_edit(self.f, 1, None, "## Notes\r\nNew.\r\n", None, False)
+                self.assertEqual(self.f.issues[ref(1)]["body"], prefix + "## Notes\r\nNew.\r\n" + newline + suffix)
+
+    def test_added_section_has_a_boundary_when_the_body_has_no_final_newline(self):
+        for body, expected in (("Intro", "Intro\n\n## Notes\nNew."),
+                               (" ", " \n## Notes\nNew."),
+                               ("## What to build\nKeep.", "## What to build\nKeep.\n\n## Notes\nNew.")):
+            with self.subTest(body=body):
+                self.f.issues[ref(1)]["body"] = body
+                g.cmd_edit(self.f, 1, None, "## Notes\nNew.", None, False)
+                self.assertEqual(self.f.issues[ref(1)]["body"], expected)
+
     def test_blocked_by_section_becomes_the_edge_set(self):
         self.f.issues[ref(1)]["blockers"] = [ref(2)]
         g.cmd_edit(self.f, 1, None, "## Blocked by\n- #4\n", None, False)
@@ -866,9 +884,9 @@ class RealGitHub(unittest.TestCase):
 
         def run(cmd, input=None, **kw):
             calls.append((cmd, input))
-            return subprocess.CompletedProcess(cmd, 0, stdout='{"number": 7}', stderr="")
+            return subprocess.CompletedProcess(cmd, 0, stdout=b'{"number": 7}', stderr=b"")
 
-        title, body = "a'b\"$(c)", "## X\n`y`\n"
+        title, body = "a'b\"$(c)", "## X\r\ncafé → 🎉 `y`\r\n"
         with mock.patch.object(g.subprocess, "run", side_effect=run):
             gh = g.GitHub(REPO)
             gh.create_issue(title, body, 3, [])
@@ -876,7 +894,7 @@ class RealGitHub(unittest.TestCase):
         (create, create_in), (comment, comment_in) = calls
         self.assertEqual(json.loads(create_in), {"title": title, "body": body, "labels": [], "milestone": 3})
         self.assertNotIn(title, " ".join(create))
-        self.assertEqual((comment[-2:], comment_in), (["--body-file", "-"], body))
+        self.assertEqual((comment[-2:], comment_in), (["--body-file", "-"], body.encode("utf-8")))
 
     def test_real_writes_mark_attempts_before_transport_failure(self):
         for method, args in (("create_issue", ("t", "b", None, [])),
@@ -918,6 +936,22 @@ class Cli(unittest.TestCase):
         self.assertEqual((code, out["ok"], out["verb"], out["total"]), (0, True, "milestone show", 0))
         code, out = self.run_cli(["milestone", "show", "m1"], f)
         self.assertEqual((code, out["ok"], out["error"]), (1, False, "refused"))
+
+    def test_file_bodies_keep_their_line_endings(self):
+        body = "## Notes\r\nKeep café → 🎉.\r\n"
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "body.md"
+            path.write_bytes(body.encode("utf-8"))
+            for verb in (["create", "--title", "T"], ["comment", "1"],
+                         ["run", "create", "--run-branch", "run/test"]):
+                with self.subTest(verb=verb):
+                    f = FakeGitHub()
+                    f.add(1)
+                    code, out = self.run_cli([*verb, "--body-file", str(path)], f)
+                    self.assertEqual(code, 0, out)
+                    actual = (f.issues[ref(1)]["comments"][-1]["body"] if verb[0] == "comment"
+                              else f.issues[ref(2)]["body"])
+                    self.assertEqual(actual, body)
 
     def test_post_write_read_failures_are_unverified(self):
         for verb in (["assign", "1", "alice"], ["move", "1", "ready"],
@@ -972,7 +1006,7 @@ class Locale(unittest.TestCase):
     """The script as a process, with a fake gh that speaks UTF-8 as the real one
     does, under a Latin-1 locale such as a Windows code page gives."""
 
-    TEXT = "café → 🎉"
+    TEXT = "café → 🎉\r\nSecond line.\r\n"
     FAKE_GH = """\
 import json, os, sys
 text, state = {text}, os.environ["FAKE_GH_STATE"]

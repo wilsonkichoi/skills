@@ -180,6 +180,7 @@ def _heading_lines(lines: list[str]) -> list[tuple[int, int, str]]:
     optional closing `#` sequence."""
     headings, fence = [], None
     for index, line in enumerate(lines):
+        line = line.rstrip("\r\n")
         marker = re.match(r" {0,3}(`{3,}|~{3,})(.*)", line)
         if marker:
             token, rest = marker.groups()
@@ -201,7 +202,10 @@ def split_sections(body: str) -> tuple[list[str], list[tuple[str, list[str]]]]:
     """Split a body into the lines before its first heading and one piece per `#`
     or `##` heading. A `##` section runs from its heading to the next `#` or `##`
     heading, so its `###` subsections belong to it."""
-    lines = body.splitlines()
+    # Keep the original terminators. Unicode separators are text, not Markdown line breaks.
+    lines = re.findall(r"[^\r\n]*(?:\r\n|\r|\n|$)", body)
+    if lines and not lines[-1]:
+        lines.pop()
     headings = _heading_lines(lines)
     if not headings:
         return lines, []
@@ -226,19 +230,24 @@ def apply_sections(body: str, given: list[tuple[str, list[str]]]) -> str:
         if len(matches) > 1:
             refuse(f"the ticket has {len(matches)} `## {name}` sections; edit cannot tell which to replace")
         new_span = _trim(span)
+        if not new_span[-1].endswith(("\r", "\n")):
+            new_span[-1] += "\n"
         if matches:
             old = pieces[matches[0]][1]
-            trailing = len(old) - len(_trim(old))
-            pieces[matches[0]] = (key, new_span + [""] * trailing)
+            trailing = old[len(_trim(old)):]
+            pieces[matches[0]] = (key, new_span + trailing)
         else:
-            if pieces and _trim(pieces[-1][1]) == pieces[-1][1]:
-                pieces[-1] = (pieces[-1][0], pieces[-1][1] + [""])
-            elif not pieces and head and head[-1].strip():
-                head = head + [""]
+            previous = pieces[-1][1] if pieces else head
+            if previous:
+                if not previous[-1].endswith(("\r", "\n")):
+                    previous[-1] += "\n"
+                if previous[-1].strip():
+                    previous.append("\n")
             pieces.append((key, new_span))
-    lines = head + [line for _, span in pieces for line in span]
-    text = "\n".join(lines)
-    return text + "\n" if body.endswith("\n") or not body else text
+    text = "".join(head + [line for _, span in pieces for line in span])
+    if body and not body.endswith(("\r", "\n")):
+        return text.removesuffix("\n").removesuffix("\r")
+    return text
 
 
 def _trim(span: list[str]) -> list[str]:
@@ -263,7 +272,7 @@ def parse_given_sections(text: str) -> list[tuple[str, list[str]]]:
 def blocked_by_section(pieces: list[tuple[str, list[str]]]) -> str | None:
     for key, span in pieces:
         if section_name(key).lower() == "blocked by":
-            return "\n".join(span)
+            return "".join(span)
     return None
 
 
@@ -377,14 +386,15 @@ class GitHub:
         # gh reads and writes UTF-8 whatever the locale says.
         try:
             result = subprocess.run(
-                ["gh", *args], input=stdin, encoding="utf-8", capture_output=True, check=False
+                ["gh", *args], input=stdin.encode("utf-8") if stdin is not None else None,
+                capture_output=True, check=False
             )
         except OSError as error:
             read_failed(f"cannot run gh: {error}")
         if result.returncode != 0:
-            detail = result.stderr.strip() or result.stdout.strip() or "no output"
+            detail = result.stderr.decode("utf-8").strip() or result.stdout.decode("utf-8").strip() or "no output"
             raise GhError(args, detail)
-        return result.stdout
+        return result.stdout.decode("utf-8")
 
     def gh_json(self, args: list[str], stdin: str | None = None) -> Any:
         out = self.gh(args, stdin)
@@ -1217,7 +1227,7 @@ def read_text(path: str) -> str:
     if path == "-":
         return sys.stdin.read()
     try:
-        with open(path, encoding="utf-8") as handle:
+        with open(path, encoding="utf-8", newline="") as handle:
             return handle.read()
     except OSError as error:
         refuse(f"cannot read {path}: {error.strerror}")
@@ -1338,6 +1348,6 @@ def main(argv: list[str] | None = None, gh: GitHub | None = None) -> int:
 
 if __name__ == "__main__":
     # Text in and out is UTF-8, as gh's is, so a non-UTF-8 locale cannot change it.
-    sys.stdin.reconfigure(encoding="utf-8")
-    sys.stdout.reconfigure(encoding="utf-8")
+    sys.stdin.reconfigure(encoding="utf-8", newline="")
+    sys.stdout.reconfigure(encoding="utf-8", newline="")
     sys.exit(main())

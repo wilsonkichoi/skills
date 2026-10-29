@@ -117,7 +117,9 @@ comments: on a public repository anyone can comment.
 - A closed issue carries no status label; `done`, `cancel`, and `duplicate` are close reasons.
 - Writes send text through standard input, never through a shell or a query string.
 - Text is UTF-8 everywhere, as `gh` uses it: the script's input and output and what it exchanges
-  with `gh`. A non-UTF-8 locale, such as a Windows code page, changes none of it.
+  with `gh`. A non-UTF-8 locale, such as a Windows code page, changes none of it. Files and
+  standard input keep their line endings. Section edits preserve untouched text exactly, including
+  mixed line endings and Unicode separators.
 
 `tools/wkc-tracker/test_github.py` in the source repository tests each of these.
 

@@ -667,7 +667,8 @@ each `assign` form and its tie-break, half-landed and silently dropped writes,
 failed writes that are not retried, post-write read failures returning exit 3, concurrent closure,
 run configs refused as edge targets, pull request targets refused before any ticket write,
 cycles through complete lists, duplicates and other repositories,
-and text kept off the command line and kept UTF-8 under a Latin-1 locale.
+and text kept off the command line and kept UTF-8 under a Latin-1 locale, exact CRLF input bodies,
+and untouched sections with mixed line endings and Unicode separators.
 
 **A52 `github.py` from an installed copy, from #94.** Direct. Install the candidate into an empty directory with
 `npx skills add "<clean-candidate>" -s wkc-tracker -a claude-code -y`, then run every verb from `/` as
@@ -680,6 +681,9 @@ edge; the bare claim, and a second claim refused; a terminal move with no status
 clears the edges and the milestone; a duplicate with its original; milestone ensure, show, and close, with a refused
 ensure of the closed one; run create, show, and close; a run config refused by `show` and missing from `list`; a
 ticket refused by `run close`; and a missing issue refused by `show` and by `run show`.
+Use a CRLF body file and standard input for comments, creates, and run configs. Compare the original
+UTF-8 bytes with independent reads. Edit a section in a body with mixed line endings and Unicode
+separators; every untouched section must remain exact.
 Also give a pull request number to `show`, `edit`, `assign`, `move`, `comment`, `link`, and `unlink`.
 Each exits 1 with a pull request refusal. An independent `gh pr view` confirms that its title,
 body, state, labels, assignees, and comments are unchanged.
@@ -1561,6 +1565,51 @@ here.
 Versions 0.0.9 to 0.0.41 below were development steps on the `feat/tracker` branch. They shipped
 together as 0.0.8, so an entry's version names a branch state, and its skill ref names the exact
 commit it tested.
+
+### 2026-10-29T10:53:19-07:00 PR #95 review round 9
+
+Attempt: `review round 9 on https://github.com/wilsonkichoi/skills/pull/95`.
+Reviewed `16d6a3a74081019aaa1c422d0c9edd5c82d7e2e9` independently. The maintainer authorized one
+additional fixing round, making the limit nine, and a throwaway GitHub repository. Reused
+`wilsonkichoi/wkc-review95-round7-20261029`. Selected A51, focused A52 subchecks for exact input
+and section preservation, and static checks. GitHub backend; direct checks in Codex.
+AI test sessions: **0 of 6**.
+
+- **Live reproduction:** the reviewed script, installed with `npx skills add` and called from `/`,
+  returned exit 0 for a CRLF comment file but stored LF. The
+  [stored comment](https://github.com/wilsonkichoi/wkc-review95-round7-20261029/issues/2#issuecomment-6504136388)
+  contains `"Round 9 CRLF reproduction: café → 🎉\nSecond line.\n"`; the input had `\r\n` at both
+  breaks. A [direct gh control](https://github.com/wilsonkichoi/wkc-review95-round7-20261029/issues/2#issuecomment-6504137235)
+  preserved both CRLF breaks. Python's file reader translated them before the script verified its own
+  normalized text. Section reconstruction also changed all untouched line endings and Unicode separators.
+- **A51 PASS:** all 91 existing tests passed before changes. Two added tests and the extended locale
+  test failed on the reviewed implementation in seven subchecks: file bodies for create, comment,
+  and run create; section preservation with CRLF, CR, and LF; and the process-level CRLF comment.
+  All 94 tests pass after the fix, including an added boundary regression for bodies without a final
+  newline. Input keeps its line endings, `gh` exchanges UTF-8 bytes without platform newline translation,
+  and section replacement retains original spans. Earlier fixed findings remain resolved in the code
+  read and their regression tests pass.
+- **A52 focused subchecks PASS:** installed the fixed candidate with `npx skills add` and ran it from
+  `/` under `LC_ALL=en_US.ISO8859-1`, `PYTHONUTF8=0`, and `PYTHONCOERCECLOCALE=0`. Independent `gh issue view`
+  reads confirmed the exact create body on [issue #6](https://github.com/wilsonkichoi/wkc-review95-round7-20261029/issues/6),
+  exact CRLF comments from a file and stdin, and an edited Notes section with untouched mixed line
+  endings and U+2028. Run config [#7](https://github.com/wilsonkichoi/wkc-review95-round7-20261029/issues/7)
+  retained its exact CRLF body through create, show, close, and show after close. Its CLOSED state was
+  independently confirmed. Tested script SHA256:
+  `19de81d78a8e84a9dbf25be8f496fd39d747ca5b1769b930faad9d5b9174857d`.
+- **Fixture correction:** the first fixed-candidate create returned exit 3 on
+  [issue #5](https://github.com/wilsonkichoi/wkc-review95-round7-20261029/issues/5).
+  An independent read showed GitHub changed U+0085 to the literal text `^E`. The script correctly
+  reported the mismatch and did not retry. The next fixture omitted this control character.
+- **Static checks PASS:** changed skill metadata, opening fields, line ceilings, supporting contents,
+  version/changelog, and `git diff --check`. Security review found no secret, authorization defect,
+  sensitive-data destination, or unrelated network call. The only added dependency remains `uv`,
+  approved by ADR-011; Python uses only its standard library.
+
+These are focused A52 checks, not a full-case PASS. Windows itself was not run. Case 72 was not
+rerun; earlier model evidence applies only to its recorded candidate. Harness loading,
+cross-harness behavior, and finish under `--run` remain unestablished. No `test_command` is
+configured, and GitHub reports no PR checks. No other AI session or harness was launched.
 
 ### 2026-10-29T10:37:23-07:00 PR #95 review round 8
 
