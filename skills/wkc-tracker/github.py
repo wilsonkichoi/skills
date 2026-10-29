@@ -365,6 +365,7 @@ class GitHub:
     def __init__(self, repo: str) -> None:
         self.repo = repo
         self._login: str | None = None
+        self.write_attempted = False
 
     # -- plumbing
 
@@ -482,15 +483,20 @@ class GitHub:
 
     # -- writes
 
+    def write(self, args: list[str], stdin: str | None = None, *, json_result: bool = False) -> Any:
+        # Once a request starts, a later failure cannot promise nothing was written.
+        self.write_attempted = True
+        return self.gh_json(args, stdin) if json_result else self.gh(args, stdin)
+
     def create_issue(self, title: str, body: str, milestone: int | None, labels: list[str]) -> int:
         payload: dict[str, Any] = {"title": title, "body": body, "labels": labels}
         if milestone is not None:
             payload["milestone"] = milestone
-        out = self.gh_json(["api", "--method", "POST", f"repos/{self.repo}/issues", "--input", "-"], json.dumps(payload))
+        out = self.write(["api", "--method", "POST", f"repos/{self.repo}/issues", "--input", "-"], json.dumps(payload), json_result=True)
         return out["number"]
 
     def update_issue(self, number: int, fields: dict[str, Any]) -> None:
-        self.gh(["api", "--method", "PATCH", f"repos/{self.repo}/issues/{number}", "--input", "-"], json.dumps(fields))
+        self.write(["api", "--method", "PATCH", f"repos/{self.repo}/issues/{number}", "--input", "-"], json.dumps(fields))
 
     def edit_issue(self, number: int, add_labels: Iterable[str] = (), remove_labels: Iterable[str] = (),
                    add_assignees: Iterable[str] = (), remove_assignees: Iterable[str] = ()) -> None:
@@ -500,33 +506,33 @@ class GitHub:
             for value in values:
                 args += [flag, value]
         if len(args) > 5:
-            self.gh(args)
+            self.write(args)
 
     def close_issue(self, number: int, reason: str, duplicate_of: Ref | None = None) -> None:
         args = ["issue", "close", str(number), "--repo", self.repo, "--reason", reason]
         if duplicate_of is not None:
             args += ["--duplicate-of", _issue_url(duplicate_of) if duplicate_of.repo != self.repo else str(duplicate_of.number)]
-        self.gh(args)
+        self.write(args)
 
     def comment(self, number: int, body: str) -> None:
-        self.gh(["issue", "comment", str(number), "--repo", self.repo, "--body-file", "-"], body)
+        self.write(["issue", "comment", str(number), "--repo", self.repo, "--body-file", "-"], body)
 
     def add_blocked_by(self, number: int, blocker_id: int) -> None:
-        self.gh(["api", "--method", "POST", f"repos/{self.repo}/issues/{number}/dependencies/blocked_by",
+        self.write(["api", "--method", "POST", f"repos/{self.repo}/issues/{number}/dependencies/blocked_by",
                  "-F", f"issue_id={blocker_id}"])
 
     def remove_blocked_by(self, number: int, blocker_id: int) -> None:
-        self.gh(["api", "--method", "DELETE", f"repos/{self.repo}/issues/{number}/dependencies/blocked_by/{blocker_id}"])
+        self.write(["api", "--method", "DELETE", f"repos/{self.repo}/issues/{number}/dependencies/blocked_by/{blocker_id}"])
 
     def create_milestone(self, title: str) -> None:
-        self.gh(["api", "--method", "POST", f"repos/{self.repo}/milestones", "--input", "-"], json.dumps({"title": title}))
+        self.write(["api", "--method", "POST", f"repos/{self.repo}/milestones", "--input", "-"], json.dumps({"title": title}))
 
     def close_milestone(self, number: int) -> None:
-        self.gh(["api", "--method", "PATCH", f"repos/{self.repo}/milestones/{number}", "--input", "-"],
+        self.write(["api", "--method", "PATCH", f"repos/{self.repo}/milestones/{number}", "--input", "-"],
                 json.dumps({"state": "closed"}))
 
     def create_label(self, name: str, description: str) -> None:
-        self.gh(["api", "--method", "POST", f"repos/{self.repo}/labels", "--input", "-"],
+        self.write(["api", "--method", "POST", f"repos/{self.repo}/labels", "--input", "-"],
                 json.dumps({"name": name, "description": description}))
 
 
@@ -550,6 +556,13 @@ def ticket(gh: GitHub, number: int) -> Issue:
     if issue.blocked_by is None:
         no_dependencies()
     return issue
+
+
+def ticket_node(gh: GitHub, ref: Ref) -> Issue:
+    node = gh.node(ref)
+    if node.is_run_config:
+        refuse(f"{ref} is a run config ({RUN_LABEL}), not a ticket")
+    return node
 
 
 def no_dependencies() -> NoReturn:
@@ -714,12 +727,14 @@ def cmd_next(gh: GitHub) -> dict[str, Any]:
     counts: dict[str, int] = {}
     for issue in issues:
         counts[issue.status] = counts.get(issue.status, 0) + 1
+    graph, cycles = _blocking_graph(gh, issues)
     return {
         "frontier": frontier,
         "held": held,
         "inconsistent": sorted(i.ref.number for i in issues if i.status == "inconsistent"),
         "open_counts": counts,
-        "cycles": _open_cycles(issues, gh.repo),
+        "cycles": cycles,
+        "blocker_graph": graph,
     }
 
 
@@ -728,26 +743,63 @@ def _open_verdict(blocker: Issue) -> dict[str, Any]:
             "met": False, "reason": f"open, {blocker.status}"}
 
 
-def _open_cycles(issues: list[Issue], repo: str) -> list[list[int]]:
-    """Cycles among open tickets in this repository, each as a closed path."""
-    graph = {
-        i.ref.number: [b["ref"].number for b in i.blocked_by or [] if b["state"] == "OPEN" and b["ref"].repo == repo]
-        for i in issues
-    }
-    cycles, seen_sets = [], set()
-    for start in sorted(graph):
-        stack = [(start, [start])]
+def _blocking_graph(gh: GitHub, issues: list[Issue]) -> tuple[list[dict[str, Any]], list[list[Any]]]:
+    """Expand complete dependency paths, including duplicates and other repositories."""
+    known = {i.ref: i for i in issues}
+    graph: dict[Ref, list[Ref]] = {}
+    unreadable: list[dict[str, Any]] = []
+    pending = list(reversed(list(known)))
+    while pending:
+        ref = pending.pop()
+        if ref in graph:
+            continue
+        node = known.get(ref)
+        if node is None:
+            try:
+                node = gh.node(ref)
+                if node.status in ("done", "cancel"):
+                    children = []
+                elif node.status == "duplicate":
+                    children = [node.duplicate_of] if node.duplicate_of else []
+                else:
+                    children = blocker_refs(gh, ref)
+            except TrackerError as error:
+                graph[ref] = []
+                unreadable.append({"ref": str(ref), "error": str(error)})
+                continue
+            known[ref] = node
+        elif node.blockers_truncated:
+            children = blocker_refs(gh, ref)
+        else:
+            children = [b["ref"] for b in node.blocked_by or []]
+        graph[ref] = children
+        pending.extend(reversed(children))
+
+    # A depth-first walk visits each edge once, even in a dense acyclic graph.
+    cycles: list[list[Any]] = []
+    finished: set[Ref] = set()
+    for start in graph:
+        if start in finished:
+            continue
+        path = [start]
+        active = {start: 0}
+        stack = [iter(graph[start])]
         while stack:
-            node, path = stack.pop()
-            for nxt in graph.get(node, []):
-                if nxt == start:
-                    key = frozenset(path)
-                    if key not in seen_sets:
-                        seen_sets.add(key)
-                        cycles.append(path + [start])
-                elif nxt not in path and nxt > start:
-                    stack.append((nxt, path + [nxt]))
-    return cycles
+            nxt = next(stack[-1], None)
+            if nxt is None:
+                finished.add(path[-1])
+                active.pop(path.pop())
+                stack.pop()
+            elif nxt in active:
+                cycle = path[active[nxt]:] + [nxt]
+                cycles.append([r.number for r in cycle] if all(r.repo.lower() == gh.repo.lower() for r in cycle)
+                              else _s(cycle))
+            elif nxt not in finished:
+                active[nxt] = len(path)
+                path.append(nxt)
+                stack.append(iter(graph[nxt]))
+    return ([node.summary() | {"ref": str(ref), "blockers": _s(graph[ref])}
+             for ref, node in known.items()] + unreadable, cycles)
 
 
 # ---------------------------------------------------------------- ticket writes
@@ -760,7 +812,7 @@ def cmd_create(gh: GitHub, title: str, body: str, milestone: str | None) -> dict
     section = blocked_by_section(pieces)
     edges = refs_in_blocked_by(section, gh.repo) if section else []
     for edge in edges:
-        gh.node(edge)
+        ticket_node(gh, edge)
     target = resolve_milestone(gh, milestone, must_be_open=True) if milestone is not None else None
     try:
         number = gh.create_issue(title, body, target["number"] if target else None, [])
@@ -784,8 +836,8 @@ def cmd_create(gh: GitHub, title: str, body: str, milestone: str | None) -> dict
         problems.append("title")
     if after.body != body:
         problems.append("body")
-    if after.status_labels:
-        problems.append("status label")
+    if after.status != "backlog" or after.status_labels:
+        problems.append("status")
     if (after.milestone or {}).get("number") != (target["number"] if target else None):
         problems.append("milestone")
     if sorted(_s([b.ref for b in gh.blockers(after.ref)])) != sorted(_s(edges)):
@@ -882,6 +934,8 @@ def cmd_assign(gh: GitHub, number: int, who: str | None, holders: list[str]) -> 
     except GhError as error:
         unverified(f"the assignment of #{number} failed; read the ticket before trying again", gh=error.detail)
     after = gh.issue(number)
+    if after.state != "OPEN":
+        unverified(f"#{number} closed during the assignment", actual=after.summary())
     want = [target.lower()] if target else []
     if sorted(a.lower() for a in after.assignees) != want:
         unverified(f"#{number} is assigned to {after.assignees or 'nobody'}, expected {target or 'nobody'}"
@@ -901,6 +955,8 @@ def _assign_bare(gh: GitHub, before: Issue, me: str) -> dict[str, Any]:
     except GhError as error:
         unverified(f"taking #{number} failed; read the ticket before trying again", gh=error.detail)
     after = gh.issue(number)
+    if after.state != "OPEN":
+        unverified(f"#{number} closed while it was being taken", actual=after.summary())
     if after.status_labels != ["in-progress"]:
         gh.edit_issue(number, remove_labels=["in-progress"], remove_assignees=["@me"])
         unverified(f"#{number} changed status while it was being taken; the claim was taken back",
@@ -934,7 +990,7 @@ def cmd_move(gh: GitHub, number: int, status: str, original: str | None) -> dict
         after = gh.issue(number)
         want_assignees = [] if clear else before.assignees
         topics = sorted(label for label in before.labels if label not in OPEN_STATUSES)
-        if (after.status_labels != [status] or sorted(after.assignees) != sorted(want_assignees)
+        if (after.state != "OPEN" or after.status_labels != [status] or sorted(after.assignees) != sorted(want_assignees)
                 or sorted(label for label in after.labels if label not in OPEN_STATUSES) != topics):
             unverified(f"#{number} did not move to {status}", actual=after.summary())
         return after.summary() | {"note": _holder_note(after, gh.login())}
@@ -945,7 +1001,7 @@ def cmd_move(gh: GitHub, number: int, status: str, original: str | None) -> dict
         duplicate = parse_ref(original, gh.repo)
         if duplicate == before.ref:
             refuse("a ticket cannot duplicate itself")
-        gh.node(duplicate)
+        ticket_node(gh, duplicate)
     try:
         gh.close_issue(number, CLOSE_ARGS[status], duplicate)
     except GhError as error:
@@ -990,7 +1046,7 @@ def cmd_comment(gh: GitHub, number: int, body: str) -> dict[str, Any]:
 def _check_link(gh: GitHub, blocked: Ref, blocker: Ref) -> None:
     if blocked == blocker:
         refuse("a ticket cannot block itself")
-    gh.node(blocker)
+    ticket_node(gh, blocker)
     cycle = find_cycle(gh, blocked, blocker)
     if cycle:
         refuse(f"the edge would close a cycle: {' → '.join(cycle)}", cycle=cycle)
@@ -1030,6 +1086,7 @@ def cmd_unlink(gh: GitHub, number: int, blocker_text: str) -> dict[str, Any]:
     blocker = parse_ref(blocker_text, gh.repo)
     if blocker not in blocker_refs(gh, blocked):
         refuse(f"#{number} is not blocked by {blocker}; the edge does not exist")
+    ticket_node(gh, blocker)
     _write_unlink(gh, number, blocker)
     return {"number": number, "unlinked": str(blocker), "blockers": _s(blocker_refs(gh, blocked))}
 
@@ -1248,9 +1305,14 @@ def main(argv: list[str] | None = None, gh: GitHub | None = None) -> int:
     label = args.verb + (f" {args.action}" if getattr(args, "action", None) else "")
     try:
         gh = gh or GitHub(args.repo or origin_repo())
+        gh.write_attempted = False
         result = {"ok": True, "verb": label, "repo": gh.repo} | dispatch(gh, args)
         code = 0
     except TrackerError as error:
+        if gh is not None and gh.write_attempted and error.code != EXIT_UNVERIFIED:
+            error = TrackerError(EXIT_UNVERIFIED,
+                                 f"A write was attempted; read the remote state before retrying: {error}",
+                                 **error.details)
         result = {"ok": False, "verb": label, "error": ERROR_NAMES[error.code], "message": str(error)}
         result |= error.details
         code = error.code

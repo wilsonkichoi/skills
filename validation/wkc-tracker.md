@@ -662,7 +662,9 @@ PASS: every test passes. The tests run each verb against an in-memory GitHub and
 lists that raise the limit on a full page, the `wkc-run` exclusion, exact milestone titles against closed and
 near-match ones, blocker verdicts for cancel, duplicate chains, loops, and other repositories, cycles, exact bodies,
 section edits around fenced code, each `assign` form and its tie-break, half-landed and silently dropped writes,
-failed writes that are not retried, and text kept off the command line.
+failed writes that are not retried, post-write read failures returning exit 3, concurrent closure,
+run configs refused as edge targets, cycles through complete lists, duplicates and other repositories,
+and text kept off the command line.
 
 **A52 `github.py` from an installed copy, from #94.** Direct. Install the candidate into an empty directory with
 `npx skills add "<clean-candidate>" -s wkc-tracker -a claude-code -y`, then run every verb from `/` as
@@ -1553,6 +1555,29 @@ here.
 Versions 0.0.9 to 0.0.41 below were development steps on the `feat/tracker` branch. They shipped
 together as 0.0.8, so an entry's version names a branch state, and its skill ref names the exact
 commit it tested.
+
+### 2026-10-29 PR #95 review round 1
+
+Attempt: `review round 1 on https://github.com/wilsonkichoi/skills/pull/95`.
+Reviewed `c84e7e9d155f905f848a851df1a22bb90aca43ff`. Selected A51 and focused static checks of
+A52 packaging, setup case 9, and the documented contracts. GitHub backend; direct checks in Codex.
+AI test sessions: 0 of 6. No configured `test_command`; GitHub reports no checks.
+
+The original 71 tests passed. Added regressions reproduced four defects: post-write read failures and
+failed link requests returned exit 1 or 4; concurrently closed issues verified as successful moves or
+assignments; ticket edges accepted run configs; cycle reporting missed truncated lists, duplicates,
+and other repositories. The fixes and regression tests pass in `make test-tracker` (79 tests).
+A missing duplicate original remains unmet and is reported in the expanded blocker graph.
+The write transport test confirms real GitHub mutations record an attempt before transport failure.
+Read-only live checks of `next` and `milestone list` on `wilsonkichoi/wkc-tracker-fixture-65`
+both returned exit 0 and JSON results.
+
+Static review: version remains 0.0.44 for this PR, supporting-file contents lists and skill metadata
+remain valid, and `git diff --check` passes. History secret scan: no leaks. New dependency `uv`
+is required by the approved Python backend; no third-party Python dependencies or extra network
+services were added. A52 live writes and case 72 model behavior were not rerun after these fixes.
+Their earlier reports remain evidence for their recorded candidates only. Harness loading, Claude
+Code and Kiro execution, and finish under `--run` are not established by this round.
 
 ### 2026-10-29T09:30:00-07:00 #94 `github.py`, direct checks
 

@@ -84,6 +84,7 @@ class FakeGitHub(g.GitHub):
         return number
 
     def _write(self, name: str, *args) -> bool:
+        self.write_attempted = True
         self.writes.append((name, *args))
         if name in self.fail:
             raise g.GhError([name], f"{name} failed")
@@ -332,6 +333,26 @@ class Next(unittest.TestCase):
         self.f.add(21, status="backlog", blockers=[ref(22)])
         self.f.add(22, status="backlog", blockers=[ref(20)])
         self.assertIn([20, 21, 22, 20], g.cmd_next(self.f)["cycles"])
+
+    def test_cycles_follow_duplicate_and_cross_repository_blockers(self):
+        self.f.add(20, status="ready", blockers=[ref(21)])
+        self.f.add(21, status="duplicate", duplicate_of=ref(22, "other/r"))
+        self.f.add(22, repo="other/r", blockers=[ref(20)])
+        out = g.cmd_next(self.f)
+        self.assertIn(["o/r#20", "o/r#21", "other/r#22", "o/r#20"], out["cycles"])
+
+    def test_cycles_use_complete_blocker_lists(self):
+        self.f.add(20, status="ready", blockers=[ref(5), ref(21)])
+        self.f.add(21, blockers=[ref(20)])
+        self.f.list_node_cap = 1
+        self.assertIn([20, 21, 20], g.cmd_next(self.f)["cycles"])
+
+    def test_missing_duplicate_original_stays_unmet(self):
+        self.f.add(20, status="ready", blockers=[ref(21)])
+        self.f.add(21, status="duplicate", duplicate_of=ref(99))
+        out = g.cmd_next(self.f)
+        self.assertNotIn(20, [t["number"] for t in out["frontier"]])
+        self.assertTrue(any(n.get("error") for n in out["blocker_graph"]))
 
     def test_counts_open_statuses(self):
         self.assertEqual(g.cmd_next(self.f)["open_counts"], {"ready": 5, "in-progress": 1})
@@ -757,6 +778,16 @@ class RealGitHub(unittest.TestCase):
         self.assertNotIn(title, " ".join(create))
         self.assertEqual((comment[-2:], comment_in), (["--body-file", "-"], body))
 
+    def test_real_writes_mark_attempts_before_transport_failure(self):
+        for method, args in (("create_issue", ("t", "b", None, [])),
+                             ("comment", (1, "b")), ("add_blocked_by", (1, 2)),
+                             ("close_milestone", (1,))):
+            with self.subTest(method=method):
+                gh = g.GitHub(REPO)
+                with mock.patch.object(gh, "gh", side_effect=g.GhError(["api"], "transport failure")):
+                    self.assertRaises(g.TrackerError, getattr(gh, method), *args)
+                self.assertTrue(gh.write_attempted)
+
     def test_graphql_variables_are_arguments_not_query_text(self):
         gh = g.GitHub(REPO)
         with mock.patch.object(gh, "gh_json", return_value={"data": {}}) as stub:
@@ -781,6 +812,48 @@ class Cli(unittest.TestCase):
         self.assertEqual((code, out["ok"], out["verb"], out["total"]), (0, True, "milestone show", 0))
         code, out = self.run_cli(["milestone", "show", "m1"], f)
         self.assertEqual((code, out["ok"], out["error"]), (1, False, "refused"))
+
+    def test_post_write_read_failures_are_unverified(self):
+        for verb in (["assign", "1", "alice"], ["move", "1", "ready"],
+                     ["edit", "1", "--title", "new"]):
+            for failure in (g.GhError(["issue", "view"], "read failed"),
+                            g.TrackerError(g.EXIT_REFUSED, "missing issue")):
+                with self.subTest(verb=verb, failure=failure):
+                    f = FakeGitHub()
+                    f.add(1)
+                    before = f.issue(1)
+                    with mock.patch.object(f, "issue", side_effect=[before, failure]):
+                        code, out = self.run_cli(verb, f)
+                    self.assertTrue(f.writes)
+                    self.assertEqual((code, out.get("error")), (3, "unverified"))
+
+    def test_failed_link_request_is_unverified(self):
+        f = FakeGitHub()
+        f.add(1)
+        f.add(2)
+        f.fail.add("add_blocked_by")
+        code, out = self.run_cli(["link", "1", "2"], f)
+        self.assertEqual((code, out.get("error")), (3, "unverified"))
+
+    def test_closed_issue_cannot_verify_an_open_move_or_assignment(self):
+        for verb in (["move", "1", "ready"], ["assign", "1", "alice"], ["assign", "1"]):
+            with self.subTest(verb=verb):
+                f = FakeGitHub()
+                f.add(1, status="ready")
+                f.after_edit = lambda d: d.update(state="CLOSED", reason="COMPLETED")
+                code, out = self.run_cli(verb, f)
+                self.assertEqual((code, out.get("error")), (3, "unverified"))
+                self.assertEqual(f.issues[ref(1)]["state"], "CLOSED")
+
+    def test_run_configs_cannot_be_ticket_edge_targets(self):
+        for verb in (["link", "1", "2"], ["move", "1", "duplicate", "--original", "2"]):
+            with self.subTest(verb=verb):
+                f = FakeGitHub()
+                f.add(1)
+                f.add(2, labels=[g.RUN_LABEL])
+                code, out = self.run_cli(verb, f)
+                self.assertEqual((code, out.get("error")), (1, "refused"))
+                self.assertEqual(f.writes, [])
 
     def test_origin_repo_parsing(self):
         for url in ("git@github.com:a/b.git", "https://github.com/a/b", "https://github.com/a/b.git"):

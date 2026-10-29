@@ -78,17 +78,20 @@ the cycle's path.
 | 0 | | The read succeeded, or the write verified |
 | 1 | `refused` | A precondition failed. Nothing was written |
 | 2 | | Usage error, on standard error |
-| 3 | `unverified` | A write ran, and the re-read does not match or only part landed. `landed` says what did |
+| 3 | `unverified` | A write ran, and the re-read does not match or only part landed. Details report confirmed effects when known |
 | 4 | `read_failed` | `gh` failed, or data was missing, malformed, or incomplete. Nothing was written |
 
 Report a `refused` or `read_failed` result as the stop SKILL.md describes. For `unverified`, read
 the ticket before anything else: the script never retries a write that may have landed, such as a
-comment or a create.
+comment or a create. A failure after any write request exits 3, including a failed verification
+read or a claim that lost its tie-break.
 
 `list` gives each ticket's number, title, status, assignees, milestone, and blockers, and the
 inconsistent tickets apart. `show` adds the body, comments, labels, each blocker's verdict, and a
 duplicate's chain. `next` gives `frontier`, `held` with each unmet blocker's status, holder, and
-reason, `inconsistent`, `open_counts`, and `cycles`; an empty frontier is explained from these.
+reason, `inconsistent`, `open_counts`, `cycles`, and `blocker_graph`. The graph includes transitive
+blockers and unreadable references. Cycles use issue numbers within this repository and full refs
+when they cross repositories. An empty frontier is explained from these.
 `milestone show` gives `total`, `counts` for every status, and `open_or_unclean`. Whether that
 means `wkc-plan close` is the caller's call: the script never closes a milestone it shows.
 

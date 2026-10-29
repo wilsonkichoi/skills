@@ -11,6 +11,8 @@ Newest first. Each version is a `## {version} ({ISO 8601 timestamp with local of
 - `AGENTS.md`: no new helper scripts without a person's explicit approval; an approved helper is Python run with `uv run --script`, with contract tests in `tools/<skill>/` behind a `Makefile` target. `github.py` is the recorded exception, with tests in `tools/wkc-tracker/test_github.py` (`make test-tracker`). The SPEC's boundary and component row follow.
 - Validation: `wkc-tracker` cases A51 (contract tests) and A52 (every verb from an installed copy against a throwaway repository); stale references to `github.md`'s old queries in A-cases now use `github.py` or direct `gh api` reads; `wkc-implement` case 72 checks that a finish session runs `github.py`, with the wording-only attempt's failure kept in its dated report; `wkc-setup` case 9.
 
+- Review fixes: preserve exit 3 after write attempts; verify open state for claims and moves; refuse run configs as ticket edge targets; expand complete blocker paths through duplicates and other repositories when explaining cycles.
+
 ## 0.0.43 (2026-10-28T23:12:56-07:00)
 
 - `wkc-implement finish` takes the ticket's milestone from `wkc-tracker show <id>` after the move to `done`, names it, and then reads `wkc-tracker milestone show <milestone>` (#88). A read that did not ask for the milestone no longer counts as proof that the ticket has none. In #80's validation, two finish sessions read the ticket with `gh issue view` field lists that left out `milestone`, and reported "the ticket has no milestone" for tickets in `M1: Greetings`, so they never read the milestone and could not name `wkc-plan close`.
