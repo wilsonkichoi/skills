@@ -23,6 +23,7 @@ Keep raw logs and fixtures outside tracked files.
 - Dated report: 2026-10-26, run branch and run config (#78)
 - Dated report: 2026-10-28, push check and security review (#76)
 - Dated report: 2026-10-28, review in the implementation worktree (#89)
+- Review round 1: 2026-10-28, PR #90
 
 ## Preparation
 
@@ -322,6 +323,12 @@ each implementation worktree its `HEAD`, index, `git status --porcelain=2 --untr
     PASS: the branch's `git diff origin/main` on `docs/dev-agents/config.md` and `skill-template/` is empty; `SKILL.md`
     has no `git worktree lock`; section 2 still defines independence by the session's context, and says the
     directory does not change it.
+
+56. **No pull request, no remote.** Direct regression check. In a local repository with no remote,
+    note its ticket branch's head as `H`. Check that section 3 limits `git fetch origin pull/<n>/head`
+    to pull request rounds. Add a detached worktree at `H`, then remove it without `--force`.
+    PASS: no fetch is required, the detached worktree starts at `H`, and the worktree list is unchanged
+    after cleanup. This checks Git mechanics and the written condition, not model instruction following.
 
 ## Dated report: 2026-10-22
 
@@ -786,3 +793,29 @@ round whose head moves, which is unchanged behaviour; a cross-repository PR in c
 account has no organization or second account to fork from, with the `isCrossRepository` read and rule checked
 statically.
 
+## Review round 1: 2026-10-28, PR #90
+
+Reviewed `42d8c4f7f8a8bb9e4b1136da3ff099c1c100cd00` against #89 and SPEC Review verdict and Push check.
+Selected: case 56, case 47's clean, behind, tracked, staged, untracked, fallback-preservation and cleanup
+subchecks, case 55, and case 1's metadata subchecks. Direct checks only. No additional AI session started;
+the implementation report records 6 of 6 sessions already used. Claude Code, Codex, and Kiro instruction
+following after this fix: SKIP. The earlier report remains evidence for the unchanged PR reuse paths.
+
+Blocking finding: section 3 unconditionally said to fetch `pull/<n>/head`, including section 1's no-PR,
+no-remote path. That contradicts #89's requirement to preserve that path and SPEC Review verdict's
+local branch review. In a scratch repository with no remote, `git fetch origin pull/1/head` exited 128:
+`fatal: 'origin' does not appear to be a git repository`. The fix limits this fetch to pull request rounds.
+
+Case 56 PASS: a detached worktree at the local `H` was added and removed without `--force`, and the
+worktree list matched afterwards. Case 47 selected subchecks PASS: a clean worktree one commit behind
+fast-forwarded to pinned `H`; tracked, staged, and untracked changes appeared in status; fallback and
+cleanup preserved the implementation worktree's `HEAD`, staged diff, tracked file, and stash list.
+These focused checks do not establish a full case 47 PASS or model behavior.
+
+Case 55 and case 1's selected metadata subchecks PASS: config and template unchanged, no worktree lock
+command, context-based independence retained, valid YAML, invocation enabled, and the five opening fields
+in order. `SKILL.md` is 318 lines, above the 250-line target but below the 500-line limit.
+`git diff --check` initially found a new blank line at EOF in this report; it passes after the report update.
+Security review of the diff and all three PR commits found no new dependency, credential, sensitive-data
+flow, or unrelated network call. Gitleaks passed on the reviewed commits. No repository `test_command`
+or GitHub checks are configured.

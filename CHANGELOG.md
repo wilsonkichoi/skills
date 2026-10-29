@@ -5,9 +5,9 @@ Newest first. Each version is a `## {version} ({ISO 8601 timestamp with local of
 ## 0.0.41 (2026-10-28T20:43:27-07:00)
 
 - `wkc-code-review` reviews in the implementation worktree when it is safe (#89). A pull request round reuses the worktree that has the PR's branch checked out when the PR is not cross-repository and that worktree is clean and idle: not `locked` or `prunable`, an empty `git status --porcelain`, no merge, rebase, cherry-pick, or `index.lock` in progress, and a `HEAD` that is an ancestor of the reviewed head `H`. A worktree that is behind is fast-forwarded to `H` with `git merge --ff-only`. A fix commit lands on the checked-out branch and is pushed from there, so the implementation worktree no longer falls behind after a `fixed` round.
-- When any check fails, or with no pull request, the round works in a temporary detached worktree at `H` as before, reports which check failed, and removes it with `git worktree remove`, never `--force`, reporting a removal that fails. The round reads the checks' results before it runs anything in a worktree.
+- When any check fails, or with no pull request, the round works in a temporary detached worktree at `H` as before, reports which check failed, and removes it with `git worktree remove`, never `--force`, reporting a removal that fails. Only a pull request round fetches the PR head; a no-remote review keeps using the local branch's head. The round reads the checks' results before it runs anything in a worktree.
 - A refused push is reported with the fix commit's sha, and nothing is reset, stashed, or force-pushed; in a reused worktree the commit stays on the local branch. Independence is still about the session's context, not the directory it works in.
-- `validation/wkc-code-review.md` gains cases 47 to 55 and a dated report.
+- `validation/wkc-code-review.md` gains cases 47 to 56 and dated implementation and review reports.
 
 ## 0.0.40 (2026-10-28T15:22:20-07:00)
 

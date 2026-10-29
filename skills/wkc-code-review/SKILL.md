@@ -100,8 +100,9 @@ Read the ticket's **What to build**, **Why**, **Acceptance criteria**, **After m
 **Notes**, the SPEC and ADR sections they cite, the diff (`gh pr diff <n>`), the checks (`gh pr
 checks <n>`), and enough surrounding code to judge the diff in context.
 
-**Where to work.** Fetch `H` with `git fetch origin pull/<n>/head`. Reuse the worktree that `git
-worktree list --porcelain` shows on `branch refs/heads/<headRefName>` when the pull request is not
+**Where to work.** Only with a pull request, fetch `H` with `git fetch origin pull/<n>/head`.
+Reuse the worktree that `git worktree list --porcelain` shows on
+`branch refs/heads/<headRefName>` when the pull request is not
 cross-repository and that worktree is clean and idle: not `locked` or `prunable`, an empty `git
 status --porcelain`, no merge, rebase, cherry-pick, or `index.lock` in progress, and a `HEAD` that is
 an ancestor of `H` (`git merge-base --is-ancestor`). When it is behind, fast-forward it with `git
