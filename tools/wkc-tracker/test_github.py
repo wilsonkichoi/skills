@@ -1,0 +1,793 @@
+#!/usr/bin/env -S uv run --script
+# /// script
+# requires-python = ">=3.11"
+# dependencies = []
+# ///
+
+"""Contract tests for skills/wkc-tracker/github.py.
+
+FakeGitHub keeps issues, milestones, and labels in memory behind the same
+methods the verbs call, so each test states one rule from SKILL.md or github.md
+and checks what the backend holds afterwards. A few tests drive the real
+GitHub class with gh stubbed, to check paging and argument handling.
+
+Run: make test-tracker   (or: uv run --script tools/wkc-tracker/test_github.py)
+"""
+
+from __future__ import annotations
+
+import importlib.util
+import io
+import json
+import subprocess
+import sys
+import unittest
+from contextlib import redirect_stdout
+from pathlib import Path
+from unittest import mock
+
+SOURCE = Path(__file__).resolve().parents[2] / "skills" / "wkc-tracker" / "github.py"
+spec = importlib.util.spec_from_file_location("github_backend", SOURCE)
+g = importlib.util.module_from_spec(spec)
+sys.modules["github_backend"] = g
+spec.loader.exec_module(g)
+
+REPO = "o/r"
+
+
+def ref(n: int, repo: str = REPO) -> g.Ref:
+    return g.Ref(repo, n)
+
+
+class FakeGitHub(g.GitHub):
+    """In-memory GitHub. `drop` names write methods that report success and change
+    nothing; `fail` names write methods that raise as gh would."""
+
+    def __init__(self, login: str = "me") -> None:
+        super().__init__(REPO)
+        self._login = login
+        self.issues: dict[g.Ref, dict] = {}
+        self.ms: list[dict] = []
+        self.labels = {"backlog", "ready", "in-progress", "in-review"}
+        self.drop: set[str] = set()
+        self.fail: set[str] = set()
+        self.writes: list[tuple] = []
+        self.list_node_cap: int | None = None
+        self.no_dependencies = False
+        self.after_edit = None  # hook run after edit_issue, to simulate another session
+
+    # -- fixture helpers
+
+    def add(self, n: int, title: str = "", status: str = "backlog", repo: str = REPO, **kw) -> dict:
+        state, reason, labels = "OPEN", "", []
+        if status in g.OPEN_STATUSES and status != "backlog":
+            labels = [status]
+        elif status == "done":
+            state, reason = "CLOSED", "COMPLETED"
+        elif status == "cancel":
+            state, reason = "CLOSED", "NOT_PLANNED"
+        elif status == "duplicate":
+            state, reason = "CLOSED", "DUPLICATE"
+        elif status == "closed, no reason":
+            state = "CLOSED"
+        issue = {"title": title or f"T{n}", "body": kw.pop("body", ""), "state": state, "reason": reason,
+                 "labels": labels + kw.pop("labels", []), "assignees": kw.pop("assignees", []),
+                 "milestone": kw.pop("milestone", None), "comments": [], "blockers": kw.pop("blockers", []),
+                 "duplicate_of": kw.pop("duplicate_of", None), "edited": False}
+        assert not kw, kw
+        self.issues[ref(n, repo)] = issue
+        return issue
+
+    def milestone(self, title: str, state: str = "open") -> int:
+        number = len(self.ms) + 1
+        self.ms.append({"number": number, "title": title, "state": state, "url": f"u/{number}"})
+        return number
+
+    def _write(self, name: str, *args) -> bool:
+        self.writes.append((name, *args))
+        if name in self.fail:
+            raise g.GhError([name], f"{name} failed")
+        return name not in self.drop
+
+    def _issue(self, r: g.Ref) -> g.Issue:
+        if r not in self.issues:
+            g.refuse(f"{r} does not exist")
+        d = self.issues[r]
+        ms = next(({"number": m["number"], "title": m["title"]} for m in self.ms if m["number"] == d["milestone"]), None)
+        nodes = [{"ref": b, "state": self.issues[b]["state"]} for b in d["blockers"]]
+        total = len(nodes)
+        if self.list_node_cap is not None:
+            nodes = nodes[: self.list_node_cap]
+        return g.Issue(ref=r, title=d["title"], state=d["state"], state_reason=d["reason"], labels=list(d["labels"]),
+                       assignees=list(d["assignees"]), milestone=ms, body=d["body"], url=f"https://x/{r.number}",
+                       comments=[dict(c) for c in d["comments"]], blocked_by=None if self.no_dependencies else nodes,
+                       blocked_by_total=total, duplicate_of=d["duplicate_of"])
+
+    # -- reads
+
+    def login(self) -> str:
+        return self._login
+
+    def issue_list(self, state: str) -> list[g.Issue]:
+        want = {"open": ("OPEN",), "closed": ("CLOSED",), "all": ("OPEN", "CLOSED")}[state]
+        return [self._issue(r) for r in self.issues if r.repo == REPO and self.issues[r]["state"] in want]
+
+    def issue(self, number: int) -> g.Issue:
+        return self._issue(ref(number))
+
+    def node(self, r: g.Ref) -> g.Issue:
+        return self._issue(r)
+
+    def blockers(self, r: g.Ref) -> list[g.Issue]:
+        return [self._issue(b) for b in self.issues[r]["blockers"]]
+
+    def milestones(self) -> list[dict]:
+        return [dict(m) for m in self.ms]
+
+    def label_names(self) -> list[str]:
+        return sorted(self.labels)
+
+    def run_node(self, number: int):
+        r = ref(number)
+        if r not in self.issues:
+            return None
+        d = self.issues[r]
+        return {"number": number, "state": d["state"], "body": d["body"],
+                "lastEditedAt": "2026-01-01" if d["edited"] else None,
+                "labels": {"nodes": [{"name": n} for n in d["labels"]]}}
+
+    def issue_id(self, r: g.Ref) -> int:
+        if r not in self.issues:
+            raise g.GhError(["api"], "Not Found")
+        return 1000 + r.number
+
+    # -- writes
+
+    def create_issue(self, title, body, milestone, labels) -> int:
+        number = max([r.number for r in self.issues if r.repo == REPO] + [0]) + 1
+        if self._write("create_issue", title, body, milestone, labels):
+            self.add(number, title, body=body, milestone=milestone, labels=list(labels))
+        return number
+
+    def update_issue(self, number, fields) -> None:
+        if self._write("update_issue", number, dict(fields)):
+            d = self.issues[ref(number)]
+            for key, value in fields.items():
+                d[key] = value
+
+    def edit_issue(self, number, add_labels=(), remove_labels=(), add_assignees=(), remove_assignees=()) -> None:
+        add_labels, remove_labels = list(add_labels), list(remove_labels)
+        add_assignees = [self._login if a == "@me" else a for a in add_assignees]
+        remove_assignees = [self._login if a == "@me" else a for a in remove_assignees]
+        if self._write("edit_issue", number, add_labels, remove_labels, add_assignees, remove_assignees):
+            d = self.issues[ref(number)]
+            d["labels"] = [x for x in d["labels"] if x not in remove_labels] + [x for x in add_labels if x not in d["labels"]]
+            d["assignees"] = [x for x in d["assignees"] if x not in remove_assignees] + [
+                x for x in add_assignees if x not in d["assignees"]]
+        if self.after_edit:
+            hook, self.after_edit = self.after_edit, None
+            hook(self.issues[ref(number)])
+
+    def close_issue(self, number, reason, duplicate_of=None) -> None:
+        if self._write("close_issue", number, reason, duplicate_of):
+            d = self.issues[ref(number)]
+            d["state"] = "CLOSED"
+            d["reason"] = {"completed": "COMPLETED", "not planned": "NOT_PLANNED", "duplicate": "DUPLICATE"}[reason]
+            d["duplicate_of"] = duplicate_of
+
+    def comment(self, number, body) -> None:
+        if "comment_lands" in self.fail:
+            self.issues[ref(number)]["comments"].append({"author": self._login, "body": body})
+        if self._write("comment", number, body):
+            self.issues[ref(number)]["comments"].append({"author": self._login, "body": body})
+
+    def add_blocked_by(self, number, blocker_id) -> None:
+        blocker = next(r for r in self.issues if 1000 + r.number == blocker_id)
+        if self._write("add_blocked_by", number, blocker_id):
+            self.issues[ref(number)]["blockers"].append(blocker)
+
+    def remove_blocked_by(self, number, blocker_id) -> None:
+        if self._write("remove_blocked_by", number, blocker_id):
+            d = self.issues[ref(number)]
+            d["blockers"] = [b for b in d["blockers"] if 1000 + b.number != blocker_id]
+
+    def create_milestone(self, title) -> None:
+        if self._write("create_milestone", title):
+            self.milestone(title)
+
+    def close_milestone(self, number) -> None:
+        if self._write("close_milestone", number):
+            next(m for m in self.ms if m["number"] == number)["state"] = "closed"
+
+    def create_label(self, name, description) -> None:
+        if self._write("create_label", name, description):
+            self.labels.add(name)
+
+
+def code_of(call) -> int:
+    try:
+        call()
+    except g.TrackerError as error:
+        return error.code
+    return 0
+
+
+class Statuses(unittest.TestCase):
+    def test_each_status_maps_from_labels_and_close_reasons(self):
+        f = FakeGitHub()
+        for n, status in enumerate(["backlog", "ready", "in-progress", "in-review", "done", "cancel",
+                                    "duplicate", "closed, no reason"], 1):
+            f.add(n, status=status)
+        f.add(9, labels=["ready", "in-review"])
+        f.add(10, labels=["bug"])
+        got = {r.number: f._issue(r).status for r in f.issues}
+        self.assertEqual(got, {1: "backlog", 2: "ready", 3: "in-progress", 4: "in-review", 5: "done", 6: "cancel",
+                               7: "duplicate", 8: "closed, no reason", 9: "inconsistent", 10: "backlog"})
+
+
+class Reads(unittest.TestCase):
+    def setUp(self):
+        self.f = FakeGitHub()
+        m4 = self.f.milestone("M4: Busy")
+        self.f.add(1, status="ready", milestone=m4)
+        self.f.add(2, status="in-review", assignees=["ann"])
+        self.f.add(3, labels=["ready", "in-progress"])
+        self.f.add(4, labels=[g.RUN_LABEL])
+        self.f.add(5, status="done", milestone=m4)
+
+    def test_list_open_excludes_run_configs_and_names_inconsistent_apart(self):
+        out = g.cmd_list(self.f, None, None)
+        self.assertEqual([t["number"] for t in out["tickets"]], [1, 2])
+        self.assertEqual(out["inconsistent"], [3])
+
+    def test_list_terminal_status_reads_closed_issues(self):
+        self.assertEqual([t["number"] for t in g.cmd_list(self.f, "done", None)["tickets"]], [5])
+
+    def test_list_milestone_matches_exactly_and_refuses_a_near_match(self):
+        self.assertEqual([t["number"] for t in g.cmd_list(self.f, None, "M4: Busy")["tickets"]], [1])
+        with self.assertRaises(g.TrackerError) as caught:
+            g.cmd_list(self.f, None, "M4: busy")
+        self.assertEqual(caught.exception.code, g.EXIT_REFUSED)
+        self.assertEqual(caught.exception.details["milestones"], ["M4: Busy"])
+
+    def test_show_refuses_a_run_config(self):
+        self.assertEqual(code_of(lambda: g.cmd_show(self.f, 4)), g.EXIT_REFUSED)
+
+    def test_show_names_an_inconsistent_tickets_labels(self):
+        self.assertEqual(g.cmd_show(self.f, 3)["status_labels"], ["ready", "in-progress"])
+
+    def test_a_host_without_dependencies_stops(self):
+        self.f.no_dependencies = True
+        self.assertEqual(code_of(lambda: g.cmd_next(self.f)), g.EXIT_READ_FAILED)
+        self.assertEqual(code_of(lambda: g.cmd_show(self.f, 1)), g.EXIT_READ_FAILED)
+
+
+class Blockers(unittest.TestCase):
+    def setUp(self):
+        f = self.f = FakeGitHub()
+        f.add(10, status="done")
+        f.add(11, status="cancel")
+        f.add(12, status="duplicate", duplicate_of=ref(10))
+        f.add(13, status="duplicate", duplicate_of=ref(14))
+        f.add(14, status="duplicate", duplicate_of=ref(13))
+        f.add(15, status="duplicate")
+        f.add(16, status="in-progress", assignees=["bob"])
+        f.add(7, status="done", repo="x/other")
+
+    def verdict(self, n, repo=REPO):
+        return g.blocker_verdict(self.f, self.f.node(ref(n, repo)))
+
+    def test_done_is_met_and_cancel_is_not(self):
+        self.assertTrue(self.verdict(10)["met"])
+        self.assertIn("canceled", self.verdict(11)["reason"])
+
+    def test_duplicate_follows_its_chain(self):
+        self.assertTrue(self.verdict(12)["met"])
+        self.assertEqual(self.verdict(12)["chain"], ["o/r#12", "o/r#10"])
+        self.assertIn("loops", self.verdict(13)["reason"])
+        self.assertIn("no original", self.verdict(15)["reason"])
+
+    def test_open_blocker_names_status_and_holder(self):
+        v = self.verdict(16)
+        self.assertEqual((v["met"], v["status"], v["assignees"]), (False, "in-progress", ["bob"]))
+
+    def test_cross_repository_blocker_keeps_its_repository(self):
+        self.f.add(1, status="ready", blockers=[ref(7, "x/other")])
+        out = g.cmd_show(self.f, 1)
+        self.assertEqual(out["blockers"][0]["ref"], "x/other#7")
+        self.assertTrue(out["blockers"][0]["met"])
+
+
+class Next(unittest.TestCase):
+    def setUp(self):
+        f = self.f = FakeGitHub()
+        f.add(1, status="ready")
+        f.add(2, status="ready", assignees=["ann"])
+        f.add(3, status="in-progress", assignees=["bob"])
+        f.add(4, status="ready", blockers=[ref(3)])
+        f.add(5, status="done")
+        f.add(6, status="ready", blockers=[ref(5)])
+        f.add(7, status="cancel")
+        f.add(8, status="ready", blockers=[ref(7)])
+        f.add(9, labels=["ready", g.RUN_LABEL])
+
+    def test_frontier_and_reasons(self):
+        out = g.cmd_next(self.f)
+        self.assertEqual([t["number"] for t in out["frontier"]], [1, 6])
+        held = {h["number"]: h for h in out["held"]}
+        self.assertEqual(held[2]["reserved_for"], ["ann"])
+        self.assertEqual(held[4]["unmet"][0]["status"], "in-progress")
+        self.assertEqual(held[4]["unmet"][0]["assignees"], ["bob"])
+        self.assertIn("canceled", held[8]["unmet"][0]["reason"])
+        self.assertNotIn(9, [t["number"] for t in out["frontier"]])
+
+    def test_truncated_blocker_list_is_read_in_full(self):
+        self.f.issues[ref(1)]["blockers"] = [ref(5), ref(3)]
+        self.f.list_node_cap = 1  # the list shows only the done blocker
+        out = g.cmd_next(self.f)
+        self.assertNotIn(1, [t["number"] for t in out["frontier"]])
+
+    def test_cycle_is_named(self):
+        self.f.add(20, status="backlog", blockers=[ref(21)])
+        self.f.add(21, status="backlog", blockers=[ref(22)])
+        self.f.add(22, status="backlog", blockers=[ref(20)])
+        self.assertIn([20, 21, 22, 20], g.cmd_next(self.f)["cycles"])
+
+    def test_counts_open_statuses(self):
+        self.assertEqual(g.cmd_next(self.f)["open_counts"], {"ready": 5, "in-progress": 1})
+
+
+class MilestoneShow(unittest.TestCase):
+    def setUp(self):
+        f = self.f = FakeGitHub()
+        self.m = f.milestone("M5: Last open")
+        f.milestone("M5: Last open plus")
+        f.milestone("Old", state="closed")
+        f.add(1, status="done", milestone=self.m)
+        f.add(2, status="cancel", milestone=self.m)
+        f.add(3, status="duplicate", milestone=self.m)
+        f.add(4, status="in-review", milestone=self.m)
+        f.add(5, labels=[g.RUN_LABEL], milestone=self.m)
+        f.add(6, status="ready", milestone=2)
+
+    def test_counts_each_status_apart_and_skips_run_configs(self):
+        out = g.cmd_milestone_show(self.f, "M5: Last open")
+        self.assertEqual(out["total"], 4)
+        self.assertEqual((out["counts"]["done"], out["counts"]["cancel"], out["counts"]["duplicate"],
+                          out["counts"]["in-review"]), (1, 1, 1, 1))
+        self.assertEqual(out["open_or_unclean"], 1)
+
+    def test_last_open_ticket_done_leaves_nothing_open(self):
+        self.f.issues[ref(4)].update(state="CLOSED", reason="COMPLETED", labels=[])
+        self.assertEqual(g.cmd_milestone_show(self.f, "M5: Last open")["open_or_unclean"], 0)
+
+    def test_near_match_is_refused_and_closed_milestone_is_shown(self):
+        self.assertEqual(code_of(lambda: g.cmd_milestone_show(self.f, "M5: last open")), g.EXIT_REFUSED)
+        self.assertEqual(g.cmd_milestone_show(self.f, "Old")["milestone"]["state"], "closed")
+
+    def test_show_never_closes(self):
+        g.cmd_milestone_show(self.f, "M5: Last open")
+        self.assertEqual(self.f.writes, [])
+
+
+class Create(unittest.TestCase):
+    def setUp(self):
+        self.f = FakeGitHub()
+        self.m = self.f.milestone("M1")
+        self.f.milestone("Done", state="closed")
+        self.f.add(1, status="done")
+
+    def test_body_title_milestone_and_edges(self):
+        title = "Quote ' \" $(rm -rf) `x` & ünïcode"
+        body = "## What to build\nIt.\n\n## Blocked by\n- #1\n"
+        out = g.cmd_create(self.f, title, body, "M1")
+        d = self.f.issues[ref(out["number"])]
+        self.assertEqual((d["title"], d["body"], d["milestone"], d["labels"]), (title, body, self.m, []))
+        self.assertEqual(d["blockers"], [ref(1)])
+
+    def test_closed_or_near_match_milestone_writes_nothing(self):
+        self.assertEqual(code_of(lambda: g.cmd_create(self.f, "t", "b", "Done")), g.EXIT_REFUSED)
+        self.assertEqual(code_of(lambda: g.cmd_create(self.f, "t", "b", "m1")), g.EXIT_REFUSED)
+        self.assertEqual(self.f.writes, [])
+
+    def test_a_blocker_that_does_not_exist_writes_nothing(self):
+        self.assertEqual(code_of(lambda: g.cmd_create(self.f, "t", "## Blocked by\n- #99\n", None)), g.EXIT_REFUSED)
+        self.assertEqual(self.f.writes, [])
+
+    def test_a_create_that_changes_nothing_is_unverified(self):
+        self.f.drop.add("create_issue")
+        self.assertEqual(code_of(lambda: g.cmd_create(self.f, "t", "b", None)), g.EXIT_UNVERIFIED)
+
+    def test_a_failed_create_is_not_retried(self):
+        self.f.fail.add("create_issue")
+        self.assertEqual(code_of(lambda: g.cmd_create(self.f, "t", "b", None)), g.EXIT_UNVERIFIED)
+        self.assertEqual([w[0] for w in self.f.writes], ["create_issue"])
+
+    def test_a_failed_edge_reports_what_landed(self):
+        self.f.fail.add("add_blocked_by")
+        with self.assertRaises(g.TrackerError) as caught:
+            g.cmd_create(self.f, "t", "## Blocked by\n- #1\n", None)
+        self.assertEqual(caught.exception.code, g.EXIT_UNVERIFIED)
+        self.assertEqual(caught.exception.details["missing_edges"], ["o/r#1"])
+
+
+BODY = """Intro line.
+
+## What to build
+Old text.
+
+```
+## Not a heading
+```
+
+### Detail
+Belongs to What to build.
+
+## Notes
+Keep me.
+"""
+
+
+class Edit(unittest.TestCase):
+    def setUp(self):
+        f = self.f = FakeGitHub()
+        f.milestone("M1")
+        f.add(1, status="in-progress", body=BODY, assignees=["me"], labels=["bug"])
+        f.add(2, status="ready")
+        f.add(3, status="ready", blockers=[ref(1)])
+        f.add(4, status="ready")
+
+    def test_given_section_replaces_its_whole_span_only(self):
+        g.cmd_edit(self.f, 1, None, "## What to build\nNew text.\n", None, False)
+        body = self.f.issues[ref(1)]["body"]
+        self.assertEqual(body, "Intro line.\n\n## What to build\nNew text.\n\n## Notes\nKeep me.\n")
+
+    def test_missing_section_is_added(self):
+        g.cmd_edit(self.f, 1, None, "## Acceptance criteria\n- [ ] Works.\n", None, False)
+        self.assertTrue(self.f.issues[ref(1)]["body"].endswith("Keep me.\n\n## Acceptance criteria\n- [ ] Works.\n"))
+
+    def test_blocked_by_section_becomes_the_edge_set(self):
+        self.f.issues[ref(1)]["blockers"] = [ref(2)]
+        g.cmd_edit(self.f, 1, None, "## Blocked by\n- #4\n", None, False)
+        self.assertEqual(self.f.issues[ref(1)]["blockers"], [ref(4)])
+
+    def test_cycle_refuses_the_whole_edit(self):
+        with self.assertRaises(g.TrackerError) as caught:
+            g.cmd_edit(self.f, 1, "New title", "## Blocked by\n- #3\n", None, False)
+        self.assertEqual(caught.exception.code, g.EXIT_REFUSED)
+        self.assertEqual(caught.exception.details["cycle"], ["o/r#1", "o/r#3", "o/r#1"])
+        self.assertEqual(self.f.writes, [])
+
+    def test_title_and_milestone_change_nothing_else(self):
+        g.cmd_edit(self.f, 1, "New", None, "M1", False)
+        d = self.f.issues[ref(1)]
+        self.assertEqual((d["title"], d["milestone"], d["body"], d["labels"], d["assignees"]),
+                         ("New", 1, BODY, ["in-progress", "bug"], ["me"]))
+        g.cmd_edit(self.f, 1, None, None, None, True)
+        self.assertIsNone(d["milestone"])
+
+    def test_closed_ticket_takes_the_edit_and_stays_closed(self):
+        self.f.add(5, status="done")
+        g.cmd_edit(self.f, 5, "Renamed", None, None, False)
+        self.assertEqual(self.f.issues[ref(5)]["state"], "CLOSED")
+
+    def test_an_edit_that_changes_nothing_is_unverified(self):
+        self.f.drop.add("update_issue")
+        self.assertEqual(code_of(lambda: g.cmd_edit(self.f, 1, "X", None, None, False)), g.EXIT_UNVERIFIED)
+
+
+class Assign(unittest.TestCase):
+    def setUp(self):
+        f = self.f = FakeGitHub()
+        f.add(1, status="ready")
+        f.add(2, status="in-progress", assignees=["ann"])
+        f.add(3, status="done")
+
+    def test_bare_form_takes_a_ready_ticket(self):
+        out = g.cmd_assign(self.f, 1, None, [])
+        self.assertEqual((out["status"], out["assignees"]), ("in-progress", ["me"]))
+
+    def test_bare_form_refuses_anything_but_unheld_ready(self):
+        self.assertEqual(code_of(lambda: g.cmd_assign(self.f, 2, None, [])), g.EXIT_REFUSED)
+        self.assertEqual(code_of(lambda: g.cmd_assign(self.f, 3, None, [])), g.EXIT_REFUSED)
+        self.assertEqual(self.f.writes, [])
+
+    def test_another_holder_must_be_named(self):
+        self.assertEqual(code_of(lambda: g.cmd_assign(self.f, 2, "bob", [])), g.EXIT_REFUSED)
+        g.cmd_assign(self.f, 2, "bob", ["ann"])
+        self.assertEqual(self.f.issues[ref(2)]["assignees"], ["bob"])
+        self.assertEqual(self.f.issues[ref(2)]["labels"], ["in-progress"])
+
+    def test_none_unassigns(self):
+        g.cmd_assign(self.f, 2, "none", ["ann"])
+        self.assertEqual(self.f.issues[ref(2)]["assignees"], [])
+
+    def test_dropped_assignee_is_unverified_and_status_goes_back(self):
+        self.f.issues[ref(1)]["assignees"] = []
+        f = self.f
+        f.after_edit = lambda d: d["assignees"].remove("me")
+        self.assertEqual(code_of(lambda: g.cmd_assign(f, 1, None, [])), g.EXIT_UNVERIFIED)
+        self.assertEqual(f.issues[ref(1)]["labels"], ["ready"])
+
+    def test_concurrent_status_change_takes_the_claim_back(self):
+        self.f.after_edit = lambda d: d["labels"].append("in-review")
+        self.assertEqual(code_of(lambda: g.cmd_assign(self.f, 1, None, [])), g.EXIT_UNVERIFIED)
+        d = self.f.issues[ref(1)]
+        self.assertEqual((d["labels"], d["assignees"]), (["in-review"], []))
+
+    def test_tie_break_keeps_the_first_login(self):
+        self.f.after_edit = lambda d: d["assignees"].append("abe")
+        self.assertEqual(code_of(lambda: g.cmd_assign(self.f, 1, None, [])), g.EXIT_REFUSED)
+        self.assertEqual(self.f.issues[ref(1)]["assignees"], ["abe"])
+
+
+class Move(unittest.TestCase):
+    def setUp(self):
+        f = self.f = FakeGitHub()
+        f.add(1, labels=["ready", "in-review", "bug"], assignees=["ann"])
+        f.add(2, status="in-progress", assignees=["me"])
+        f.add(3, status="done")
+
+    def test_open_move_repairs_inconsistent_and_keeps_topic_labels(self):
+        g.cmd_move(self.f, 1, "in-progress", None)
+        d = self.f.issues[ref(1)]
+        self.assertEqual((sorted(d["labels"]), d["assignees"]), (["bug", "in-progress"], ["ann"]))
+
+    def test_backlog_and_ready_clear_every_assignee(self):
+        g.cmd_move(self.f, 1, "ready", None)
+        self.assertEqual(self.f.issues[ref(1)]["assignees"], [])
+
+    def test_terminal_move_closes_and_strips_status_labels(self):
+        g.cmd_move(self.f, 2, "done", None)
+        d = self.f.issues[ref(2)]
+        self.assertEqual((d["state"], d["reason"], d["labels"], d["assignees"]), ("CLOSED", "COMPLETED", [], ["me"]))
+
+    def test_duplicate_needs_and_records_its_original(self):
+        self.assertEqual(code_of(lambda: g.cmd_move(self.f, 2, "duplicate", None)), g.EXIT_REFUSED)
+        g.cmd_move(self.f, 2, "duplicate", "#3")
+        self.assertEqual(self.f.issues[ref(2)]["duplicate_of"], ref(3))
+
+    def test_terminal_tickets_and_non_statuses_are_refused(self):
+        self.assertEqual(code_of(lambda: g.cmd_move(self.f, 3, "ready", None)), g.EXIT_REFUSED)
+        self.assertEqual(code_of(lambda: g.cmd_move(self.f, 2, "blocked", None)), g.EXIT_REFUSED)
+        self.assertEqual(self.f.writes, [])
+
+    def test_half_landed_close_reports_what_landed(self):
+        self.f.fail.add("edit_issue")
+        with self.assertRaises(g.TrackerError) as caught:
+            g.cmd_move(self.f, 2, "cancel", None)
+        self.assertEqual((caught.exception.code, caught.exception.details["landed"]), (g.EXIT_UNVERIFIED, ["closed"]))
+
+    def test_a_move_that_changes_nothing_is_unverified(self):
+        self.f.drop.add("edit_issue")
+        self.assertEqual(code_of(lambda: g.cmd_move(self.f, 2, "in-review", None)), g.EXIT_UNVERIFIED)
+
+
+class Comment(unittest.TestCase):
+    def setUp(self):
+        self.f = FakeGitHub()
+        self.f.add(1)
+
+    def test_exact_body_lands(self):
+        body = "wkc-implement: done\nMerged: x\n`$(no)` 'q' \"q\"\n"
+        g.cmd_comment(self.f, 1, body)
+        self.assertEqual(self.f.issues[ref(1)]["comments"][-1]["body"], body)
+
+    def test_dropped_comment_is_unverified(self):
+        self.f.drop.add("comment")
+        self.assertEqual(code_of(lambda: g.cmd_comment(self.f, 1, "x")), g.EXIT_UNVERIFIED)
+
+    def test_failed_call_that_landed_is_reported_and_not_retried(self):
+        self.f.fail |= {"comment", "comment_lands"}
+        with self.assertRaises(g.TrackerError) as caught:
+            g.cmd_comment(self.f, 1, "x")
+        self.assertTrue(caught.exception.details["landed"])
+        self.assertEqual(len(self.f.issues[ref(1)]["comments"]), 1)
+
+
+class Links(unittest.TestCase):
+    def setUp(self):
+        f = self.f = FakeGitHub()
+        f.add(1, status="ready")
+        f.add(2, status="ready", blockers=[ref(1)])
+        f.add(3, status="done", blockers=[ref(2)])
+        f.add(4, status="duplicate", duplicate_of=ref(2))
+        f.add(5, status="ready", blockers=[ref(1)])
+
+    def test_self_link_and_cycle_are_refused(self):
+        self.assertEqual(code_of(lambda: g.cmd_link(self.f, 1, "#1")), g.EXIT_REFUSED)
+        with self.assertRaises(g.TrackerError) as caught:
+            g.cmd_link(self.f, 1, "#2")
+        self.assertEqual(caught.exception.details["cycle"], ["o/r#1", "o/r#2", "o/r#1"])
+        self.assertEqual(self.f.writes, [])
+
+    def test_done_ends_the_walk_and_duplicate_continues(self):
+        g.cmd_link(self.f, 1, "#3")  # 3 is done: no cycle through it
+        self.assertEqual(code_of(lambda: g.cmd_link(self.f, 1, "#4")), g.EXIT_REFUSED)  # 4 → 2 → 1
+
+    def test_link_leaves_the_blockers_own_edges(self):
+        g.cmd_link(self.f, 5, "#2")
+        self.assertEqual(self.f.issues[ref(5)]["blockers"], [ref(1), ref(2)])
+        self.assertEqual(self.f.issues[ref(2)]["blockers"], [ref(1)])
+
+    def test_dropped_link_is_unverified(self):
+        self.f.drop.add("add_blocked_by")
+        self.assertEqual(code_of(lambda: g.cmd_link(self.f, 5, "#2")), g.EXIT_UNVERIFIED)
+
+    def test_unlink_needs_the_edge_and_keeps_the_others(self):
+        self.assertEqual(code_of(lambda: g.cmd_unlink(self.f, 1, "#2")), g.EXIT_REFUSED)
+        self.f.issues[ref(5)]["blockers"].append(ref(2))
+        g.cmd_unlink(self.f, 5, "o/r#1")
+        self.assertEqual(self.f.issues[ref(5)]["blockers"], [ref(2)])
+
+    def test_dropped_unlink_is_unverified(self):
+        self.f.drop.add("remove_blocked_by")
+        self.assertEqual(code_of(lambda: g.cmd_unlink(self.f, 2, "#1")), g.EXIT_UNVERIFIED)
+
+
+class Milestones(unittest.TestCase):
+    def setUp(self):
+        self.f = FakeGitHub()
+        self.f.milestone("Open one")
+        self.f.milestone("Closed one", state="closed")
+
+    def test_ensure(self):
+        self.assertFalse(g.cmd_milestone_ensure(self.f, "Open one")["created"])
+        self.assertEqual(code_of(lambda: g.cmd_milestone_ensure(self.f, "Closed one")), g.EXIT_REFUSED)
+        self.assertEqual(self.f.writes, [])
+        self.assertTrue(g.cmd_milestone_ensure(self.f, "M3: New")["created"])
+
+    def test_ensure_that_changes_nothing_is_unverified(self):
+        self.f.drop.add("create_milestone")
+        self.assertEqual(code_of(lambda: g.cmd_milestone_ensure(self.f, "x")), g.EXIT_UNVERIFIED)
+
+    def test_close(self):
+        self.assertFalse(g.cmd_milestone_close(self.f, "Closed one")["closed"])
+        self.assertEqual(code_of(lambda: g.cmd_milestone_close(self.f, "open one")), g.EXIT_REFUSED)
+        self.f.add(1, status="ready", milestone=1)
+        self.assertTrue(g.cmd_milestone_close(self.f, "Open one")["closed"])
+        self.assertEqual([w[0] for w in self.f.writes], ["close_milestone"])
+        self.assertEqual(self.f.issues[ref(1)]["state"], "OPEN")
+
+    def test_list_is_sorted_and_includes_closed(self):
+        out = g.cmd_milestone_list(self.f)["milestones"]
+        self.assertEqual([(m["title"], m["state"]) for m in out], [("Open one", "open"), ("Closed one", "closed")])
+
+
+class RunConfigs(unittest.TestCase):
+    def setUp(self):
+        self.f = FakeGitHub()
+        self.f.labels.discard(g.RUN_LABEL)
+
+    def test_create_show_close(self):
+        text = "Run branch: run/m4\nLimits: none\n"
+        number = g.cmd_run_create(self.f, "run/m4", text)["reference"]
+        self.assertIn(g.RUN_LABEL, self.f.labels)
+        d = self.f.issues[ref(number)]
+        self.assertEqual((d["title"], d["labels"], d["milestone"], d["assignees"]),
+                         ("Run config: run/m4", [g.RUN_LABEL], None, []))
+        self.assertEqual(g.cmd_run_show(self.f, number)["text"], text)
+        g.cmd_run_close(self.f, number)
+        self.assertEqual(g.cmd_run_show(self.f, number)["state"], "CLOSED")
+
+    def test_show_refuses_edited_unlabeled_and_missing(self):
+        self.f.add(1, labels=[g.RUN_LABEL])["edited"] = True
+        self.f.add(2)
+        for n in (1, 2, 99):
+            self.assertEqual(code_of(lambda: g.cmd_run_show(self.f, n)), g.EXIT_REFUSED)
+
+    def test_run_close_refuses_a_ticket(self):
+        self.f.add(2)
+        self.assertEqual(code_of(lambda: g.cmd_run_close(self.f, 2)), g.EXIT_REFUSED)
+        self.assertEqual(self.f.writes, [])
+
+    def test_ticket_verbs_refuse_a_run_config(self):
+        self.f.add(1, labels=[g.RUN_LABEL])
+        for call in (lambda: g.cmd_comment(self.f, 1, "x"), lambda: g.cmd_move(self.f, 1, "ready", None),
+                     lambda: g.cmd_assign(self.f, 1, None, []), lambda: g.cmd_edit(self.f, 1, "x", None, None, False)):
+            self.assertEqual(code_of(call), g.EXIT_REFUSED)
+        self.assertEqual(self.f.writes, [])
+
+
+class Parsing(unittest.TestCase):
+    def test_refs(self):
+        self.assertEqual(g.parse_ref("#12", REPO), ref(12))
+        self.assertEqual(g.parse_ref("A/B#3", REPO), ref(3, "a/b"))
+        self.assertEqual(g.parse_ref("https://github.com/a/b/issues/4", REPO), ref(4, "a/b"))
+        self.assertEqual(g.refs_in_blocked_by("## Blocked by\n- #1\n- a/b#2 and #3\n- None\n", REPO),
+                         [ref(1), ref(2, "a/b"), ref(3)])
+        self.assertEqual(code_of(lambda: g.refs_in_blocked_by("## Blocked by\n- the auth work\n", REPO)),
+                         g.EXIT_REFUSED)
+
+
+class RealGitHub(unittest.TestCase):
+    """The real class with gh stubbed: paging and argument handling."""
+
+    def test_issue_list_raises_the_limit_on_a_full_page(self):
+        rows = [{"number": n, "title": "", "state": "OPEN", "labels": [], "assignees": [],
+                 "blockedBy": {"nodes": [], "totalCount": 0}} for n in range(1, 701)]
+        limits = []
+
+        def fake(args, stdin=None):
+            limit = int(args[args.index("--limit") + 1])
+            limits.append(limit)
+            return rows[:limit]
+
+        gh = g.GitHub(REPO)
+        with mock.patch.object(gh, "gh_json", side_effect=fake):
+            self.assertEqual(len(gh.issue_list("all")), 700)
+        self.assertEqual(limits, [500, 2000])
+
+    def test_milestones_flatten_every_page(self):
+        pages = [[{"number": n, "title": f"M{n}", "state": "open"} for n in range(1, 101)],
+                 [{"number": 101, "title": "M101", "state": "closed"}]]
+        gh = g.GitHub(REPO)
+        with mock.patch.object(gh, "gh_json", return_value=pages) as stub:
+            self.assertEqual(len(gh.milestones()), 101)
+        args = stub.call_args.args[0]
+        self.assertIn("--paginate", args)
+        self.assertIn("state=all&per_page=100", args[-1])
+
+    def test_blockers_page_through_and_fail_when_counts_differ(self):
+        node = lambda n: {"number": n, "title": "", "url": "", "state": "OPEN", "stateReason": None,
+                          "repository": {"nameWithOwner": REPO}, "duplicateOf": None,
+                          "labels": {"nodes": []}, "assignees": {"nodes": []}}
+        page = lambda nodes, more, total: {"repository": {"issue": {"blockedBy": {
+            "totalCount": total, "pageInfo": {"hasNextPage": more, "endCursor": "c"}, "nodes": nodes}}}}
+        gh = g.GitHub(REPO)
+        with mock.patch.object(gh, "graphql", side_effect=[page([node(1)], True, 2), page([node(2)], False, 2)]):
+            self.assertEqual([b.ref.number for b in gh.blockers(ref(9))], [1, 2])
+        with mock.patch.object(gh, "graphql", return_value=page([node(1)], False, 3)):
+            self.assertEqual(code_of(lambda: gh.blockers(ref(9))), g.EXIT_READ_FAILED)
+
+    def test_text_goes_on_stdin_never_into_arguments(self):
+        calls = []
+
+        def run(cmd, input=None, **kw):
+            calls.append((cmd, input))
+            return subprocess.CompletedProcess(cmd, 0, stdout='{"number": 7}', stderr="")
+
+        title, body = "a'b\"$(c)", "## X\n`y`\n"
+        with mock.patch.object(g.subprocess, "run", side_effect=run):
+            gh = g.GitHub(REPO)
+            gh.create_issue(title, body, 3, [])
+            gh.comment(7, body)
+        (create, create_in), (comment, comment_in) = calls
+        self.assertEqual(json.loads(create_in), {"title": title, "body": body, "labels": [], "milestone": 3})
+        self.assertNotIn(title, " ".join(create))
+        self.assertEqual((comment[-2:], comment_in), (["--body-file", "-"], body))
+
+    def test_graphql_variables_are_arguments_not_query_text(self):
+        gh = g.GitHub(REPO)
+        with mock.patch.object(gh, "gh_json", return_value={"data": {}}) as stub:
+            gh.graphql(g.NODE_QUERY, owner="o", name="r'x", n=5)
+        args = stub.call_args.args[0]
+        self.assertIn("name=r'x", args)
+        self.assertIn("n=5", args)
+        self.assertEqual(args[args.index("n=5") - 1], "-F")
+
+
+class Cli(unittest.TestCase):
+    def run_cli(self, argv, f):
+        out = io.StringIO()
+        with redirect_stdout(out):
+            code = g.main(argv, gh=f)
+        return code, json.loads(out.getvalue())
+
+    def test_success_and_refusal_are_json_with_exit_codes(self):
+        f = FakeGitHub()
+        f.milestone("M1")
+        code, out = self.run_cli(["milestone", "show", "M1"], f)
+        self.assertEqual((code, out["ok"], out["verb"], out["total"]), (0, True, "milestone show", 0))
+        code, out = self.run_cli(["milestone", "show", "m1"], f)
+        self.assertEqual((code, out["ok"], out["error"]), (1, False, "refused"))
+
+    def test_origin_repo_parsing(self):
+        for url in ("git@github.com:a/b.git", "https://github.com/a/b", "https://github.com/a/b.git"):
+            with mock.patch.object(g.subprocess, "run",
+                                   return_value=subprocess.CompletedProcess([], 0, stdout=url + "\n")):
+                self.assertEqual(g.origin_repo(), "a/b")
+
+
+if __name__ == "__main__":
+    unittest.main()
