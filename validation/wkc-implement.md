@@ -32,6 +32,7 @@ Keep raw logs and fixtures outside tracked files.
 - Review round 1: 2026-10-29, PR #99
 - Review round 2: 2026-10-29, PR #99
 - Review round 3: 2026-10-29, PR #99
+- Review round 4: 2026-10-29, PR #99
 
 ## Preparation
 
@@ -498,10 +499,13 @@ error while a flag file is absent, a check the merged code fails, and a smoke te
     swapped; both entries replaced after an `opus` verdict; only the `opus` entry replaced after an `opus` verdict;
     an effort-only edit after a `gpt-6.1-sol` verdict; two identical `round 1` verdicts; a handoff with no
     `Execution:` line, manual and under `--run`; a `gpt-6.1-sol` verdict, then the ticket's pair edited before the
-    next round in a run.
+    next round in a run; an `opus` handoff, then a `wkc-code-review round 1` fix commit on the head with no verdict,
+    manual and under `--run`.
     PASS, in order: `gpt-6.1-sol`; `opus`, a fresh worker; `gpt-6.1-sol`; `opus`; the new second entry; the new
     second entry; `opus`; the duplicate counted once; a question when manual and a `Parked (wkc-yolo):` comment under
-    the run, never a parity guess; the edited pair's other model. No history resets a fixing-round count. New, from #83.
+    the run, never a parity guess; the edited pair's other model; a question when manual and a park under the run,
+    never `gpt-6.1-sol` from the handoff alone. No history resets a fixing-round count. New, from #83; the last
+    history from review round 4 of #99.
 
 76. **Dispatch arguments.** Direct, static. Read `routing.md` section 5 and the local CLI help (`claude --help`,
     `codex exec --help`, `codex exec resume --help`).
@@ -1495,3 +1499,27 @@ answer-delivery failure and the static fix. Source: the
 [round 2 verdict](https://github.com/wilsonkichoi/skills/pull/99#issuecomment-6509086480).
 That dry run preceded the fix and cannot establish that all of case 81 passed.
 Live dispatch, live question relay, and model instruction following were not tested in this round.
+
+## Review round 4: 2026-10-29, PR #99
+
+Attempt: review round 4 on https://github.com/wilsonkichoi/skills/pull/99. Reviewed:
+`a6dd8aee91ec42924cc6ca9b909f8ca1b7e36af2`. AI test sessions: 1 of 6. Harness: Claude Code.
+Backend: GitHub.
+
+Selected: case 75 with its new history, as one native Claude Code dry run (`opus`, effort `medium`)
+that read `routing.md` with this round's fix and started nothing. Direct: five-field order, the
+`routing.md` contents list, `git diff --check`, and gitleaks over the PR's commits.
+
+| Case | Result | Evidence |
+|---|---|---|
+| 75, all histories | PASS, AI dry run | Every earlier history gave its listed model. The new history, a round 1 fix commit on the head after an `opus` handoff with no verdict, asked the person when manual and parked under `--run`. |
+| 75, extra fixture | PASS, AI dry run | A merge the person says they made kept the `opus` handoff as the preceding step and chose `gpt-6.1-sol`. The session called the first wording of that sentence ambiguous; it now says the record stays the preceding step, checked statically. |
+
+- Fixed: section 3 took the latest execution record as the preceding step without checking that it
+  names the pull request's head. A worker that pushed a fix and failed before its verdict left a head
+  past every record, and the next review went to the model that wrote the fix. SPEC Model selection
+  and dispatch, Step evidence, requires reconciling the head with the records and never guessing.
+  The preceding step is now unknown when the head is past the latest record.
+
+Still not run: case 78, and case 80's live question relay and `--run` handoff, which need the
+person's approval.

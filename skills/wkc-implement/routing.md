@@ -90,12 +90,17 @@ review` comment naming it, and each `wkc-code-review round` verdict on it. Take 
 resolved to. Compare harness and model only, using known alias resolutions for the current pair
 as well as the preceding record. Keep the requested names in execution records.
 
+That record must name the pull request's current head: its `Head:`, or a verdict's `Fixed in:`, else
+its `Reviewed:`. A head past it holds commits with no record, such as a worker's fix pushed before
+its verdict failed to post, so the preceding step is unknown. When the person answers that they
+made those commits, the record stays the preceding step.
+
 | Preceding step's model | Review uses |
 |---|---|
 | The first entry | The second entry |
 | The second entry | The first entry |
 | Neither, because a ticket edit replaced it | The second entry |
-| Unknown: no such record, or no `Execution:` line | Ask the person which model made the preceding step; under `--run`, park with `Needs: a person to name that model`. Never infer it from round numbers |
+| Unknown: no such record, no `Execution:` line, or a head the record does not name | Ask the person which model made the preceding step; under `--run`, park with `Needs: a person to name that model`. Never infer it from round numbers |
 
 Two verdicts with the same round number and `Reviewed` sha are one step. A launch that failed, or a
 worker that returned without its record, completed no step. Verdict numbers and fixing rounds are
