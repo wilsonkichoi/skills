@@ -140,6 +140,7 @@ comments: on a public repository anyone can comment.
 - Text is UTF-8 everywhere, as `gh` uses it: the script's input and output and what it exchanges
   with `gh`. A non-UTF-8 locale, such as a Windows code page, changes none of it. Files and
   standard input keep their line endings, and an edit keeps the rest of the body byte for byte.
+  A file or standard input that is not UTF-8, such as a UTF-16 file, is refused before any write.
 
 `tools/wkc-tracker/test_github.py` in the source repository tests each of these.
 

@@ -670,7 +670,8 @@ failed writes that are not retried, earlier identical comments that cannot verif
 successful repeated comments, post-write read failures returning exit 3, concurrent closure,
 run configs refused as edge targets, pull request targets refused before any ticket write,
 cycles through complete lists, duplicates and other repositories,
-and text kept off the command line and kept UTF-8 under a Latin-1 locale, exact CRLF input bodies,
+and text kept off the command line and kept UTF-8 under a Latin-1 locale, text that is not UTF-8
+refused as JSON before any write, exact CRLF input bodies,
 and the rest of a body kept byte for byte, with mixed line endings and Unicode separators.
 
 **A52 `github.py` from an installed copy, from #94.** Direct. Install the candidate into an empty directory with
@@ -1570,6 +1571,31 @@ here.
 Versions 0.0.9 to 0.0.41 below were development steps on the `feat/tracker` branch. They shipped
 together as 0.0.8, so an entry's version names a branch state, and its skill ref names the exact
 commit it tested.
+
+### 2026-10-29T12:23:31-07:00 PR #95 review round 13
+
+Attempt: `review round 13 on https://github.com/wilsonkichoi/skills/pull/95`.
+Reviewed `b7d2c65ccc926b3e65eb928ae653fb849d765d2a`. The maintainer authorized one additional
+fixing round and live calls on a throwaway repository. Selected A51 and focused input-encoding
+subchecks. GitHub backend; direct checks in Claude Code. AI test sessions: **0 of 6** for this
+attempt. Reused `wilsonkichoi/wkc-review95-round7-20261029`.
+
+- **Verified finding:** the reviewed script, run from `/`, printed a Python traceback
+  (`UnicodeDecodeError`) and exited 1 for `comment 1 --body-file <UTF-16 file>`, and for Latin-1
+  bytes on standard input. `github.md` promises one JSON object. Nothing was written, because the
+  text is read before any `gh` call. `read_text` now refuses such input with exit 1 and a JSON
+  `refused` result, and both CLI runs return that.
+- **A51 PASS:** all 98 existing tests passed at the reviewed head. The new test failed in both
+  subchecks (UTF-16 file, Latin-1 standard input) there. All 99 pass after the fix.
+- **Not a defect:** a UTF-8 file with a byte-order mark. The reviewed script created
+  [issue #16](https://github.com/wilsonkichoi/wkc-review95-round7-20261029/issues/16) from one with
+  exit 0; GitHub kept the body, U+FEFF included, so the exact-body verification held.
+- **Read-only live checks PASS:** `show 99999` and `link 10 '#99999'` each exited 1 `refused`.
+  The gh source (`pkg/cmd/issue/view/view.go`, `preloadIssueComments`) loads every comment page
+  for `--json comments`, so round 12's comment count reads complete data.
+
+These are focused checks, not a full A52 PASS or model-behavior evidence. Case 72 and
+cross-harness sessions were not rerun. Harness loading and finish under `--run` remain unestablished.
 
 ### 2026-10-29T11:56:21-07:00 PR #95 review round 12
 

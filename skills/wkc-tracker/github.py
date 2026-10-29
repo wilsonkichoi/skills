@@ -1141,13 +1141,15 @@ def origin_repo() -> str:
 
 
 def read_text(path: str) -> str:
-    if path == "-":
-        return sys.stdin.read()
     try:
+        if path == "-":
+            return sys.stdin.read()
         with open(path, encoding="utf-8", newline="") as handle:
             return handle.read()
     except OSError as error:
         refuse(f"cannot read {path}: {error.strerror}")
+    except UnicodeDecodeError:
+        refuse(f"{'standard input' if path == '-' else path} is not UTF-8 text; write it as UTF-8")
 
 
 def number_arg(text: str) -> int:

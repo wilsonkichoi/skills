@@ -975,6 +975,18 @@ class Cli(unittest.TestCase):
                               else f.issues[ref(2)]["body"])
                     self.assertEqual(actual, body)
 
+    def test_text_that_is_not_utf8_is_refused_as_json(self):
+        with tempfile.TemporaryDirectory() as directory:
+            utf16 = Path(directory) / "body.md"
+            utf16.write_bytes("Body.\n".encode("utf-16"))
+            for name, path, stdin in (("UTF-16 file", str(utf16), b""), ("Latin-1 stdin", "-", "café".encode("latin-1"))):
+                with self.subTest(name), mock.patch.object(
+                        sys, "stdin", io.TextIOWrapper(io.BytesIO(stdin), encoding="utf-8", newline="")):
+                    f = FakeGitHub()
+                    f.add(1)
+                    code, out = self.run_cli(["comment", "1", "--body-file", path], f)
+                    self.assertEqual((code, out["error"], f.writes), (1, "refused", []))
+
     def test_edit_text_files_keep_their_line_endings_and_edges_are_explicit(self):
         with tempfile.TemporaryDirectory() as directory:
             old, new = Path(directory) / "old.txt", Path(directory) / "new.txt"
