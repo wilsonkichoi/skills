@@ -94,6 +94,9 @@ blockers and unreadable references. Cycles use issue numbers within this reposit
 when they cross repositories. An empty frontier is explained from these.
 `milestone show` gives `total`, `counts` for every status, and `open_or_unclean`. Whether that
 means `wkc-plan close` is the caller's call: the script never closes a milestone it shows.
+`run show` gives the config's `text` and its `state`. A closed run config stays readable with
+`run show`, so `run close` verifies the `CLOSED` state. The script never reads a run config's
+comments: on a public repository anyone can comment.
 
 ## What the script holds to
 
