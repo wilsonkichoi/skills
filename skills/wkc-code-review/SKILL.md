@@ -105,8 +105,9 @@ Reuse the worktree that `git worktree list --porcelain` shows on `branch refs/he
 when the pull request is not cross-repository and that worktree is clean and idle: not `locked` or
 `prunable`, an empty `git status --porcelain`, no merge, rebase, cherry-pick, or `index.lock` in
 progress, and a `HEAD` that is an ancestor of `H` (`git merge-base --is-ancestor`). When it is
-behind, fast-forward it with `git merge --ff-only H` before the review starts. With no pull request,
-no worktree on that branch, or a failed reuse check, work in a temporary detached worktree at `H`
+behind, fast-forward it with `git merge --ff-only --no-overwrite-ignore H` before the review starts.
+With no pull request, no worktree on that branch, a failed reuse check, or a failed fast-forward,
+work in a temporary detached worktree at `H`
 (`git worktree add --detach <path> H`) and report the reason. When the round ends, remove that
 worktree with `git worktree remove <path>`, never `--force`, and report a removal that fails, with
 its path. Never switch, stash, reset, or clean a checkout, and never commit someone else's changes.
