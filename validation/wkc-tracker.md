@@ -1568,6 +1568,44 @@ Versions 0.0.9 to 0.0.41 below were development steps on the `feat/tracker` bran
 together as 0.0.8, so an entry's version names a branch state, and its skill ref names the exact
 commit it tested.
 
+### 2026-10-29T11:43:36-07:00 PR #95 opaque ticket text
+
+Attempt: `build fix/94-tracker-backend-queries`, after the maintainer's architecture decision that
+`github.py` stops parsing Markdown. Candidate `b28792c`. Selected A51, focused A52 subchecks for the
+new `create` and `edit` arguments, and model cases A6, A8, and focused A39 and A41 subchecks.
+GitHub backend on `wilsonkichoi/wkc-review95-round7-20261029`; direct checks and one model session in
+Claude Code. AI test sessions: **3 of 6** for this attempt, counting the build's earlier two.
+
+- **A51 PASS:** 94 tests. The parser's edge-case tests are replaced by contract tests: edges only
+  from `--blocked-by`, any Markdown body kept and unparsed, exact replacement that refuses missing,
+  repeated, and empty old text, append, whole-body replacement checked against the digest, a stale
+  body refused before writing, edit edge sets kept, replaced, or cleared, and the argument rules
+  (exit 2). The other regression tests are unchanged and pass.
+- **A52 focused subchecks PASS:** installed with `npx skills add` into an empty directory
+  (`diff -r` clean) and run from `/` under `LC_ALL=en_US.ISO8859-1`, `PYTHONUTF8=0`. Independent
+  `gh` reads: #11 created with `--blocked-by #10` has edge [10] and its exact CRLF body, which holds
+  a list-item fence and an HTML comment; #12 with `## Blocked by` in the body and no argument has no
+  edge. Exact replacement on #11 kept the rest byte for byte; a missing old text and a stale
+  `--expected-sha256` each exited 1 with the body unchanged; append and the whole-body replacement
+  landed exactly, and `show`'s `body_sha256` matched a local SHA-256. `--blocked-by #12` replaced
+  the edge, `--no-blockers` cleared it with the body unchanged, an edit closing #10 → #11 → #12 → #10
+  exited 1 with no edge written, and a pull request as `--blocked-by` exited 1 with no issue
+  created. `--body-file` without a digest exited 2. Script SHA256 at the candidate:
+  `aebaec238fd307a6f10b7509cf861374c7ba05d6b4e95c9953ffb2c8699fc89e`.
+- **Model session 3 PASS for the selected subchecks:** Claude Code `general-purpose` subagent,
+  Sonnet, effort medium, reading the installed `SKILL.md` by hand in a fixture project. It ran
+  every tracker operation through `github.py` and no `gh issue`, `gh api`, or `gh label` command.
+  A6: it created #13 with `--blocked-by '#10'`, and the edge read back [10]. A8: `## Related - #12`
+  made no edge. A39 (focused): it changed the title and added `## Notes` with `--append-file`; the
+  other sections read back exactly. A41 (focused): it swapped `## Blocked by` with an exact
+  replacement plus `--blocked-by '#12'`, and the edges read back [12]; its edit of #10 to be blocked
+  by #12 was refused as the cycle #10 → #12 → #10, and #10's body and edges are unchanged.
+
+A39 and A41 are focused subchecks: the fixture had no milestone, label, or assignee, and A41's
+three-ticket swap was not run. Codex and Kiro CLI: SKIP. Case 72 was not rerun; its verbs
+(`show`, `move`, `comment`, `milestone show`) did not change. A pull request given as a blocker is
+refused with "does not exist" rather than naming it a pull request; nothing is written.
+
 ### 2026-10-29T11:04:41-07:00 PR #95 review round 10
 
 Attempt: `review round 10 on https://github.com/wilsonkichoi/skills/pull/95`.
