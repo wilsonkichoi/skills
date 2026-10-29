@@ -166,7 +166,7 @@ Ticket: <id>
 Pull request: <URL and head sha | none yet>
 Checkout: <absolute path>
 Execution: <harness>, <model>, effort <effort>
-Work in the checkout above. Run the installed <skill> skill's steps yourself, once, for this invocation. Do not dispatch, and start no subagent, worker, AI test session, or other harness. Read the ticket, the documents it cites, the pull request, and earlier verdicts yourself. Write the Execution line above on your handoff, update, or verdict. In a manual call, end with a final message starting "Question:" instead of any write that depends on a person's answer.
+Work in the checkout above. Read the <skill> skill installed in that checkout's harness skill directory and run its steps yourself, once, for this invocation. Do not dispatch, and start no subagent, worker, AI test session, or other harness. Read the ticket, the documents it cites, the pull request, and earlier verdicts yourself. Write the Execution line above on your handoff, update, or verdict. In a manual call, end with a final message starting "Question:" instead of any write that depends on a person's answer.
 ```
 
 A review worker gets nothing else: no implementation conversation, summary, or reasoning. Returning
