@@ -676,7 +676,7 @@ edge; the bare claim, and a second claim refused; a terminal move with no status
 `done`; a refused cycle with its path; link, unlink, and a refused second unlink; an edit that replaces one section,
 clears the edges and the milestone; a duplicate with its original; milestone ensure, show, and close, with a refused
 ensure of the closed one; run create, show, and close; a run config refused by `show` and missing from `list`; a
-ticket refused by `run close`; and a missing issue refused.
+ticket refused by `run close`; and a missing issue refused by `show` and by `run show`.
 
 ## B. Local backend
 
@@ -1556,7 +1556,21 @@ Versions 0.0.9 to 0.0.41 below were development steps on the `feat/tracker` bran
 together as 0.0.8, so an entry's version names a branch state, and its skill ref names the exact
 commit it tested.
 
-### 2026-10-29 PR #95 review round 1
+### 2026-10-29T09:42:38-07:00 PR #95 review round 2
+
+Attempt: `review round 2 on https://github.com/wilsonkichoi/skills/pull/95`.
+Reviewed `ec34e3d4b73e3de98c9e43992ce45eac67466a62`. Selected A51 and focused live subchecks of A52 (`run show`
+of a missing issue, a one-section `edit`). GitHub backend; direct checks in Claude Code. AI test sessions: 0 of 6.
+
+Three regression tests failed on the reviewed head and pass after the fix: `run show 99999` exited 4
+`read_failed` instead of refusing; an `edit` built the body from its first read, so a body change made during its
+milestone and cycle checks was overwritten; a given `## what to build` added a second section instead of replacing
+`## What to build`. `make test-tracker`: 82 tests, OK. Live on `wilsonkichoi/wkc-tracker-fixture-65`:
+`run show 99999` exited 1 `refused`; `edit 6` with a `## Notes` section exited 0 and an independent
+`gh issue view` showed the section added and the rest of the body unchanged. A52 in full and case 72 were not
+rerun.
+
+### 2026-10-29T09:37:05-07:00 PR #95 review round 1
 
 Attempt: `review round 1 on https://github.com/wilsonkichoi/skills/pull/95`.
 Reviewed `c84e7e9d155f905f848a851df1a22bb90aca43ff`. Selected A51 and focused static checks of

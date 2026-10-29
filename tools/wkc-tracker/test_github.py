@@ -492,6 +492,24 @@ class Edit(unittest.TestCase):
         g.cmd_edit(self.f, 5, "Renamed", None, None, False)
         self.assertEqual(self.f.issues[ref(5)]["state"], "CLOSED")
 
+    def test_section_names_match_in_any_case(self):
+        g.cmd_edit(self.f, 1, None, "## what to build\nNew text.\n", None, False)
+        body = self.f.issues[ref(1)]["body"]
+        self.assertEqual(body, "Intro line.\n\n## what to build\nNew text.\n\n## Notes\nKeep me.\n")
+
+    def test_a_body_change_made_during_the_checks_is_kept(self):
+        d = self.f.issues[ref(1)]
+        read = self.f.milestones
+
+        def milestones():
+            d["body"] = d["body"].replace("Keep me.", "Changed by another session.")
+            return read()
+
+        self.f.milestones = milestones
+        g.cmd_edit(self.f, 1, None, "## What to build\nNew text.\n", "M1", False)
+        self.assertIn("Changed by another session.", d["body"])
+        self.assertIn("New text.", d["body"])
+
     def test_an_edit_that_changes_nothing_is_unverified(self):
         self.f.drop.add("update_issue")
         self.assertEqual(code_of(lambda: g.cmd_edit(self.f, 1, "X", None, None, False)), g.EXIT_UNVERIFIED)
@@ -787,6 +805,12 @@ class RealGitHub(unittest.TestCase):
                 with mock.patch.object(gh, "gh", side_effect=g.GhError(["api"], "transport failure")):
                     self.assertRaises(g.TrackerError, getattr(gh, method), *args)
                 self.assertTrue(gh.write_attempted)
+
+    def test_run_show_of_a_missing_issue_refuses(self):
+        gh = g.GitHub(REPO)
+        missing = g.GhError(["api", "graphql"], "gh: Could not resolve to an Issue with the number of 99.")
+        with mock.patch.object(gh, "gh", side_effect=missing):
+            self.assertEqual(code_of(lambda: g.cmd_run_show(gh, 99)), g.EXIT_REFUSED)
 
     def test_graphql_variables_are_arguments_not_query_text(self):
         gh = g.GitHub(REPO)

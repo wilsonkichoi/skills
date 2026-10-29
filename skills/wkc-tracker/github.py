@@ -218,7 +218,7 @@ def apply_sections(body: str, given: list[tuple[str, list[str]]]) -> str:
     head, pieces = split_sections(body)
     for key, span in given:
         name = section_name(key)
-        matches = [i for i, (k, _) in enumerate(pieces) if section_name(k) == name]
+        matches = [i for i, (k, _) in enumerate(pieces) if section_name(k).lower() == name.lower()]
         if len(matches) > 1:
             refuse(f"the ticket has {len(matches)} `## {name}` sections; edit cannot tell which to replace")
         new_span = _trim(span)
@@ -250,7 +250,7 @@ def parse_given_sections(text: str) -> list[tuple[str, list[str]]]:
         refuse("the sections file must start with a `## ` heading")
     if any(not key.startswith("## ") for key, _ in pieces):
         refuse("the sections file may hold only `## ` sections")
-    names = [section_name(key) for key, _ in pieces]
+    names = [section_name(key).lower() for key, _ in pieces]
     if len(set(names)) != len(names):
         refuse("the sections file names one section twice")
     return pieces
@@ -475,7 +475,12 @@ class GitHub:
 
     def run_node(self, number: int) -> dict[str, Any] | None:
         owner, name = split_repo(self.repo)
-        data = self.graphql(RUN_QUERY, owner=owner, name=name, n=number)
+        try:
+            data = self.graphql(RUN_QUERY, owner=owner, name=name, n=number)
+        except GhError as error:
+            if "Could not resolve to an Issue" in error.detail:
+                return None
+            raise
         return (data.get("repository") or {}).get("issue")
 
     def issue_id(self, ref: Ref) -> int:
@@ -867,8 +872,11 @@ def cmd_edit(gh: GitHub, number: int, title: str | None, sections_text: str | No
     fields: dict[str, Any] = {}
     if title is not None:
         fields["title"] = title
-    new_body = apply_sections(before.body or "", given) if given else None
-    if new_body is not None:
+    new_body = None
+    if given:
+        # GitHub has no conditional write: build the body from a read taken right
+        # before the write, so a change made during the checks above is kept.
+        new_body = apply_sections(gh.issue(number).body or "", given)
         fields["body"] = new_body
     if target is not None:
         fields["milestone"] = target["number"]
