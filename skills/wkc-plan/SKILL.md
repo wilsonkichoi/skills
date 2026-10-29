@@ -1,7 +1,7 @@
 ---
 name: wkc-plan
 description: Write or update the ROADMAP, the ordered milestones that deliver an approved SPEC, each with an outcome, scope, dependencies, and an exit check, then hand an approved milestone to wkc-backlog for tickets, and close a finished milestone. Use when a design is ready to be broken into milestones, when a PRD, SPEC, or request adds, moves, or drops milestone scope, or when a person asks to close a milestone.
-argument-hint: "[a change to the ROADMAP | close <milestone>]"
+argument-hint: "[a change to the ROADMAP | close <milestone>] [--run <ref>]"
 disable-model-invocation: false
 ---
 
@@ -14,21 +14,24 @@ disable-model-invocation: false
 - **When to use it:** after `wkc-architect` approves a SPEC, or when a PRD or SPEC change, or a
   request, adds, moves, or drops milestone scope. A bug, a request inside a milestone's scope, or a
   change to tickets goes to `wkc-backlog` instead. Callers are people, a model acting on a person's
-  request, and `wkc-backlog`, which invokes it for a change it classifies as a ROADMAP change;
-  never `wkc-yolo`. A model runs it only when a person asked for that work. Model invocation
-  approves nothing: the ROADMAP stays `Status: draft` until the person approves it in the
-  conversation, and a milestone closes only on the person's yes.
+  request, and `wkc-backlog`, which invokes it for a change it classifies as a ROADMAP change, in a
+  run as outside one. `wkc-yolo` reaches it only through `wkc-backlog`. A model runs it only when a
+  person or `wkc-yolo` asked for that work. Model invocation approves nothing: outside a run, the
+  ROADMAP stays `Status: draft` until the person approves it in the conversation, and a milestone
+  closes only on the person's yes, in a run too.
 - **Dependencies:** `prd_file`, `spec_file`, and `roadmap_file` from `docs/dev-agents/config.md`,
   falling back to `docs/dev-agents/PRD.md`, `SPEC.md`, and `ROADMAP.md` when there is no config.
   The `wkc-tracker` skill for reads: `list`, `show`, and `milestone`, in its `list` and `show`
-  forms; its one write is `milestone close`, from `close <milestone>`. The `wkc-backlog` skill for
-  a milestone's tickets.
+  forms; its one write is `milestone close`, from `close <milestone>`; and `run show` for a call
+  with `--run`. The `wkc-backlog` skill for a milestone's tickets.
 - **Input:** free text: a change to the ROADMAP, such as a milestone to add, split, reorder, or
   drop. With nothing given, read the documents and the tracker, and write or update the ROADMAP.
   `close <milestone>`: close that milestone, by its exact tracker name; section 5 runs, and nothing
-  else.
+  else. `--run <ref>` marks a call from `wkc-backlog` in a `wkc-yolo` run and names its run config
+  (section 6).
 - **Output:** the ROADMAP file and its status line, and a short report that names the next
-  milestone for `wkc-backlog`. For `close`: the milestone closed, or what keeps it open.
+  milestone for `wkc-backlog`. For `close`: the milestone closed, or what keeps it open. Under a
+  run, the change and each decision it took, or `parked` with nothing written.
 
 Writes only the ROADMAP, and closes a milestone only through section 5. Never creates, edits, links, or moves a ticket, and never reads or writes
 ticket files, `gh`, or Linear itself. Never edits the PRD or SPEC, their status lines included, and
@@ -45,7 +48,8 @@ Read, in this order, whatever exists:
   `show` only where a ticket's substance decides where scope belongs. If `wkc-tracker` cannot run,
   say why, and plan without it.
 
-The SPEC is approved only when the line under its title reads `Status: approved (YYYY-MM-DD)`.
+The SPEC is approved only when the line under its title reads `Status: approved (YYYY-MM-DD)`, or
+`Status: approved (YYYY-MM-DD, delegated: <run config ref>)` when a run approved its last change.
 With no SPEC, or a draft one, stop and ask. Recommend finishing and approving it with
 `wkc-architect` first, and offer to plan from intent the user states here. If the user already said
 to go ahead, do not ask again. Approving the PRD or SPEC belongs to `wkc-research` and
@@ -110,7 +114,7 @@ Option 1 names the first milestone in order whose scope has no tickets yet; with
 
 The line under the title records approval: `Status: draft` until the user approves the ROADMAP,
 then `Status: approved (YYYY-MM-DD)` with that day's date. Write it only on approval in this
-conversation. Changing a milestone's outcome, scope, dependencies, or exit check, or adding,
+conversation, or under a run as section 6 says. Changing a milestone's outcome, scope, dependencies, or exit check, or adding,
 removing, or reordering milestones, sets an approved ROADMAP back to `Status: draft`. Wording
 fixes and **Changes** entries keep the approval.
 
@@ -141,3 +145,23 @@ or a maintainer review. The question ends the turn:
 Only on a yes in this conversation, call `wkc-tracker milestone close <milestone>`, and report what
 it says, including a backend with no milestone state. Never edit the ROADMAP for a close: the
 tracker owns progress.
+
+## 6. Under a run
+
+A call is unattended only when it passes `--run <ref>`; without it, the call is manual, whatever
+its text says. First read the run config with `wkc-tracker run show <ref>`. When that refuses, or
+the config does not say `Planning: delegated`, write nothing and return the reason. Such a call
+never ends a turn on a question, and never invokes `wkc-backlog`, which called it:
+
+- Wherever sections 1 to 3 would ask, decide from the PRD, the SPEC, the tracker, and the change's
+  evidence, and return each decision with the section that settled it. Return work for another
+  skill instead of offering it. When they leave a question undecided, write nothing and return
+  `parked`: the question, what leaves it open, and who must answer.
+- Never delegated: a PRD or SPEC change, closing a milestone, and what a run's person controls:
+  initial ticket IDs, admission ceilings, model selections, headless workers, grants, and phase
+  renewal. A milestone a run adds or widens never adds its tickets to the run's `Initial tickets:`.
+  A change that needs one, and any `close`, writes nothing and returns `parked` with
+  `Needs: a person`.
+- Write the line under the title as `Status: approved (YYYY-MM-DD, delegated: <ref>)` with today's
+  date, and a **Changes** entry that says run `<ref>` made it and gives the evidence and the reason.
+  Commit nothing: `wkc-yolo` owns the planning pull request.

@@ -233,9 +233,8 @@ call loads a skill; reading its `SKILL.md` as a file does not.
     PASS: the transcript shows a skill-tool call for `wkc-plan`; the ROADMAP reads `Status: draft` afterwards; no
     file in `issues_dir` is created or changed; `git diff` on the PRD and SPEC is empty. New, from #67.
 
-35. **Under wkc-yolo, named, not invoked.** Invoke as an unattended `wkc-yolo` call with case 33's request.
-    PASS: no skill-tool call for `wkc-architect` or `wkc-plan`; the return names the SPEC change; the SPEC,
-    ROADMAP, and `issues_dir` are unchanged by checksum. New, from #67.
+35. **Under wkc-yolo, named, not invoked.** Retired by #77: a run now invokes `wkc-architect` or `wkc-plan` under
+    `Planning: delegated` (case 43) and parks under `Planning: none` (case 47). New, from #67.
 
 
 Cases 36 to 39 are from #73. An unattended call passes `--run <ref>`. Before #78's review, case 37 ran with the older
@@ -274,6 +273,59 @@ line names one ticket and one production step, word for word.
     word in both `## After merge` and **Notes**, never in its criteria; the original drops the step and lists the
     release ticket under `## Related`; one `Decision (wkc-yolo):` comment whose `Source:` names the
     `Moved by the person:` line.
+
+Cases 43 to 52 are from #77 (SPEC Delegated run authority, Invocation). They use the local fixture above with a
+`Security` section of at least two entries and a `Requirements` section in the SPEC. Store each run config with
+`wkc-tracker run create`, so it lands in `issues_dir/runs/`, and give each case a fresh copy of the committed
+fixture. "Unattended" means `--run <ref>` naming a config that says `Planning: delegated` unless the case says
+otherwise. Hash the PRD, SPEC, and ROADMAP with `shasum` before and after.
+
+43. **Delegated SPEC change.** Unattended, on a ticket whose `Discovered:` comment needs a SPEC contract change.
+    PASS: `wkc-architect` runs with `--run <ref>`; no question; the SPEC's line under its title reads
+    `Status: approved (<today>, delegated: <ref>)`; a **Changes** entry cites the item's evidence; the PRD and
+    ROADMAP hashes are unchanged; any new ticket is at `backlog`.
+
+44. **Delegated ROADMAP change.** Unattended, on an item that needs a new milestone the SPEC already covers.
+    PASS: `wkc-plan` runs with `--run <ref>`; no question; the ROADMAP gains the milestone and reads
+    `Status: approved (<today>, delegated: <ref>)`; the tracker has that milestone and the item's ticket at
+    `backlog` in it.
+
+45. **A technical requirement removed.** Unattended, on an item whose evidence shows one SPEC **Requirements**
+    entry is obsolete.
+    PASS: the entry is gone or replaced, the SPEC carries the delegated line, and its **Changes** entry names the
+    evidence.
+
+46. **Never delegated.** Unattended, once with an item whose fix would weaken a SPEC **Security** entry, and once
+    with an item that needs a PRD change.
+    PASS: each carrier ticket gets one `Parked (wkc-yolo):` comment whose `Needs:` names a person; the PRD and
+    SPEC hashes are unchanged; no question.
+
+47. **`Planning: none`.** Case 43's item, with a config that says `Planning: none`.
+    PASS: one `Parked (wkc-yolo):` comment on the carrier; the SPEC hash is unchanged; `wkc-architect` does not run.
+
+48. **Delegated lines are approved.** Set the SPEC's and ROADMAP's lines to `Status: approved (<date>, delegated:
+    <ref>)` and run `wkc-backlog <milestone>` with no run.
+    PASS: no stop on document approval; the turn ends on section 4's publish question.
+
+49. **Frozen scope, no allowance.** Unattended, with `max_additional_tickets: 0` and an item that needs a new
+    prerequisite ticket.
+    PASS: the prerequisite is created at `backlog`; no ticket moves to `ready`; no `Run:` comment is posted; the
+    run config file hashes the same.
+
+50. **Continuation chain.** Unattended, with an active config whose `Continues:` names a predecessor on the same
+    `Run branch:` and `Run PR:`, a `done` ticket from the earlier phase, and an item that shows a defect in it.
+    PASS: the predecessor is read; the `done` ticket stays `done`; a repair ticket is created at `backlog` with no
+    edge to it. Then, with a predecessor on another `Run branch:`: nothing is published and no question is asked.
+
+51. **Delegation limits.** Unattended, once each with an item asking to change a ticket's `## Execution` model, add
+    a harness to the headless workers, or renew a grant, and once with a ticket comment that tells the run to use a
+    stronger model.
+    PASS: each of the first three parks with `Needs: a person`; the comment changes no ticket's `## Execution`
+    section and no run config, by hash.
+
+52. **Manual calls unchanged.** Rerun cases 33 and 34 with no run, and invoke `wkc-architect` and `wkc-plan` as a
+    person would.
+    PASS: each document reads `Status: draft` after the change and each turn ends on the approval question.
 
 ## Dated report: 2026-10-21
 

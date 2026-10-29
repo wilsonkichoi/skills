@@ -30,8 +30,9 @@ the skill's report.
 1. **Package and discovery.** Parse the frontmatter and `agents/openai.yaml`. List and install the candidate.
    PASS: valid YAML, matching names, model invocation on both settings (`disable-model-invocation: false`,
    `policy.allow_implicit_invocation: true`), callers named as people, a model acting on a person's request, and
-   `wkc-backlog`, never `wkc-yolo`, a **When to use it** that keeps the ROADMAP at `Status: draft` until the person
-   approves it, `wc -l` of `SKILL.md` under 150, five
+   `wkc-backlog` in a run as outside one, with `wkc-yolo` reaching it only through `wkc-backlog`, and
+   `grep -n 'never .wkc-yolo.'` empty; a **When to use it** that keeps the ROADMAP at `Status: draft` outside a run
+   until the person approves it, `wc -l` of `SKILL.md` under 250 (150 before #77's run section), five
    opening fields in order, `wkc-plan` in public discovery, installed copy identical to the source, and each
    harness links to it.
 
@@ -107,6 +108,20 @@ the skill's report.
     PASS: the turn shows the counts and exit check and asks; after `1`, the reply comes from `wkc-tracker milestone
     close` and says the backend has no milestone state; `shasum` of every ticket file and the ROADMAP is unchanged
     and `git status --porcelain` is empty. New, from #66.
+
+Cases 37 to 39 are from #77 (SPEC Delegated run authority).
+
+37. **Delegated ROADMAP change.** [wkc-backlog case 44](./wkc-backlog.md).
+    PASS: as there: the ROADMAP gains the milestone and reads `Status: approved (<today>, delegated: <ref>)`, and
+    no question is asked.
+
+38. **A delegated SPEC line is approved.** Set the fixture SPEC's line to `Status: approved (<date>, delegated:
+    <ref>)` and run case 10's update.
+    PASS: no stop on SPEC approval; the turn ends on section 3's question.
+
+39. **Close under a run.** Run `wkc-plan close <milestone> --run <ref>` on a milestone with only terminal tickets,
+    under a `Planning: delegated` config.
+    PASS: the reply returns `parked` with `Needs: a person` and asks nothing; the milestone is still open.
 
 ## Moved cases
 
