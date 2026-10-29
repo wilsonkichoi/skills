@@ -25,6 +25,7 @@ Keep raw logs and fixtures outside tracked files.
 - Review round 4: 2026-10-28, PR #87
 - Review round 6: 2026-10-28, PR #87
 - Dated report: 2026-10-28, AI test allowances (#91)
+- Dated report: 2026-10-28, finish names the milestone (#88)
 
 ## Preparation
 
@@ -1161,3 +1162,33 @@ Candidate `ee9c162`, a local-backend `greet` fixture with no remote, built from 
 | 71 | PASS | Session 1 (pilot), limit `3`: continued `docs/002-help-examples`, posted exactly one record, `3 of 3` for `build docs/002-help-examples`, then one simulated start covering A1 to A3. The `build fix/002-earlier` record was not counted. No remote, so no handoff. |
 
 Not run: the handoff `AI test sessions:` line in a session, which needs a remote; follow-up PRs as new attempts; the pre-merge update continuing a build. Codex and Kiro: SKIP.
+
+## Dated report: 2026-10-28, finish names the milestone (#88)
+
+Scope: after a move to `done`, finish takes the ticket's milestone from `wkc-tracker show <id>`. Selected: cases 32 and
+33 in Claude Code. Codex and Kiro CLI: SKIP, no session in those harnesses. Candidate `ad3c9ab`, exported with
+`git archive` and installed with `skills` 1.7.4; `diff -r` of the installed `wkc-implement` and `wkc-tracker` against the
+candidate gave no output.
+
+Root cause, from the #80 transcripts: S1 read ticket 1 with `gh issue view 1 --json title,body,state,labels,assignees`, and
+S3 read ticket 5 with `--json number,title,body,state,labels,comments,assignees`. Neither list asks for `milestone`, and
+neither session ran the `show` query from `github.md`, which does. Both reported no milestone.
+
+Fixture: `wilsonkichoi/wkc-implement-fixture-59`, reused. The tester added `M5: Last open` and staged #32 in `M4: Busy`
+(where #26 stays `ready`), #34 in M5 (where #33 is `CLOSED` `COMPLETED`), and #35 with no milestone. Each was `in-review`,
+held by the tester, with a handoff comment naming a merged PR (#36, #37, #38).
+
+Session S1, 1 of 6 for `build fix/88-finish-milestone`, recorded on #88 before it started: a Claude Code
+`general-purpose` subagent on Sonnet (`sonnet`, effort `medium`), the configuration that failed in #80, reading the
+installed `SKILL.md` by hand, so harness loading is untested here. Three turns, about 63k to 67k subagent tokens each.
+
+| Case | Result | Evidence |
+|---|---|---|
+| 33, open ticket left | PASS | `finish 32`: the ticket read asked for `milestone`; the report named `M4: Busy`, as `gh issue view 32 --json milestone` shows, and said #26 is still `ready`; no `wkc-plan close`. The transcript shows the milestone's ticket query from `github.md`'s `milestone show`, without its title read and `rows` check. #32 `CLOSED` `COMPLETED`, one finish comment. |
+| 32 | PASS | `finish 34`: the same milestone query on `M5: Last open`; the report named `wkc-plan close M5: Last open` and did not close it. M5 still `open` by `gh api`. #34 `CLOSED` `COMPLETED`, one finish comment. |
+| 33, no milestone | PASS | `finish 35`: the ticket read asked for `milestone` and got `null`; no milestone query in the transcript; the report said the ticket has none. #35 `CLOSED` `COMPLETED`, one finish comment. |
+
+Every milestone kept its state, and #26 is still `ready`. The #80 failure was intermittent (two of three sessions) and
+happened under `--run` on a different fixture; finish under `--run` was not rerun here, so these passes do not prove the
+failure is gone there.
+
