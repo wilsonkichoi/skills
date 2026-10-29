@@ -661,7 +661,8 @@ calls them.
 PASS: every test passes. The tests run each verb against an in-memory GitHub and cover status mapping, unfiltered
 lists that raise the limit on a full page, the `wkc-run` exclusion, exact milestone titles against closed and
 near-match ones, blocker verdicts for cancel, duplicate chains, loops, and other repositories, cycles, exact bodies,
-section edits around fenced code, each `assign` form and its tie-break, half-landed and silently dropped writes,
+section edits and dependency parsing around fenced code (including fence-like content with trailing text),
+each `assign` form and its tie-break, half-landed and silently dropped writes,
 failed writes that are not retried, post-write read failures returning exit 3, concurrent closure,
 run configs refused as edge targets, cycles through complete lists, duplicates and other repositories,
 and text kept off the command line.
@@ -1555,6 +1556,28 @@ here.
 Versions 0.0.9 to 0.0.41 below were development steps on the `feat/tracker` branch. They shipped
 together as 0.0.8, so an entry's version names a branch state, and its skill ref names the exact
 commit it tested.
+
+### 2026-10-29T09:47:49-07:00 PR #95 review round 3
+
+Attempt: `review round 3 on https://github.com/wilsonkichoi/skills/pull/95`.
+Reviewed `3dfbe8871cbff96ac0bd3aa19673aaf58d1c3eff` independently. Selected A51 and focused read-only
+A52 subchecks (`run show` of a missing issue and `next` from `/`). GitHub backend; direct checks in Codex.
+AI test sessions: 0 of 6.
+
+The 82 existing tests passed. Two new regression tests failed at the reviewed head for both backtick and
+tilde fences: a fence-like line with trailing text ended the parser's code block early. Editing a real
+`## Notes` section deleted the literal example and the real section. Creating a ticket with a literal
+`## Blocked by` example refused valid input. The parser now closes fences only when the remaining line
+is whitespace. All 84 tests pass with `make test-tracker`.
+
+On `wilsonkichoi/wkc-tracker-fixture-65`, `run show 99999` returned exit 1 `refused`; `next` returned exit 0
+and reported the existing cycle through duplicate #4. Both commands ran from `/`. These are focused
+read checks, not a full A52 rerun or an installed-copy check. Static skill metadata, field order, length,
+supporting contents, version/changelog, and `git diff --check` passed. No `test_command` is configured.
+GitHub reports no PR checks. The pre-fix six-commit gitleaks scan found no leaks.
+
+A52 live writes and model case 72 were not rerun. Earlier evidence covers its recorded candidates only.
+This round does not establish harness loading, Claude Code/Kiro execution, or finish under `--run`.
 
 ### 2026-10-29T09:42:38-07:00 PR #95 review round 2
 

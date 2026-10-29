@@ -183,7 +183,7 @@ def _heading_lines(lines: list[str]) -> list[tuple[int, int]]:
             token = marker.group(1)
             if fence is None:
                 fence = token[0] * len(token)
-            elif token.startswith(fence):
+            elif token.startswith(fence) and not line[marker.end():].strip():
                 fence = None
             continue
         if fence is None:

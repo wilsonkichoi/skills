@@ -415,6 +415,15 @@ class Create(unittest.TestCase):
         self.assertEqual(code_of(lambda: g.cmd_create(self.f, "t", "## Blocked by\n- #99\n", None)), g.EXIT_REFUSED)
         self.assertEqual(self.f.writes, [])
 
+    def test_fence_content_does_not_create_dependency_edges(self):
+        for fence in ("```", "~~~"):
+            with self.subTest(fence=fence):
+                body = f"## What to build\n{fence}text\n{fence}literal\n## Blocked by\n- #99\n{fence}\n"
+                out = g.cmd_create(self.f, "Example", body, None)
+                issue = self.f.issues[ref(out["number"])]
+                self.assertEqual(issue["body"], body)
+                self.assertEqual(issue["blockers"], [])
+
     def test_a_create_that_changes_nothing_is_unverified(self):
         self.f.drop.add("create_issue")
         self.assertEqual(code_of(lambda: g.cmd_create(self.f, "t", "b", None)), g.EXIT_UNVERIFIED)
@@ -466,6 +475,15 @@ class Edit(unittest.TestCase):
     def test_missing_section_is_added(self):
         g.cmd_edit(self.f, 1, None, "## Acceptance criteria\n- [ ] Works.\n", None, False)
         self.assertTrue(self.f.issues[ref(1)]["body"].endswith("Keep me.\n\n## Acceptance criteria\n- [ ] Works.\n"))
+
+    def test_fence_content_is_kept_when_editing_a_real_section(self):
+        for fence in ("```", "~~~"):
+            with self.subTest(fence=fence):
+                body = (f"## What to build\n{fence}text\n{fence}literal\n## Notes\nLiteral example.\n"
+                        f"{fence}\n\n## Notes\nReal notes.\n")
+                self.f.issues[ref(1)]["body"] = body
+                g.cmd_edit(self.f, 1, None, "## Notes\nNew notes.\n", None, False)
+                self.assertEqual(self.f.issues[ref(1)]["body"], body.replace("Real notes.", "New notes."))
 
     def test_blocked_by_section_becomes_the_edge_set(self):
         self.f.issues[ref(1)]["blockers"] = [ref(2)]
