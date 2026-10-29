@@ -22,6 +22,8 @@ Keep raw logs and fixtures outside tracked files.
 - Review round 1: 2026-10-28, PR #87
 - Review round 2: 2026-10-28, PR #87
 - Review round 3: 2026-10-28, PR #87
+- Review round 4: 2026-10-28, PR #87
+- Review round 6: 2026-10-28, PR #87
 
 ## Preparation
 
@@ -393,6 +395,7 @@ error while a flag file is absent, a check the merged code fails, and a smoke te
     marker is absent. Under the `command` store, staging runs: its `get` is the edit check. Repeat with `get` refusing
     an edited config with a non-zero exit, even if stdout contains config text. The call stops with the refusal,
     writes nothing, and runs no gate. The store fixture owns edit detection; the skill needs no separate proof.
+    A successful `get` must also authorize the local-backend gate without an audit of its implementation.
 
 65. **Grant limits bind every attempt.** On the GitHub fixture, use a staging grant with zero remaining operations;
     then one with one operation left and a gate that fails on code. Exercise environment retries after expiry and
@@ -403,7 +406,9 @@ error while a flag file is absent, a check the merged code fails, and a smoke te
     holds the dependent. Contrast an environment failure, which does not hold it. Result summaries record the active
     ref, attempts, and bounded cost and duration so a resumed call counts prior use. Include comments from earlier in
     the active phase with no attempt count: unknown use does not count as unused authority. A predecessor phase's use
-    does not consume the active phase's limits. Verify leaves status unchanged in these paths.
+    does not consume the active phase's limits: after one predecessor staging attempt, a new phase with one
+    staging attempt still runs it. An environment log alone does not attribute that attempt to the new phase.
+    Verify leaves status unchanged in these paths.
 
 66. **Local verify evidence reads.** With local tickets and a `command` store, verify at one head twice.
     PASS: the first call posts and reads back gate comments on the run PR naming the ticket path, with no commit or
@@ -1038,3 +1043,78 @@ their paths are local or manual and unchanged.
 S8 needs the candidate installed in the fixture checkout and a Claude Code session started there: a subagent
 of another session sees that session's installed skills. Budget: 7 sessions and 1 retry. Case 64 on Linear is SKIP unless the person adds a session: its rule is the
 same line as local. No AI session ran in this round.
+
+## Review round 6: 2026-10-28, PR #87
+
+The person authorized additional review, fixes, and validation after round 5 stopped. The authorization is also
+recorded on [PR #87](https://github.com/wilsonkichoi/skills/pull/87#issuecomment-6486196135).
+Scope: the round-4 seven-session plan plus one retry, sequential Claude Code sessions, one additional fixing round,
+and one fresh independent review. No merge of PR #87 is authorized. No worker launched another worker or harness.
+
+Two verified defects were corrected:
+
+- At `43c8e6`, S9 refused a staging gate under new phase #68 with one available attempt because ticket #48 had
+  used an attempt under predecessor #57. Observed: “Ticket #48 already used it in the earlier call”. Expected:
+  the new phase has its own allowance. Issue #53 preserves the incorrect gate and waiting records. Accounting
+  now counts the active config ref, rejects incomplete usage attributable to that phase, and never derives
+  phase use from an environment log alone. This enforces #80 Grant ownership and SPEC Review continuations.
+- With that correction installed, S14's first local verify refused accepted command-store grants. Observed:
+  “Its `get` only runs `cat` on `local-active.md`, so the config could have been edited without a trace”.
+  No shared gate ran; only the local pass was posted on fixture PR #70. SPEC Store delegates that decision
+  to `get`. The remaining “store that detects edits” predicate still prompted an implementation audit despite
+  round 2's static correction. The text now explicitly trusts successful `get`, forbids a separate audit,
+  and preserves refusal on a non-zero exit even when stdout contains config text.
+
+Fixture: private `wilsonkichoi/wkc-run-finish-fixture-80`, new branches and records only. GitHub run branch
+`run/review87-20261028T1940`, run PR #46; local branch `run/review87-local`, run PR #70. Earlier test records
+were preserved. CLI: Claude Code 2.1.312, requested `sonnet`, effort `medium`; observed `claude-sonnet-5-5`.
+Installer: skills 1.7.4. Installed copies were compared with source. Raw prompts, transcripts, snapshots, and
+limits are retained outside tracked files in `.local/runs/pr87-validation/`.
+
+Source sequence: original `43c8e625c11dca73541501261c4898afd2601444`; phase-accounting correction with
+`run.md` SHA-256 `bfafeda0772cb41d12feeb5832eae449196af2b66800f21d59b8d4a773180939`; final store correction with
+`run.md` SHA-256 `dbfa0ef5de2f00a678a09fe6eea34cc2ad9f4522c074c8d3012b0f6d0e2e586c`.
+The main SKILL.md is unchanged. Relevant unchanged finish, verify, blocker, and continuation instructions retain
+results from the intermediate candidate. The changed store and accounting paths were retested after correction.
+
+| Session | Selected cases or subchecks | Independent observations |
+|---|---|---|
+| S8 | 51, 62, 67 installed invocation and active-config refusal | `/wkc-implement finish 43 --run 47` loaded the installed skill, read run.md, resolved initial #45's `not opened`, ran at `ed1a840`, and closed #43 as COMPLETED. Run PR #46 remained unmerged. Missing config 999999 caused no gate or write. |
+| S9 | 52, 65 dispatch | #48 ran local and staging; expired sandbox, unlisted preview, and production did not run. `--authorized` added no authority. #52's zero allowance ran nothing. The predecessor-accounting defect on #53 is FAIL at the original candidate. |
+| S9R | 64, 65 focused regressions | After correction, new phase #69 ran #53's staging gate once despite #57's earlier attempt. #55's incomplete active-phase usage remained unverifiable. Command-store acceptance ran #52; non-zero `get` with config text on stdout caused no gate or write. Final retests are recorded below. |
+| S10 | 53, 56, 57 | QA logged two failures per initial finish, waiting without parking. Recovery reused local passes and completed #49. Verify recovered #50 at the same head without a finish/status write. At new head `6f9b065`, local and QA reran; preview did not inherit its predecessor grant. #49 remained COMPLETED. |
+| S11 | 58, 65 failed-gate holds | One code attempt under #59 stayed fail without an authorized rerun or follow-up. Two refused claims left #63's state, holder, and comments unchanged. After tester follow-up #77 and a passing finish, #63 opened PR #78. A clean environment contrast, #75 blocked by waiting #50, opened PR #81. |
+| S12 | 62, 63 membership; criterion 15 grant ownership | False closure and conflicting PR identities wrote nothing. Real closure of #46 supplied historical membership for missing predecessor 999998, allowing #54 to finish. Reopening #46 retained that history and reused the pass. A comment on #48 attempting grant renewal and command widening authorized nothing; sandbox, preview, and production stayed unrun. |
+| S13 | 59, 63 delivery | Wrong base, unmerged PR, unrelated carrying head, earlier same-branch merge, missing carried ref, and wrong recorded branch each refused. A corrected missing-commit fixture left #85 unchanged. Valid superseding squash PR #82 then released #85, which opened PR #86 against main, after the carrying branch was deleted. No retired config was read. |
+| S14 | 64 local tracker and command stores; 66 local evidence | Initial command-store audit refusal is FAIL at the intermediate candidate. After correction, local/staging passed and QA retried once by default, then recovered. A repeated verify reused all passes. Gate comments on PR #70 name the local ticket path and checked head. Final file/status and unsupported-store checks are recorded below. |
+
+Focused checks are not full-case certifications. Case 65 covers zero and exhausted counts, active-phase unknown
+usage, predecessor resets, cross-ticket accounting, and an unauthorized code-failure retry. It does not establish
+measured cost/duration enforcement or expiry during an in-flight attempt. Existing expiry-before-dispatch and
+non-production/production distinctions are covered by cases 52 and the grant-ownership check. No further fixture
+expansion was run. Linear case 64 is SKIP. Codex and Kiro behavior is SKIP. The eight additional contexts include
+the reserved retry; resumed turns reuse their existing context. No quota, rate-limit, or authentication error occurred.
+
+Fixture corrections are not product findings: the first environment contrast had inconsistent body/native references
+and was replaced by #75 with both naming #50. A missing-commit fixture accidentally removed `Verified at:`; S13
+correctly used `Merged:` and claimed #67. That subcheck is unscored. A new #85 fixture preserved `Verified at:` with
+an unresolvable sha, refused without writes, and then accepted the restored real sha. Both original observations
+are preserved in the transcripts and fixture records.
+
+Direct GitHub checks confirmed PR #80's head and `refs/pull/80/head` stayed `ed1a840` after its branch advanced to
+`5acb195`. The valid carrier #82's head `da563fc` contains the blocker's `5acb195`; its squash merge `eb88a83`
+does not. The deleted carrier branch remained fetchable through `pull/82/head`. These check host mechanics,
+separately from the model observations above. No production marker was created and no sandbox operation ran.
+
+Final retests PASS: S9R under the final source counted #53's spent #69 attempt against #55 at a newer head,
+ran no deploy, and kept #55 waiting. The GitHub command-store verify then ran #52 once under accepted,
+while refused returned non-zero with config text and performed no gate or write. S14 trusted the successful
+local command store, recovered QA, reused its passes, and rejected the local tracker store's shared grant.
+The local head and SHA-256 of all ticket files stayed identical before and after every local verify.
+
+Direct checks PASS: metadata, five fields, relative links, contents, exact SPEC gate/finish/Decision/Parked
+blocks, case 61, version/changelog format, and git diff --check. Security inspection found no new dependency,
+credential, sensitive output, or unnecessary network call. The required gitleaks history scan runs after the
+commit and before its push; its outcome is recorded in the verdict. The project has no test_command or CI checks.
+Eight contexts reported $5.296 total list-price usage, not an API-billing fallback.
+Every context stayed below its $5 cap. The fresh review is separate from these validation contexts.
