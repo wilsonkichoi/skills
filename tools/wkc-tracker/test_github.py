@@ -415,6 +415,10 @@ class Create(unittest.TestCase):
         out = g.cmd_create(self.f, "t", "No dependency section.", None, ["#1", "o/r#1", "https://github.com/o/r/issues/1"])
         self.assertEqual(self.f.issues[ref(out["number"])]["blockers"], [ref(1)])
 
+    def test_blocker_verification_ignores_repository_case(self):
+        out = g.cmd_create(self.f, "t", "b", None, ["O/R#1", "o/r#1"])
+        self.assertEqual(self.f.issues[ref(out["number"])]["blockers"], [ref(1)])
+
     def test_any_markdown_body_is_kept_exactly(self):
         body = ("## What to build\r\n- ```\r\n  ## Blocked by\r\n  - #99\r\n  ```\r\n<!--\n## Notes\n-->\n"
                 "\t~~~\n## Blocked by ##\ncafé\u2028→ 🎉")
@@ -484,6 +488,12 @@ class Edit(unittest.TestCase):
         out = g.cmd_edit(self.f, 1, old="Old text.\n", new="New text.\n")
         self.assertEqual(self.body(), BODY.replace("Old text.", "New text."))
         self.assertEqual(out["body_sha256"], g.body_digest(self.body()))
+
+    def test_blocker_verification_ignores_repository_case(self):
+        for blocker in ("O/R#2", "o/r#2"):
+            with self.subTest(blocker=blocker):
+                g.cmd_edit(self.f, 1, blocked_by=[blocker])
+                self.assertEqual(self.f.issues[ref(1)]["blockers"], [ref(2)])
 
     def test_missing_ambiguous_or_empty_old_text_writes_nothing(self):
         for old in ("Absent.", "\n\n", "", "old text."):
@@ -684,12 +694,32 @@ class Comment(unittest.TestCase):
         self.f.drop.add("comment")
         self.assertEqual(code_of(lambda: g.cmd_comment(self.f, 1, "x")), g.EXIT_UNVERIFIED)
 
+    def test_identical_comments_are_appended(self):
+        g.cmd_comment(self.f, 1, "x")
+        g.cmd_comment(self.f, 1, "x")
+        self.assertEqual([c["body"] for c in self.f.issues[ref(1)]["comments"]], ["x", "x"])
+
+    def test_an_earlier_identical_comment_cannot_verify_a_dropped_write(self):
+        g.cmd_comment(self.f, 1, "x")
+        for failure in ("drop", "fail"):
+            with self.subTest(failure=failure):
+                self.f.drop.clear()
+                self.f.fail.clear()
+                getattr(self.f, failure).add("comment")
+                with self.assertRaises(g.TrackerError) as caught:
+                    g.cmd_comment(self.f, 1, "x")
+                self.assertEqual(caught.exception.code, g.EXIT_UNVERIFIED)
+                if failure == "fail":
+                    self.assertFalse(caught.exception.details["landed"])
+        self.assertEqual(len(self.f.issues[ref(1)]["comments"]), 1)
+
     def test_failed_call_that_landed_is_reported_and_not_retried(self):
+        g.cmd_comment(self.f, 1, "x")
         self.f.fail |= {"comment", "comment_lands"}
         with self.assertRaises(g.TrackerError) as caught:
             g.cmd_comment(self.f, 1, "x")
         self.assertTrue(caught.exception.details["landed"])
-        self.assertEqual(len(self.f.issues[ref(1)]["comments"]), 1)
+        self.assertEqual(len(self.f.issues[ref(1)]["comments"]), 2)
 
 
 class Links(unittest.TestCase):

@@ -80,7 +80,7 @@ stops with exit 4 and suggests the `local` backend.
   `--expected-sha256` also works with the other two. A missing or repeated old text, or a body
   whose digest differs, is refused and nothing is written: read the ticket again and decide.
 - A blocker ref, `--blocked-by`, and `--original` take `#12`, `12`, `owner/repo#12`, or an issue
-  URL; a bare number is this repository. A pull request URL is refused.
+  URL; a bare number is this repository. Repository names are case-insensitive. A pull request URL is refused.
 - `run create` titles the issue `Run config: <branch>`, from the config's `Run branch`.
 
 ## Output and exit codes
@@ -135,6 +135,8 @@ comments: on a public repository anyone can comment.
   not close it.
 - A closed issue carries no status label; `done`, `cancel`, and `duplicate` are close reasons.
 - Writes send text through standard input, never through a shell or a query string.
+- A comment verifies only when the number of comments with its exact body increases. An earlier
+  identical comment cannot verify a dropped write or count as a new comment after a failed request.
 - Text is UTF-8 everywhere, as `gh` uses it: the script's input and output and what it exchanges
   with `gh`. A non-UTF-8 locale, such as a Windows code page, changes none of it. Files and
   standard input keep their line endings, and an edit keeps the rest of the body byte for byte.

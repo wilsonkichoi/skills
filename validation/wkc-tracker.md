@@ -663,9 +663,11 @@ lists that raise the limit on a full page, the `wkc-run` exclusion, exact milest
 near-match ones, blocker verdicts for cancel, duplicate chains, loops, and other repositories, cycles, exact bodies,
 edges only from explicit arguments (any Markdown body kept and never parsed), exact text replacement that refuses
 missing, repeated, and empty old text, append, whole-body replacement checked against the body's digest, a stale
-body refused before writing, edit edge sets that are kept, replaced, or cleared, the edit argument rules,
+body refused before writing, edit edge sets that are kept, replaced, or cleared, case-insensitive repository
+names in edge verification, the edit argument rules,
 each `assign` form and its tie-break, half-landed and silently dropped writes,
-failed writes that are not retried, post-write read failures returning exit 3, concurrent closure,
+failed writes that are not retried, earlier identical comments that cannot verify dropped or failed writes,
+successful repeated comments, post-write read failures returning exit 3, concurrent closure,
 run configs refused as edge targets, pull request targets refused before any ticket write,
 cycles through complete lists, duplicates and other repositories,
 and text kept off the command line and kept UTF-8 under a Latin-1 locale, exact CRLF input bodies,
@@ -677,7 +679,8 @@ and the rest of a body kept byte for byte, with mixed line endings and Unicode s
 and once as `"<install>/.claude/skills/wkc-tracker/github.py" --repo <R> milestone list`.
 PASS: each verb's exit code matches its outcome (0 done, 1 refused, 4 read failed), and independent `gh` reads
 confirm each write: the exact title and body of a create with quotes, `$(...)`, and non-ASCII text; an edge from
-`--blocked-by`, and none from a `## Blocked by` in the body alone; the bare claim, and a second claim refused; a terminal move with no status label; a refused move out of
+`--blocked-by` with mixed-case repository names on create and edit, and none from a `## Blocked by` in the body
+alone; two identical comments append twice; the bare claim, and a second claim refused; a terminal move with no status label; a refused move out of
 `done`; a refused cycle with its path; link, unlink, and a refused second unlink; an edit that replaces exact text
 and clears the edges (`--no-blockers`) and the milestone; an edit refused for missing old text and one refused for
 a stale `--expected-sha256`, each with the body unchanged; a duplicate with its original; milestone ensure, show, and close, with a refused
@@ -1567,6 +1570,52 @@ here.
 Versions 0.0.9 to 0.0.41 below were development steps on the `feat/tracker` branch. They shipped
 together as 0.0.8, so an entry's version names a branch state, and its skill ref names the exact
 commit it tested.
+
+### 2026-10-29T11:56:21-07:00 PR #95 review round 12
+
+Attempt: `review round 12 on https://github.com/wilsonkichoi/skills/pull/95`.
+Reviewed `0b642b55b595f4f7421ad4ef7f8cb8b4eff069f7`. The maintainer authorized one additional
+fixing round and live calls on a throwaway repository. Selected A51 and focused A52 subchecks for
+explicit blocker references, exact body edits, and repeated comments. GitHub backend; direct
+checks in Codex. AI test sessions: **0 of 6** for this attempt. Reused
+`wilsonkichoi/wkc-review95-round7-20261029`.
+
+- **Verified finding:** installed reviewed code, run from `/`, created
+  [issue #14](https://github.com/wilsonkichoi/wkc-review95-round7-20261029/issues/14) with
+  `--blocked-by WilsonKiChoi/WKC-Review95-Round7-20261029#10` and returned exit 3, naming
+  `blockers` as the difference. An exact Notes replacement with the same edge argument also
+  returned exit 3. Independent `gh issue view` reads confirmed the exact bodies and edge [10]
+  after both calls. The requested repository and the returned repository differ only in case.
+  Edge-set verification now uses `Ref` equality, which already compares repository names without case.
+- **Verified finding:** with an earlier identical comment and a silently dropped write, the
+  in-memory contract reproduction returned `commented: true`; with a failed request, it reported
+  `landed: true`. Neither appended a comment. Verification now requires the number of exact-body
+  matches to increase. No live silent drop was observed or induced.
+- **A51 PASS:** all 94 existing tests passed at the reviewed head. Three of four new tests failed
+  there, including both dropped/failed-comment subchecks. All 98 tests pass after the fixes.
+  The existing failed-but-landed comment test now also starts with an identical earlier comment.
+  Earlier fixes remain resolved; Markdown-parser behavior was superseded by the recorded
+  maintainer decision in ADR-011.
+- **A52 focused subchecks PASS:** installed with `npx skills add`, run from `/` under
+  `LC_ALL=en_US.ISO8859-1`, `PYTHONUTF8=0`, and `PYTHONCOERCECLOCALE=0`.
+  [Issue #15](https://github.com/wilsonkichoi/wkc-review95-round7-20261029/issues/15) was created
+  and edited with the same mixed-case blocker reference, each exiting 0. Independent `gh` reads
+  confirmed edge [10] and the exact mixed-ending UTF-8 body. Exact replacement, append, digest-checked
+  whole-body replacement, and clearing blockers together with their body text all verified exactly.
+  Missing old text and a stale digest each exited 1 with the body unchanged. `show` and `edit`
+  returned the independently computed SHA-256. Two identical CRLF comments each exited 0, and
+  independent reads showed the matching count increase from 0 to 1 to 2. Tested script SHA256:
+  `db56ba6e790334d1bacccb4b1ea7179b0caadc665796965a684e6fe94912dd01`.
+- **Static checks PASS:** the final installed skill matches the source, excluding `__pycache__`,
+  and retains the executable bit. Metadata, opening fields, line ceilings, supporting contents,
+  the existing 0.0.44 version/changelog entry, and `git diff --check` pass. The history and diff
+  review found no secret, authorization defect, sensitive-data destination, or unrelated network
+  call. `uv` is the dependency approved in ADR-011; the script uses only the standard library.
+  Gitleaks over all branch commits passed before push.
+
+These are focused A52 subchecks, not a full-case PASS or model-behavior evidence. Case 72 and
+cross-harness sessions were not rerun. Harness loading and finish under `--run` remain unestablished.
+No `test_command` is configured; GitHub reports no PR checks. The live fixtures remain as evidence.
 
 ### 2026-10-29T11:43:36-07:00 PR #95 opaque ticket text
 

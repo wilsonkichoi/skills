@@ -772,7 +772,7 @@ def cmd_create(gh: GitHub, title: str, body: str, milestone: str | None,
         problems.append("status")
     if (after.milestone or {}).get("number") != (target["number"] if target else None):
         problems.append("milestone")
-    if sorted(_s([b.ref for b in gh.blockers(after.ref)])) != sorted(_s(edges)):
+    if {b.ref for b in gh.blockers(after.ref)} != set(edges):
         problems.append("blockers")
     if problems:
         unverified(f"#{number} was created, but the re-read differs in: {', '.join(problems)}", number=number,
@@ -842,7 +842,7 @@ def cmd_edit(gh: GitHub, number: int, *, title: str | None = None, old: str | No
     want_milestone = fields["milestone"] if "milestone" in fields else (before.milestone or {}).get("number")
     if (after.milestone or {}).get("number") != want_milestone:
         problems.append("milestone")
-    if sorted(_s(blocker_refs(gh, after.ref))) != sorted(_s(new_edges)):
+    if set(blocker_refs(gh, after.ref)) != set(new_edges):
         problems.append("blockers")
     if (after.state, after.state_reason) != (before.state, before.state_reason):
         problems.append("state")
@@ -972,15 +972,16 @@ def _holder_note(issue: Issue, me: str) -> str | None:
 def cmd_comment(gh: GitHub, number: int, body: str) -> dict[str, Any]:
     if not body.strip():
         refuse("a comment needs a body")
-    ticket(gh, number)
+    before = ticket(gh, number)
+    matches_before = sum(c["body"] == body for c in before.comments or [])
     try:
         gh.comment(number, body)
     except GhError as error:
-        landed = any(c["body"] == body for c in gh.issue(number).comments or [])
+        landed = sum(c["body"] == body for c in gh.issue(number).comments or []) > matches_before
         unverified(f"gh reported a failure; the comment {'did' if landed else 'did not'} land. Do not retry blindly",
                    landed=landed, gh=error.detail)
-    if not any(c["body"] == body for c in gh.issue(number).comments or []):
-        unverified(f"the comment is not on #{number}")
+    if sum(c["body"] == body for c in gh.issue(number).comments or []) <= matches_before:
+        unverified(f"a new comment with the given body is not on #{number}")
     return {"number": number, "commented": True}
 
 
@@ -999,7 +1000,7 @@ def _write_link(gh: GitHub, number: int, blocker: Ref) -> None:
     gh.add_blocked_by(number, gh.issue_id(blocker))
     if blocker not in blocker_refs(gh, blocked):
         unverified(f"{blocker} is not among the blockers of #{number}")
-    if sorted(_s(blocker_refs(gh, blocker))) != sorted(_s(blockers_before)):
+    if set(blocker_refs(gh, blocker)) != set(blockers_before):
         unverified(f"the blockers of {blocker} changed")
 
 
@@ -1008,7 +1009,7 @@ def _write_unlink(gh: GitHub, number: int, blocker: Ref) -> None:
     others = [r for r in blocker_refs(gh, blocked) if r != blocker]
     gh.remove_blocked_by(number, gh.issue_id(blocker))
     remaining = blocker_refs(gh, blocked)
-    if blocker in remaining or sorted(_s(remaining)) != sorted(_s(others)):
+    if blocker in remaining or set(remaining) != set(others):
         unverified(f"unlinking {blocker} from #{number} did not verify", blockers=_s(remaining))
 
 
