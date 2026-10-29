@@ -424,6 +424,17 @@ class Create(unittest.TestCase):
                 self.assertEqual(issue["body"], body)
                 self.assertEqual(issue["blockers"], [])
 
+    def test_headings_github_renders_create_dependency_edges(self):
+        for heading in (" ## Blocked by", "   ## Blocked by", "## Blocked by ##", "##\tBlocked by"):
+            with self.subTest(heading=heading):
+                out = g.cmd_create(self.f, "t", f"## What to build\nIt.\n\n{heading}\n- #1\n", None)
+                self.assertEqual(self.f.issues[ref(out["number"])]["blockers"], [ref(1)])
+
+    def test_inline_code_at_line_start_does_not_open_a_fence(self):
+        body = "## What to build\n```x``` is inline code.\n\n## Blocked by\n- #1\n"
+        out = g.cmd_create(self.f, "t", body, None)
+        self.assertEqual(self.f.issues[ref(out["number"])]["blockers"], [ref(1)])
+
     def test_a_create_that_changes_nothing_is_unverified(self):
         self.f.drop.add("create_issue")
         self.assertEqual(code_of(lambda: g.cmd_create(self.f, "t", "b", None)), g.EXIT_UNVERIFIED)
@@ -484,6 +495,13 @@ class Edit(unittest.TestCase):
                 self.f.issues[ref(1)]["body"] = body
                 g.cmd_edit(self.f, 1, None, "## Notes\nNew notes.\n", None, False)
                 self.assertEqual(self.f.issues[ref(1)]["body"], body.replace("Real notes.", "New notes."))
+
+    def test_an_indented_or_closed_heading_is_replaced_not_duplicated(self):
+        for heading in ("  ## Notes", "## Notes ##"):
+            with self.subTest(heading=heading):
+                self.f.issues[ref(1)]["body"] = f"## What to build\nIt.\n\n{heading}\nOld notes.\n"
+                g.cmd_edit(self.f, 1, None, "## Notes\nNew notes.\n", None, False)
+                self.assertEqual(self.f.issues[ref(1)]["body"], "## What to build\nIt.\n\n## Notes\nNew notes.\n")
 
     def test_blocked_by_section_becomes_the_edge_set(self):
         self.f.issues[ref(1)]["blockers"] = [ref(2)]

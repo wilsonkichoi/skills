@@ -1557,6 +1557,24 @@ Versions 0.0.9 to 0.0.41 below were development steps on the `feat/tracker` bran
 together as 0.0.8, so an entry's version names a branch state, and its skill ref names the exact
 commit it tested.
 
+### 2026-10-29T09:58:01-07:00 PR #95 review round 4
+
+Attempt: `review round 4 on https://github.com/wilsonkichoi/skills/pull/95`.
+Reviewed `a22bb6ff04c3a5dc0fa6ac7e9ddd035a9a496958` independently. Selected A51. GitHub backend; direct
+checks in Claude Code. AI test sessions: 0 of 6.
+
+The 84 existing tests passed. Three new regression tests failed at the reviewed head in seven subchecks:
+`create` made no edge for a `## Blocked by` heading indented one or three spaces, closed with `##`, or
+followed by a tab, or one that came after a line starting with inline triple-backtick code; `edit` of
+`## Notes` added a second Notes section beside an indented or closed one. GitHub renders each of these
+as a heading. The parser now reads headings with up to three leading spaces and an optional closing
+sequence, and a backtick line whose info string holds a backtick opens no fence. All 87 tests pass
+with `make test-tracker`.
+
+No live call ran: the change is the body parser, which the contract tests drive directly. A52 and
+model case 72 were not rerun. This round does not establish harness loading, Claude Code/Kiro
+execution, or finish under `--run`.
+
 ### 2026-10-29T09:47:49-07:00 PR #95 review round 3
 
 Attempt: `review round 3 on https://github.com/wilsonkichoi/skills/pull/95`.

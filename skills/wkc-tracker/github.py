@@ -174,22 +174,26 @@ def refs_in_blocked_by(section: str, repo: str) -> list[Ref]:
 # ---------------------------------------------------------------- body sections
 
 
-def _heading_lines(lines: list[str]) -> list[tuple[int, int]]:
-    """(line index, level) of every `#` or `##` heading outside a fenced block."""
+def _heading_lines(lines: list[str]) -> list[tuple[int, int, str]]:
+    """(line index, level, text) of every `#` or `##` heading outside a fenced
+    block, read as GitHub renders them: up to three leading spaces and an
+    optional closing `#` sequence."""
     headings, fence = [], None
     for index, line in enumerate(lines):
-        marker = re.match(r"\s{0,3}(`{3,}|~{3,})", line)
+        marker = re.match(r"\s{0,3}(`{3,}|~{3,})(.*)", line)
         if marker:
-            token = marker.group(1)
+            token, rest = marker.groups()
             if fence is None:
-                fence = token[0] * len(token)
-            elif token.startswith(fence) and not line[marker.end():].strip():
+                # A backtick in a backtick fence's info string makes the line inline code.
+                if token[0] == "~" or "`" not in rest:
+                    fence = token[0] * len(token)
+            elif token.startswith(fence) and not rest.strip():
                 fence = None
             continue
         if fence is None:
-            match = re.match(r"(#{1,2}) ", line)
+            match = re.match(r" {0,3}(#{1,2})(?:[ \t]+(.*?))?(?:[ \t]+#+)?[ \t]*$", line)
             if match:
-                headings.append((index, len(match.group(1))))
+                headings.append((index, len(match.group(1)), match.group(2) or ""))
     return headings
 
 
@@ -201,10 +205,10 @@ def split_sections(body: str) -> tuple[list[str], list[tuple[str, list[str]]]]:
     headings = _heading_lines(lines)
     if not headings:
         return lines, []
-    ends = [index for index, _ in headings[1:]] + [len(lines)]
+    ends = [index for index, _, _ in headings[1:]] + [len(lines)]
     pieces = [
-        ("#" * level + " " + lines[index][level + 1 :].strip(), lines[index:end])
-        for (index, level), end in zip(headings, ends)
+        ("#" * level + " " + text, lines[index:end])
+        for (index, level, text), end in zip(headings, ends)
     ]
     return lines[: headings[0][0]], pieces
 

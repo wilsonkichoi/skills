@@ -104,8 +104,10 @@ means `wkc-plan close` is the caller's call: the script never closes a milestone
 - A blocker is met only when it is `done`, or a duplicate whose chain ends at `done`. Blockers are
   read in full with their repository; a duplicate chain that loops or breaks is unmet.
 - `link` and an `edit` that adds edges walk the blockers first and refuse a cycle with its path.
-- Section edits and dependency parsing ignore headings inside fenced code, including fence-like
-  content with trailing text that cannot close the block.
+- Section edits and dependency parsing read headings as GitHub renders them, with up to three
+  leading spaces and an optional closing `#` sequence. They ignore headings inside fenced code,
+  including fence-like content with trailing text that cannot close the block. A line that starts
+  with inline code in triple backticks opens no block.
 - A closed issue carries no status label; `done`, `cancel`, and `duplicate` are close reasons.
 - Writes send text through standard input, never through a shell or a query string.
 
