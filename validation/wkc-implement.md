@@ -1366,3 +1366,21 @@ output only. Selected: cases 73, 74, 75, 76, 77, and 79; `wkc-code-review` case 
 The session noted that it read fixture Codex configs with `cat`, which printed values; section 4 now says to
 print key names only.
 
+
+### Pilot, case 80, 2026-10-29
+
+Approved by the maintainer in this session: about 3 worker sessions (an `opus` build, a `gpt-6.1-sol` review, a fresh
+`opus` review), one at a time, in a throwaway private repository, `codex exec` the only other harness. The question
+relay and `--run` parts of case 80 were outside that approval and stay SKIP. Fixture:
+`wilsonkichoi/wkc-routing-pilot-20261029`, ticket #1, PR #2, candidate `5a05dae` installed for Claude Code and Codex.
+This session was the coordinator and followed the installed `routing.md`; its own instruction following is covered by
+the dry run above, not by this pilot.
+
+| Step | Result | Evidence |
+|---|---|---|
+| Coordinator checks | PASS, direct | No visible settings file sets `sandbox.enabled` or disables bypass; no managed settings file; `codex login status` reports ChatGPT; `~/.codex/config.toml` has no `model_provider` or `model_providers` key; the API-key variables and `OPENAI_BASE_URL` are unset. `CLAUDE_CODE_MAX_SUBAGENT_SPAWN_DEPTH` unset, so only the prompt kept the worker from starting a subagent. |
+| 1, `opus` build (session 2 of 6) | PASS | Native agent, `model: opus`, `effort: medium`. PR #2 opened at `407afb2`; the ticket reads `in-review` with one handoff carrying `Execution: claude-code, opus, effort medium` and `Observed execution: model claude-opus-5-5 (harness-reported model ID); effort unavailable`. The transcript shows it read the checkout's installed `routing.md` and `SKILL.md` and made no `Agent` or `Skill` call. |
+| 2, `gpt-6.1-sol` review (session 3 of 6) | FAIL, environment: authentication | Tester planted `44496b3` (unknown single-dash option greets instead of usage). The `codex exec` command from `routing.md` exited 1 with `turn.failed`: `workspace routing discovery unauthorized (401)`, after `Encountered invalidated oauth token for user`. Nothing landed: PR #2 head and comments unchanged, the ticket has only the handoff. All dispatch stopped with no retry. `codex login status` still reported `Logged in using ChatGPT`, so the pre-launch check cannot see a revoked token; only the worker's exit does. |
+| 3, fresh `opus` review | Not run | Stopped by the authentication error. |
+
+Unblock: the person runs `codex login`; then steps 2 and 3 use the remaining allowance (3 of 6 for this attempt).
