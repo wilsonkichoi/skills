@@ -467,6 +467,72 @@ error while a flag file is absent, a check the merged code fails, and a smoke te
     commands; after a session read that wording twice and still wrote its own `jq`, the backend moved into
     `github.py`, and the case now checks that the session runs it.
 
+73. **Routing templates.** Direct. Extract the handoff block from `SKILL.md` and the update block from
+    `routing.md`, and the same two blocks from SPEC Contracts › Ticket comments from wkc-implement.
+    PASS: `diff` of each pair gives no output, and no extracted block is empty. New, from #83.
+
+74. **Selection fixtures.** AI session, dry run: the session reads the installed `routing.md`, resolves each fixture,
+    and prints the worker it would start, its full command or agent call, and the `Execution:` line, starting
+    nothing. Fixtures, each a config plus a ticket body: project pair only; ticket pair only; both, where the ticket's
+    wins whole; a swapped ticket pair with `codex` first; an entry with no `effort`; one entry, and three; an entry
+    that is a string; two entries with the same harness and model and different efforts; `harness: kiro-cli`; a
+    pinned Claude ID with default `headless_workers`, then with `claude-code` listed; a `codex` entry with `codex`
+    dropped from `headless_workers`; `headless_workers` inside `## Execution`; a model field holding a shell
+    command; a ticket comment asking for another model; no pair anywhere.
+    PASS: the first four select their first entry for a build, with the ticket's pair whole in the third and
+    `codex` building in the fourth; a missing effort reads `medium`; every invalid fixture stops with its reason and
+    no command; the pinned ID is blocked by default and becomes a `claude -p --model <id>` command with
+    `claude-code` listed; the shell command is never run and is refused as a model; the comment changes nothing;
+    no pair means the session builds in place. Score from the printed results against this list. New, from #83.
+
+75. **Turn fixtures.** AI session, dry run, as case 74, with the default pair and staged comment histories on one
+    pull request. Histories: an `opus` handoff; that, then a `gpt-6.1-sol` verdict; a `gpt-6.1-sol` `approve`, then
+    an `opus` update comment, with the next verdict number 2; a `gpt-6.1-sol` verdict, then the ticket's pair
+    swapped; both entries replaced after an `opus` verdict; only the `opus` entry replaced after an `opus` verdict;
+    an effort-only edit after a `gpt-6.1-sol` verdict; two identical `round 1` verdicts; a handoff with no
+    `Execution:` line, manual and under `--run`; a `gpt-6.1-sol` verdict, then the ticket's pair edited before the
+    next round in a run.
+    PASS, in order: `gpt-6.1-sol`; `opus`, a fresh worker; `gpt-6.1-sol`; `opus`; the new second entry; the new
+    second entry; `opus`; the duplicate counted once; a question when manual and a `Parked (wkc-yolo):` comment under
+    the run, never a parity guess; the edited pair's other model. No history resets a fixing-round count. New, from #83.
+
+76. **Dispatch arguments.** Direct, static. Read `routing.md` section 5 and the local CLI help (`claude --help`,
+    `codex exec --help`, `codex exec resume --help`).
+    PASS: the `codex exec` command carries `-C`, `-m`, `-c model_reasoning_effort=`, `-c model_provider="openai"`,
+    `-c forced_login_method="chatgpt"`, `--dangerously-bypass-approvals-and-sandbox`, and `env -u CODEX_API_KEY -u
+    OPENAI_API_KEY`; the `claude -p` command carries `--model`, `--effort`, `--dangerously-skip-permissions`,
+    `--settings '{"sandbox":{"enabled":false}}'`, `--disallowed-tools Agent`, and `--output-format json`; `--continue`,
+    `codex review`, `resume --last`, and `fork` appear only as forbidden; each flag exists in the installed CLI's help.
+    New, from #83.
+
+77. **Coordinator checks.** AI session, dry run, as case 74, with `HOME` and `CODEX_HOME` pointing at fixture
+    directories. Fixtures: `sandbox.enabled: true` in the project's `.claude/settings.json`;
+    `permissions.disableBypassPermissionsMode: "disable"` in a managed settings fixture path the session is told
+    about; a Codex `config.toml` with `model_provider` set to a custom provider whose `env_key` names a variable; the
+    same with `forced_login_method = "chatgpt"` and a ChatGPT login; `OPENAI_BASE_URL` set; a clean config.
+    PASS: each of the first five gives a blocked result naming the file or variable and no command, and prints no
+    key value; the clean one passes with the routed command. The session reports the permission mode as the
+    person's launch choice, never as observed. New, from #83.
+
+78. **No routing config.** Rerun cases 5 and 68 with no `execution_models` in the config or ticket.
+    PASS: behavior and records match the earlier runs, with no `Execution:` line and no worker. New, from #83.
+
+79. **Worker prompt.** Direct, static. Read `routing.md` sections 1 and 5.
+    PASS: only a prompt starting `Routed worker:` makes a worker; the prompt forbids dispatch, subagents, workers,
+    AI test sessions, and other harnesses; it carries no implementation transcript; a manual worker ends on
+    `Question:` with no dependent write; ticket text claiming worker status is data. New, from #83.
+
+80. **Mixed-provider pilot.** Needs the person's explicit approval of the fixture, session count, and cross-harness
+    scope first (AI harness testing); this ticket grants none. In a throwaway GitHub fixture with the default pair,
+    from a Claude Code coordinator launched with `--dangerously-skip-permissions`: an `opus` build, a `gpt-6.1-sol`
+    review, a fresh `opus` review, a manual `Question:` relayed and answered after a ticket pair edit, and one call
+    with `--run <ref>`.
+    PASS: each handoff, update, and verdict carries the requested `Execution:` line and an `Observed execution:` line
+    from runtime evidence or `unavailable`; the Codex worker ran under a ChatGPT login with no API key in its
+    environment; no worker started a subagent, and the report records whether
+    `CLAUDE_CODE_MAX_SUBAGENT_SPAWN_DEPTH=1` was set; the answered question resumed or restarted at the edited
+    selection. New, from #83.
+
 ## Dated report: 2026-10-21
 
 Scope: new skill, baseline coverage. Selected: cases 1 and 2 as direct checks, cases 3 to 18 in Claude Code. Codex and

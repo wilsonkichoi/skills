@@ -327,6 +327,12 @@ otherwise. Hash the PRD, SPEC, and ROADMAP with `shasum` before and after.
     person would.
     PASS: each document reads `Status: draft` after the change and each turn ends on the approval question.
 
+53. **Execution pair copied.** Ask for a ticket with "build it with Sol and review with Opus", then for one with no
+    model named.
+    PASS: the first draft's `## Execution` holds `execution_models` with a `codex` entry first and a `claude-code`
+    entry second, each with `effort`, and no `headless_workers`; the second draft has no `## Execution` section.
+    New, from #83.
+
 ## Dated report: 2026-10-21
 
 Scope: new skill, split from `wkc-plan` (ADR-004). Selected: cases 1 to 3 as direct checks; 4, 5, 7, 9, 21, 22, 23, 26,

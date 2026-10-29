@@ -1,7 +1,7 @@
 # wkc-setup validation
 
 Follow [Validation](../AGENTS.md#validation). This catalog covers the review-round field added by #54, the
-`run_config` field added by #78, the `push_check` field added by #76, the AI test allowance added by #91, and the `uv` prerequisite added by #94. It does not claim baseline coverage of the
+`run_config` field added by #78, the `push_check` field added by #76, the AI test allowance added by #91, the `uv` prerequisite added by #94, and the execution model fields added by #83. It does not claim baseline coverage of the
 rest of setup.
 
 ## Cases
@@ -20,7 +20,7 @@ rest of setup.
    PASS: Section E offers `tracker`, `github-variable`, and `command <cmd>` with `tracker` first, warns that a
    `tracker` issue on a public GitHub repository is public, that Linear and local cannot detect an edit, and that
    every Actions workflow can read a variable; the template parses `run_config` as `tracker`; the multi-question
-   rule names Sections A to E.
+   rule names Sections A to F (A to E before #83).
 5. **Write the store.** In a throwaway public GitHub project, run setup and choose `github-variable`.
    PASS: the warning about the public repository appears before the choice is taken, and the written config holds
    `run_config: github-variable`.
@@ -42,6 +42,18 @@ rest of setup.
 9. **`uv` for the GitHub backend.** Direct. Read Section A's prerequisite table.
    PASS: the `github` row checks `uv --version` beside `gh auth status` and the remote, and says `wkc-tracker`
    cannot run on GitHub without it. New, from #94 (ADR-011).
+
+10. **Execution model fields.** Direct. Read Section F and parse the config template's YAML frontmatter.
+   PASS: Section F offers the default pair first, another pair, and none; it says a missing `effort` is `medium`,
+   that a pinned Claude ID needs `claude -p`, and that listing `claude-code` in `headless_workers` accepts its
+   login, API billing included; it gives the `claude --dangerously-skip-permissions`, `~/.claude/settings.json`
+   `bypassPermissions`, Codex, and Kiro CLI launches, and that project settings cannot turn bypass mode on. The
+   template parses `execution_models` as two maps, `claude-code`/`opus`/`medium` then `codex`/`gpt-6.1-sol`/`medium`,
+   and `headless_workers` as `[codex, kiro-cli]`; the multi-question rule names Sections A to F. New, from #83.
+11. **Write the pair.** In a throwaway project, run setup with both fields missing and choose the default pair and
+   the default workers.
+   PASS: the written config parses as case 10's template values, and no `claude-code` appears in `headless_workers`.
+   New, from #83.
 
 ## Dated report: 2026-10-22
 

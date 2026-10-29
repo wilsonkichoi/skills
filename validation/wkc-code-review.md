@@ -371,6 +371,12 @@ each implementation worktree its `HEAD`, index, `git status --porcelain=2 --untr
     PASS: no record lands and no test session starts; the check that needed it is SKIP, never passed, in the verdict
     and the report, and the verdict says `0 of 0`.
 
+62. **Routed round.** Cases 74, 75, 77, and 80 in `validation/wkc-implement.md` cover routing for review rounds. Add,
+    direct: `SKILL.md` names `execution_models`, `headless_workers`, and the `wkc-implement` skill's `routing.md` as
+    dependencies, and stops with the dependency named when that file is missing from the installed copy.
+    PASS: the install with `-s wkc-code-review` alone, given a pair, posts nothing and names `wkc-implement`. New,
+    from #83.
+
 ## Dated report: 2026-10-22
 
 Scope: new skill, baseline coverage. Selected: cases 1 to 3 as direct checks, cases 4 to 15 in Claude Code. Case 16
