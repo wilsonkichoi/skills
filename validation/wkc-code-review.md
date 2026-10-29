@@ -22,6 +22,11 @@ Keep raw logs and fixtures outside tracked files.
 - Review round 2: 2026-10-25, PR #78
 - Dated report: 2026-10-26, run branch and run config (#78)
 - Dated report: 2026-10-28, push check and security review (#76)
+- Dated report: 2026-10-28, review in the implementation worktree (#89)
+- Review round 1: 2026-10-28, PR #90
+- Review round 2: 2026-10-28, PR #90
+- Review round 3: 2026-10-28, PR #90
+- Review round 4: 2026-10-28, PR #90
 
 ## Preparation
 
@@ -275,6 +280,75 @@ tester stages. An unattended call passes `--run <ref>`.
     PASS: the paragraph names a person's session, a native subagent, `codex exec`, and `claude -p` with no exemption,
     and forbids `--no-verify`, disabling a hook, and skipping the check; the **Security** item lists the SPEC Review
     verdict's five defect kinds and says it applies whatever `push_check` reported.
+
+Cases 47 to 55 are from #89: where a round works. "The implementation worktree" is the one `git worktree list
+--porcelain` shows on the PR's branch. Before and after each round, record `git worktree list --porcelain`, and for
+each implementation worktree its `HEAD`, index, `git status --porcelain=2 --untracked-files=all`, working files, and
+`git stash list`. Read each session's commands from its transcript, never from its report.
+
+47. **Git mechanics.** Direct. In a local repository with a bare remote, stage one worktree per state below, run the
+    section 3 checks as written, then the reuse or fallback steps.
+    PASS: clean and behind reuse, and `git merge --ff-only --no-overwrite-ignore H` leaves `HEAD` at `H`;
+    ignored files that do not collide with `H` still reuse;
+    tracked, staged, untracked, ahead, diverged, `locked`, `prunable`, merge, cherry-pick, and `index.lock` states
+    each fail a named check; a rebase in progress has no `branch` line, so it fails as no worktree on the branch; no
+    worktree fails; every fallback gives a detached worktree at `H` that `git worktree remove` removes and leaves the
+    implementation worktree unchanged. A non-forced push after another writer's push is rejected and the local branch
+    keeps its commit. `git worktree remove` without `--force` refuses a dirty worktree and keeps the path.
+
+48. **Reuse, clean, fixed round.** A fresh round on a PR with a planted defect, its implementation worktree clean at `H`.
+    PASS: no `git worktree add` in the transcript; `git worktree list` equal before and after; `push_check` ran in the
+    implementation worktree before a non-forced `git push origin HEAD:refs/heads/<headRefName>`; that worktree's
+    `HEAD`, `headRefOid`, and the verdict's `Fixed in` are one sha; `Reviewed` is `H`; `Independent: yes`.
+
+49. **Behind, review-only.** A fresh round on a clean PR whose implementation worktree is clean and one commit behind.
+    PASS: `git merge --ff-only --no-overwrite-ignore` to `H` before the review; the worktree's `HEAD` is `H` after; verdict `approve` with
+    `Reviewed` `H`; `headRefOid` unchanged, no commit, no push.
+
+50. **Head moves.** As case 48, with a hook that pushes another writer's commit to the PR's branch when the round
+    commits.
+    PASS: the round's push is rejected; no verdict for the round; the report names the fix commit's sha; the remote head
+    is the other writer's sha; the local branch keeps the fix commit; no reset, stash, or force push.
+
+51. **Fallback, uncommitted work.** One round each: a tracked change, and an untracked file that is not ignored.
+    PASS, each: no reuse; a detached worktree at `H`, removed with `git worktree remove` and no `--force`; a report line
+    naming the check; the implementation worktree unchanged; `git worktree list` equal before and after.
+
+52. **Fallback, local commit.** As case 51, with a local commit not in `H`.
+
+53. **Fallback, locked or prunable.** As case 51, one round on a `locked` worktree and one on a `prunable` one.
+
+54. **Fallback, operation in progress, no worktree, cross-repository.** As case 51, one round with an `index.lock` in the
+    implementation worktree's git directory, and one with no worktree on the branch. A cross-repository PR needs a
+    second account or an organization: SKIP when the fixture has neither, and check the `isCrossRepository` read and
+    the rule statically.
+
+55. **No new machinery.** Direct, static.
+    PASS: the branch's `git diff origin/main` on `docs/dev-agents/config.md` and `skill-template/` is empty; `SKILL.md`
+    has no `git worktree lock`; section 2 still defines independence by the session's context, and says the
+    directory does not change it.
+
+56. **No pull request, no remote.** Direct regression check. In a local repository with no remote,
+    note its ticket branch's head as `H`. Check that section 3 limits `git fetch origin pull/<n>/head`
+    to pull request rounds. Add a detached worktree at `H`, then remove it without `--force`.
+    PASS: no fetch is required, the detached worktree starts at `H`, and the worktree list is unchanged
+    after cleanup. This checks Git mechanics and the written condition, not model instruction following.
+
+57. **Ignored file collision.** Direct regression check. A clean implementation worktree is behind `H`.
+    It has an ignored `local.txt` with local-only contents. `H` force-adds `local.txt` with different contents.
+    First reproduce in a separate worktree: `git merge --ff-only H` silently replaces the ignored file.
+    Then run section 3's `git merge --ff-only --no-overwrite-ignore H` and its detached fallback.
+    PASS: the guarded merge refuses the overwrite; the implementation worktree's `HEAD`, index, file
+    contents, and stash list are unchanged; the fallback is detached at `H` and removed without `--force`;
+    the worktree list matches afterwards. A non-conflicting ignored file still permits fast-forward reuse.
+    Check statically that section 3 requires this flag and falls back when the fast-forward fails.
+
+58. **Failed fast-forward, in a session.** As case 51, with case 57's state: a clean implementation worktree one
+    commit behind `H`, holding an ignored file at a path that `H` tracks.
+    PASS: the session reads the refused `git merge --ff-only --no-overwrite-ignore H` before it runs anything else
+    in that worktree; the criteria's commands and `test_command` run only in the detached worktree at `H`; the
+    implementation worktree's `HEAD`, index, files, the ignored file's contents, and stash list are unchanged; the
+    report names the failed fast-forward.
 
 ## Dated report: 2026-10-22
 
@@ -695,3 +769,156 @@ authentication or authorization defects, sensitive data, unneeded network calls,
 
 Case 44 ran with fixing rounds left, so the finding is `fixed`, not `open`; a `max_fix_attempts: 0` round, where it
 would be `open` with `stopped`, did not run.
+
+## Dated report: 2026-10-28, review in the implementation worktree (#89)
+
+Scope: where a round works. Selected: cases 47 and 55 as direct checks, cases 48 to 54 in Claude Code, and case 1's
+package subchecks. Candidates `ae794eb` (S1 to S5) and `ac9fed2` (S6), each exported with `git archive` and installed
+with `skills` 1.7.4; each installed copy equals its candidate by `diff -r`. `ac9fed2` only moves the sentence that runs
+the criteria's commands after the worktree rule (see S5). Codex and Kiro CLI: SKIP, no session in those harnesses.
+
+Direct checks: case 1 subchecks PASS; `wc -l` is 317, over 250, because the worktree rule replaces one sentence with
+one paragraph. Case 47 PASS, run in a scratch repository with a bare remote, with every state in the case staged as a
+real git state (conflicted merge and cherry-pick, a stopped rebase). The rebase state shows `detached` in `git worktree
+list --porcelain`, so it falls back as "no worktree on the branch", never reaching the rebase check. Case 55 PASS:
+`git diff origin/main` on `docs/dev-agents/config.md` and `skill-template/` is empty, no `git worktree lock`, and
+section 2 reads "not the model or the directory it works in".
+
+Fixture: private throwaway `wilsonkichoi/wkc-push-check-fixture-76`, reused from #76, with `push_check` restored on
+`main` (`40f62d9`). Staged by the tester: tickets #13 to #33 (odd numbers), each `in-review` with a handoff naming
+PRs #14 to #34, and an implementation worktree per ticket in one state: #13 clean with a planted defect (`count`
+counts owners), #15 one commit behind, #17 clean with a planted defect (`first` uses `max`) and a pre-commit hook that
+pushes another writer's commit to `feat/17-first` once, #19 a tracked change, #21 an untracked `scratch.txt`, #23 a
+local commit, #25 `locked`, #27 `prunable`, #29 an `index.lock`, #31 no worktree, #33 clean and complete. Before and
+after each session: `git worktree list --porcelain`, and each worktree's `HEAD`, index, status, files, and stash list.
+Commands are read from each session's transcript.
+
+Sessions: 6 of 6, one at a time, as Claude Code `general-purpose` subagents on Sonnet (`sonnet`, effort `medium`),
+each reading the installed `SKILL.md` by hand, so harness loading is untested here. About 60k to 77k subagent tokens
+per session.
+
+| Session | Case | Result | Evidence |
+|---|---|---|---|
+| S1 | 48, ticket #13, PR #14 | PASS | No `git worktree add`; the worktree set is unchanged, and only #13's `HEAD` moved, to the fix. `gitleaks` ran in that worktree, then `git push origin HEAD:refs/heads/feat/13-count`. The worktree `HEAD`, `headRefOid`, and `Fixed in` are `e07d8f0`; `Reviewed` is `578ede4`, `Independent: yes`. |
+| S2 | 49, ticket #15, PR #16 | Subcheck PASS: behind | `git merge --ff-only 154365f` ran before the session read the code. The round then applied two improvements (the usage line, a CLI test), so it is `fixed`, not review-only: the staged PR left the usage line stale. The fix commit `8b44efd` is the worktree `HEAD` and `headRefOid`. |
+| S3 | 50, ticket #17 | Invalid fixture | The tester's hook inherited `GIT_DIR` and `GIT_INDEX_FILE` from the round's commit, so it committed in the implementation worktree and moved its branch. The session's commit failed with `cannot lock ref 'HEAD'`; it posted nothing and reset nothing. The tester restored the branch and fixed the hook with `unset $(git rev-parse --local-env-vars)`. |
+| S4 | 51, 52, 53, tickets #19, #21, #23, #25 | PASS | Each round: `git worktree add --detach` at `H`, the reason reported (uncommitted change, untracked file, local commit not an ancestor, `locked`), `git worktree remove` with no `--force`. #23 was `fixed`, pushed from the detached worktree. The worktree list and every snapshot are unchanged. |
+| S5 | 53, 54, tickets #27, #29, #31 | PASS: prunable, no worktree. FAIL: `index.lock` | #27 and #31 fell back as in S4. #29 fell back too, but one batched command ran `uv run python -m unittest` in `feat-29-admins` before the session read the `index.lock` result. The snapshot is unchanged (ignored files only). Cause: the candidate placed "Run the criteria's commands" before the worktree rule. Fixed in `ac9fed2`. |
+| S6 | 49, ticket #33, PR #34 | Subcheck PASS: review-only in reuse | Reused the clean worktree at `H`; verdict `round 1: approve`; `headRefOid` stays `9451100`; no commit, no push. |
+| S6 | 50, ticket #17, PR #18 | PASS | Reused the worktree; the hook pushed `d24ea6b`; the round's push was rejected (non-fast-forward); no verdict; the report names fix commit `38918a2`, which stays on the local branch. No reset, stash, or force push. |
+| S6 | 54, ticket #29, PR #30, another round | PASS | Only read-only checks ran in `feat-29-admins`; then a detached worktree, removed with no `--force`; verdict `round 2: approve`. |
+
+Not run: case 49 as one round (behind and review-only together), since S2 and S6 cover its two parts; a review-only
+round whose head moves, which is unchanged behaviour; a cross-repository PR in case 54, SKIP because the fixture
+account has no organization or second account to fork from, with the `isCrossRepository` read and rule checked
+statically.
+
+## Review round 1: 2026-10-28, PR #90
+
+Reviewed `42d8c4f7f8a8bb9e4b1136da3ff099c1c100cd00` against #89 and SPEC Review verdict and Push check.
+Selected: case 56, case 47's clean, behind, tracked, staged, untracked, fallback-preservation and cleanup
+subchecks, case 55, and case 1's metadata subchecks. Direct checks only. No additional AI session started;
+the implementation report records 6 of 6 sessions already used. Claude Code, Codex, and Kiro instruction
+following after this fix: SKIP. The earlier report remains evidence for the unchanged PR reuse paths.
+
+Blocking finding: section 3 unconditionally said to fetch `pull/<n>/head`, including section 1's no-PR,
+no-remote path. That contradicts #89's requirement to preserve that path and SPEC Review verdict's
+local branch review. In a scratch repository with no remote, `git fetch origin pull/1/head` exited 128:
+`fatal: 'origin' does not appear to be a git repository`. The fix limits this fetch to pull request rounds.
+
+Case 56 PASS: a detached worktree at the local `H` was added and removed without `--force`, and the
+worktree list matched afterwards. Case 47 selected subchecks PASS: a clean worktree one commit behind
+fast-forwarded to pinned `H`; tracked, staged, and untracked changes appeared in status; fallback and
+cleanup preserved the implementation worktree's `HEAD`, staged diff, tracked file, and stash list.
+These focused checks do not establish a full case 47 PASS or model behavior.
+
+Case 55 and case 1's selected metadata subchecks PASS: config and template unchanged, no worktree lock
+command, context-based independence retained, valid YAML, invocation enabled, and the five opening fields
+in order. `SKILL.md` is 318 lines, above the 250-line target but below the 500-line limit.
+`git diff --check` initially found a new blank line at EOF in this report; it passes after the report update.
+Security review of the diff and all three PR commits found no new dependency, credential, sensitive-data
+flow, or unrelated network call. Gitleaks passed on the reviewed commits. No repository `test_command`
+or GitHub checks are configured.
+
+## Review round 2: 2026-10-28, PR #90
+
+Reviewed `1549195caa45a78f46897cf4bd07689f7fa19767` against #89. No blocking finding. Round 1's fetch
+fix holds: section 3 fetches `pull/<n>/head` only with a pull request.
+
+Improvement: section 3 said "Read the checks' results before running anything in a worktree", and the
+same paragraph calls `gh pr checks <n>` "the checks", so a reader could take it as CI results. It now
+says to finish the reuse checks first, and names "no worktree on that branch" as a fallback reason
+next to a failed reuse check. The git commands and conditions are unchanged.
+
+Static checks only: `git diff --check`, the five opening fields and frontmatter unchanged, no
+`git worktree lock`, and config and `skill-template/` unchanged. `SKILL.md` is 318 lines. No AI
+session ran; 6 of 6 were used. S6's `index.lock` ordering PASS used the earlier wording, so
+instruction following on this wording is SKIP in Claude Code, Codex, and Kiro.
+
+## Review round 3: 2026-10-28, PR #90
+
+Reviewed `b9acbea729516a5adad6dca1b6860430781c3241` against #89 and SPEC Review verdict, Push check,
+and Security. Round 1's conditional PR fetch and round 2's ordering clarification remain intact.
+Selected: case 57; case 47's clean, behind, non-conflicting ignored file, tracked, staged, untracked,
+fallback-preservation, and cleanup subchecks; case 56; case 55; case 1's metadata subchecks.
+Direct checks only, using a local scratch repository with no remote. No AI session was launched.
+
+Confirmed round 2's ignored-file suggestion as a blocking data-loss defect in the new reuse path.
+Reproduction: commit `.gitignore` containing `local.txt`; create the implementation worktree at that
+commit with an ignored `local.txt` containing `local-only contents`; force-add `local.txt` containing
+`PR contents` in the newer head `H`. Status is empty and `HEAD` is an ancestor of `H`.
+`git merge --ff-only H` succeeds and replaces the local-only contents with `PR contents`.
+The previous detached review leaves that local file intact. Section 3 now uses
+`git merge --ff-only --no-overwrite-ignore H` and falls back when the fast-forward fails.
+This fixes the ticket's worktree reuse path without adding config, persistent files, or locks.
+
+Case 57 PASS: the guarded merge exits 1 with `The following untracked working tree files would be
+overwritten by merge`. The implementation worktree's `HEAD`, index hash, files, and stash list
+match the pre-merge snapshot. A detached fallback starts at `H` and is removed without `--force`.
+Its cleanup restores the worktree list and leaves that snapshot unchanged. The command flag and
+failed-fast-forward fallback also pass static checks.
+
+Case 47 selected subchecks PASS: clean and behind worktrees fast-forward with the new flag, and a
+non-conflicting ignored file is preserved. Tracked, staged, and untracked changes cause nonempty
+status; detached fallback and cleanup preserve each worktree's `HEAD`, index hash, files, and stash.
+Case 56 PASS: no-remote detached review and cleanup need no fetch; the PR-only fetch condition remains.
+Case 55 and case 1's metadata subchecks PASS: config and template unchanged; no worktree lock command;
+context-based independence; valid YAML, names, invocation settings, description, and opening fields.
+`SKILL.md` is 319 lines, above the 250-line target and below the 500-line limit. `git diff --check` passes.
+Security review of the diff and all five reviewed commits found no secret, dependency change,
+authentication defect, sensitive-data flow, or unneeded network call. Push scanner results are in the verdict.
+
+Limits: the implementation report used 6 of 6 AI sessions. Instruction following after this fix is
+SKIP in Claude Code, Codex, and Kiro. Historical model evidence above describes the earlier commands;
+it does not validate this flag or its fallback instruction. Cross-repository PR behavior, review-only
+head movement, and behind plus review-only as one round retain their recorded coverage gaps.
+Focused direct checks do not establish full-case or cross-harness compatibility. No repository
+`test_command` or GitHub checks are configured.
+
+## Review round 4: 2026-10-28, PR #90
+
+Reviewed `24bf78ac9941f1bc1639b95cb61bc28f91340bff` against #89 and SPEC Review verdict, Push check,
+and Security. The person approved one fixing round past `max_fix_attempts: 3` and one AI session past
+the standing limit of 6. Rounds 1 to 3's fixes hold. Direct check: `git merge --ff-only
+--no-overwrite-ignore` also refuses an ignored directory that `H` replaces with a file, an ignored
+file that `H` replaces with a directory, and an ignored file inside an ignored directory; an ignored
+sibling file still fast-forwards. Git 2.54.0.
+
+Session S7: one Claude Code `general-purpose` subagent on Sonnet (`sonnet`, effort `medium`), about
+81k tokens, reading the installed `SKILL.md` by hand. Candidate `24bf78a`, exported with `git archive`,
+installed with `skills` 1.7.4, equal to the candidate by `diff -r`. Fixture: a fresh clone of
+`wilsonkichoi/wkc-push-check-fixture-76` at `40f62d9`, with tickets #35, #37, and #39 and PRs #36,
+#38, and #40. Commands are read from the session's transcript; snapshots as in cases 47 to 55.
+
+| Round | Case | Result | Evidence |
+|---|---|---|---|
+| #35, PR #36 | 49 as one round | PASS | `git merge --ff-only --no-overwrite-ignore` to `91528ea` in the clean worktree, then the tests there; `approve`, `Reviewed` `91528ea`; `headRefOid` unchanged; no commit, no push. |
+| #37, PR #38 | 58 | FAIL: ordering | The reuse checks ran first and passed. The refused fast-forward was chained with `;` to `uv run python -m unittest` and `notes.py ann list` in the implementation worktree, at the old commit `9008552`. The session then used a detached worktree at `bae3111`, cited only its results, reported the failed fast-forward, and removed it without `--force`. The local `notes.json` and every snapshot are unchanged. |
+| #39, PR #40 | 54, `index.lock` | PASS | Only `git status`, a git-dir listing, and `git merge-base` ran in `feat-39-missing-delete`; then a detached worktree at `8d70d0a`, removed without `--force`; `approve`. |
+
+Cause of the FAIL: section 3's ordering sentence named only the reuse checks, and the fast-forward
+also decides the worktree. Round 4 changes it to "Finish the reuse checks and any fast-forward, and
+read their results, before running anything else in a worktree", and the CHANGELOG bullet matches.
+Case 58 records the session case. Instruction following on the new wording is SKIP in Claude Code,
+Codex, and Kiro: the extra approved session is used. The worktree list matched before and after S7.
+Cross-repository PR behavior and review-only head movement keep their recorded gaps.

@@ -48,8 +48,9 @@ number is not a pull request, resolve it as a ticket instead. Other failures sto
 trigger that fallback. A ticket id on another backend goes straight to `wkc-tracker show <id>`. For
 a ticket target, the pull request is on the `PR:` line of the ticket's latest `wkc-implement`
 handoff comment. With no argument, run `gh pr list --state open --head <current branch>`. Then read
-it with `gh pr view <n> --json number,url,state,headRefName,headRefOid,baseRefName,body,comments`. A
-pull request that is not `OPEN` is reported and nothing is posted.
+it with `gh pr view <n> --json
+number,url,state,headRefName,headRefOid,baseRefName,isCrossRepository,body,comments`. A pull
+request that is not `OPEN` is reported and nothing is posted.
 
 **The ticket.** The review judges the change against the work that asked for it; read the ticket
 with `wkc-tracker show`. A ticket target is the ticket. For a pull request, first list the tickets
@@ -89,18 +90,30 @@ none. A fixing round is left while the `fixed` rounds are fewer than `max_fix_at
 
 **Independence.** The round is independent when this session wrote none of the pull request's code,
 earlier fix commits included. A fresh session on the same model is independent; this is about the
-context, not the model. A round that is not independent still reviews, and may fix or stop, but it
-never approves (section 4). Its verdict says `Independent: no, <why>`. Never claim independence
-this session does not have.
+context, not the model or the directory it works in. A round that is not independent still reviews,
+and may fix or stop, but it never approves (section 4). Its verdict says `Independent: no, <why>`.
+Never claim independence this session does not have.
 
 ## 3. Review
 
 Read the ticket's **What to build**, **Why**, **Acceptance criteria**, **After merge**, and
 **Notes**, the SPEC and ADR sections they cite, the diff (`gh pr diff <n>`), the checks (`gh pr
-checks <n>`), and enough surrounding code to judge the diff in context. Work in a detached worktree
-at `H` (`git worktree add --detach <path> H`), never by switching a checkout that has other work in
-it, and never stash, reset, clean, or commit someone else's changes. Run the criteria's commands and
-`test_command` where a judgment needs them. Remove the worktree when the round ends.
+checks <n>`), and enough surrounding code to judge the diff in context.
+
+**Where to work.** Only with a pull request, fetch `H` with `git fetch origin pull/<n>/head`.
+Reuse the worktree that `git worktree list --porcelain` shows on `branch refs/heads/<headRefName>`
+when the pull request is not cross-repository and that worktree is clean and idle: not `locked` or
+`prunable`, an empty `git status --porcelain`, no merge, rebase, cherry-pick, or `index.lock` in
+progress, and a `HEAD` that is an ancestor of `H` (`git merge-base --is-ancestor`). When it is
+behind, fast-forward it with `git merge --ff-only --no-overwrite-ignore H` before the review starts.
+With no pull request, no worktree on that branch, a failed reuse check, or a failed fast-forward,
+work in a temporary detached worktree at `H`
+(`git worktree add --detach <path> H`) and report the reason. When the round ends, remove that
+worktree with `git worktree remove <path>`, never `--force`, and report a removal that fails, with
+its path. Never switch, stash, reset, or clean a checkout, and never commit someone else's changes.
+Finish the reuse checks and any fast-forward, and read their results, before running anything else
+in a worktree; then run the criteria's commands and `test_command` in the chosen one, where a
+judgment needs them.
 
 **An update from the base.** When the latest verdict is `approve` on an older head `A`, and `H` is a
 merge whose parents are `A` and a commit `M` on the base branch (`git merge-base --is-ancestor M
@@ -226,8 +239,9 @@ report it; under a run, park. With no `push_check`, a manual push goes ahead and
 that no push check is configured; under a run, park instead of pushing.
 
 Push the commit to the pull request's branch with `git push origin HEAD:refs/heads/<headRefName>`,
-never with force. A refused push means the head moved: post
-nothing and report it. Confirm the new head with `gh pr view <n> --json headRefOid`. Then, for each
+never with force. A refused push means the head moved: post nothing, and report it with the
+commit's sha. Never reset, stash, or force-push to recover; in a reused worktree the commit stays on
+the local branch. Confirm the new head with `gh pr view <n> --json headRefOid`. Then, for each
 related fix allowed by section 3's scope rule, update the pull request body's **What changed** to
 name the fix and why it belongs, preserving the rest of the body. With no pull request, push the
 same way when the branch is on the remote. With no remote, fast-forward the local branch: `git push

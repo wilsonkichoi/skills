@@ -2,6 +2,13 @@
 
 Newest first. Each version is a `## {version} ({ISO 8601 timestamp with local offset})` heading followed by a bullet list of changes.
 
+## 0.0.41 (2026-10-28T20:43:27-07:00)
+
+- `wkc-code-review` reviews in the implementation worktree when it is safe (#89). A pull request round reuses the worktree that has the PR's branch checked out when the PR is not cross-repository and that worktree is clean and idle: not `locked` or `prunable`, an empty `git status --porcelain`, no merge, rebase, cherry-pick, or `index.lock` in progress, and a `HEAD` that is an ancestor of the reviewed head `H`. A worktree that is behind is fast-forwarded to `H` with `git merge --ff-only --no-overwrite-ignore`, preserving local ignored files. A fix commit lands on the checked-out branch and is pushed from there, so the implementation worktree no longer falls behind after a `fixed` round.
+- When any check or the fast-forward fails, or with no pull request, the round works in a temporary detached worktree at `H` as before, reports which check failed, and removes it with `git worktree remove`, never `--force`, reporting a removal that fails. Only a pull request round fetches the PR head; a no-remote review keeps using the local branch's head. The round finishes the reuse checks and any fast-forward, and reads their results, before it runs anything else in a worktree, and reports the reason for each fallback, including no worktree on the branch.
+- A refused push is reported with the fix commit's sha, and nothing is reset, stashed, or force-pushed; in a reused worktree the commit stays on the local branch. Independence is still about the session's context, not the directory it works in.
+- `validation/wkc-code-review.md` gains cases 47 to 58 and dated implementation and review reports.
+
 ## 0.0.40 (2026-10-28T15:22:20-07:00)
 
 - Run completion (#80, SPEC Contracts › Lifecycle › Finish in a run, ADR-008). Under `--run <ref>`, `wkc-implement finish <id>` runs right after the ticket's pull request merges into the run branch, at the run branch head, and needs no merge into the default branch. It classifies each post-merge gate by what it acts on: a local gate runs, a shared non-production gate runs only under an unexpired `Grant:` in the active run config that names its environment and exact command, and a production-affecting gate never runs. The ticket moves to `done` when every required gate passes; otherwise the finish comment is `waiting` and names who must act.
