@@ -22,6 +22,7 @@ Keep raw logs and fixtures outside tracked files.
 - Review round 2: 2026-10-25, PR #78
 - Dated report: 2026-10-26, run branch and run config (#78)
 - Dated report: 2026-10-28, push check and security review (#76)
+- Dated report: 2026-10-28, review in the implementation worktree (#89)
 
 ## Preparation
 
@@ -741,3 +742,47 @@ authentication or authorization defects, sensitive data, unneeded network calls,
 
 Case 44 ran with fixing rounds left, so the finding is `fixed`, not `open`; a `max_fix_attempts: 0` round, where it
 would be `open` with `stopped`, did not run.
+
+## Dated report: 2026-10-28, review in the implementation worktree (#89)
+
+Scope: where a round works. Selected: cases 47 and 55 as direct checks, cases 48 to 54 in Claude Code, and case 1's
+package subchecks. Candidates `ae794eb` (S1 to S5) and `ac9fed2` (S6), each exported with `git archive` and installed
+with `skills` 1.7.4; each installed copy equals its candidate by `diff -r`. `ac9fed2` only moves the sentence that runs
+the criteria's commands after the worktree rule (see S5). Codex and Kiro CLI: SKIP, no session in those harnesses.
+
+Direct checks: case 1 subchecks PASS; `wc -l` is 317, over 250, because the worktree rule replaces one sentence with
+one paragraph. Case 47 PASS, run in a scratch repository with a bare remote, with every state in the case staged as a
+real git state (conflicted merge and cherry-pick, a stopped rebase). The rebase state shows `detached` in `git worktree
+list --porcelain`, so it falls back as "no worktree on the branch", never reaching the rebase check. Case 55 PASS:
+`git diff origin/main` on `docs/dev-agents/config.md` and `skill-template/` is empty, no `git worktree lock`, and
+section 2 reads "not the model or the directory it works in".
+
+Fixture: private throwaway `wilsonkichoi/wkc-push-check-fixture-76`, reused from #76, with `push_check` restored on
+`main` (`40f62d9`). Staged by the tester: tickets #13 to #33 (odd numbers), each `in-review` with a handoff naming
+PRs #14 to #34, and an implementation worktree per ticket in one state: #13 clean with a planted defect (`count`
+counts owners), #15 one commit behind, #17 clean with a planted defect (`first` uses `max`) and a pre-commit hook that
+pushes another writer's commit to `feat/17-first` once, #19 a tracked change, #21 an untracked `scratch.txt`, #23 a
+local commit, #25 `locked`, #27 `prunable`, #29 an `index.lock`, #31 no worktree, #33 clean and complete. Before and
+after each session: `git worktree list --porcelain`, and each worktree's `HEAD`, index, status, files, and stash list.
+Commands are read from each session's transcript.
+
+Sessions: 6 of 6, one at a time, as Claude Code `general-purpose` subagents on Sonnet (`sonnet`, effort `medium`),
+each reading the installed `SKILL.md` by hand, so harness loading is untested here. About 60k to 77k subagent tokens
+per session.
+
+| Session | Case | Result | Evidence |
+|---|---|---|---|
+| S1 | 48, ticket #13, PR #14 | PASS | No `git worktree add`; the worktree set is unchanged, and only #13's `HEAD` moved, to the fix. `gitleaks` ran in that worktree, then `git push origin HEAD:refs/heads/feat/13-count`. The worktree `HEAD`, `headRefOid`, and `Fixed in` are `e07d8f0`; `Reviewed` is `578ede4`, `Independent: yes`. |
+| S2 | 49, ticket #15, PR #16 | Subcheck PASS: behind | `git merge --ff-only 154365f` ran before the session read the code. The round then applied two improvements (the usage line, a CLI test), so it is `fixed`, not review-only: the staged PR left the usage line stale. The fix commit `8b44efd` is the worktree `HEAD` and `headRefOid`. |
+| S3 | 50, ticket #17 | Invalid fixture | The tester's hook inherited `GIT_DIR` and `GIT_INDEX_FILE` from the round's commit, so it committed in the implementation worktree and moved its branch. The session's commit failed with `cannot lock ref 'HEAD'`; it posted nothing and reset nothing. The tester restored the branch and fixed the hook with `unset $(git rev-parse --local-env-vars)`. |
+| S4 | 51, 52, 53, tickets #19, #21, #23, #25 | PASS | Each round: `git worktree add --detach` at `H`, the reason reported (uncommitted change, untracked file, local commit not an ancestor, `locked`), `git worktree remove` with no `--force`. #23 was `fixed`, pushed from the detached worktree. The worktree list and every snapshot are unchanged. |
+| S5 | 53, 54, tickets #27, #29, #31 | PASS: prunable, no worktree. FAIL: `index.lock` | #27 and #31 fell back as in S4. #29 fell back too, but one batched command ran `uv run python -m unittest` in `feat-29-admins` before the session read the `index.lock` result. The snapshot is unchanged (ignored files only). Cause: the candidate placed "Run the criteria's commands" before the worktree rule. Fixed in `ac9fed2`. |
+| S6 | 49, ticket #33, PR #34 | Subcheck PASS: review-only in reuse | Reused the clean worktree at `H`; verdict `round 1: approve`; `headRefOid` stays `9451100`; no commit, no push. |
+| S6 | 50, ticket #17, PR #18 | PASS | Reused the worktree; the hook pushed `d24ea6b`; the round's push was rejected (non-fast-forward); no verdict; the report names fix commit `38918a2`, which stays on the local branch. No reset, stash, or force push. |
+| S6 | 54, ticket #29, PR #30, another round | PASS | Only read-only checks ran in `feat-29-admins`; then a detached worktree, removed with no `--force`; verdict `round 2: approve`. |
+
+Not run: case 49 as one round (behind and review-only together), since S2 and S6 cover its two parts; a review-only
+round whose head moves, which is unchanged behaviour; a cross-repository PR in case 54, SKIP because the fixture
+account has no organization or second account to fork from, with the `isCrossRepository` read and rule checked
+statically.
+
