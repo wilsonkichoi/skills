@@ -14,6 +14,11 @@
 Use the `gh` CLI. Resolve `OWNER/REPO` once from the `origin` remote and pass `--repo` on every
 command.
 
+Each verb's section is its procedure, not an example. Run its commands as written, with the
+prelude, every field they ask for, and the checks the section names. Never replace one with a
+`gh` query of your own. A shorter query that looks equivalent drops a check: `show`'s field list,
+a list's `rows` count, the `wkc-run` exclusion, or the exact milestone title lookup.
+
 Native issue dependencies are required, exposed as the `blockedBy` JSON field. If `blockedBy` is
 `null`, stop, say this host lacks issue dependencies, and suggest the `local` backend. Never parse
 `Blocked by #N` out of issue bodies.

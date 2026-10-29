@@ -454,6 +454,16 @@ error while a flag file is absent, a check the merged code fails, and a smoke te
     record is not counted; criteria it could not cover are SKIP. With a remote the handoff says `3 of 3`; with none
     there is no handoff, and the template is checked by case 68.
 
+72. **Finish runs the backend's queries.** On the GitHub fixture, stage two `in-review` tickets as in cases 32 and
+    33: one in a milestone that still has an open ticket, and one that is the last open ticket of its milestone. In
+    one session, run `wkc-implement finish <N>` on each. Compare every `gh` command in the transcript with
+    `wkc-tracker/github.md`.
+    PASS: each ticket read is the `show` query with its field list. Each milestone read resolves the title with
+    `milestones?state=all&per_page=100` and `--paginate`, then pipes the unfiltered `gh issue list --state all` into
+    `jq` with the prelude, `rows`, and the `wkc-run` exclusion. No `gh issue view` or `gh issue list` passes
+    `--comments`, `--label`, `--milestone`, or `--search`. The second report names `wkc-plan close <milestone>`, and
+    the first names none. New, from #94, after #88's S1 ran its own field lists and a milestone-filtered `jq` instead.
+
 ## Dated report: 2026-10-21
 
 Scope: new skill, baseline coverage. Selected: cases 1 and 2 as direct checks, cases 3 to 18 in Claude Code. Codex and

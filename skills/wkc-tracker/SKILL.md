@@ -37,6 +37,11 @@ way through, before running anything:
 - `local` → [local.md](./local.md)
 - `other` → no backend file. Follow the workflow the user wrote into the config body.
 
+The backend file gives each verb's commands and checks. Run them as written, with every field,
+filter, and check they carry. Never write your own query in their place, even a shorter one that
+looks equivalent. A hand-written query drops the backend's safeguards: a field the verb reports,
+the completeness check on a list, the run config exclusion, or the exact milestone title match.
+
 Stop when the config cannot name a backend: the file does not exist, it has no `issue_tracker`
 field, or the value is not one of the four above. Write nothing, create no file or directory, and
 read no backend file. Say so, and ask the user to run `wkc-setup` first. Never use another tool's config or ticket

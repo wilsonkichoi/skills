@@ -2,6 +2,12 @@
 
 Newest first. Each version is a `## {version} ({ISO 8601 timestamp with local offset})` heading followed by a bullet list of changes.
 
+## 0.0.44 (2026-10-29T00:38:22-07:00)
+
+- `wkc-tracker` sessions run each verb with the commands its backend file gives, as written, instead of queries they write themselves (#94). `SKILL.md` section 1 and the top of `github.md` say so, and name what a hand-written query drops: `show`'s field list, a list's `rows` count, the `wkc-run` exclusion, and the exact milestone title lookup. In #88's validation, a `wkc-implement finish` session read `github.md` in full, then read tickets with its own `gh issue view` field lists, passed `--comments`, and counted a milestone with a filtered `jq` that had no `rows` check and no `wkc-run` exclusion.
+- `wkc-implement` says its ticket reads and writes run with the backend file's commands, never a query of its own.
+- `validation/wkc-implement.md` gains case 72, which compares every `gh` command in two finish transcripts with `github.md`, and a dated report.
+
 ## 0.0.43 (2026-10-28T23:12:56-07:00)
 
 - `wkc-implement finish` takes the ticket's milestone from `wkc-tracker show <id>` after the move to `done`, names it, and then reads `wkc-tracker milestone show <milestone>` (#88). A read that did not ask for the milestone no longer counts as proof that the ticket has none. In #80's validation, two finish sessions read the ticket with `gh issue view` field lists that left out `milestone`, and reported "the ticket has no milestone" for tickets in `M1: Greetings`, so they never read the milestone and could not name `wkc-plan close`.
