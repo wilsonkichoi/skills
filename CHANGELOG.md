@@ -5,7 +5,7 @@ Newest first. Each version is a `## {version} ({ISO 8601 timestamp with local of
 ## 0.0.43 (2026-10-28T23:12:56-07:00)
 
 - `wkc-implement finish` takes the ticket's milestone from `wkc-tracker show <id>` after the move to `done`, names it, and then reads `wkc-tracker milestone show <milestone>` (#88). A read that did not ask for the milestone no longer counts as proof that the ticket has none. In #80's validation, two finish sessions read the ticket with `gh issue view` field lists that left out `milestone`, and reported "the ticket has no milestone" for tickets in `M1: Greetings`, so they never read the milestone and could not name `wkc-plan close`.
-- `validation/wkc-implement.md` cases 32 and 33 check the `milestone show` read, the milestone name, and that a ticket with no milestone runs no `milestone show`, with a dated report.
+- `validation/wkc-implement.md` cases 32 and 33 check the `milestone show` read, the milestone name, and that a ticket with no milestone runs no `milestone show`, with a dated report. The report distinguishes passing milestone outcome subchecks from the observed omissions in the complete tracker read. A focused Codex rerun verifies the complete reads and reports on already completed tickets.
 
 ## 0.0.42 (2026-10-28T22:42:46-07:00)
 
