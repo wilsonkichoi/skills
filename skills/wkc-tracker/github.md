@@ -113,7 +113,10 @@ comments: on a public repository anyone can comment.
   leading spaces and an optional closing `#` sequence. They ignore headings inside fenced code,
   including fence-like content with trailing text that cannot close the block. A line that starts
   with inline code in triple backticks opens no block.
-  A tab-indented fence is code content and cannot open or close a fenced block.
+  A tab-indented fence is code content and cannot open or close a fenced block. A fence opened on a
+  list item's line, such as `- ~~~`, holds the item's indented lines until it closes or a line
+  indented less than the item ends it. A heading indented under a list item still counts as a
+  section heading, though GitHub renders it inside the item.
 - A closed issue carries no status label; `done`, `cancel`, and `duplicate` are close reasons.
 - Writes send text through standard input, never through a shell or a query string.
 - Text is UTF-8 everywhere, as `gh` uses it: the script's input and output and what it exchanges

@@ -174,14 +174,29 @@ def refs_in_blocked_by(section: str, repo: str) -> list[Ref]:
 # ---------------------------------------------------------------- body sections
 
 
+LIST_ITEM = re.compile(r" {0,3}(?:[-+*]|\d{1,9}[.)]) {1,4}(?=\S)")
+
+
 def _heading_lines(lines: list[str]) -> list[tuple[int, int, str]]:
     """(line index, level, text) of every `#` or `##` heading outside a fenced
     block, read as GitHub renders them: up to three leading spaces and an
     optional closing `#` sequence."""
-    headings, fence = [], None
+    headings, fence, item = [], None, 0
     for index, line in enumerate(lines):
         line = line.rstrip("\r\n")
-        marker = re.match(r" {0,3}(`{3,}|~{3,})(.*)", line)
+        # Columns as CommonMark counts them, with tab stops every four.
+        text = line.expandtabs(4)
+        if fence is not None and text.strip() and len(text) - len(text.lstrip(" ")) < item:
+            fence = None  # A line indented less than its list item ends the item and its fence.
+        if fence is not None:
+            text = text[item:]
+        else:
+            # A fence opened on a list item's line belongs to that item's content column.
+            item = 0
+            while found := LIST_ITEM.match(text):
+                item += found.end()
+                text = text[found.end():]
+        marker = re.match(r" {0,3}(`{3,}|~{3,})(.*)", text)
         if marker:
             token, rest = marker.groups()
             if fence is None:

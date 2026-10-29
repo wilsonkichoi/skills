@@ -446,6 +446,22 @@ class Create(unittest.TestCase):
                     out = g.cmd_create(self.f, "t", body, None)
                     self.assertEqual(self.f.issues[ref(out["number"])]["blockers"], [ref(1)])
 
+    def test_fence_opened_on_a_list_item_line_holds_its_indented_content(self):
+        for marker in ("- ", "* ", "+ ", "1. ", "1) ", "-\t", "- 1. "):
+            for fence in ("```", "~~~"):
+                with self.subTest(marker=marker, fence=fence):
+                    pad = " " * len(marker.expandtabs(4))
+                    body = (f"## What to build\n{marker}{fence}\n{pad}## Blocked by\n{pad}- #99\n{pad}{fence}\n\n"
+                            "## Blocked by\n- #1\n")
+                    out = g.cmd_create(self.f, "t", body, None)
+                    self.assertEqual(self.f.issues[ref(out["number"])]["blockers"], [ref(1)])
+
+    def test_fence_in_a_list_item_ends_with_the_item(self):
+        for fence in ("```", "~~~"):
+            with self.subTest(fence=fence):
+                out = g.cmd_create(self.f, "t", f"## What to build\n- {fence}\n  code\n## Blocked by\n- #1\n", None)
+                self.assertEqual(self.f.issues[ref(out["number"])]["blockers"], [ref(1)])
+
     def test_a_create_that_changes_nothing_is_unverified(self):
         self.f.drop.add("create_issue")
         self.assertEqual(code_of(lambda: g.cmd_create(self.f, "t", "b", None)), g.EXIT_UNVERIFIED)
@@ -523,6 +539,15 @@ class Edit(unittest.TestCase):
                     self.f.issues[ref(1)]["body"] = body
                     g.cmd_edit(self.f, 1, None, "## Notes\nNew notes.\n", None, False)
                     self.assertEqual(self.f.issues[ref(1)]["body"], body.replace("Real notes.", "New notes."))
+
+    def test_fence_opened_on_a_list_item_line_keeps_later_sections(self):
+        for fence in ("```", "~~~"):
+            with self.subTest(fence=fence):
+                body = (f"## What to build\nIt.\n\n## Notes\n- {fence}\n  ## Related\n  - #5\n  {fence}\n\n"
+                        "## Related\n- #2\n\n## Other\nKeep me.\n")
+                self.f.issues[ref(1)]["body"] = body
+                g.cmd_edit(self.f, 1, None, "## Related\n- #3\n", None, False)
+                self.assertEqual(self.f.issues[ref(1)]["body"], body.replace("- #2", "- #3"))
 
     def test_section_edits_keep_untouched_line_endings_and_unicode_separators(self):
         for newline in ("\r\n", "\r", "\n"):

@@ -1566,6 +1566,49 @@ Versions 0.0.9 to 0.0.41 below were development steps on the `feat/tracker` bran
 together as 0.0.8, so an entry's version names a branch state, and its skill ref names the exact
 commit it tested.
 
+### 2026-10-29T11:04:41-07:00 PR #95 review round 10
+
+Attempt: `review round 10 on https://github.com/wilsonkichoi/skills/pull/95`.
+Reviewed `16370a9d8088d3740ccba3ffa6c716afdd56fd85` independently. The maintainer authorized one
+additional fixing round, making the limit ten, and live calls on a throwaway GitHub repository.
+Reused `wilsonkichoi/wkc-review95-round7-20261029`. Selected A51, focused A52 subchecks for
+`create` and `edit` on bodies with a fence opened on a list item's line, a differential check
+against GitHub's renderer, and static checks. GitHub backend; direct checks in Claude Code.
+AI test sessions: **0 of 6**.
+
+- **Live reproduction:** the reviewed script, run from `/`, created
+  [issue #8](https://github.com/wilsonkichoi/wkc-review95-round7-20261029/issues/8) with exit 0 and
+  no dependency edge, although its body ends with `## Blocked by` / `- #6`. Its Notes section holds
+  a list item that opens a fence on its own line (`- ` then three backticks) around a literal
+  `## Related`. The script read that literal as a heading and the item's indented closing fence as
+  an opener, which hid every later heading. `edit 8` with a new `## Related` then exited 0, and an
+  independent `gh issue view` shows the literal example, the real Related, `## Other`, and
+  `## Blocked by` deleted. GitHub's renderer shows the literal as code and the later sections as
+  headings.
+- **A51 PASS:** all 94 existing tests passed before changes. Two of three added tests failed on the
+  reviewed implementation in 12 subchecks: `create` refused or dropped the edge for `-`, `*`, `+`,
+  `1.`, and `1)` items with backtick and tilde fences, and `edit` deleted later sections. All 97
+  tests pass after the fix, including nested markers, a tab after the marker, and an item that ends
+  its fence by a less indented line.
+- **Differential check:** 19 bodies rendered with `gh api markdown` (mode `gfm`), comparing GitHub's
+  top-level `h1` and `h2` with the script's section headings. The reviewed script differed on 6;
+  the fix resolves 4 and adds none. The 2 left are present at the reviewed head too: a heading
+  indented under a list item, which GitHub renders inside the item and the script reads as a
+  section heading. `github.md` states that limit.
+- **A52 focused subchecks PASS:** the fixed source, run from `/`, created
+  [issue #9](https://github.com/wilsonkichoi/wkc-review95-round7-20261029/issues/9) from the same
+  body with exit 0. Independent reads show `blockedBy` [6] and the exact body. `edit 9` with the
+  same `## Related` exited 0; an independent read matches the expected body exactly, with only the
+  real Related changed. Tested script SHA256:
+  `cac92f01a45bd7b153c8b6d6fbcc2c741438c5142d7fb872c75949b3be78ef43`.
+- **Static checks PASS:** `git diff --check`, `github.md` `## Contents`, and version/changelog.
+  Security review found no secret, authorization defect, sensitive-data destination, or unrelated
+  network call.
+
+These are focused A52 checks from the source, not an installed copy and not a full-case PASS.
+Case 72 was not rerun. Harness loading, cross-harness behavior, and finish under `--run` remain
+unestablished. No other AI session or harness was launched.
+
 ### 2026-10-29T10:53:19-07:00 PR #95 review round 9
 
 Attempt: `review round 9 on https://github.com/wilsonkichoi/skills/pull/95`.
