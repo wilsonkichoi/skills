@@ -171,11 +171,20 @@ does not carry forward. The allowance is a ceiling, never a target: a skill sele
 the change needs, runs direct checks first, and starts no AI test session when direct checks
 suffice.
 
-Before each start, the skill posts this on the ticket with `wkc-tracker comment`:
+Before each start, the skill posts this on the ticket with `wkc-tracker comment`. From
+`wkc-implement`:
 
 ```
 AI test session: <k> of <limit>
-Attempt: build <branch> | review round <n> on <PR URL or branch>
+Attempt: build <branch>
+Checks: <the cases or subchecks this session runs>
+```
+
+From `wkc-code-review`:
+
+```
+AI test session: <k> of <limit>
+Attempt: review round <n> on <PR URL or branch>
 Checks: <the cases or subchecks this session runs>
 ```
 
