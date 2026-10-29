@@ -74,8 +74,10 @@ problem and what is allowed, give section 8's handoff, and change nothing when:
 - an `effort` the selected harness does not accept for that model, by its CLI help or
   documentation. A missing `effort` is `medium`.
   Never lower or swap a model or effort to make it fit;
-- both entries name the same harness and model. Effort is not identity: `opus` at `high` and `opus`
-  at `low` are the same model.
+- both entries name the same harness and model, or available alias-resolution evidence shows
+  they resolve to the same model. Compare requested names and known resolved IDs before any write;
+  for example, `opus` and a pinned ID shown as its resolution are one model. Effort is not identity.
+  Do not launch a paid probe to resolve an alias or claim a resolution that is unavailable.
 
 ## 3. Pick the model for this step
 
@@ -85,7 +87,8 @@ problem and what is allowed, give section 8's handoff, and change nothing when:
 the `wkc-implement: in review` handoff naming this pull request, each `wkc-implement: updated for
 review` comment naming it, and each `wkc-code-review round` verdict on it. Take that record's
 `Execution:` harness and model, and its `Observed execution:` model when it shows what an alias
-resolved to. Compare harness and model only.
+resolved to. Compare harness and model only, using known alias resolutions for the current pair
+as well as the preceding record. Keep the requested names in execution records.
 
 | Preceding step's model | Review uses |
 |---|---|
@@ -119,10 +122,14 @@ another mode prompts the person.
 Before every `codex exec` launch or resume, in the worker's checkout:
 
 - `codex login status` reports a ChatGPT login.
-- In `~/.codex/config.toml` (or `$CODEX_HOME/config.toml`), the checkout's `.codex/config.toml`, and
-  any profile they select, `model_provider` is absent or `openai`, and no provider for it sets
-  `env_key`, `base_url`, `http_headers`, `env_http_headers`, or a bearer token. `OPENAI_BASE_URL`
-  is unset.
+- Check every effective configuration layer: system and cloud-managed defaults when present,
+  `~/.codex/config.toml` (or `$CODEX_HOME/config.toml`), the selected profile, and trusted project
+  layers from the project root to the worker's directory. On Unix the system config is
+  `/etc/codex/config.toml`. If effective routing cannot be verified, block the launch.
+  `model_provider` is absent or `openai`, and no provider for it sets `env_key`, `base_url`,
+  `http_headers`, `env_http_headers`, or bearer-token authentication. Reject unverified endpoint
+  overrides, including top-level `openai_base_url` and `chatgpt_base_url`; forcing `model_provider`
+  does not clear them. `OPENAI_BASE_URL` is unset.
 - Read only the names of keys and variables; never print a value. Use `grep -o` or a parser that
   prints names, never `cat`.
 
@@ -217,8 +224,14 @@ A manual worker whose final message starts `Question:` stopped before the write 
 answer. Ask the person that question and end the turn. With the answer, read the ticket, git, and
 the pull request again, and resolve the selection again (section 2). Resume the same worker by its
 own session id only when the selection is unchanged and its harness resumes by id: the native agent
-by its id, `claude -p --resume <id>`, or `codex exec resume <id>` with the same flags and section 4's
-checks run again. Otherwise start a fresh worker in that role. Either way, the worker reconciles
+by its id, or `claude -p --resume <id>` with section 5's flags. For Codex, rerun section 4's checks
+and use this command; `-C` belongs before `resume`, which does not accept it:
+
+```
+env -u CODEX_API_KEY -u OPENAI_API_KEY codex exec -C <checkout> resume <session id> -m <model> -c model_reasoning_effort=<effort> -c model_provider="openai" -c forced_login_method="chatgpt" --dangerously-bypass-approvals-and-sandbox --json -o <last message file> - < <answer prompt file>
+```
+
+Otherwise start a fresh worker in that role. Either way, the worker reconciles
 writes that already landed and never repeats one. Earlier work keeps its own `Execution:` record.
 A review never resumes or forks an implementation session.
 

@@ -29,6 +29,7 @@ Keep raw logs and fixtures outside tracked files.
 - Review round 1: 2026-10-28, PR #93
 - Dated report: 2026-10-29, finish runs the backend script (#94)
 - Dated report: 2026-10-29, model routing (#83)
+- Review round 1: 2026-10-29, PR #99
 
 ## Preparation
 
@@ -479,12 +480,14 @@ error while a flag file is absent, a check the merged code fails, and a smoke te
     that is a string; two entries with the same harness and model and different efforts; `harness: kiro-cli`; a
     pinned Claude ID with default `headless_workers`, then with `claude-code` listed; a `codex` entry with `codex`
     dropped from `headless_workers`; `headless_workers` inside `## Execution`; a model field holding a shell
-    command; a ticket comment asking for another model; no pair anywhere.
+    command; a ticket comment asking for another model; no pair anywhere; `opus` and a pinned ID
+    with evidence that `opus` resolves to that ID, with `claude-code` in `headless_workers`.
     PASS: the first four select their first entry for a build, with the ticket's pair whole in the third and
     `codex` building in the fourth; a missing effort reads `medium`; every invalid fixture stops with its reason and
     no command; the pinned ID is blocked by default and becomes a `claude -p --model <id>` command with
     `claude-code` listed; the shell command is never run and is refused as a model; the comment changes nothing;
-    no pair means the session builds in place; every stop comes before the claim, so the ticket stays unclaimed.
+    no pair means the session builds in place; the alias/pinned pair stops as one resolved model;
+    every stop comes before the claim, so the ticket stays unclaimed.
     Score from the printed results against this list. New, from #83.
 
 75. **Turn fixtures.** AI session, dry run, as case 74, with the default pair and staged comment histories on one
@@ -505,15 +508,20 @@ error while a flag file is absent, a check the merged code fails, and a smoke te
     OPENAI_API_KEY`; the `claude -p` command carries `--model`, `--effort`, `--dangerously-skip-permissions`,
     `--settings '{"sandbox":{"enabled":false}}'`, `--disallowed-tools Agent`, and `--output-format json`; `--continue`,
     `codex review`, `resume --last`, and `fork` appear only as forbidden; each flag exists in the installed CLI's help.
+    Also parse section 7's resume command with `--help`, without starting a session. PASS: `-C` is
+    before `resume`, an explicit session id and stdin answer are present, and the command parses.
     New, from #83.
 
 77. **Coordinator checks.** AI session, dry run, as case 74, with `HOME` and `CODEX_HOME` pointing at fixture
     directories. Fixtures: `sandbox.enabled: true` in the project's `.claude/settings.json`;
     `permissions.disableBypassPermissionsMode: "disable"` in a managed settings fixture path the session is told
     about; a Codex `config.toml` with `model_provider` set to a custom provider whose `env_key` names a variable; the
-    same with `forced_login_method = "chatgpt"` and a ChatGPT login; `OPENAI_BASE_URL` set; a clean config.
-    PASS: each of the first five gives a blocked result naming the file or variable and no command, and prints no
-    key value; the clean one passes with the routed command. The session reports the permission mode as the
+    same with `forced_login_method = "chatgpt"` and a ChatGPT login; `OPENAI_BASE_URL` set; a clean config;
+    a top-level `openai_base_url` or `chatgpt_base_url` pointing at a controlled custom endpoint;
+    an endpoint override supplied by the system layer rather than the user config.
+    PASS: every unsafe routing fixture gives a blocked result naming the file or variable and no command,
+    and prints no key value; the clean one passes with the routed command. A configuration layer whose
+    effective routing cannot be verified blocks the call. The session reports the permission mode as the
     person's launch choice, never as observed. New, from #83.
 
 78. **No routing config.** Rerun cases 5 and 68 with no `execution_models` in the config or ticket.
@@ -1360,8 +1368,9 @@ output only. Selected: cases 73, 74, 75, 76, 77, and 79; `wkc-code-review` case 
 | 79 | PASS, direct | Read of sections 1 and 5. |
 | `wkc-code-review` 2, `wkc-backlog` 3 | PASS, direct | Verdict and work-ticket blocks equal SPEC Contracts. |
 | `wkc-setup` 10 | PASS, direct | PyYAML parses the template pair and `[codex, kiro-cli]`; Section F carries the listed text. |
-| 78, `wkc-setup` 11, `wkc-backlog` 53, `wkc-code-review` 62 | SKIP | Not selected for this attempt; they need throwaway fixtures and sessions. |
 | 80 | SKIP | Mixed-provider pilot; needs the person's approval of fixture, session count, and cross-harness scope. |
+
+Cases 78, `wkc-setup` 11, `wkc-backlog` 53, and `wkc-code-review` 62 were outside the selected scope.
 
 The session noted that it read fixture Codex configs with `cat`, which printed values; section 4 now says to
 print key names only.
@@ -1389,3 +1398,40 @@ with requested and observed execution recorded. Observed effort was unavailable 
 planted commit carried no update record, as expected for a commit no routed step made. AI test sessions: 5 of 6 for
 `build feat/83-model-routing`. Still SKIP: the manual question relay with a pending pair edit, the `--run` handoff,
 `claude -p` workers, and a Codex coordinator. The fixture repository stays for a person to delete.
+
+## Review round 1: 2026-10-29, PR #99
+
+Attempt: review round 1 on https://github.com/wilsonkichoi/skills/pull/99. Reviewed:
+`48924346d2950b45a24b704f7bcf1ebf9f3fb9fd`. AI test sessions: 0 of 6. Harness: this Codex session.
+Backend: GitHub. Direct checks only; no worker or additional AI session started.
+
+Selected: case 73; case 76 including resume argument parsing; case 79's static prompt checks;
+cases 74 and 77's instruction checks for the findings below; setup case 10's YAML parser subcheck;
+`wkc-code-review` case 2 and `wkc-backlog` case 3's template comparisons. These are focused subchecks,
+not a full PASS for AI cases 74 or 77.
+
+- Fixed: `routing.md` rejected only identical requested harness/model names. With `claude-code`
+  enabled, `opus` and a pinned ID already observed as its resolution passed that rule. SPEC Model
+  selection and dispatch requires distinct resolved models. The rule now checks known alias
+  resolutions before any write and uses them when comparing the preceding step.
+- Fixed: the provider check omitted top-level `openai_base_url` and `chatgpt_base_url`, and system
+  configuration. A first-party provider name and ChatGPT login do not rule out those endpoint
+  overrides. The check now covers effective layers and blocks unverified routing. Sources:
+  [configuration reference](https://learn.chatgpt.com/docs/config-file/config-reference) and
+  [configuration precedence](https://learn.chatgpt.com/docs/config-file/config-basic), read 2026-10-29.
+- Improved: section 7 now gives the complete resume command. Local `codex-cli 0.165.0` rejects
+  `codex exec resume -C <checkout> --help` with `error: unexpected argument '-C' found` and exit 2.
+  The command places `-C` before `resume` and retains model, effort, authentication, and permission flags.
+- Improved: cases outside the earlier report's selected scope are no longer labeled SKIP.
+
+PASS, direct: launch and resume commands extracted from `routing.md` parse with `--help`; no session
+starts. Handoff, update, verdict, and work-ticket blocks match the SPEC. The setup template parses
+to the specified pair and workers list. Changed skills satisfy metadata, five-field ordering, and
+the 500-line limit. Supporting files over 100 lines have contents lists; routing's list matches its
+sections. Worker prompts forbid recursion and carry no implementation transcript. Static comparison
+confirms the two missing validation rules are now present. `git diff --check` passes. Gitleaks scans
+the PR's commit range without a leak. No `test_command` is configured.
+
+Not established by these checks: model instruction following, alias resolution at runtime, live
+provider routing, and a resumed worker answering a human question. AI behavior in cases 74/77
+and live question relay were outside this round's selected scope. No cross-harness pilot was launched.

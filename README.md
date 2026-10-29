@@ -131,6 +131,10 @@ other model from the step before. `wkc-setup` offers `claude-code`, `opus`, then
 ticket, and an edit applies to the next build or review. With no pair, every skill runs in the
 session that calls it, as before.
 
+Pairs must name different models, including known alias resolutions. Codex dispatch checks effective
+provider configuration and endpoint overrides before launch or resume. An unverified custom endpoint
+blocks the call even with a ChatGPT login.
+
 The session you call `wkc-implement` or `wkc-code-review` in coordinates. It starts a native Claude
 Code agent for a Claude alias and `codex exec` for a Codex model, using your ChatGPT login, never an
 API key. `claude -p` runs only when `headless_workers` lists `claude-code`, which accepts whatever
