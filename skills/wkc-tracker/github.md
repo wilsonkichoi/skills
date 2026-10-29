@@ -116,6 +116,8 @@ comments: on a public repository anyone can comment.
   A tab-indented fence is code content and cannot open or close a fenced block.
 - A closed issue carries no status label; `done`, `cancel`, and `duplicate` are close reasons.
 - Writes send text through standard input, never through a shell or a query string.
+- Text is UTF-8 everywhere, as `gh` uses it: the script's input and output and what it exchanges
+  with `gh`. A non-UTF-8 locale, such as a Windows code page, changes none of it.
 
 `tools/wkc-tracker/test_github.py` in the source repository tests each of these.
 

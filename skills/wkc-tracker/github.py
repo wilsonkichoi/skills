@@ -374,9 +374,10 @@ class GitHub:
     # -- plumbing
 
     def gh(self, args: list[str], stdin: str | None = None) -> str:
+        # gh reads and writes UTF-8 whatever the locale says.
         try:
             result = subprocess.run(
-                ["gh", *args], input=stdin, text=True, capture_output=True, check=False
+                ["gh", *args], input=stdin, encoding="utf-8", capture_output=True, check=False
             )
         except OSError as error:
             read_failed(f"cannot run gh: {error}")
@@ -1336,4 +1337,7 @@ def main(argv: list[str] | None = None, gh: GitHub | None = None) -> int:
 
 
 if __name__ == "__main__":
+    # Text in and out is UTF-8, as gh's is, so a non-UTF-8 locale cannot change it.
+    sys.stdin.reconfigure(encoding="utf-8")
+    sys.stdout.reconfigure(encoding="utf-8")
     sys.exit(main())

@@ -19,8 +19,11 @@ from __future__ import annotations
 import importlib.util
 import io
 import json
+import os
+import shutil
 import subprocess
 import sys
+import tempfile
 import unittest
 from contextlib import redirect_stdout
 from pathlib import Path
@@ -963,6 +966,64 @@ class Cli(unittest.TestCase):
             with mock.patch.object(g.subprocess, "run",
                                    return_value=subprocess.CompletedProcess([], 0, stdout=url + "\n")):
                 self.assertEqual(g.origin_repo(), "a/b")
+
+
+class Locale(unittest.TestCase):
+    """The script as a process, with a fake gh that speaks UTF-8 as the real one
+    does, under a Latin-1 locale such as a Windows code page gives."""
+
+    TEXT = "café → 🎉"
+    FAKE_GH = """\
+import json, os, sys
+text, state = {text}, os.environ["FAKE_GH_STATE"]
+if sys.argv[1:3] == ["issue", "comment"]:
+    open(state, "wb").write(sys.stdin.buffer.read())
+    sys.exit(0)
+said = open(state, "rb").read().decode("utf-8") if os.path.exists(state) else None
+if sys.argv[1:3] == ["issue", "view"]:
+    result = {{"number": 1, "title": text, "body": "", "state": "OPEN", "stateReason": "", "labels": [],
+              "assignees": [], "milestone": None, "blockedBy": {{"nodes": [], "totalCount": 0}},
+              "comments": [{{"author": {{"login": "me"}}, "body": said}}] if said else [],
+              "url": "https://github.com/o/r/issues/1"}}
+else:
+    result = {{"data": {{"repository": {{"issue": {{"number": 1, "state": "OPEN", "body": text,
+              "lastEditedAt": None, "labels": {{"nodes": [{{"name": "wkc-run"}}]}}}}}}}}}}
+sys.stdout.buffer.write(json.dumps(result, ensure_ascii=False).encode("utf-8"))
+"""
+
+    def setUp(self):
+        self.tmp = Path(tempfile.mkdtemp())
+        self.addCleanup(shutil.rmtree, self.tmp)
+        fake = self.tmp / "gh"
+        fake.write_text(f"#!{sys.executable}\n" + self.FAKE_GH.format(text=ascii(self.TEXT)), encoding="utf-8")
+        fake.chmod(0o755)
+        self.state = self.tmp / "said"
+        self.env = {k: v for k, v in os.environ.items() if k not in ("PYTHONUTF8", "PYTHONIOENCODING")}
+        self.env |= {"PATH": f"{self.tmp}{os.pathsep}{os.environ['PATH']}", "LC_ALL": "en_US.ISO8859-1",
+                     "FAKE_GH_STATE": str(self.state)}
+        probe = self.python(["-c", "import locale; print(locale.getpreferredencoding(False))"])
+        if "utf" in probe.stdout.decode().lower():
+            self.skipTest("no Latin-1 locale on this machine")
+
+    def python(self, args, stdin=b""):
+        return subprocess.run([sys.executable, "-X", "utf8=0", *args], input=stdin, capture_output=True,
+                              env=self.env, check=False)
+
+    def test_text_in_and_out_is_utf8(self):
+        body = self.tmp / "body.md"
+        body.write_bytes(self.TEXT.encode("utf-8"))
+        for name, args, stdin in (("comment from a file", ["comment", "1", "--body-file", str(body)], b""),
+                                  ("comment from stdin", ["comment", "1", "--body-file", "-"],
+                                   self.TEXT.encode("utf-8"))):
+            with self.subTest(name):
+                self.state.unlink(missing_ok=True)
+                run = self.python([str(SOURCE), "--repo", REPO, *args], stdin)
+                self.assertEqual(run.returncode, 0, run.stdout.decode(errors="replace") + run.stderr.decode(errors="replace"))
+                self.assertEqual(self.state.read_bytes(), self.TEXT.encode("utf-8"))
+        with self.subTest("run show"):
+            run = self.python([str(SOURCE), "--repo", REPO, "run", "show", "1"])
+            self.assertEqual(run.returncode, 0, run.stderr.decode(errors="replace"))
+            self.assertEqual(json.loads(run.stdout.decode("utf-8"))["text"], self.TEXT)
 
 
 if __name__ == "__main__":

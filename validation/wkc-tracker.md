@@ -667,7 +667,7 @@ each `assign` form and its tie-break, half-landed and silently dropped writes,
 failed writes that are not retried, post-write read failures returning exit 3, concurrent closure,
 run configs refused as edge targets, pull request targets refused before any ticket write,
 cycles through complete lists, duplicates and other repositories,
-and text kept off the command line.
+and text kept off the command line and kept UTF-8 under a Latin-1 locale.
 
 **A52 `github.py` from an installed copy, from #94.** Direct. Install the candidate into an empty directory with
 `npx skills add "<clean-candidate>" -s wkc-tracker -a claude-code -y`, then run every verb from `/` as
@@ -1561,6 +1561,33 @@ here.
 Versions 0.0.9 to 0.0.41 below were development steps on the `feat/tracker` branch. They shipped
 together as 0.0.8, so an entry's version names a branch state, and its skill ref names the exact
 commit it tested.
+
+### 2026-10-29T10:37:23-07:00 PR #95 review round 8
+
+Attempt: `review round 8 on https://github.com/wilsonkichoi/skills/pull/95`.
+Reviewed `27052b6e4c5bfdb4cd60dbf38611218b20cc1079` independently. The maintainer authorized one
+more fixing round, making the limit eight, and live calls on a throwaway GitHub repository.
+Selected A51, focused A52 subchecks for non-ASCII text under a Latin-1 locale
+(`LC_ALL=en_US.ISO8859-1`), and static checks. GitHub backend; direct checks in Claude Code.
+AI test sessions: **0 of 6**.
+
+- **Live reproduction:** the reviewed script decoded and encoded `gh`'s text with the locale
+  encoding. On [fixture issue #2](https://github.com/wilsonkichoi/wkc-review95-round7-20261029/issues/2),
+  `comment 2` with `→` in the body raised `UnicodeEncodeError` with a traceback and exit 1, the
+  "nothing written" code, after the write had started. `comment 2` with `café` exited 3, and an
+  independent `gh issue view` shows the comment landed as `caf�`.
+- **A51 PASS:** 90 existing tests passed. The new `Locale` test runs the script as a process with
+  a fake `gh` that speaks UTF-8; its file-body subcheck failed on the reviewed script, and its stdin
+  and `run show` subchecks fail when only the `gh` encoding is fixed. All 91 tests pass.
+- **A52 focused subchecks PASS:** the fixed source, run from `/` under the Latin-1 locale, posted
+  comments with `→` and an emoji, with `café`, and with `ü → 日本` through `--body-file -`. Each
+  exited 0, and an independent `gh issue view` shows each body exactly. `show 2` printed its
+  title's `ü` correctly.
+
+This is focused A52 evidence on the source script, not an installed copy and not a full-case PASS.
+Windows itself was not run; the Latin-1 locale exercises the same locale-encoding path. Case 72
+was not rerun. Harness loading, cross-harness behavior, and finish under `--run` remain
+unestablished. There is no configured `test_command`, and GitHub reports no PR checks.
 
 ### 2026-10-29T10:26:25-07:00 PR #95 review round 7
 
