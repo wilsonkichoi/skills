@@ -25,6 +25,8 @@ Keep raw logs and fixtures outside tracked files.
 - Review round 4: 2026-10-28, PR #87
 - Review round 6: 2026-10-28, PR #87
 - Dated report: 2026-10-28, AI test allowances (#91)
+- Dated report: 2026-10-28, finish names the milestone (#88)
+- Review round 1: 2026-10-28, PR #93
 
 ## Preparation
 
@@ -210,13 +212,17 @@ Do not preload `run.md` or tell the session to read it. Observe whether the skil
 32. **Finish names a milestone close.** On the GitHub fixture, stage an `in-review` ticket held by the caller, with a
     merged handoff PR, as the last open ticket of a milestone whose other ticket is `done`. Run
     `wkc-implement finish <N>`.
-    PASS: the ticket is `done` (`CLOSED`, `COMPLETED`) with one finish comment; the report names
-    `wkc-plan close <milestone>`; `gh api` shows the milestone still `open`. New, from #66.
+    PASS: the ticket is `done` (`CLOSED`, `COMPLETED`) with one finish comment; the transcript shows
+    `wkc-tracker milestone show <milestone>`; the report names `wkc-plan close <milestone>`; `gh api` shows the
+    milestone still `open`. New, from #66; the `milestone show` read is from #88.
 
 33. **Finish names no close.** As case 32, once on a ticket whose milestone still has a `ready` ticket, and once on a
     ticket with no milestone.
     PASS: both tickets are `done`, both reports name no `wkc-plan close`, and every milestone keeps its state by
-    `gh api`. New, from #66.
+    `gh api`. The first report names the ticket's milestone exactly as `gh issue view <N> --json milestone` shows it,
+    and its transcript shows `wkc-tracker milestone show <milestone>`. The second reports no milestone, and its
+    transcript shows no `milestone show`. New, from #66; the milestone name and reads are from #88, after two
+    sessions in #80's report read the ticket without its `milestone` field and reported none.
 
 Cases 34 to 45 are from #73. An unattended call passes `--run <ref>`, naming a fixture run config written from
 SPEC Contracts › wkc-yolo run › Run config the way `wkc-tracker run create` writes it. Before #78's review, cases 35 to 41 ran with the older trigger, a call that said it came from
@@ -1157,3 +1163,69 @@ Candidate `ee9c162`, a local-backend `greet` fixture with no remote, built from 
 | 71 | PASS | Session 1 (pilot), limit `3`: continued `docs/002-help-examples`, posted exactly one record, `3 of 3` for `build docs/002-help-examples`, then one simulated start covering A1 to A3. The `build fix/002-earlier` record was not counted. No remote, so no handoff. |
 
 Not run: the handoff `AI test sessions:` line in a session, which needs a remote; follow-up PRs as new attempts; the pre-merge update continuing a build. Codex and Kiro: SKIP.
+
+## Dated report: 2026-10-28, finish names the milestone (#88)
+
+Scope: after a move to `done`, finish takes the ticket's milestone from `wkc-tracker show <id>`. Selected: milestone
+identification, ticket reads, reports, and preserved milestone state from cases 32 and 33 in Claude Code. These are
+focused subchecks, not full-case passes. Codex and Kiro CLI: SKIP, no session in those harnesses. Candidate `ad3c9ab`, exported with
+`git archive` and installed with `skills` 1.7.4; `diff -r` of the installed `wkc-implement` and `wkc-tracker` against the
+candidate gave no output.
+
+Root cause, from the #80 transcripts: S1 read ticket 1 with `gh issue view 1 --json title,body,state,labels,assignees`, and
+S3 read ticket 5 with `--json number,title,body,state,labels,comments,assignees`. Neither list asks for `milestone`, and
+neither session ran the `show` query from `github.md`, which does. Both reported no milestone.
+
+Fixture: `wilsonkichoi/wkc-implement-fixture-59`, reused. The tester added `M5: Last open` and staged #32 in `M4: Busy`
+(where #26 stays `ready`), #34 in M5 (where #33 is `CLOSED` `COMPLETED`), and #35 with no milestone. Each was `in-review`,
+held by the tester, with a handoff comment naming a merged PR (#36, #37, #38).
+
+Session S1, 1 of 6 for `build fix/88-finish-milestone`, recorded on #88 before it started: a Claude Code
+`general-purpose` subagent on Sonnet (`sonnet`, effort `medium`), the configuration that failed in #80, reading the
+installed `SKILL.md` by hand, so harness loading is untested here. Three turns, about 63k to 67k subagent tokens each.
+
+| Focused subcheck | Result | Evidence |
+|---|---|---|
+| 33, open ticket left | PASS | `finish 32`: the ticket read asked for `milestone`; the report named `M4: Busy`, as `gh issue view 32 --json milestone` shows, and said #26 is still `ready`; no `wkc-plan close`. The transcript shows a milestone-filtered ticket list, not the complete `milestone show` read. #32 `CLOSED` `COMPLETED`, one finish comment. |
+| 32, last open ticket | PASS | `finish 34`: the same milestone-filtered list on `M5: Last open`; the report named `wkc-plan close M5: Last open` and did not close it. M5 still `open` by `gh api`. #34 `CLOSED` `COMPLETED`, one finish comment. |
+| 33, no milestone | PASS | `finish 35`: the ticket read asked for `milestone` and got `null`; no milestone query in the transcript; the report said the ticket has none. #35 `CLOSED` `COMPLETED`, one finish comment. |
+
+The complete `wkc-tracker milestone show` subcheck did not pass for #32 or #34. Both calls omitted the backend's
+milestone-title lookup and result-completeness check. Those omissions are observed failures, not SKIPs. The passing
+outcome subchecks above do not establish compliance with the complete tracker verb.
+
+Every milestone kept its state, and #26 is still `ready`. The #80 failure was intermittent (two of three sessions) and
+happened under `--run` on a different fixture; finish under `--run` was not rerun here, so these passes do not prove the
+failure is gone there.
+
+## Review round 1: 2026-10-28, PR #93
+
+Attempt: `review round 1 on https://github.com/wilsonkichoi/skills/pull/93`. Candidate
+`97da691909d735092314ac877efd58a4de85c96d`. Selected: focused milestone reads and reports from cases 32 and 33,
+rerunning finish on the already completed GitHub fixture tickets #32, #34, and #35. This does not repeat their
+initial `in-review` to `done` transitions. The candidate's skill and backend instructions match the build candidate.
+
+One native Codex test subagent, 1 of the configured 6, recorded before launch on
+[#88](https://github.com/wilsonkichoi/skills/issues/88#issuecomment-6489578316). Model and reasoning effort were
+inherited; exact runtime identifiers and token usage were unavailable. It read the candidate skills by path in the
+existing `wilsonkichoi/wkc-implement-fixture-59` checkout. Harness loading was not tested. Claude Code and Kiro
+reruns: SKIP, this review runs in Codex. The Claude Code build evidence above is reused, not a new run.
+
+| Focused rerun subcheck | Result | Evidence |
+|---|---|---|
+| 33, open ticket left | PASS | `finish 32` read `M4: Busy`, resolved its exact title to milestone 3, and counted 2 `done`, 1 `ready`. The report named the milestone and no close command. |
+| 32, last open ticket | PASS | `finish 34` read `M5: Last open`, resolved its exact title to milestone 4, and counted 2 `done`. The report named `wkc-plan close M5: Last open`; milestone 4 stayed `open`. |
+| 33, no milestone | PASS | `finish 35` read `milestone: null`, reported no milestone, and ran no milestone query for that ticket. |
+
+Both milestone reads used the backend's paginated title lookup with `state=all` and an unfiltered issue list with
+`--state all --limit 1000`; each checked `rows: 20` before trusting its counts. No remote write ran. Independent
+parent reads confirmed each ticket still `CLOSED` `COMPLETED` with exactly one finish comment and its original
+milestone. A `gh repo view --repo` syntax error was corrected with `gh api repos/<owner>/<repo>`; no authentication,
+rate-limit, or quota failure occurred.
+
+The fixture's configured `rules_dir` was absent, so no rule files could be read there.
+
+Static checks passed: skill metadata, opening field order, 500-line ceiling, version and changelog timestamp,
+and `git diff --check` after removing the extra trailing blank line. The pre-fix history scan found no secret.
+There is no configured `test_command`, and GitHub reported no PR checks. Finish under `--run` and complete
+cross-harness compatibility remain untested by this round.
