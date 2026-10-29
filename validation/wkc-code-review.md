@@ -26,6 +26,7 @@ Keep raw logs and fixtures outside tracked files.
 - Review round 1: 2026-10-28, PR #90
 - Review round 2: 2026-10-28, PR #90
 - Review round 3: 2026-10-28, PR #90
+- Review round 4: 2026-10-28, PR #90
 
 ## Preparation
 
@@ -341,6 +342,13 @@ each implementation worktree its `HEAD`, index, `git status --porcelain=2 --untr
     contents, and stash list are unchanged; the fallback is detached at `H` and removed without `--force`;
     the worktree list matches afterwards. A non-conflicting ignored file still permits fast-forward reuse.
     Check statically that section 3 requires this flag and falls back when the fast-forward fails.
+
+58. **Failed fast-forward, in a session.** As case 51, with case 57's state: a clean implementation worktree one
+    commit behind `H`, holding an ignored file at a path that `H` tracks.
+    PASS: the session reads the refused `git merge --ff-only --no-overwrite-ignore H` before it runs anything else
+    in that worktree; the criteria's commands and `test_command` run only in the detached worktree at `H`; the
+    implementation worktree's `HEAD`, index, files, the ignored file's contents, and stash list are unchanged; the
+    report names the failed fast-forward.
 
 ## Dated report: 2026-10-22
 
@@ -886,3 +894,31 @@ it does not validate this flag or its fallback instruction. Cross-repository PR 
 head movement, and behind plus review-only as one round retain their recorded coverage gaps.
 Focused direct checks do not establish full-case or cross-harness compatibility. No repository
 `test_command` or GitHub checks are configured.
+
+## Review round 4: 2026-10-28, PR #90
+
+Reviewed `24bf78ac9941f1bc1639b95cb61bc28f91340bff` against #89 and SPEC Review verdict, Push check,
+and Security. The person approved one fixing round past `max_fix_attempts: 3` and one AI session past
+the standing limit of 6. Rounds 1 to 3's fixes hold. Direct check: `git merge --ff-only
+--no-overwrite-ignore` also refuses an ignored directory that `H` replaces with a file, an ignored
+file that `H` replaces with a directory, and an ignored file inside an ignored directory; an ignored
+sibling file still fast-forwards. Git 2.54.0.
+
+Session S7: one Claude Code `general-purpose` subagent on Sonnet (`sonnet`, effort `medium`), about
+81k tokens, reading the installed `SKILL.md` by hand. Candidate `24bf78a`, exported with `git archive`,
+installed with `skills` 1.7.4, equal to the candidate by `diff -r`. Fixture: a fresh clone of
+`wilsonkichoi/wkc-push-check-fixture-76` at `40f62d9`, with tickets #35, #37, and #39 and PRs #36,
+#38, and #40. Commands are read from the session's transcript; snapshots as in cases 47 to 55.
+
+| Round | Case | Result | Evidence |
+|---|---|---|---|
+| #35, PR #36 | 49 as one round | PASS | `git merge --ff-only --no-overwrite-ignore` to `91528ea` in the clean worktree, then the tests there; `approve`, `Reviewed` `91528ea`; `headRefOid` unchanged; no commit, no push. |
+| #37, PR #38 | 58 | FAIL: ordering | The reuse checks ran first and passed. The refused fast-forward was chained with `;` to `uv run python -m unittest` and `notes.py ann list` in the implementation worktree, at the old commit `9008552`. The session then used a detached worktree at `bae3111`, cited only its results, reported the failed fast-forward, and removed it without `--force`. The local `notes.json` and every snapshot are unchanged. |
+| #39, PR #40 | 54, `index.lock` | PASS | Only `git status`, a git-dir listing, and `git merge-base` ran in `feat-39-missing-delete`; then a detached worktree at `8d70d0a`, removed without `--force`; `approve`. |
+
+Cause of the FAIL: section 3's ordering sentence named only the reuse checks, and the fast-forward
+also decides the worktree. Round 4 changes it to "Finish the reuse checks and any fast-forward, and
+read their results, before running anything else in a worktree", and the CHANGELOG bullet matches.
+Case 58 records the session case. Instruction following on the new wording is SKIP in Claude Code,
+Codex, and Kiro: the extra approved session is used. The worktree list matched before and after S7.
+Cross-repository PR behavior and review-only head movement keep their recorded gaps.

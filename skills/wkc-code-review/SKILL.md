@@ -111,8 +111,9 @@ work in a temporary detached worktree at `H`
 (`git worktree add --detach <path> H`) and report the reason. When the round ends, remove that
 worktree with `git worktree remove <path>`, never `--force`, and report a removal that fails, with
 its path. Never switch, stash, reset, or clean a checkout, and never commit someone else's changes.
-Finish the reuse checks before running anything else in a worktree; then run the criteria's
-commands and `test_command` in the chosen one, where a judgment needs them.
+Finish the reuse checks and any fast-forward, and read their results, before running anything else
+in a worktree; then run the criteria's commands and `test_command` in the chosen one, where a
+judgment needs them.
 
 **An update from the base.** When the latest verdict is `approve` on an older head `A`, and `H` is a
 merge whose parents are `A` and a commit `M` on the base branch (`git merge-base --is-ancestor M
