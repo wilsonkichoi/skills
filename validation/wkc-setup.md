@@ -69,3 +69,13 @@ sessions went to the callers.
 | Case | Result | Evidence |
 |---|---|---|
 | 6 | PASS, direct | `grep -n push_check` shows Section D lines 143 and 150 and template line 14. Section D offers the gitleaks command first with `command -v gitleaks`, then the project's own command and none, and says a manual push without one only warns. PyYAML parses the template value as `gitleaks git --redact --log-opts="origin/main..HEAD"`, and its comment says default none. |
+
+## Dated report: 2026-10-28, AI test allowances (#91)
+
+Candidate `ee9c162`. Direct checks only; no AI sessions.
+
+| Case | Result | Evidence |
+|---|---|---|
+| 1 | PASS, direct | Section D recommends `5`; PyYAML parses the template's `max_fix_attempts` as integer `5`. |
+| 7 | PASS, direct | Section D asks for `max_ai_test_sessions_per_attempt`, recommends `6`, names both attempt kinds, and says it is a ceiling and `0` starts none. PyYAML parses the template value as integer `6`, and this repository's config as `5` and `6`. |
+| 8 | SKIP | Needs a setup session; the allowance went to the skill cases. |

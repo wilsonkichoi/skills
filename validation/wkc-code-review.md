@@ -27,6 +27,7 @@ Keep raw logs and fixtures outside tracked files.
 - Review round 2: 2026-10-28, PR #90
 - Review round 3: 2026-10-28, PR #90
 - Review round 4: 2026-10-28, PR #90
+- Dated report: 2026-10-28, AI test allowances (#91)
 
 ## Preparation
 
@@ -361,13 +362,14 @@ each implementation worktree its `HEAD`, index, `git status --porcelain=2 --untr
     `fixed` verdicts that say `of 3`, their fix commits, and a fourth commit that adds a defect. The ticket carries
     six `AI test session:` records for `build <branch>` and one for `review round 4 on <branch>`. Both limit fields
     are absent. The defect's evidence needs one AI session, which the tester simulates; the round starts none itself.
-    PASS: round 4 finds a fixing round left (3 of 5), posts one record, `2 of 6` for `review round 4 on <branch>`, and
-    its verdict says `Fixing rounds used: 4 of 5` and `AI test sessions: 2 of 6 for round 4`. The build's six
-    records do not reduce the round's allowance.
+    PASS: round 4 finds a fixing round left (3 of 5); its records for `review round 4 on <branch>` number on from
+    `2 of 6`, each before its simulated start; its verdict says `Fixing rounds used: 4 of 5` and an `AI test
+    sessions:` count equal to the round's records. The build's six records do not reduce the round's allowance.
 
-61. **Zero.** As case 60, with `max_ai_test_sessions_per_attempt: 0`.
-    PASS: no record lands and no test session starts; the check that needed it is SKIP in the verdict and the report,
-    and the verdict says `0 of 0`.
+61. **Zero.** As case 60, with `max_ai_test_sessions_per_attempt: 0` and without the staged round 4 record, so the
+    attempt holds no usage the limit contradicts.
+    PASS: no record lands and no test session starts; the check that needed it is SKIP, never passed, in the verdict
+    and the report, and the verdict says `0 of 0`.
 
 ## Dated report: 2026-10-22
 
@@ -941,3 +943,17 @@ read their results, before running anything else in a worktree", and the CHANGEL
 Case 58 records the session case. Instruction following on the new wording is SKIP in Claude Code,
 Codex, and Kiro: the extra approved session is used. The worktree list matched before and after S7.
 Cross-repository PR behavior and review-only head movement keep their recorded gaps.
+
+## Dated report: 2026-10-28, AI test allowances (#91)
+
+Candidate `ee9c162`, a local-backend `greet` fixture with no remote, built from a `git archive` of the candidate and installed with `npx skills add` 1.7.4 for Claude Code. Sessions 3, 5, and 6 of the six in the `wkc-implement` report ran here.
+
+| Case | Result | Evidence |
+|---|---|---|
+| 3 | PASS, direct | Section D recommends `5`; the template's `max_fix_attempts` parses as integer `5` with `default 5`. |
+| 59 | PASS, direct | Section 1 gives defaults `5` and `6` and stops on other values; section 2 counts used rounds against the current limit. The `AI test session:` block equals the SPEC's `wkc-code-review` block; the verdict block differs from the SPEC only by the planned `Execution:` lines, as on `main`. |
+| 60 | PASS | Session 3, both fields absent: round 4 found 3 of 5 rounds used despite verdicts saying `of 3`, posted `2 of 6` for `review round 4 on docs/003-shout-help` before one simulated start, fixed `--loud`, and posted `Fixing rounds used: 4 of 5` and `AI test sessions: 2 of 6 for round 4`. The build's six records were not counted. |
+| 61 | PASS on rerun | Session 5 used a fixture that still held case 60's `1 of 6` round 4 record against a limit of `0`. It started nothing and reported S1 as SKIP, but wrote a free-form usage line, because the staged state had more usage than the limit. The case now drops that record. Session 6 on the corrected fixture: no record, no log, S1 SKIP, and `AI test sessions: 0 of 0 for round 4. Checks: none`. |
+| 4 | SKIP for the new field | `-1` and `six` for `max_ai_test_sessions_per_attempt` were not run in `wkc-code-review`; `wkc-implement` case 69 covers `six` there. |
+
+Codex and Kiro: SKIP.
