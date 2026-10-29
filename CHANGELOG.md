@@ -2,11 +2,14 @@
 
 Newest first. Each version is a `## {version} ({ISO 8601 timestamp with local offset})` heading followed by a bullet list of changes.
 
-## 0.0.44 (2026-10-29T00:38:22-07:00)
+## 0.0.44 (2026-10-29T09:24:42-07:00)
 
-- `wkc-tracker` sessions run each verb with the commands its backend file gives, as written, instead of queries they write themselves (#94). `SKILL.md` section 1 and the top of `github.md` say so, and name what a hand-written query drops: `show`'s field list, a list's `rows` count, the `wkc-run` exclusion, and the exact milestone title lookup. In #88's validation, a `wkc-implement finish` session read `github.md` in full, then read tickets with its own `gh issue view` field lists, passed `--comments`, and counted a milestone with a filtered `jq` that had no `rows` check and no `wkc-run` exclusion.
+- `wkc-tracker`'s GitHub backend runs every verb through `github.py`, a standard-library Python script in the skill directory, run with `uv run --script` (#94, ADR-011). It covers `list`, `show`, `next`, `create`, `edit`, every `assign` form, `move`, `comment`, `link`, `unlink`, `milestone` ensure, close, list, and show, and the `tracker` run config store. Each verb reads, checks its precondition, writes, and verifies with a separate read, and prints one JSON object with exit 0 (done), 1 (refused, nothing written), 2 (usage), 3 (a write did not verify), or 4 (a read failed). Why: in #88's validation a session read the old query-by-query `github.md` in full and still counted a milestone with its own `jq`, with no completeness check and no `wkc-run` exclusion. A first fix in this branch told sessions in three places to run the commands as written; the next session read that twice and still rewrote every `jq` that began with the prelude placeholder.
+- `github.md` is now the map from each verb to `github.py`'s arguments, its input, output, and exit codes, and what the script holds to. `SKILL.md` section 1 says GitHub verbs run through the script and never through a query of the session's own. `SKILL.md` keeps every verb's meaning; Linear and local are unchanged. The `github-variable` and `command` run config stores stay as `SKILL.md` gives them.
+- The GitHub backend needs `uv` as well as `gh`. `wkc-setup` checks `uv --version` for `github`.
 - `wkc-implement` says its ticket reads and writes run with the backend file's commands, never a query of its own.
-- `validation/wkc-implement.md` gains case 72, which compares every `gh` command in two finish transcripts with `github.md`, and a dated report.
+- `AGENTS.md`: no new helper scripts without a person's explicit approval; an approved helper is Python run with `uv run --script`, with contract tests in `tools/<skill>/` behind a `Makefile` target. `github.py` is the recorded exception, with tests in `tools/wkc-tracker/test_github.py` (`make test-tracker`). The SPEC's boundary and component row follow.
+- Validation: `wkc-tracker` cases A51 (contract tests) and A52 (every verb from an installed copy against a throwaway repository); stale references to `github.md`'s old queries in A-cases now use `github.py` or direct `gh api` reads; `wkc-implement` case 72 checks that a finish session runs `github.py`, with the wording-only attempt's failure kept in its dated report; `wkc-setup` case 9.
 
 ## 0.0.43 (2026-10-28T23:12:56-07:00)
 

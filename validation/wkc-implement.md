@@ -27,6 +27,7 @@ Keep raw logs and fixtures outside tracked files.
 - Dated report: 2026-10-28, AI test allowances (#91)
 - Dated report: 2026-10-28, finish names the milestone (#88)
 - Review round 1: 2026-10-28, PR #93
+- Dated report: 2026-10-29, finish runs the backend script (#94)
 
 ## Preparation
 
@@ -1241,3 +1242,36 @@ Static checks passed: skill metadata, opening field order, 500-line ceiling, ver
 and `git diff --check` after removing the extra trailing blank line. The pre-fix history scan found no secret.
 There is no configured `test_command`, and GitHub reported no PR checks. Finish under `--run` and complete
 cross-harness compatibility remain untested by this round.
+
+## Dated report: 2026-10-29, finish runs the backend script (#94)
+
+Scope: case 72, in Claude Code, GitHub backend. Focused on ticket and milestone reads and writes during finish and
+the milestone guidance; finish under `--run` is not selected. Codex and Kiro CLI: SKIP, no session in those
+harnesses. Fixture `wilsonkichoi/wkc-implement-fixture-59`, reused; each run staged two `in-review` tickets held by
+the tester with merged handoff PRs, one in `M4: Busy` (where #26 stays `ready`) and one as the last open ticket of
+`M5: Last open`. Both sessions were Claude Code `general-purpose` subagents on Sonnet (`sonnet`, effort `medium`),
+reading the installed `SKILL.md` by hand, so harness loading through the Skill tool is untested. Attempt
+`build fix/94-tracker-backend-queries`; each session was recorded on #94 before it started.
+
+**Session 1 of 6, candidate `bd8615f`, wording only: FAIL.** That candidate told sessions, in `wkc-tracker`
+`SKILL.md`, `github.md`, and `wkc-implement`, to run the backend's commands as written. `finish 39` and `finish 40`
+read `github.md` twice, including the new paragraph. Ticket reads copied `show`'s `--json` field list but dropped
+the prelude. The milestone reads listed every title instead of the exact `--arg t` match, and replaced the counting
+`jq` with a filter of their own: no prelude, no `wkc-run` exclusion, and on the second read no `rows`. No
+`--comments`, `--label`, `--milestone`, or `--search` appeared. Outcomes were right: #39 and #40 `CLOSED`
+`COMPLETED` with one finish comment each, the reports named `M4: Busy` with no close and `wkc-plan close M5: Last
+open`, and both milestones stayed open. Every command the session could run unchanged, it copied; every `jq`
+program that started with the `<prelude>` placeholder, it rewrote. This led to ADR-011.
+
+**Session 2 of 6, candidate `190a268`, `github.py`: PASS.** `finish 43` and `finish 44`. The transcript has nine
+`uv run --script <fixture>/.claude/skills/wkc-tracker/github.py --repo wilsonkichoi/wkc-implement-fixture-59`
+calls: `show 43`, `show 44`, `comment`, `move <n> done`, and `show` for each ticket, and `milestone show "M4: Busy"`
+and `milestone show "M5: Last open"`. No `gh issue`, `gh api`, or `gh label` command ran; `gh pr list` and `gh pr
+view` read the pull requests, which are the caller's. By `gh issue view`, #43 and #44 are `CLOSED` `COMPLETED`
+with no status label and one finish comment each; #26 is still `ready`. The first report named `M4: Busy` with one
+open ticket and no close; the second named `wkc-plan close M5: Last open`. By `gh api`, both milestones are `open`.
+About 64k subagent tokens, six tool calls, 53 s.
+
+The session read only the first 120 lines of `wkc-tracker/SKILL.md` and the first 150 of `github.md`, which is all
+of it. Still unverified: harness-loaded skills, Codex and Kiro, finish under `--run`, and the other callers of
+`wkc-tracker` (`wkc-backlog`, `wkc-code-review`, `wkc-plan`, `wkc-yolo`) running the script.

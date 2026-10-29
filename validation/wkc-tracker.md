@@ -1554,6 +1554,22 @@ Versions 0.0.9 to 0.0.41 below were development steps on the `feat/tracker` bran
 together as 0.0.8, so an entry's version names a branch state, and its skill ref names the exact
 commit it tested.
 
+### 2026-10-29T09:30:00-07:00 #94 `github.py`, direct checks
+
+Candidates on `fix/94-tracker-backend-queries`: `f494965` for A52, `190a268` for A51 and S1. Selected A51, A52, and S1, GitHub backend, direct
+only; no AI session. Codex and Kiro CLI: SKIP, no session in those harnesses, and these direct checks do not
+exercise any harness. `uv` 0.10.7, `gh` 2.102.0, `skills` 1.7.4.
+
+| Case | Result | Evidence |
+|---|---|---|
+| A51 | PASS | `make test-tracker`: 71 tests, OK. The first run failed one test: a create whose issue did not read back exited `refused`, which would tell a caller nothing was written. Fixed to `unverified` in `github.py`; the test stays. |
+| A52 | PASS | Installed from a `git archive` of `f494965` into an empty directory (`diff -r` against the candidate: no output); `github.py` installed executable. Every verb run from `/` against `wilsonkichoi/wkc-tracker-fixture-65` (issues #5 to #8, milestone `Int 94: A`). Exit codes: 0 for each write and read, 1 for the second bare claim, the move out of `done`, the cycle (`#5 → #6 → #5`), the second unlink, the ensure of the closed milestone, `show` on the run config, `run close` on a ticket, and `show 99999`; 4 for a repository that does not exist. Independent `gh` reads: #5's title `T1 'quote' "dq" $(x) & ü` and body exact (`jq --rawfile`), `CLOSED` `COMPLETED`, no labels; #6's edited body exact with no blockers and no milestone, its comment exact; #7 `DUPLICATE` with `duplicateOf` 6; #8 labeled `wkc-run`, `CLOSED`; the milestone `closed`. The direct-exec form, `"<install>/github.py" --repo <R> milestone list`, exited 0. After A52, `show`'s `duplicate_of` was reshaped to name `original`, `chain`, and `ends_at` (`190a268`); `show 7` from the source tree then gave `original` #6 and a chain #7 → #6. |
+| S1 | PASS | The installed `wkc-tracker` directory holds `github.py` with mode `-rwxr-xr-x`. |
+
+On `wilsonkichoi/wkc-implement-fixture-59` (32 issues), `milestone show` took 0.97 s and 1.18 s and `next` 0.58 s,
+with `M4: Busy` at 1 open of 4 and `M5: Last open` at 0 open of 3, matching `gh issue list`. Full output:
+`integration.log` in the session scratchpad, not kept.
+
 ### 2026-10-26T14:40:02-07:00 PR #78 round 6, focused direct checks
 
 Reviewed `44fca3d57566ed0d28654ea2c2ab402d06e13893`. Selected A49.3 in Claude Code, GitHub backend, fixture
