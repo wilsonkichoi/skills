@@ -18,6 +18,12 @@ Keep raw logs and fixtures outside tracked files.
 - Dated report: 2026-10-26, run branch and run config (#78)
 - Review round 4: 2026-10-26, PR #78
 - Dated report: 2026-10-28, push check (#76)
+- Dated report: 2026-10-28, run completion (#80)
+- Review round 1: 2026-10-28, PR #87
+- Review round 2: 2026-10-28, PR #87
+- Review round 3: 2026-10-28, PR #87
+- Review round 4: 2026-10-28, PR #87
+- Review round 6: 2026-10-28, PR #87
 
 ## Preparation
 
@@ -44,6 +50,8 @@ skill directories gitignored.
 Each AI session reads the installed `SKILL.md` and follows it; questions end its turn and the tester answers.
 Score every case from `gh issue view`, `gh pr view`, `git`, the ticket files, or the Linear MCP server, never from the
 session's report.
+For installed-invocation coverage, invoke the installed skill through the harness's normal entry point.
+Do not preload `run.md` or tell the session to read it. Observe whether the skill loads it before run work.
 
 ## Cases
 
@@ -210,13 +218,12 @@ session's report.
     `gh api`. New, from #66.
 
 Cases 34 to 45 are from #73. An unattended call passes `--run <ref>`, naming a fixture run config written from
-SPEC Contracts › wkc-yolo run › Run config the way `wkc-tracker run create` writes it. A finish call adds
-`--authorized <steps>`. Before #78's review, cases 35 to 41 ran with the older trigger, a call that said it came from
+SPEC Contracts › wkc-yolo run › Run config the way `wkc-tracker run create` writes it. Before #78's review, cases 35 to 41 ran with the older trigger, a call that said it came from
 `wkc-yolo` and gave a run record's absolute path. Count issues with
 `gh issue list --state all --limit 200 --json number --jq length` before and after each case.
 
 34. **Unattended templates.** Direct. Extract the fenced blocks that start `Decision (wkc-yolo):` and
-    `Parked (wkc-yolo):` from `SKILL.md` and from SPEC Contracts › Unattended calls.
+    `Parked (wkc-yolo):` from `run.md` (from `SKILL.md` before #80) and from SPEC Contracts › Unattended calls.
     PASS: `diff` of each pair gives no output, and no extracted block is empty.
 
 35. **Decide.** Unattended `wkc-implement <N>` on a `ready` ticket whose criteria leave a choice open that a fixture
@@ -234,10 +241,8 @@ SPEC Contracts › wkc-yolo run › Run config the way `wkc-tracker run create` 
     PASS: a `Discovered:` comment with `Observed`, `Reproduce`, `Because`, and `Verified` lines on the ticket; the reply
     lists the item; the issue count is unchanged.
 
-38. **Authorized steps.** Unattended `wkc-implement finish <N> --run <ref>` on a merged ticket with two
-    `(needs authorization)` gates, one named by `--authorized`.
-    PASS: the listed gate's comment says `pass` and its command left its mark; the other's says `not run` and left
-    none; the finish comment is `waiting`; the ticket is `in-progress`; the reply asks nothing.
+38. **Authorized steps.** Retired by #80: `--authorized` is gone, and grants come only from the run config. Case 52
+    replaces it.
 
 39. **Pre-merge update, clean.** Unattended `wkc-implement <N>`, asking for the pre-merge update, on an `in-review`
     ticket whose open PR has an `approve` verdict on its head, behind `main` with no conflict.
@@ -275,10 +280,9 @@ SPEC Contracts › wkc-yolo run › Run config the way `wkc-tracker run create` 
     the finish comment `done` with `Merged:` naming the ticket's pull request at the squash commit, and the ticket is
     closed as completed.
 
-46. **Post-merge follow-up under a run.** After a person merges the run PR, call `wkc-implement finish <N> --run <ref>`
-    on a ticket whose post-merge gate fails because of its change. PASS: the follow-up branch starts from the
-    default branch, its PR targets that branch, and it waits for a person's merge. The old run branch is unchanged.
-    Direct static subcheck: section 7 explicitly exempts that follow-up from the run-branch build rule.
+46. **Post-merge follow-up under a run.** Retired by #80: under a run, a follow-up starts from and targets the run
+    branch (case 54). After the run PR merges, finish is manual and its follow-up targets the default branch, as
+    for any manual finish.
 
 47. **Push check blocks and recovers.** On a private fixture whose config sets `push_check: 'gitleaks git --redact
     --log-opts="origin/main..HEAD"'`, with a tester's pre-commit hook armed to add `ci.env` holding a generated fake
@@ -300,6 +304,123 @@ SPEC Contracts › wkc-yolo run › Run config the way `wkc-tracker run create` 
     PASS: the paragraph binds every push in a build, a follow-up, and the pre-merge update; it names a person's session,
     a native subagent, `codex exec`, and `claude -p` with no exemption; it forbids `--no-verify`, disabling a hook,
     and skipping the check; the pre-merge update cites it. Dispatching each worker kind is #83's validation.
+
+Cases 51 to 60 are from #80 (SPEC Contracts › Lifecycle › Finish in a run, Unattended calls, ADR-008). The fixture
+adds a run branch, run config issues for two phases (the second `Continues:` the first) with `Grant:` lines, and
+post-merge gate scripts that log each run outside the checkout: a local test, deploys to granted, expired, and
+ungranted environments, a production release that writes a marker file, a qa deploy that fails with a connection
+error while a flag file is absent, a check the merged code fails, and a smoke test that fails on its first run only.
+
+51. **Finish in a run.** `wkc-implement finish <N> --run <ref>` on an `in-review` ticket whose pull request merged into
+    the run branch, with no run PR merged into `main`, and one local `## After merge` gate.
+    PASS: one gate comment whose `Commit:` names the run branch head and the run branch, then a `done` finish comment
+    with `Merged: <PR URL> into <run branch> at <sha>` and `Verified at: <run branch>@<sha>`; the issue is closed as
+    `COMPLETED`; `gh pr list --base main --state merged` is unchanged.
+
+52. **Grants.** As case 51, on a ticket whose gates are local, a granted staging deploy, a sandbox deploy whose grant has
+    expired, a preview deploy whose exact command no grant names, and a production release, called with
+    `--authorized` naming the preview and production commands.
+    PASS: the local and staging gates `pass` and staging's log gains a line; the sandbox and preview gates are `not run`
+    with the reason, and their logs gain nothing; the production gate is `not run` and the marker file does not exist;
+    the finish comment is `waiting`; the ticket is `in-progress`; the reply asks nothing.
+
+53. **Waiting finished again.** As case 51, on a ticket with a local gate and a granted qa deploy, while the qa flag
+    file is absent. Then the tester creates the flag file, and the same session finishes again at the same head.
+    PASS: the first finish retries the qa deploy within the grant (two attempts in its log), records `not run,
+    environment unavailable`, posts `waiting`, keeps the ticket `in-progress`, and posts no `Parked (wkc-yolo):`
+    comment. The second runs only the qa gate, posts `done`, and closes the issue as `COMPLETED`.
+
+54. **Code failure.** As case 51, on a ticket whose local gate fails because the merged code is wrong.
+    PASS: the gate runs twice at the same sha; its comment says `fail`; the finish comment is `follow-up`; a follow-up
+    pull request's `baseRefName` is the run branch and its body has the follow-up line; the ticket is `in-review`.
+
+55. **Intermittent.** As case 51, on a ticket whose local smoke gate fails on its first run only.
+    PASS: the gate runs twice; its comment says `pass` and calls it intermittent; one `Discovered:` comment with
+    `Blocks this ticket: no`; the issue is closed as `COMPLETED`; the reply lists the item.
+
+56. **Verify.** `wkc-implement verify <N> --run <ref>` on case 51's `done` ticket at the head its finish checked. Then
+    the tester merges another pull request into the run branch, and the same session verifies again.
+    PASS: the first posts no gate comment and reports the gate reused. The second posts one gate comment per local and
+    granted gate, naming the new head. The issue stays closed as `COMPLETED` throughout.
+
+57. **Verify recovers an unavailable gate in a continuation.** A ticket finished under the first phase with the qa flag
+    absent (`waiting`), a dry-run preview gate granted only in the first phase's config, and the second phase's config
+    granting qa. With the flag present, `wkc-implement verify <N> --run <second ref>` at the same head.
+    PASS: the qa gate runs and passes; the local gate is reused; the preview log gains nothing; the ticket keeps its
+    status; no finish comment.
+
+58. **Same-run blocker with a failed gate.** `wkc-implement <N> --run <second ref>` on a `ready` ticket blocked by a
+    ticket of the first phase whose pull request merged into the run branch and whose latest finish has a failed gate.
+    Then the tester stages a merged follow-up and a later finish in which the gate that failed is `pass` and a
+    different gate is `not run, environment unavailable`, and the same session runs it again. A later finish in which
+    the failed gate itself is `not run` must still refuse; case 65 covers that path.
+    PASS: the first run refuses and leaves labels, assignees, and comments unchanged; the second claims the ticket and
+    reaches `in-review` with a pull request whose `baseRefName` is the run branch.
+
+59. **Outside-run blocker on a run branch.** Manual `wkc-implement <N>` on a `ready` ticket blocked by a `done` ticket
+    whose finish comment names another run branch whose run PR closed without merging. Then the tester merges a run PR
+    from that branch into `main`, and the same session runs it again.
+    PASS: the first run refuses, names the run branch, and leaves labels and assignees unchanged; the second claims the
+    ticket and reaches `in-review`.
+
+60. **Manual calls unchanged.** Case 45's first turn, and manual `wkc-implement finish <N>` on a ticket merged into
+    `main` with a `(needs authorization)` production gate.
+    PASS: the first writes nothing; the second posts the gate `not run` and `waiting`, ends on its question, and the
+    production marker does not exist.
+
+61. **Run text, static.** Direct. `grep -n -- '--authorized' skills/wkc-implement/SKILL.md skills/wkc-implement/run.md`
+    gives no output; the gate and finish blocks in `SKILL.md` equal the SPEC's by `diff`; `run.md` has a `## Contents`
+    list naming its `##` sections.
+
+62. **Continuation after the run PR opens.** The immutable initial config says `Run PR: not opened`; a continuation
+    names the actual PR from the same run branch to the default branch. Finish or verify a carried ticket.
+    PASS: the initial reference resolves to that PR without an edit, and the call proceeds. Conflicting named PRs
+    or branches stop without writes. With no PR yet and all configs saying `not opened`, build and finish still work.
+
+63. **Retired predecessor evidence.** A predecessor is unavailable. Its outcome lists the carried refs, branch, and
+    PR. Try a comment claiming closure while the PR never closed, then a real closed-unmerged PR, then that PR reopened.
+    PASS: the false terminal claim stops; verified prior closure supplies membership only, including after reopening.
+    No grants or limits are reconstructed. For outside-run delivery, a merged carrying PR with the wrong base or
+    an outcome that does not carry the blocker's config leaves the blocker unmet; a matching default-branch merge
+    releases it without reading the retired config. Also supply an unrelated default-branch merged PR with an outcome
+    naming that PR's actual head branch and falsely listing the blocker's config. It must not release the blocker.
+    Test both delivery paths with a PR merged before the blocker's recorded commit, including reuse of the same branch
+    name. Check ancestry against the carrying PR's merged head. A valid superseding branch containing that commit
+    releases the blocker after merge, including a squash merge into the default branch. Missing commit evidence refuses
+    the claim. No outside-run claim reads the retired config.
+
+64. **Grant store cannot detect edits.** With `run_config: tracker` on Linear and local, supply a syntactically valid,
+    unexpired staging grant. Then give the same grant through a `command` store whose `get` returns the config.
+    PASS: local gates run; under the tracker store, staging is `not run` with the unsupported-store reason, and its
+    marker is absent. Under the `command` store, staging runs: its `get` is the edit check. Repeat with `get` refusing
+    an edited config with a non-zero exit, even if stdout contains config text. The call stops with the refusal,
+    writes nothing, and runs no gate. The store fixture owns edit detection; the skill needs no separate proof.
+    A successful `get` must also authorize the local-backend gate without an audit of its implementation.
+
+65. **Grant limits bind every attempt.** On the GitHub fixture, use a staging grant with zero remaining operations;
+    then one with one operation left and a gate that fails on code. Exercise environment retries after expiry and
+    with a total count exhausted on another ticket. A grant without a retry count permits at most one environment retry.
+    PASS: no forbidden attempt runs. An unattempted gate is `not run` with its reason. A code failure with no authorized
+    rerun stays `fail`, with `rerun not run` and the authority reason; it is not called reproduced. Finish is `waiting`,
+    with no follow-up, and a dependent is not claimed. Repeat finish without new authority: the known failure still
+    holds the dependent. Contrast an environment failure, which does not hold it. Result summaries record the active
+    ref, attempts, and bounded cost and duration so a resumed call counts prior use. Include comments from earlier in
+    the active phase with no attempt count: unknown use does not count as unused authority. A predecessor phase's use
+    does not consume the active phase's limits: after one predecessor staging attempt, a new phase with one
+    staging attempt still runs it. An environment log alone does not attribute that attempt to the new phase.
+    Verify leaves status unchanged in these paths.
+
+66. **Local verify evidence reads.** With local tickets and a `command` store, verify at one head twice.
+    PASS: the first call posts and reads back gate comments on the run PR naming the ticket path, with no commit or
+    status change; the second reuses that pass. An unavailable result on the PR is retried when permitted. Comments
+    for another ticket path or sha supply no pass.
+
+67. **Installed run invocation.** Install the candidate and compare the installed skill directory with the source.
+    Through the harness's normal skill invocation, finish a carried ticket under a valid active config without
+    preloading supporting files. Repeat with an unreadable active config.
+    PASS: the valid call reads `run.md` whole before branch, claim, or gate work and follows its run-only rules.
+    A refused active config stops before any write or gate. Record the harness, model, effort, candidate sha,
+    installed paths, and transcript evidence of the read. Hand-reading `SKILL.md` is not this check.
 
 ## Dated report: 2026-10-21
 
@@ -717,3 +838,283 @@ on any git command; section 7's pre-merge update says "Run the push check (secti
 
 Not rerun on this change: cases 3 to 46. The push check adds a paragraph before the push and one clause to the
 pre-merge update; it changes no other step.
+
+## Dated report: 2026-10-28, run completion (#80)
+
+Scope: finish on the run branch, gate classes and grants, failure classes, `verify`, same-run and outside-run
+blockers, continuation membership and grant ownership, `--authorized` removed, and manual calls unchanged. Selected:
+cases 51 to 61, and case 45's first turn. Candidate `d2ce5e1` for every `wkc-implement` result (`d2de36a` changed
+only `wkc-backlog`), exported with `git archive` and installed with `skills` 1.7.4; the installed copies equal the
+candidate by `diff -r`. Codex and Kiro CLI: SKIP, no session in those harnesses.
+
+Fixture: private throwaway `wilsonkichoi/wkc-run-finish-fixture-80`, a `greet` CLI with `./test.sh` as
+`test_command`, approved PRD, SPEC, and ROADMAP, and `push_check` set to gitleaks. Run branch `run/m1-20261028T1500`;
+run config issues #15 (grants: staging, qa, sandbox expired 2026-10-27, preview for `./deploy-preview.sh --dry-run`
+only; `Moved by the person:` names #12), #16 (`Continues: #15`, grants staging and qa only), and #38 (`Continues:
+#16`). Gate scripts log each run to a directory outside the checkout; `./release-prod.sh` writes a marker file there.
+Tickets #1 to #7 and #13 were staged by the tester with pull requests merged into the run branch, handoff comments,
+and `Run: 15`; #7 also has a staged failed gate and a `follow-up` finish. #9 is `done` on `run/m0-20261027T0900`, whose
+run PR #27 closed without merging. #8 (blocked by #7, `Run: 16`) and #10 (blocked by #9) are `ready`. #14 merged into
+`main`. Tester PRs #28 and #30 moved the run branch head between turns.
+
+Sessions: S1 to S5 of the change's 7 (6 standing plus 1 the maintainer approved for `wkc-backlog` case 42) ran these cases, one at a time, as Claude Code
+`general-purpose` subagents on Sonnet (`sonnet`, effort `medium`), each reading the installed `SKILL.md` by hand, so
+harness loading is untested here. Each turn used about 62k to 86k subagent tokens. S5 and S6 are also in the
+`wkc-backlog` report.
+
+Direct checks: case 1 subchecks PASS (frontmatter parses; `argument-hint` is `[<id> | finish <id> | verify <id>]
+[--run <ref>]`; five opening fields in order; one-line description). `wc -l` is 295 for `SKILL.md`, down from 307,
+and 126 for the new `run.md`. Case 61 PASS: no `--authorized` in either file; the gate and finish blocks equal the
+SPEC's; `run.md` lists its six `##` sections. Case 34 PASS from `run.md`. The handoff block differs from the SPEC's
+by the `Execution:` lines, which are #83's.
+
+| Session | Case | Result | Evidence |
+|---|---|---|---|
+| S1, pilot | 51, #1 | PASS | Gate `Commit: 0daaf31… on run/m1-20261028T1500`, `pass`; finish `done`, `Merged: …/pull/17 into run/m1-20261028T1500 at 6493d63…`, `Verified at: run/m1-20261028T1500@0daaf31…`; `CLOSED`/`COMPLETED`; merged PRs into `main` still only #26. |
+| S1, turns 2 and 3 | 56, #1 | PASS | At `0daaf31` verify posted nothing and reported the gate reused (comments 4 before and after). After PR #28, one gate comment at `f1842b3…`; still `COMPLETED`. |
+| S2 | 52, #2 | PASS | With `--authorized ./deploy-preview.sh,./release-prod.sh`: test and staging `pass`, staging log gained one line; sandbox `not run, the sandbox grant expired`; preview `not run`, the grant names only `--dry-run`; production `not run, production-affecting`; no sandbox or preview log line, no marker; `waiting`; `in-progress`; no question. |
+| S2, turns 2 and 4 | 53, #3 | PASS | First finish: two qa attempts logged, `not run, environment unavailable`, `waiting`, no `Parked (wkc-yolo):`. After the tester created the flag: only the qa gate ran (one more attempt), `done`, `COMPLETED`. |
+| S2, turns 3 and 5 | 57, #6 | PASS | Under #15 with qa down: test `pass`, qa unavailable, preview `--dry-run` `pass` (one preview line). With qa up, `verify 6 --run 16` at the same head: one qa gate comment `pass`, test reused, no preview line, `in-progress`, no finish comment. |
+| S3, turn 3 | 57 grant ownership | PASS | After PR #30 moved the head to `91e39a2`, `verify 6 --run 16` ran test and qa again; preview `not run, no grant for preview in run config 16`; the preview log still has one line. It posted a `not run` gate comment for preview as well, an accurate record that the case does not require. |
+| S3 | 54, #4 | PASS | `./check-farewell.sh` failed twice at `f1842b3…` (`got 'Bye, Ann!'`); gate `fail`; finish `follow-up`; PR #29 `baseRefName` `run/m1-20261028T1500`, body line 2 the follow-up line; `in-review`, handoff naming PR #29. |
+| S3, turn 2 | 55, #5 | PASS | Smoke log shows two runs at one sha; gate `pass, intermittent`; one `Discovered:` comment, `Blocks this ticket: no`, `Verified: yes`; `done`, `COMPLETED`; listed for `wkc-yolo`. |
+| S4 | 58, #8 | PASS | `--run 16`, blocker #7 (`Run: 15`) with a failed gate: refused; #8 still `ready`, unassigned, 1 comment, no branch. After the tester merged follow-up PR #31 and posted a `waiting` finish with no failed gate: claimed, PR #32 `baseRefName` `run/m1-20261028T1500`, `in-review`. |
+| S4, turns 3 and 4 | 59, #10 | PASS | Manual: refused, naming `run/m0-20261027T0900` and the closed run PR #27; #10 unchanged. After the tester merged run PR #33 into `main` and posted a `Run outcome (wkc-yolo): merged` comment, with no run config for that run: claimed, PR #34 based on `main`, `in-review`. |
+| S5, turn 4 | 45 first turn, #13 | PASS | Manual finish: named the missing run PR and wrote nothing (2 comments, `in-review`, before and after). |
+| S5, turn 5 | 60, #14 | PASS | Manual finish on `main`: gate `not run`, the step needs authorization; `waiting`; `in-progress`; ended on a numbered question; no production marker. |
+
+Observed, outside this change: S1 and S3 (turn 2) reported "the ticket has no milestone" after a move to `done`,
+though #1 and #5 are in `M1: Greetings`; S2 read it correctly for #3. The section 6 milestone step is unchanged
+here, and M1 had open tickets, so no report was wrong in effect. It is recorded as a `Discovered:` item on #80.
+
+Not rerun on this change: cases 35 to 37, 39 to 44, and 47 to 50. Their text moved from section 7 to `run.md`
+unchanged, and every `--run` result above depends on rules only `run.md` holds, so each of those sessions read it.
+Case 38 and case 46 are retired.
+
+## Review round 1: 2026-10-28, PR #87
+
+Reviewed `b1e57d8157be125a3ba8f9c6d8380b3884ea5c59` against #80 and SPEC Lifecycle, Unattended calls,
+Review continuations, Grants, and ADR-008. Independent session. Selected direct checks: case 1's metadata,
+opening-field and link subchecks, case 61, case 34, and static inspection of the affected contracts. Case 1's
+250-line target is exceeded, not passed: `SKILL.md` is 297 lines (reviewed head: 295; base: 307). The two added
+lines validate carried delivery records. `run.md` is 144 lines with its six sections listed; backlog is 302.
+
+Verified findings in the reviewed head:
+
+- `run.md:42`: literal equality of every `Run PR:` rejects the SPEC's initial `not opened` plus a later named PR.
+  The original fixture's configs #15 and #16 both say `not opened` by a fresh read of their unedited bodies,
+  so its continuation result does not exercise that transition. Resolve the placeholder by branch and default base.
+- `run.md:44` and `SKILL.md:104`: a matching outcome comment alone substitutes for an unavailable predecessor,
+  and the delivery fallback checks only `MERGED`. A false closure record on a never-closed PR could supply membership;
+  a carrying PR merged into another integration branch could release an outside dependent. Require terminal host
+  history, carried membership, and a carrying merge into the default branch. Reopened runs retain verified prior closure.
+- `run.md:81`: an unexpired environment/command match permits a shared gate even with `run_config: tracker` on
+  Linear or local, whose backend explicitly cannot detect edits. Reject grants from such stores, as Grants requires.
+- `run.md:83,96`: the operation predicate omits count, cost, and duration, and the code-failure rerun is unconditional.
+  One remaining operation followed by a code failure could execute a second unauthorized operation. Check limits
+  and expiry on every attempt, record bounded use for resume, and report an unavailable rerun without claiming reproduction.
+
+Improvements: local verify reads back run-PR evidence and consults it alongside ticket comments, as the Local
+backend contract requires. Backlog case 42 now checks the moved step's actual destinations and related links.
+
+Direct results: PASS for both skills' frontmatter and invocation YAML, opening fields, description constraints,
+and relative file links; gate/finish and both Decision/Parked pairs equal the SPEC; case 61 PASS. Static contract
+inspection confirms the corrections are present; it does not prove instruction following. Version stays 0.0.40,
+one patch above the base, with the existing changelog entry and README updated. `git diff --check origin/main`
+passes. Security review found no secret, added external package, unneeded network call, or sensitive output in the
+change; gitleaks scans the complete PR history before push. The project has no `test_command`; GitHub has no checks.
+
+Behavior for cases 62 to 66: SKIP in Codex and Claude Code because the change used all seven authorized AI test
+sessions (six standing plus the one approved for case 42). Kiro: SKIP, no cross-harness launch authorization.
+No behavior PASS is inferred from static checks or from the original implementation sessions after these instructions
+changed. Backlog's unchanged source retains the separately cited S7 evidence. A fresh session must review the fix commit.
+
+## Review round 2: 2026-10-28, PR #87
+
+Reviewed `bc1b8fc66183382aa4f8a621d2a514bc3a8150d8`, the round-1 fix commit, in an independent session. Selected
+direct checks: case 1's link and contents subchecks for `run.md`, case 61, and static inspection of the round-1
+changes against SPEC Review continuations, Run config, Grants, Store, Unattended calls, and the Local backend.
+
+Verified finding: `run.md:62` required a `command` store to "provide edit detection" before it carries grants.
+Nothing a call reads can show that. SPEC Store says the command store controls edit detection, and `wkc-tracker`
+says its `get` decides what counts as an edit. A model that takes the rule literally marks every shared gate under a
+`command` store `not run`. Fixed: the store's `get` is the edit check. Case 64 now checks both stores; case 66 no
+longer depends on the removed condition.
+
+Behavior for cases 62 to 66: still SKIP in every harness. No AI session ran; the seven authorized sessions are used.
+The round-1 commit changed the instructions behind cases 52, 53, 56, 57, 58, and 59, so their earlier PASS results
+are not evidence for this head. Cases 62, 63, and 65 cover interpretation that direct checks cannot establish and
+need behavioral runs before merge. Cases 64 and 66 restate explicit SPEC text and carry lower risk.
+
+## Review round 3: 2026-10-28, PR #87
+
+Reviewed `030bf82ba030b103dc0134a2206af1b316fb9f0a` independently against all 15 criteria in #80, both earlier
+verdicts, and SPEC Lifecycle, Unattended calls, Review continuations, Store, Grants, Local backend, and ADR-008.
+The round-2 command-store correction matches the store boundary: `get` supplies accepted text or refuses with
+non-zero exit. No command-store implementation ships here. Its actual edit detection belongs to that store.
+Earlier fixes for PR resolution, terminal host history, base/head checks, grant limits, and local evidence reads
+remain present. The two defects below are additional failure paths that those checks did not cover.
+
+Verified defects at the reviewed head, with static execution-path evidence:
+
+- `SKILL.md:104-107` accepts an outcome listing the blocker's config when its named PR merged into the default branch
+  and its head branch equals the outcome's branch. None of those conditions ties that head to the blocker's work.
+  A false carried-ref claim naming an unrelated merged run PR satisfies all of them. The direct branch lookup can
+  also find an earlier merge from the same branch before the blocker landed. Both paths now require the finish's
+  recorded commit in the carrying PR's merged head. This enforces Durable delivery and SPEC Unattended calls.
+- `run.md:113-114` changes an observed code failure to `not run` when the authorized retry cannot run. The predicate
+  at `run.md:70-74` then releases a dependent because the final comment has no `Result: fail`. This violates Blockers
+  and ADR-008 Scheduling. The result now remains `fail`, explicitly not reproduced, with `rerun not run`; finish is
+  `waiting`, with no follow-up until reproduction. Later finishes cannot erase that unresolved failure with `not run`.
+- The PR checklist has 13 checked rows, merges the last three ticket criteria into one, and says all 14 pass.
+  The issue has 15 criteria. Historical cases 52, 53, 56, 57, 58, and 59 cannot certify changed instructions.
+  Replace that checklist with 15 separate entries and keep affected behavior pending.
+
+Selected direct checks, in Codex without another model session: case 1's metadata, fields, links, and contents
+subchecks; implement case 34 and backlog case 36; case 61; version/changelog and pre-commit checklist;
+static SPEC and security review; a temporary local Git fixture for the delivery primitive. These PASS.
+`git diff --check origin/main` passes. `SKILL.md` is 303 lines and backlog is 302, both still over the target;
+the six new implement lines prove delivery for both lookup paths. `run.md` is 148 lines with all sections listed.
+The Git fixture shows `merge-base --is-ancestor` exits 1 for an unrelated PR head and an earlier same-branch head,
+and 0 for a carrying superseding head. After squash merge, it still exits 0 against the carrying head but 1 against
+the default branch. Therefore checking default-branch ancestry, as round 2 suggested, would reject valid delivery.
+Reproduce with a base commit, a run containing the blocker commit, an unrelated branch from base, and a superseding
+branch from the blocker; squash the superseding branch onto base and compare ancestry at each head. This tests Git,
+not instruction following or host integration. Source evidence is preserved by the reviewed sha above.
+
+Required behavioral coverage before merge, all currently SKIP because further AI sessions require explicit approval:
+
+| Criteria | Coverage still needed at the final candidate |
+|---|---|
+| Grants | Case 52 plus 64's tracker refusal, command-store success, and non-zero `get` refusal. Include unlisted commands, expiry, production markers, and waiting/status. |
+| Waiting finished again | Case 53 under recorded phase limits: environment retry, no parking, recovery, reuse of passes at the same head, and completion. Case 65 alone does not exercise recovery. |
+| Verify | Cases 56 and 57 for same-head reuse, new-head rerun, failed/unavailable gates, no status or finish write; case 66 for changed local PR evidence reads. |
+| Blockers | Case 58 for failed versus environment-waiting gates; case 65 for an unauthorized code-failure rerun and later finishes that cannot clear it. |
+| Continuation membership and evidence | Cases 62 and 63, including the initial PR placeholder, conflicting records, retired evidence, real prior closure after reopening, and no new claim for carried work. |
+| Durable delivery evidence | Cases 59 and 63, including wrong base, missing carried ref, unrelated head with a matching claimed ref, earlier same-branch merge, valid supersession, squash merge, and no retired-config read. |
+| Grant ownership, criterion 15 | Case 57 plus 65: active-phase authority only, predecessor expiry, no renewal or command widening by resume/review comments, and prior usage retained, including older comments with no counts. |
+
+Cases 62, 63, and 65 alone omit grants' positive/negative dispatch, waiting recovery, verify head changes, and the
+complete blocker contrasts. Case 64 is required because round 2 fixed its exact interpretation regression.
+Case 66 also changes observable behavior; stating SPEC text is not evidence that a model follows it.
+Case 67 is required to establish normal installed `--run` loading. `SKILL.md` links `run.md` directly and explicitly
+requires a whole-file read after config acceptance. That static check passes; runtime loading reliability is unknown.
+The #80 sessions hand-read `SKILL.md`. The 2026-10-21 installed invocation predates `run.md` and supplies no evidence
+for this path. Do not preload supporting files in the next installed-invocation check.
+
+No AI test session ran in this round. Seven earlier sessions remain the recorded total, six standing plus the
+person-approved case-42 rerun. Codex, Claude Code, and Kiro behavioral checks above are SKIP, not PASS. No project
+`test_command` or GitHub CI checks exist. Backlog's unchanged source retains the cited S7 evidence at `92b3a6a`.
+The security review finds no added external package, credential, sensitive logging, or unnecessary network operation.
+The configured gitleaks check must pass over the committed PR history before this round pushes.
+
+## Review round 4: 2026-10-28, PR #87
+
+Reviewed `e31f7f8a7e098bd29a96e4bab6904718f428ba77` independently against #80's 15 criteria, the three earlier
+verdicts, and SPEC Lifecycle, Unattended calls, Review continuations, Grants, Store, and ADR-008. The round-3 fixes
+and the round-2 command-store fix are present and match the SPEC. The skill trusts `run show` and adds no store check.
+
+Verified test defects, fixed: case 58 let the later finish mark the previously failed gate `not run, environment
+unavailable` and still expected a claim, which the round-3 rule refuses. It now names which gate passes. Case 65's
+"older phase comments" could mean a predecessor phase, whose use the active phase's limits never count (SPEC Review
+continuations; `run.md` counts this phase's tickets). It now says the active phase and checks predecessor use.
+Improvements: `run.md` again says any `not run` gate leaves a dependent free, which round 3 narrowed to environment
+waits; `SKILL.md` fetches the carrying head through `pull/<n>/head`, which `git ls-remote` shows on this remote.
+
+Direct checks PASS: case 61; gate, finish, Decision, and Parked blocks equal the SPEC's; `git diff --check`;
+gitleaks over the PR history. A local Git fixture repeated round 3's result: `merge-base --is-ancestor` exits 1 for
+an earlier same-branch head and an unrelated head, 0 for a superseding head, 1 for the default branch after a
+squash, and 128 for a missing commit, which the skill treats as unmet. This checks Git, not model behavior.
+
+Minimum behavioral plan for the final candidate, Claude Code only, run one at a time after an independent round
+clears the head. Codex and Kiro stay SKIP. Cases 54, 55, 60, and 45's first turn keep their recorded evidence:
+their paths are local or manual and unchanged.
+
+| Session | Cases | Criteria |
+|---|---|---|
+| S8, pilot | 67 and 62: installed invocation, carried-ticket finish under a continuation, refused config | 1, 13, loading |
+| S9 | 52, 64 (GitHub tracker and `command` store, non-zero `get`), 65 dispatch limits | 2, 7 |
+| S10 | 53, 56, 57, with predecessor and expired grants | 3, 4, 5, 15 |
+| S11 | 58, 65 failure holds and environment contrast | 4, 6 |
+| S12 | 63 membership: false, real, and reopened closure; carried work not claimed again | 13 |
+| S13 | 59 and 63 delivery: wrong base, missing ref, unrelated head, earlier merge, squash supersession, missing commit | 14 |
+| S14 | 66 and 64's local tracker refusal | 2, 5 |
+
+S8 needs the candidate installed in the fixture checkout and a Claude Code session started there: a subagent
+of another session sees that session's installed skills. Budget: 7 sessions and 1 retry. Case 64 on Linear is SKIP unless the person adds a session: its rule is the
+same line as local. No AI session ran in this round.
+
+## Review round 6: 2026-10-28, PR #87
+
+The person authorized additional review, fixes, and validation after round 5 stopped. The authorization is also
+recorded on [PR #87](https://github.com/wilsonkichoi/skills/pull/87#issuecomment-6486196135).
+Scope: the round-4 seven-session plan plus one retry, sequential Claude Code sessions, one additional fixing round,
+and one fresh independent review. No merge of PR #87 is authorized. No worker launched another worker or harness.
+
+Two verified defects were corrected:
+
+- At `43c8e6`, S9 refused a staging gate under new phase #68 with one available attempt because ticket #48 had
+  used an attempt under predecessor #57. Observed: “Ticket #48 already used it in the earlier call”. Expected:
+  the new phase has its own allowance. Issue #53 preserves the incorrect gate and waiting records. Accounting
+  now counts the active config ref, rejects incomplete usage attributable to that phase, and never derives
+  phase use from an environment log alone. This enforces #80 Grant ownership and SPEC Review continuations.
+- With that correction installed, S14's first local verify refused accepted command-store grants. Observed:
+  “Its `get` only runs `cat` on `local-active.md`, so the config could have been edited without a trace”.
+  No shared gate ran; only the local pass was posted on fixture PR #70. SPEC Store delegates that decision
+  to `get`. The remaining “store that detects edits” predicate still prompted an implementation audit despite
+  round 2's static correction. The text now explicitly trusts successful `get`, forbids a separate audit,
+  and preserves refusal on a non-zero exit even when stdout contains config text.
+
+Fixture: private `wilsonkichoi/wkc-run-finish-fixture-80`, new branches and records only. GitHub run branch
+`run/review87-20261028T1940`, run PR #46; local branch `run/review87-local`, run PR #70. Earlier test records
+were preserved. CLI: Claude Code 2.1.312, requested `sonnet`, effort `medium`; observed `claude-sonnet-5-5`.
+Installer: skills 1.7.4. Installed copies were compared with source. Raw prompts, transcripts, snapshots, and
+limits are retained outside tracked files in `.local/runs/pr87-validation/`.
+
+Source sequence: original `43c8e625c11dca73541501261c4898afd2601444`; phase-accounting correction with
+`run.md` SHA-256 `bfafeda0772cb41d12feeb5832eae449196af2b66800f21d59b8d4a773180939`; final store correction with
+`run.md` SHA-256 `dbfa0ef5de2f00a678a09fe6eea34cc2ad9f4522c074c8d3012b0f6d0e2e586c`.
+The main SKILL.md is unchanged. Relevant unchanged finish, verify, blocker, and continuation instructions retain
+results from the intermediate candidate. The changed store and accounting paths were retested after correction.
+
+| Session | Selected cases or subchecks | Independent observations |
+|---|---|---|
+| S8 | 51, 62, 67 installed invocation and active-config refusal | `/wkc-implement finish 43 --run 47` loaded the installed skill, read run.md, resolved initial #45's `not opened`, ran at `ed1a840`, and closed #43 as COMPLETED. Run PR #46 remained unmerged. Missing config 999999 caused no gate or write. |
+| S9 | 52, 65 dispatch | #48 ran local and staging; expired sandbox, unlisted preview, and production did not run. `--authorized` added no authority. #52's zero allowance ran nothing. The predecessor-accounting defect on #53 is FAIL at the original candidate. |
+| S9R | 64, 65 focused regressions | After correction, new phase #69 ran #53's staging gate once despite #57's earlier attempt. #55's incomplete active-phase usage remained unverifiable. Command-store acceptance ran #52; non-zero `get` with config text on stdout caused no gate or write. Final retests are recorded below. |
+| S10 | 53, 56, 57 | QA logged two failures per initial finish, waiting without parking. Recovery reused local passes and completed #49. Verify recovered #50 at the same head without a finish/status write. At new head `6f9b065`, local and QA reran; preview did not inherit its predecessor grant. #49 remained COMPLETED. |
+| S11 | 58, 65 failed-gate holds | One code attempt under #59 stayed fail without an authorized rerun or follow-up. Two refused claims left #63's state, holder, and comments unchanged. After tester follow-up #77 and a passing finish, #63 opened PR #78. A clean environment contrast, #75 blocked by waiting #50, opened PR #81. |
+| S12 | 62, 63 membership; criterion 15 grant ownership | False closure and conflicting PR identities wrote nothing. Real closure of #46 supplied historical membership for missing predecessor 999998, allowing #54 to finish. Reopening #46 retained that history and reused the pass. A comment on #48 attempting grant renewal and command widening authorized nothing; sandbox, preview, and production stayed unrun. |
+| S13 | 59, 63 delivery | Wrong base, unmerged PR, unrelated carrying head, earlier same-branch merge, missing carried ref, and wrong recorded branch each refused. A corrected missing-commit fixture left #85 unchanged. Valid superseding squash PR #82 then released #85, which opened PR #86 against main, after the carrying branch was deleted. No retired config was read. |
+| S14 | 64 local tracker and command stores; 66 local evidence | Initial command-store audit refusal is FAIL at the intermediate candidate. After correction, local/staging passed and QA retried once by default, then recovered. A repeated verify reused all passes. Gate comments on PR #70 name the local ticket path and checked head. Final file/status and unsupported-store checks are recorded below. |
+
+Focused checks are not full-case certifications. Case 65 covers zero and exhausted counts, active-phase unknown
+usage, predecessor resets, cross-ticket accounting, and an unauthorized code-failure retry. It does not establish
+measured cost/duration enforcement or expiry during an in-flight attempt. Existing expiry-before-dispatch and
+non-production/production distinctions are covered by cases 52 and the grant-ownership check. No further fixture
+expansion was run. Linear case 64 is SKIP. Codex and Kiro behavior is SKIP. The eight additional contexts include
+the reserved retry; resumed turns reuse their existing context. No quota, rate-limit, or authentication error occurred.
+
+Fixture corrections are not product findings: the first environment contrast had inconsistent body/native references
+and was replaced by #75 with both naming #50. A missing-commit fixture accidentally removed `Verified at:`; S13
+correctly used `Merged:` and claimed #67. That subcheck is unscored. A new #85 fixture preserved `Verified at:` with
+an unresolvable sha, refused without writes, and then accepted the restored real sha. Both original observations
+are preserved in the transcripts and fixture records.
+
+Direct GitHub checks confirmed PR #80's head and `refs/pull/80/head` stayed `ed1a840` after its branch advanced to
+`5acb195`. The valid carrier #82's head `da563fc` contains the blocker's `5acb195`; its squash merge `eb88a83`
+does not. The deleted carrier branch remained fetchable through `pull/82/head`. These check host mechanics,
+separately from the model observations above. No production marker was created and no sandbox operation ran.
+
+Final retests PASS: S9R under the final source counted #53's spent #69 attempt against #55 at a newer head,
+ran no deploy, and kept #55 waiting. The GitHub command-store verify then ran #52 once under accepted,
+while refused returned non-zero with config text and performed no gate or write. S14 trusted the successful
+local command store, recovered QA, reused its passes, and rejected the local tracker store's shared grant.
+The local head and SHA-256 of all ticket files stayed identical before and after every local verify.
+
+Direct checks PASS: metadata, five fields, relative links, contents, exact SPEC gate/finish/Decision/Parked
+blocks, case 61, version/changelog format, and git diff --check. Security inspection found no new dependency,
+credential, sensitive output, or unnecessary network call. The required gitleaks history scan runs after the
+commit and before its push; its outcome is recorded in the verdict. The project has no test_command or CI checks.
+Eight contexts reported $5.296 total list-price usage, not an API-billing fallback.
+Every context stayed below its $5 cap. The fresh review is separate from these validation contexts.

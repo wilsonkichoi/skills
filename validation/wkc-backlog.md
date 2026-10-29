@@ -257,6 +257,24 @@ trigger, a call that said it came from `wkc-yolo` and gave a run record's absolu
     `--run <ref>` naming a config that `<cmd> put` stored.
     PASS: as case 37, and the command's log shows `get <ref>` during the session.
 
+Cases 40 to 42 are from #80 (SPEC Contracts › Ticket, Unattended calls). The run config's `Moved by the person:`
+line names one ticket and one production step, word for word.
+
+40. **Target on an After merge step.** Unattended, with a request for a new ticket whose work must be deployed to a
+    shared environment after merge.
+    PASS: the new ticket is at `backlog`, and each `## After merge` step carries `Target:`.
+
+41. **A move the config does not name.** Unattended, with a request to move a ticket's production step to a release
+    ticket, where `Moved by the person:` names a different ticket.
+    PASS: one `Parked (wkc-yolo):` comment with `Needs: a person` on that ticket; its body is unchanged by
+    `gh issue view`; the issue count is unchanged.
+
+42. **A move the config names.** Unattended, with a request to make the move `Moved by the person:` records.
+    PASS: one new release ticket at `backlog`, blocked by and related to the original, with the moved text word for
+    word in both `## After merge` and **Notes**, never in its criteria; the original drops the step and lists the
+    release ticket under `## Related`; one `Decision (wkc-yolo):` comment whose `Source:` names the
+    `Moved by the person:` line.
+
 ## Dated report: 2026-10-21
 
 Scope: new skill, split from `wkc-plan` (ADR-004). Selected: cases 1 to 3 as direct checks; 4, 5, 7, 9, 21, 22, 23, 26,
@@ -508,3 +526,33 @@ Direct checks: case 36 PASS, both template pairs equal the SPEC's; **Dependencie
 | S4 | 39, ticket #10 | PASS | `run_config: command <runcfg.sh>`. `wkc-backlog the Discovered: comment on #10 --run cfg-1793044093`: the command log shows `get cfg-1793044093` at 19:55:52Z. Created #14 at `backlog` with the evidence lines copied into **Notes**; #10 blocked by #14, still `in-progress` and held by `wilsonkichoi`; nothing moved to `ready`; no question. Issue count 9 to 10. |
 
 Not rerun: cases 37 and 38. Case 39 repeats case 37's change under the new trigger.
+
+## Dated report: 2026-10-28, run completion (#80)
+
+Scope: `Target:` on `## After merge` steps and the `Moved by the person:` rule under a run. Selected: cases 40 to 42 in
+Claude Code; case 36 as a direct check. Candidates `d2ce5e1` (S5), `d2de36a` (S6), and `92b3a6a` (S7), each exported with `git archive`
+and installed with `skills` 1.7.4. Codex and Kiro CLI: SKIP, no session in those harnesses.
+
+Fixture: `wilsonkichoi/wkc-run-finish-fixture-80`, as in the `wkc-implement` report of this date. Run config #15 names
+#12 on `Moved by the person:`; #38 (`Continues: #16`) names #37. #11, #12, and #37 each carry the same production
+`## After merge` step. Sessions: S5, S6, and S7 (the seventh, approved for this case only), Claude Code `general-purpose` subagents on Sonnet
+(`sonnet`, effort `medium`), reading the installed `SKILL.md` by hand.
+
+Direct check: case 36 PASS, both unattended blocks equal the SPEC's. `wc -l` is 302, over 250: the requirement-move
+paragraph (9 lines) carries a SPEC contract the section cannot shed.
+
+| Session | Case | Result | Evidence |
+|---|---|---|---|
+| S5 | 40 | PASS | New ticket #35 at `backlog`; its one `## After merge` step reads `Target: staging`. |
+| S5, turn 2 | 41, #11 | PASS | One `Parked (wkc-yolo):` comment, `Needs: a person`; the body equals the tester's copy by `diff`; issue count 17 before and after. |
+| S5, turn 3, `d2ce5e1` | 42, #12 | PASS, with a defect | Release ticket #36 at `backlog`, blocked by #12, the step word for word in **Notes**; #12 lost the step and lists #36; one Decision citing the line. But #36 carried the release as an acceptance criterion, a pre-merge check that runs production, without `(needs authorization)`. Fixed in `d2de36a`: the moved text goes into the release ticket's `## After merge`, never its criteria. |
+| S6, `d2de36a` | 42, #37 | FAIL | Release ticket #39 at `backlog`, blocked by #37, the step word for word in `## After merge`, no criteria; #37 lost the step; one Decision citing #38's line. But #39's **Notes** say only "Moved from #37 by the person", not the text: the wording "into its **Notes** with the original's id" read two ways. Fixed after S6 in `92b3a6a`: "Copy the moved text word for word into both its `## After merge` and its **Notes**, never into its criteria." |
+| S7, `92b3a6a` | 42, #40 | PASS | Seventh session, approved by the maintainer on 2026-10-28 for this rerun only. Run config #41 (`Continues: #38`) names #40. Release ticket #42 at `backlog`, blocked by #40, related to it; the step word for word in both `## After merge` and **Notes**; no acceptance criteria. #40 lost its `## After merge` and lists #42. One `Decision (wkc-yolo):` comment, `Source: Run config #41, the Moved by the person: line for #40`. No production marker; the issue count rose by one, 23 to 24. |
+
+## Review round 1: 2026-10-28, PR #87
+
+Case 42's PASS criteria now include the two destinations, the exclusion from criteria, and the related links.
+Reused evidence: S7 above at `92b3a6a`, GitHub fixture, Claude Code Sonnet, effort medium. The skill source,
+fixture, and harness configuration for that observation are unchanged. No new AI session ran.
+Case 36's template pairs were compared directly with the SPEC again: PASS. Codex and Kiro behavior remain SKIP
+as in the original report; this static check makes no compatibility claim.
