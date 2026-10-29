@@ -661,29 +661,31 @@ calls them.
 PASS: every test passes. The tests run each verb against an in-memory GitHub and cover status mapping, unfiltered
 lists that raise the limit on a full page, the `wkc-run` exclusion, exact milestone titles against closed and
 near-match ones, blocker verdicts for cancel, duplicate chains, loops, and other repositories, cycles, exact bodies,
-section edits and dependency parsing around fenced code (including fence-like content with trailing text and
-tab-indented markers that cannot open or close a fence),
+edges only from explicit arguments (any Markdown body kept and never parsed), exact text replacement that refuses
+missing, repeated, and empty old text, append, whole-body replacement checked against the body's digest, a stale
+body refused before writing, edit edge sets that are kept, replaced, or cleared, the edit argument rules,
 each `assign` form and its tie-break, half-landed and silently dropped writes,
 failed writes that are not retried, post-write read failures returning exit 3, concurrent closure,
 run configs refused as edge targets, pull request targets refused before any ticket write,
 cycles through complete lists, duplicates and other repositories,
 and text kept off the command line and kept UTF-8 under a Latin-1 locale, exact CRLF input bodies,
-and untouched sections with mixed line endings and Unicode separators.
+and the rest of a body kept byte for byte, with mixed line endings and Unicode separators.
 
 **A52 `github.py` from an installed copy, from #94.** Direct. Install the candidate into an empty directory with
 `npx skills add "<clean-candidate>" -s wkc-tracker -a claude-code -y`, then run every verb from `/` as
 `uv run --script "<install>/.claude/skills/wkc-tracker/github.py" --repo <R> <verb>` on a throwaway repository,
 and once as `"<install>/.claude/skills/wkc-tracker/github.py" --repo <R> milestone list`.
 PASS: each verb's exit code matches its outcome (0 done, 1 refused, 4 read failed), and independent `gh` reads
-confirm each write: the exact title and body of a create with quotes, `$(...)`, and non-ASCII text; a `## Blocked by`
-edge; the bare claim, and a second claim refused; a terminal move with no status label; a refused move out of
-`done`; a refused cycle with its path; link, unlink, and a refused second unlink; an edit that replaces one section,
-clears the edges and the milestone; a duplicate with its original; milestone ensure, show, and close, with a refused
+confirm each write: the exact title and body of a create with quotes, `$(...)`, and non-ASCII text; an edge from
+`--blocked-by`, and none from a `## Blocked by` in the body alone; the bare claim, and a second claim refused; a terminal move with no status label; a refused move out of
+`done`; a refused cycle with its path; link, unlink, and a refused second unlink; an edit that replaces exact text
+and clears the edges (`--no-blockers`) and the milestone; an edit refused for missing old text and one refused for
+a stale `--expected-sha256`, each with the body unchanged; a duplicate with its original; milestone ensure, show, and close, with a refused
 ensure of the closed one; run create, show, and close; a run config refused by `show` and missing from `list`; a
 ticket refused by `run close`; and a missing issue refused by `show` and by `run show`.
 Use a CRLF body file and standard input for comments, creates, and run configs. Compare the original
-UTF-8 bytes with independent reads. Edit a section in a body with mixed line endings and Unicode
-separators; every untouched section must remain exact.
+UTF-8 bytes with independent reads. Replace exact text in a body with mixed line endings and Unicode
+separators; the rest of the body must remain exact.
 Also give a pull request number to `show`, `edit`, `assign`, `move`, `comment`, `link`, and `unlink`.
 Each exits 1 with a pull request refusal. An independent `gh pr view` confirms that its title,
 body, state, labels, assignees, and comments are unchanged.

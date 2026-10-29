@@ -1520,7 +1520,8 @@ the previous tag. Each port also updates the README roster, the repository map u
 
 - 2026-10-29: Maintainer decision in #94. `wkc-tracker`'s GitHub backend runs every verb through
   `github.py`, after a session that read the backend's commands in full still wrote its own
-  (Components, Boundaries; ADR-011). No verb's meaning changed.
+  (Components, Boundaries; ADR-011). The script treats ticket text as opaque: the session passes
+  dependency edges explicitly and changes a body by exact text. No verb's meaning changed.
 
 - 2026-10-28: Maintainer decision in #91. `max_fix_attempts` defaults to 5, and the new
   `max_ai_test_sessions_per_attempt`, default 6, gives each build and each review round its own AI

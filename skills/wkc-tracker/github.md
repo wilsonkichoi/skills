@@ -38,8 +38,8 @@ stops with exit 4 and suggests the `local` backend.
 | `list [status] [milestone]` | `list [--status <status>] [--milestone <title>]` |
 | `show <id>` | `show <n>` |
 | `next` | `next` |
-| `create <ticket>` | `create --title <title> --body-file <file> [--milestone <title>]` |
-| `edit <id> <changes>` | `edit <n> [--title <title>] [--sections-file <file>] [--milestone <title> \| --no-milestone]` |
+| `create <ticket>` | `create --title <title> --body-file <file> [--blocked-by <ref>]... [--milestone <title>]` |
+| `edit <id> <changes>` | `edit <n> [--title <title>] [<one body change>] [--blocked-by <ref>... \| --no-blockers] [--milestone <title> \| --no-milestone]` |
 | `assign <id>`, `assign <id> me` | `assign <n>` |
 | `assign <id> <who> [from <holder>]` | `assign <n> <who> [--from <holder>]...` |
 | `assign <id> none [from <holder>]` | `assign <n> none [--from <holder>]...` |
@@ -58,13 +58,29 @@ stops with exit 4 and suggests the `local` backend.
 
 - `<status>` is one of the seven names exactly. Turning a person's words into one, or asking when
   they name none, stays with you, as SKILL.md's `move` row says.
-- Text goes in a file, never on the command line: a ticket body, a comment, a run config, and the
-  sections an edit gives. `-` reads standard input.
-- An edit's `--sections-file` holds one or more `## ` sections, each replacing that whole section
-  or added when the ticket lacks it. A `## Blocked by` section there is the new edge set.
-- `create` takes its edges from the body's `## Blocked by` section. Each line names a ticket as
-  `#12`, `owner/repo#12`, or an issue URL; `None` means no edges. A line naming none is refused.
-- A blocker ref and `--original` take the same three forms; a bare number is this repository.
+- Text goes in a file, never on the command line: a ticket body, a comment, a run config, and an
+  edit's text. `-` reads standard input, for one file per call.
+- The script treats ticket text as opaque. It never reads Markdown, so it never finds a section or
+  a dependency in a body. You read the ticket, decide what changes, and pass exact text and
+  explicit edges.
+- Native issue dependencies are the edge record. `## Blocked by` in a body is for readers; keep it
+  in step with the edges you pass. For `create`, pass one `--blocked-by` per entry of the body's
+  `## Blocked by`, or none. For `edit`, `--blocked-by` given one or more times is the new edge set,
+  `--no-blockers` removes every edge, and neither leaves the edges alone. Update the body's
+  `## Blocked by` in the same call when it changes.
+- An edit takes at most one body change:
+  - `--old-text-file <a> --new-text-file <b>` replaces text that appears exactly once in the body.
+    Copy it from `show`'s `body`, line endings included. To change a section, the old text is that
+    whole section as SKILL.md defines it; to add a section, use an anchor that appears once, such
+    as the section it goes after, and give the anchor plus the new section as the new text.
+  - `--append-file <file>` adds the text at the end of the body, exactly as given; include the
+    blank line it needs.
+  - `--body-file <file> --expected-sha256 <digest>` replaces the whole body. The digest is
+    `body_sha256` from the `show` you read it with.
+  `--expected-sha256` also works with the other two. A missing or repeated old text, or a body
+  whose digest differs, is refused and nothing is written: read the ticket again and decide.
+- A blocker ref, `--blocked-by`, and `--original` take `#12`, `12`, `owner/repo#12`, or an issue
+  URL; a bare number is this repository. A pull request URL is refused.
 - `run create` titles the issue `Run config: <branch>`, from the config's `Run branch`.
 
 ## Output and exit codes
@@ -87,10 +103,11 @@ comment or a create. A failure after any write request exits 3, including a fail
 read or a claim that lost its tie-break.
 
 `list` gives each ticket's number, title, status, assignees, milestone, and blockers, and the
-inconsistent tickets apart. `show` adds the body, comments, labels, each blocker's verdict, and a
-duplicate's chain. `next` gives `frontier`, `held` with each unmet blocker's status, holder, and
-reason, `inconsistent`, `open_counts`, `cycles`, and `blocker_graph`. The graph includes transitive
-blockers and unreadable references. Cycles use issue numbers within this repository and full refs
+inconsistent tickets apart. `show` adds the body, its `body_sha256`, comments, labels, each
+blocker's verdict, and a duplicate's chain. `edit` returns the new `body_sha256`. `next` gives
+`frontier`, `held` with each unmet blocker's status, holder, and reason, `inconsistent`,
+`open_counts`, `cycles`, and `blocker_graph`. The graph includes transitive blockers and
+unreadable references. Cycles use issue numbers within this repository and full refs
 when they cross repositories. An empty frontier is explained from these.
 `milestone show` gives `total`, `counts` for every status, and `open_or_unclean`. Whether that
 means `wkc-plan close` is the caller's call: the script never closes a milestone it shows.
@@ -109,20 +126,18 @@ comments: on a public repository anyone can comment.
 - A blocker is met only when it is `done`, or a duplicate whose chain ends at `done`. Blockers are
   read in full with their repository; a duplicate chain that loops or breaks is unmet.
 - `link` and an `edit` that adds edges walk the blockers first and refuse a cycle with its path.
-- Section edits and dependency parsing read headings as GitHub renders them, with up to three
-  leading spaces and an optional closing `#` sequence. They ignore headings inside fenced code,
-  including fence-like content with trailing text that cannot close the block. A line that starts
-  with inline code in triple backticks opens no block.
-  A tab-indented fence is code content and cannot open or close a fenced block. A fence opened on a
-  list item's line, such as `- ~~~`, holds the item's indented lines until it closes or a line
-  indented less than the item ends it. A heading indented under a list item still counts as a
-  section heading, though GitHub renders it inside the item.
+- Ticket text is never parsed. Edges come only from explicit arguments, and a body change is
+  an exact replacement, an append, or a whole body checked against its digest. Every other byte
+  of the body stays as it was.
+- An edit applies its body change to a read taken right before the write and checks it again
+  there. GitHub has no conditional write, so a change another session makes between that read
+  and the write can still be lost; the digest and the exact old text narrow that window, they do
+  not close it.
 - A closed issue carries no status label; `done`, `cancel`, and `duplicate` are close reasons.
 - Writes send text through standard input, never through a shell or a query string.
 - Text is UTF-8 everywhere, as `gh` uses it: the script's input and output and what it exchanges
   with `gh`. A non-UTF-8 locale, such as a Windows code page, changes none of it. Files and
-  standard input keep their line endings. Section edits preserve untouched text exactly, including
-  mixed line endings and Unicode separators.
+  standard input keep their line endings, and an edit keeps the rest of the body byte for byte.
 
 `tools/wkc-tracker/test_github.py` in the source repository tests each of these.
 

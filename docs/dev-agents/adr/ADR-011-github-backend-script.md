@@ -43,6 +43,12 @@ person's words into a status, decides when to ask, and decides what a result mea
 never closes a milestone because its counts look complete, and never retries a write that may have
 landed.
 
+The agent decides what needs to happen; the script guarantees how it is carried out. The agent reads
+and writes ticket Markdown. The script treats ticket text as opaque: it takes dependency edges only
+as explicit arguments, and changes a body only by an exact replacement of text that appears once, an
+append, or a whole body checked against the SHA-256 of the body the agent read. Native issue
+dependencies are the edge record; a body's `## Blocked by` mirrors them for readers.
+
 `AGENTS.md` changes the no-scripts rule to no new helper scripts without a person's explicit
 approval, Python preferred, and records this script as an exception.
 
@@ -55,3 +61,22 @@ approval, Python preferred, and records this script as an exception.
   stay as `SKILL.md` writes them.
 - Validation of the GitHub backend checks that a session runs the script, not which `gh` commands
   it typed.
+- An agent keeps a body's `## Blocked by` in step with the edges it passes. The script cannot catch
+  a mismatch, by design.
+- GitHub has no conditional issue update. The script applies a body change to a read taken right
+  before the write and checks the exact old text or the digest there, which narrows a concurrent
+  edit's window but cannot close it.
+
+## Amendment: ticket text is opaque (2026-10-29)
+
+The first version parsed Markdown: `create` took edges from the body's `## Blocked by`, and `edit`
+replaced whole `## ` sections it found. Ten review rounds on PR #95 kept finding parser defects:
+fence lines with trailing text, indented and closed headings, tab-indented fences, fences opened on
+a list item's line, and next HTML comments, each able to drop an edge or delete sections while
+exiting 0. A hand-written parser cannot match GitHub's rendering, and interpreting a document is
+the agent's job, not the script's.
+
+Options: a CommonMark library such as `markdown-it-py` would end the parser defects but keeps
+document interpretation in the script and adds a dependency; refusing bodies the parser is unsure
+of keeps the parser and refuses valid tickets. The maintainer chose neither: the parser is removed,
+and the agent passes explicit edges and exact text, as the Decision above now says.

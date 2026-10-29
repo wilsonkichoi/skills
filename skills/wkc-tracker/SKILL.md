@@ -39,7 +39,8 @@ way through, before running anything:
 - `other` → no backend file. Follow the workflow the user wrote into the config body.
 
 The backend file says how each verb runs. On GitHub, every verb runs through the bundled
-`github.py`, which reads, checks, writes, and verifies. Run what the backend file gives, as written.
+`github.py`, which reads, checks, writes, and verifies. It treats ticket text as opaque: you read
+the Markdown, decide what changes, and pass it exact text and explicit edges. Run what the backend file gives, as written.
 Never write your own query in its place, even a shorter one that looks equivalent: it drops the
 backend's safeguards, such as the completeness check on a list, the run config exclusion, or the
 exact milestone title match.
@@ -252,7 +253,7 @@ One to three sentences on what exists when this is done.
 Spec references, with the key excerpt copied in so nobody has to fetch it.
 ```
 
-`create` turns every `## Blocked by` entry into a real dependency edge, and `edit` keeps the edges equal to a `## Blocked by` it is given. `## Related` is only for readers: no verb parses it, queries it, or turns it into an edge. Write the
+`create` turns every `## Blocked by` entry into a real dependency edge, and `edit` keeps the edges equal to a `## Blocked by` it is given. The backend's edges are the record, and the section mirrors them for readers: you read its entries and pass them to the backend as edges, as the backend file says. `## Related` is only for readers: no verb parses it, queries it, or turns it into an edge. Write the
 ids plainly and let the backend render them.
 
 A ticket carries its title, its body sections, its `## Blocked by` edges, and a milestone. `create`

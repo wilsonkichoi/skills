@@ -404,63 +404,35 @@ class Create(unittest.TestCase):
     def test_body_title_milestone_and_edges(self):
         title = "Quote ' \" $(rm -rf) `x` & ünïcode"
         body = "## What to build\nIt.\n\n## Blocked by\n- #1\n"
-        out = g.cmd_create(self.f, title, body, "M1")
+        out = g.cmd_create(self.f, title, body, "M1", ["#1"])
         d = self.f.issues[ref(out["number"])]
         self.assertEqual((d["title"], d["body"], d["milestone"], d["labels"]), (title, body, self.m, []))
         self.assertEqual(d["blockers"], [ref(1)])
+
+    def test_edges_come_only_from_the_arguments(self):
+        out = g.cmd_create(self.f, "t", "## Blocked by\n- #1\n", None)
+        self.assertEqual(self.f.issues[ref(out["number"])]["blockers"], [])
+        out = g.cmd_create(self.f, "t", "No dependency section.", None, ["#1", "o/r#1", "https://github.com/o/r/issues/1"])
+        self.assertEqual(self.f.issues[ref(out["number"])]["blockers"], [ref(1)])
+
+    def test_any_markdown_body_is_kept_exactly(self):
+        body = ("## What to build\r\n- ```\r\n  ## Blocked by\r\n  - #99\r\n  ```\r\n<!--\n## Notes\n-->\n"
+                "\t~~~\n## Blocked by ##\ncafé\u2028→ 🎉")
+        out = g.cmd_create(self.f, "t", body, None)
+        d = self.f.issues[ref(out["number"])]
+        self.assertEqual((d["body"], d["blockers"]), (body, []))
 
     def test_closed_or_near_match_milestone_writes_nothing(self):
         self.assertEqual(code_of(lambda: g.cmd_create(self.f, "t", "b", "Done")), g.EXIT_REFUSED)
         self.assertEqual(code_of(lambda: g.cmd_create(self.f, "t", "b", "m1")), g.EXIT_REFUSED)
         self.assertEqual(self.f.writes, [])
 
-    def test_a_blocker_that_does_not_exist_writes_nothing(self):
-        self.assertEqual(code_of(lambda: g.cmd_create(self.f, "t", "## Blocked by\n- #99\n", None)), g.EXIT_REFUSED)
+    def test_an_invalid_blocker_writes_nothing(self):
+        self.f.add(2, labels=[g.RUN_LABEL])
+        for blocker in ("#99", "the auth work", "#2"):
+            with self.subTest(blocker=blocker):
+                self.assertEqual(code_of(lambda: g.cmd_create(self.f, "t", "b", None, [blocker])), g.EXIT_REFUSED)
         self.assertEqual(self.f.writes, [])
-
-    def test_fence_content_does_not_create_dependency_edges(self):
-        for fence in ("```", "~~~"):
-            with self.subTest(fence=fence):
-                body = f"## What to build\n{fence}text\n{fence}literal\n## Blocked by\n- #99\n{fence}\n"
-                out = g.cmd_create(self.f, "Example", body, None)
-                issue = self.f.issues[ref(out["number"])]
-                self.assertEqual(issue["body"], body)
-                self.assertEqual(issue["blockers"], [])
-
-    def test_headings_github_renders_create_dependency_edges(self):
-        for heading in (" ## Blocked by", "   ## Blocked by", "## Blocked by ##", "##\tBlocked by"):
-            with self.subTest(heading=heading):
-                out = g.cmd_create(self.f, "t", f"## What to build\nIt.\n\n{heading}\n- #1\n", None)
-                self.assertEqual(self.f.issues[ref(out["number"])]["blockers"], [ref(1)])
-
-    def test_inline_code_at_line_start_does_not_open_a_fence(self):
-        body = "## What to build\n```x``` is inline code.\n\n## Blocked by\n- #1\n"
-        out = g.cmd_create(self.f, "t", body, None)
-        self.assertEqual(self.f.issues[ref(out["number"])]["blockers"], [ref(1)])
-
-    def test_tab_indented_fence_does_not_hide_dependency_heading(self):
-        for indent in ("\t", " \t", "  \t"):
-            for fence in ("```", "~~~"):
-                with self.subTest(indent=indent, fence=fence):
-                    body = f"## What to build\nIt.\n\n{indent}{fence}\n\n## Blocked by\n- #1\n"
-                    out = g.cmd_create(self.f, "t", body, None)
-                    self.assertEqual(self.f.issues[ref(out["number"])]["blockers"], [ref(1)])
-
-    def test_fence_opened_on_a_list_item_line_holds_its_indented_content(self):
-        for marker in ("- ", "* ", "+ ", "1. ", "1) ", "-\t", "- 1. "):
-            for fence in ("```", "~~~"):
-                with self.subTest(marker=marker, fence=fence):
-                    pad = " " * len(marker.expandtabs(4))
-                    body = (f"## What to build\n{marker}{fence}\n{pad}## Blocked by\n{pad}- #99\n{pad}{fence}\n\n"
-                            "## Blocked by\n- #1\n")
-                    out = g.cmd_create(self.f, "t", body, None)
-                    self.assertEqual(self.f.issues[ref(out["number"])]["blockers"], [ref(1)])
-
-    def test_fence_in_a_list_item_ends_with_the_item(self):
-        for fence in ("```", "~~~"):
-            with self.subTest(fence=fence):
-                out = g.cmd_create(self.f, "t", f"## What to build\n- {fence}\n  code\n## Blocked by\n- #1\n", None)
-                self.assertEqual(self.f.issues[ref(out["number"])]["blockers"], [ref(1)])
 
     def test_a_create_that_changes_nothing_is_unverified(self):
         self.f.drop.add("create_issue")
@@ -474,7 +446,7 @@ class Create(unittest.TestCase):
     def test_a_failed_edge_reports_what_landed(self):
         self.f.fail.add("add_blocked_by")
         with self.assertRaises(g.TrackerError) as caught:
-            g.cmd_create(self.f, "t", "## Blocked by\n- #1\n", None)
+            g.cmd_create(self.f, "t", "b", None, ["#1"])
         self.assertEqual(caught.exception.code, g.EXIT_UNVERIFIED)
         self.assertEqual(caught.exception.details["missing_edges"], ["o/r#1"])
 
@@ -505,97 +477,57 @@ class Edit(unittest.TestCase):
         f.add(3, status="ready", blockers=[ref(1)])
         f.add(4, status="ready")
 
-    def test_given_section_replaces_its_whole_span_only(self):
-        g.cmd_edit(self.f, 1, None, "## What to build\nNew text.\n", None, False)
-        body = self.f.issues[ref(1)]["body"]
-        self.assertEqual(body, "Intro line.\n\n## What to build\nNew text.\n\n## Notes\nKeep me.\n")
+    def body(self, n=1):
+        return self.f.issues[ref(n)]["body"]
 
-    def test_missing_section_is_added(self):
-        g.cmd_edit(self.f, 1, None, "## Acceptance criteria\n- [ ] Works.\n", None, False)
-        self.assertTrue(self.f.issues[ref(1)]["body"].endswith("Keep me.\n\n## Acceptance criteria\n- [ ] Works.\n"))
+    def test_exact_replacement_changes_only_that_text(self):
+        out = g.cmd_edit(self.f, 1, old="Old text.\n", new="New text.\n")
+        self.assertEqual(self.body(), BODY.replace("Old text.", "New text."))
+        self.assertEqual(out["body_sha256"], g.body_digest(self.body()))
 
-    def test_fence_content_is_kept_when_editing_a_real_section(self):
-        for fence in ("```", "~~~"):
-            with self.subTest(fence=fence):
-                body = (f"## What to build\n{fence}text\n{fence}literal\n## Notes\nLiteral example.\n"
-                        f"{fence}\n\n## Notes\nReal notes.\n")
-                self.f.issues[ref(1)]["body"] = body
-                g.cmd_edit(self.f, 1, None, "## Notes\nNew notes.\n", None, False)
-                self.assertEqual(self.f.issues[ref(1)]["body"], body.replace("Real notes.", "New notes."))
-
-    def test_an_indented_or_closed_heading_is_replaced_not_duplicated(self):
-        for heading in ("  ## Notes", "## Notes ##"):
-            with self.subTest(heading=heading):
-                self.f.issues[ref(1)]["body"] = f"## What to build\nIt.\n\n{heading}\nOld notes.\n"
-                g.cmd_edit(self.f, 1, None, "## Notes\nNew notes.\n", None, False)
-                self.assertEqual(self.f.issues[ref(1)]["body"], "## What to build\nIt.\n\n## Notes\nNew notes.\n")
-
-    def test_tab_indented_fence_does_not_close_a_fenced_example(self):
-        for indent in ("\t", " \t", "  \t"):
-            for fence in ("```", "~~~"):
-                with self.subTest(indent=indent, fence=fence):
-                    body = (f"## What to build\n{fence}\n{indent}{fence}\n## Notes\nLiteral example.\n"
-                            f"{fence}\n\n## Notes\nReal notes.\n")
-                    self.f.issues[ref(1)]["body"] = body
-                    g.cmd_edit(self.f, 1, None, "## Notes\nNew notes.\n", None, False)
-                    self.assertEqual(self.f.issues[ref(1)]["body"], body.replace("Real notes.", "New notes."))
-
-    def test_fence_opened_on_a_list_item_line_keeps_later_sections(self):
-        for fence in ("```", "~~~"):
-            with self.subTest(fence=fence):
-                body = (f"## What to build\nIt.\n\n## Notes\n- {fence}\n  ## Related\n  - #5\n  {fence}\n\n"
-                        "## Related\n- #2\n\n## Other\nKeep me.\n")
-                self.f.issues[ref(1)]["body"] = body
-                g.cmd_edit(self.f, 1, None, "## Related\n- #3\n", None, False)
-                self.assertEqual(self.f.issues[ref(1)]["body"], body.replace("- #2", "- #3"))
-
-    def test_section_edits_keep_untouched_line_endings_and_unicode_separators(self):
-        for newline in ("\r\n", "\r", "\n"):
-            with self.subTest(newline=repr(newline)):
-                prefix = "## What to build" + newline + "Keep café\u2028and this.\u0085" + newline + newline
-                suffix = "## Related\nKeep mixed line endings.\r\n"
-                self.f.issues[ref(1)]["body"] = prefix + "## Notes" + newline + "Old." + newline + newline + suffix
-                g.cmd_edit(self.f, 1, None, "## Notes\r\nNew.\r\n", None, False)
-                self.assertEqual(self.f.issues[ref(1)]["body"], prefix + "## Notes\r\nNew.\r\n" + newline + suffix)
-
-    def test_added_section_has_a_boundary_when_the_body_has_no_final_newline(self):
-        for body, expected in (("Intro", "Intro\n\n## Notes\nNew."),
-                               (" ", " \n## Notes\nNew."),
-                               ("## What to build\nKeep.", "## What to build\nKeep.\n\n## Notes\nNew.")):
-            with self.subTest(body=body):
-                self.f.issues[ref(1)]["body"] = body
-                g.cmd_edit(self.f, 1, None, "## Notes\nNew.", None, False)
-                self.assertEqual(self.f.issues[ref(1)]["body"], expected)
-
-    def test_blocked_by_section_becomes_the_edge_set(self):
-        self.f.issues[ref(1)]["blockers"] = [ref(2)]
-        g.cmd_edit(self.f, 1, None, "## Blocked by\n- #4\n", None, False)
-        self.assertEqual(self.f.issues[ref(1)]["blockers"], [ref(4)])
-
-    def test_cycle_refuses_the_whole_edit(self):
-        with self.assertRaises(g.TrackerError) as caught:
-            g.cmd_edit(self.f, 1, "New title", "## Blocked by\n- #3\n", None, False)
-        self.assertEqual(caught.exception.code, g.EXIT_REFUSED)
-        self.assertEqual(caught.exception.details["cycle"], ["o/r#1", "o/r#3", "o/r#1"])
+    def test_missing_ambiguous_or_empty_old_text_writes_nothing(self):
+        for old in ("Absent.", "\n\n", "", "old text."):
+            with self.subTest(old=old):
+                self.assertEqual(code_of(lambda: g.cmd_edit(self.f, 1, old=old, new="x")), g.EXIT_REFUSED)
         self.assertEqual(self.f.writes, [])
 
-    def test_title_and_milestone_change_nothing_else(self):
-        g.cmd_edit(self.f, 1, "New", None, "M1", False)
+    def test_old_text_matches_line_endings_exactly_and_the_rest_is_kept(self):
+        body = "## What to build\r\nKeep café\u2028this.\u0085\r\n\r\n## Notes\nOld.\r\n## Related\rKeep.\r"
+        self.f.issues[ref(1)]["body"] = body
+        self.assertEqual(code_of(lambda: g.cmd_edit(self.f, 1, old="## Notes\nOld.\n", new="x")), g.EXIT_REFUSED)
+        g.cmd_edit(self.f, 1, old="## Notes\nOld.\r\n", new="## Notes\r\nNew.\r\n")
+        self.assertEqual(self.body(), body.replace("## Notes\nOld.\r\n", "## Notes\r\nNew.\r\n"))
+
+    def test_markdown_in_the_text_is_never_interpreted(self):
+        g.cmd_edit(self.f, 1, old="## Not a heading\n", new="## Blocked by\n- #4\n")
+        self.assertEqual(self.body(), BODY.replace("## Not a heading", "## Blocked by\n- #4"))
+        self.assertEqual(self.f.issues[ref(1)]["blockers"], [])
+
+    def test_append_adds_text_at_the_end(self):
+        g.cmd_edit(self.f, 1, append="\n## Acceptance criteria\n- [ ] Works.\n")
+        self.assertEqual(self.body(), BODY + "\n## Acceptance criteria\n- [ ] Works.\n")
+
+    def test_whole_body_needs_the_digest_of_the_body_it_replaces(self):
+        self.assertEqual(code_of(lambda: g.cmd_edit(self.f, 1, body="New.", expected_sha256="0" * 64)), g.EXIT_REFUSED)
+        self.assertEqual(self.f.writes, [])
+        g.cmd_edit(self.f, 1, body="New.\r\n", expected_sha256=g.body_digest(BODY))
+        self.assertEqual(self.body(), "New.\r\n")
+
+    def test_a_stale_body_is_refused_before_writing(self):
         d = self.f.issues[ref(1)]
-        self.assertEqual((d["title"], d["milestone"], d["body"], d["labels"], d["assignees"]),
-                         ("New", 1, BODY, ["in-progress", "bug"], ["me"]))
-        g.cmd_edit(self.f, 1, None, None, None, True)
-        self.assertIsNone(d["milestone"])
+        read = self.f.milestones
 
-    def test_closed_ticket_takes_the_edit_and_stays_closed(self):
-        self.f.add(5, status="done")
-        g.cmd_edit(self.f, 5, "Renamed", None, None, False)
-        self.assertEqual(self.f.issues[ref(5)]["state"], "CLOSED")
+        def milestones():
+            d["body"] = d["body"].replace("Keep me.", "Changed by another session.")
+            return read()
 
-    def test_section_names_match_in_any_case(self):
-        g.cmd_edit(self.f, 1, None, "## what to build\nNew text.\n", None, False)
-        body = self.f.issues[ref(1)]["body"]
-        self.assertEqual(body, "Intro line.\n\n## what to build\nNew text.\n\n## Notes\nKeep me.\n")
+        self.f.milestones = milestones
+        for change in ({"body": "Mine.", "expected_sha256": g.body_digest(BODY)},
+                       {"old": "Keep me.", "new": "Mine."}):
+            with self.subTest(change=change):
+                d["body"] = BODY
+                self.assertEqual(code_of(lambda: g.cmd_edit(self.f, 1, milestone="M1", **change)), g.EXIT_REFUSED)
+        self.assertEqual(self.f.writes, [])
 
     def test_a_body_change_made_during_the_checks_is_kept(self):
         d = self.f.issues[ref(1)]
@@ -606,13 +538,49 @@ class Edit(unittest.TestCase):
             return read()
 
         self.f.milestones = milestones
-        g.cmd_edit(self.f, 1, None, "## What to build\nNew text.\n", "M1", False)
+        g.cmd_edit(self.f, 1, old="Old text.", new="New text.", milestone="M1")
         self.assertIn("Changed by another session.", d["body"])
         self.assertIn("New text.", d["body"])
 
+    def test_explicit_blockers_replace_clear_or_keep_the_edge_set(self):
+        d = self.f.issues[ref(1)]
+        d["blockers"] = [ref(2)]
+        g.cmd_edit(self.f, 1, title="Kept edges")
+        self.assertEqual(d["blockers"], [ref(2)])
+        g.cmd_edit(self.f, 1, blocked_by=["#4", "#4"])
+        self.assertEqual(d["blockers"], [ref(4)])
+        g.cmd_edit(self.f, 1, blocked_by=[])
+        self.assertEqual((d["blockers"], d["body"]), ([], BODY))
+
+    def test_cycle_refuses_the_whole_edit(self):
+        with self.assertRaises(g.TrackerError) as caught:
+            g.cmd_edit(self.f, 1, title="New title", blocked_by=["#3"], old="Old text.", new="x")
+        self.assertEqual(caught.exception.code, g.EXIT_REFUSED)
+        self.assertEqual(caught.exception.details["cycle"], ["o/r#1", "o/r#3", "o/r#1"])
+        self.assertEqual(self.f.writes, [])
+
+    def test_an_invalid_text_change_refuses_the_whole_edit(self):
+        self.assertEqual(code_of(lambda: g.cmd_edit(self.f, 1, title="New", blocked_by=["#4"], old="Absent.", new="x")),
+                         g.EXIT_REFUSED)
+        self.assertEqual(self.f.writes, [])
+
+    def test_title_and_milestone_change_nothing_else(self):
+        g.cmd_edit(self.f, 1, title="New", milestone="M1")
+        d = self.f.issues[ref(1)]
+        self.assertEqual((d["title"], d["milestone"], d["body"], d["labels"], d["assignees"]),
+                         ("New", 1, BODY, ["in-progress", "bug"], ["me"]))
+        g.cmd_edit(self.f, 1, clear_milestone=True)
+        self.assertIsNone(d["milestone"])
+
+    def test_closed_ticket_takes_the_edit_and_stays_closed(self):
+        self.f.add(5, status="done")
+        g.cmd_edit(self.f, 5, title="Renamed")
+        self.assertEqual(self.f.issues[ref(5)]["state"], "CLOSED")
+
     def test_an_edit_that_changes_nothing_is_unverified(self):
         self.f.drop.add("update_issue")
-        self.assertEqual(code_of(lambda: g.cmd_edit(self.f, 1, "X", None, None, False)), g.EXIT_UNVERIFIED)
+        self.assertEqual(code_of(lambda: g.cmd_edit(self.f, 1, title="X")), g.EXIT_UNVERIFIED)
+        self.assertEqual(code_of(lambda: g.cmd_edit(self.f, 1, old="Old text.", new="New.")), g.EXIT_UNVERIFIED)
 
 
 class Assign(unittest.TestCase):
@@ -823,7 +791,7 @@ class RunConfigs(unittest.TestCase):
     def test_ticket_verbs_refuse_a_run_config(self):
         self.f.add(1, labels=[g.RUN_LABEL])
         for call in (lambda: g.cmd_comment(self.f, 1, "x"), lambda: g.cmd_move(self.f, 1, "ready", None),
-                     lambda: g.cmd_assign(self.f, 1, None, []), lambda: g.cmd_edit(self.f, 1, "x", None, None, False)):
+                     lambda: g.cmd_assign(self.f, 1, None, []), lambda: g.cmd_edit(self.f, 1, title="x")):
             self.assertEqual(code_of(call), g.EXIT_REFUSED)
         self.assertEqual(self.f.writes, [])
 
@@ -833,10 +801,9 @@ class Parsing(unittest.TestCase):
         self.assertEqual(g.parse_ref("#12", REPO), ref(12))
         self.assertEqual(g.parse_ref("A/B#3", REPO), ref(3, "a/b"))
         self.assertEqual(g.parse_ref("https://github.com/a/b/issues/4", REPO), ref(4, "a/b"))
-        self.assertEqual(g.refs_in_blocked_by("## Blocked by\n- #1\n- a/b#2 and #3\n- None\n", REPO),
-                         [ref(1), ref(2, "a/b"), ref(3)])
-        self.assertEqual(code_of(lambda: g.refs_in_blocked_by("## Blocked by\n- the auth work\n", REPO)),
-                         g.EXIT_REFUSED)
+        self.assertEqual(g.refs_given(["#1", "1", "a/b#2", "A/B#2"], REPO), [ref(1), ref(2, "a/b")])
+        self.assertEqual(code_of(lambda: g.parse_ref("the auth work", REPO)), g.EXIT_REFUSED)
+        self.assertEqual(code_of(lambda: g.parse_ref("https://github.com/a/b/pull/4", REPO)), g.EXIT_REFUSED)
 
 
 class RealGitHub(unittest.TestCase):
@@ -977,6 +944,36 @@ class Cli(unittest.TestCase):
                     actual = (f.issues[ref(1)]["comments"][-1]["body"] if verb[0] == "comment"
                               else f.issues[ref(2)]["body"])
                     self.assertEqual(actual, body)
+
+    def test_edit_text_files_keep_their_line_endings_and_edges_are_explicit(self):
+        with tempfile.TemporaryDirectory() as directory:
+            old, new = Path(directory) / "old.txt", Path(directory) / "new.txt"
+            old.write_bytes("Old.\r\n".encode("utf-8"))
+            new.write_bytes("New → 🎉.\r\n".encode("utf-8"))
+            f = FakeGitHub()
+            f.add(1, body="## Notes\r\nOld.\r\n", blockers=[])
+            f.add(2)
+            f.add(3)
+            code, out = self.run_cli(["edit", "1", "--old-text-file", str(old), "--new-text-file", str(new),
+                                      "--blocked-by", "2", "--blocked-by", "#3"], f)
+            self.assertEqual(code, 0, out)
+            self.assertEqual((f.issues[ref(1)]["body"], f.issues[ref(1)]["blockers"]),
+                             ("## Notes\r\nNew → 🎉.\r\n", [ref(2), ref(3)]))
+            code, out = self.run_cli(["edit", "1", "--no-blockers"], f)
+            self.assertEqual((code, f.issues[ref(1)]["blockers"]), (0, []))
+            code, out = self.run_cli(["create", "--title", "T", "--body-file", str(new), "--blocked-by", "2"], f)
+            self.assertEqual((code, f.issues[ref(4)]["blockers"]), (0, [ref(2)]))
+
+    def test_edit_argument_rules_are_usage_errors(self):
+        for argv in (["edit", "1", "--old-text-file", "a"], ["edit", "1", "--body-file", "a"],
+                     ["edit", "1", "--expected-sha256", "0", "--title", "t"],
+                     ["edit", "1", "--old-text-file", "-", "--new-text-file", "-"],
+                     ["edit", "1", "--old-text-file", "a", "--new-text-file", "b", "--append-file", "c"],
+                     ["edit", "1", "--blocked-by", "2", "--no-blockers"], ["edit", "1", "--sections-file", "a"]):
+            with self.subTest(argv=argv), redirect_stdout(io.StringIO()), \
+                 mock.patch.object(sys, "stderr", io.StringIO()), self.assertRaises(SystemExit) as caught:
+                g.main(argv, gh=FakeGitHub())
+            self.assertEqual(caught.exception.code, 2)
 
     def test_post_write_read_failures_are_unverified(self):
         for verb in (["assign", "1", "alice"], ["move", "1", "ready"],

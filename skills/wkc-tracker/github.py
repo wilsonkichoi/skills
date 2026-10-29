@@ -22,6 +22,7 @@ Exit codes:
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import re
 import subprocess
@@ -145,150 +146,44 @@ def parse_ref(text: str, repo: str) -> Ref:
     refuse(f"cannot read an issue reference from {text!r}")
 
 
-REF_IN_TEXT = re.compile(
-    r"https://[^/\s]+/(?P<url_repo>[\w.-]+/[\w.-]+)/issues/(?P<url_n>\d+)"
-    r"|(?P<repo>[\w.-]+/[\w.-]+)?#(?P<n>\d+)"
-)
-
-
-def refs_in_blocked_by(section: str, repo: str) -> list[Ref]:
-    """Read the edge set from a `## Blocked by` section a caller gave."""
+def refs_given(texts: Iterable[str], repo: str) -> list[Ref]:
+    """The edge set a caller gave, each reference once."""
     refs: list[Ref] = []
-    for line in section.splitlines()[1:]:
-        text = re.sub(r"^\s*[-*+]\s*", "", line).strip()
-        if not text or re.fullmatch(r"(?i)(none|nothing|n/a)\.?", text):
-            continue
-        found = list(REF_IN_TEXT.finditer(text))
-        if not found:
-            refuse(f"`## Blocked by` line has no issue reference: {line.strip()!r}")
-        for match in found:
-            if match.group("url_repo"):
-                ref = Ref(match.group("url_repo"), int(match.group("url_n")))
-            else:
-                ref = Ref(match.group("repo") or repo, int(match.group("n")))
-            if ref not in refs:
-                refs.append(ref)
+    for text in texts:
+        ref = parse_ref(text, repo)
+        if ref not in refs:
+            refs.append(ref)
     return refs
 
 
-# ---------------------------------------------------------------- body sections
+# ---------------------------------------------------------------- body text
 
 
-LIST_ITEM = re.compile(r" {0,3}(?:[-+*]|\d{1,9}[.)]) {1,4}(?=\S)")
+def body_digest(body: str) -> str:
+    return hashlib.sha256(body.encode("utf-8")).hexdigest()
 
 
-def _heading_lines(lines: list[str]) -> list[tuple[int, int, str]]:
-    """(line index, level, text) of every `#` or `##` heading outside a fenced
-    block, read as GitHub renders them: up to three leading spaces and an
-    optional closing `#` sequence."""
-    headings, fence, item = [], None, 0
-    for index, line in enumerate(lines):
-        line = line.rstrip("\r\n")
-        # Columns as CommonMark counts them, with tab stops every four.
-        text = line.expandtabs(4)
-        if fence is not None and text.strip() and len(text) - len(text.lstrip(" ")) < item:
-            fence = None  # A line indented less than its list item ends the item and its fence.
-        if fence is not None:
-            text = text[item:]
-        else:
-            # A fence opened on a list item's line belongs to that item's content column.
-            item = 0
-            while found := LIST_ITEM.match(text):
-                item += found.end()
-                text = text[found.end():]
-        marker = re.match(r" {0,3}(`{3,}|~{3,})(.*)", text)
-        if marker:
-            token, rest = marker.groups()
-            if fence is None:
-                # A backtick in a backtick fence's info string makes the line inline code.
-                if token[0] == "~" or "`" not in rest:
-                    fence = token[0] * len(token)
-            elif token.startswith(fence) and not rest.strip():
-                fence = None
-            continue
-        if fence is None:
-            match = re.match(r" {0,3}(#{1,2})(?:[ \t]+(.*?))?(?:[ \t]+#+)?[ \t]*$", line)
-            if match:
-                headings.append((index, len(match.group(1)), match.group(2) or ""))
-    return headings
-
-
-def split_sections(body: str) -> tuple[list[str], list[tuple[str, list[str]]]]:
-    """Split a body into the lines before its first heading and one piece per `#`
-    or `##` heading. A `##` section runs from its heading to the next `#` or `##`
-    heading, so its `###` subsections belong to it."""
-    # Keep the original terminators. Unicode separators are text, not Markdown line breaks.
-    lines = re.findall(r"[^\r\n]*(?:\r\n|\r|\n|$)", body)
-    if lines and not lines[-1]:
-        lines.pop()
-    headings = _heading_lines(lines)
-    if not headings:
-        return lines, []
-    ends = [index for index, _, _ in headings[1:]] + [len(lines)]
-    pieces = [
-        ("#" * level + " " + text, lines[index:end])
-        for (index, level, text), end in zip(headings, ends)
-    ]
-    return lines[: headings[0][0]], pieces
-
-
-def section_name(key: str) -> str:
-    return key[3:] if key.startswith("## ") else ""
-
-
-def apply_sections(body: str, given: list[tuple[str, list[str]]]) -> str:
-    """Replace each given `##` section's whole span, and add any the body lacks."""
-    head, pieces = split_sections(body)
-    for key, span in given:
-        name = section_name(key)
-        matches = [i for i, (k, _) in enumerate(pieces) if section_name(k).lower() == name.lower()]
-        if len(matches) > 1:
-            refuse(f"the ticket has {len(matches)} `## {name}` sections; edit cannot tell which to replace")
-        new_span = _trim(span)
-        if not new_span[-1].endswith(("\r", "\n")):
-            new_span[-1] += "\n"
-        if matches:
-            old = pieces[matches[0]][1]
-            trailing = old[len(_trim(old)):]
-            pieces[matches[0]] = (key, new_span + trailing)
-        else:
-            previous = pieces[-1][1] if pieces else head
-            if previous:
-                if not previous[-1].endswith(("\r", "\n")):
-                    previous[-1] += "\n"
-                if previous[-1].strip():
-                    previous.append("\n")
-            pieces.append((key, new_span))
-    text = "".join(head + [line for _, span in pieces for line in span])
-    if body and not body.endswith(("\r", "\n")):
-        return text.removesuffix("\n").removesuffix("\r")
-    return text
-
-
-def _trim(span: list[str]) -> list[str]:
-    end = len(span)
-    while end > 1 and not span[end - 1].strip():
-        end -= 1
-    return span[:end]
-
-
-def parse_given_sections(text: str) -> list[tuple[str, list[str]]]:
-    head, pieces = split_sections(text)
-    if any(line.strip() for line in head):
-        refuse("the sections file must start with a `## ` heading")
-    if any(not key.startswith("## ") for key, _ in pieces):
-        refuse("the sections file may hold only `## ` sections")
-    names = [section_name(key).lower() for key, _ in pieces]
-    if len(set(names)) != len(names):
-        refuse("the sections file names one section twice")
-    return pieces
-
-
-def blocked_by_section(pieces: list[tuple[str, list[str]]]) -> str | None:
-    for key, span in pieces:
-        if section_name(key).lower() == "blocked by":
-            return "".join(span)
-    return None
+def changed_body(body: str, *, old: str | None = None, new: str | None = None, append: str | None = None,
+                 whole: str | None = None, expected_sha256: str | None = None) -> str:
+    """The body after one exact text change. Text is matched byte for byte and
+    never read as Markdown: what to change is the caller's decision."""
+    if expected_sha256 is not None and body_digest(body) != expected_sha256.lower():
+        refuse("the body changed since it was read: its SHA-256 is not --expected-sha256",
+               body_sha256=body_digest(body))
+    if whole is not None:
+        return whole
+    if append is not None:
+        if not append:
+            refuse("the text to append is empty")
+        return body + append
+    if not old or new is None:
+        refuse("a replacement needs a non-empty old text and its new text")
+    first = body.find(old)
+    if first < 0:
+        refuse("the old text is not in the body; it must match exactly, line endings included")
+    if body.find(old, first + 1) >= 0:
+        refuse("the old text appears more than once in the body; give text that appears exactly once")
+    return body[:first] + new + body[first + len(old):]
 
 
 # ---------------------------------------------------------------- gh access
@@ -727,6 +622,7 @@ def cmd_show(gh: GitHub, number: int) -> dict[str, Any]:
         "url": issue.url,
         "labels": issue.labels,
         "body": issue.body,
+        "body_sha256": body_digest(issue.body or ""),
         "comments": issue.comments,
         "blockers": [blocker_verdict(gh, b) for b in gh.blockers(issue.ref)],
     }
@@ -842,12 +738,11 @@ def _blocking_graph(gh: GitHub, issues: list[Issue]) -> tuple[list[dict[str, Any
 # ---------------------------------------------------------------- ticket writes
 
 
-def cmd_create(gh: GitHub, title: str, body: str, milestone: str | None) -> dict[str, Any]:
+def cmd_create(gh: GitHub, title: str, body: str, milestone: str | None,
+               blocked_by: Iterable[str] = ()) -> dict[str, Any]:
     if not title.strip():
         refuse("a ticket needs a title")
-    _, pieces = split_sections(body)
-    section = blocked_by_section(pieces)
-    edges = refs_in_blocked_by(section, gh.repo) if section else []
+    edges = refs_given(blocked_by, gh.repo)
     for edge in edges:
         ticket_node(gh, edge)
     target = resolve_milestone(gh, milestone, must_be_open=True) if milestone is not None else None
@@ -885,18 +780,23 @@ def cmd_create(gh: GitHub, title: str, body: str, milestone: str | None) -> dict
     return after.summary() | {"url": after.url, "blockers": _s(edges)}
 
 
-def cmd_edit(gh: GitHub, number: int, title: str | None, sections_text: str | None,
-             milestone: str | None, clear_milestone: bool) -> dict[str, Any]:
+def cmd_edit(gh: GitHub, number: int, *, title: str | None = None, old: str | None = None,
+             new: str | None = None, append: str | None = None, body: str | None = None,
+             expected_sha256: str | None = None, blocked_by: list[str] | None = None,
+             milestone: str | None = None, clear_milestone: bool = False) -> dict[str, Any]:
+    """`blocked_by` None leaves the edges alone; a list, empty or not, is the new edge set."""
     before = ticket(gh, number)
-    given = parse_given_sections(sections_text) if sections_text is not None else []
-    if title is None and not given and milestone is None and not clear_milestone:
+    text = {"old": old, "new": new, "append": append, "whole": body, "expected_sha256": expected_sha256}
+    changes_text = old is not None or append is not None or body is not None
+    if title is None and not changes_text and blocked_by is None and milestone is None and not clear_milestone:
         refuse("edit was given nothing to change")
     if title is not None and not title.strip():
         refuse("a ticket needs a title")
+    if changes_text:
+        changed_body(before.body or "", **text)
     target = resolve_milestone(gh, milestone, must_be_open=True) if milestone is not None else None
     current_edges = blocker_refs(gh, before.ref)
-    section = blocked_by_section(given)
-    new_edges = refs_in_blocked_by(section, gh.repo) if section is not None else current_edges
+    new_edges = refs_given(blocked_by, gh.repo) if blocked_by is not None else current_edges
     added = [e for e in new_edges if e not in current_edges]
     removed = [e for e in current_edges if e not in new_edges]
     for edge in added:
@@ -905,10 +805,10 @@ def cmd_edit(gh: GitHub, number: int, title: str | None, sections_text: str | No
     if title is not None:
         fields["title"] = title
     new_body = None
-    if given:
-        # GitHub has no conditional write: build the body from a read taken right
-        # before the write, so a change made during the checks above is kept.
-        new_body = apply_sections(gh.issue(number).body or "", given)
+    if changes_text:
+        # GitHub has no conditional write: apply the change to a read taken right
+        # before the write, so a change made during the checks above is kept or refused.
+        new_body = changed_body(gh.issue(number).body or "", **text)
         fields["body"] = new_body
     if target is not None:
         fields["milestone"] = target["number"]
@@ -953,7 +853,8 @@ def cmd_edit(gh: GitHub, number: int, title: str | None, sections_text: str | No
     if problems:
         unverified(f"the edit of #{number} did not verify: {', '.join(problems)}", landed=landed,
                    actual=after.summary())
-    return after.summary() | {"changed": landed, "blockers": _s(new_edges)}
+    return after.summary() | {"changed": landed, "blockers": _s(new_edges),
+                              "body_sha256": body_digest(after.body or "")}
 
 
 def cmd_assign(gh: GitHub, number: int, who: str | None, holders: list[str]) -> dict[str, Any]:
@@ -1269,10 +1170,19 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--title", required=True)
     p.add_argument("--body-file", required=True)
     p.add_argument("--milestone")
+    p.add_argument("--blocked-by", action="append", default=[])
     p = verbs.add_parser("edit")
     p.add_argument("number", type=number_arg)
     p.add_argument("--title")
-    p.add_argument("--sections-file")
+    group = p.add_mutually_exclusive_group()
+    group.add_argument("--old-text-file")
+    group.add_argument("--append-file")
+    group.add_argument("--body-file")
+    p.add_argument("--new-text-file")
+    p.add_argument("--expected-sha256")
+    group = p.add_mutually_exclusive_group()
+    group.add_argument("--blocked-by", action="append")
+    group.add_argument("--no-blockers", action="store_true")
     group = p.add_mutually_exclusive_group()
     group.add_argument("--milestone")
     group.add_argument("--no-milestone", action="store_true")
@@ -1316,10 +1226,14 @@ def dispatch(gh: GitHub, args: argparse.Namespace) -> dict[str, Any]:
     if verb == "next":
         return cmd_next(gh)
     if verb == "create":
-        return cmd_create(gh, args.title, read_text(args.body_file), args.milestone)
+        return cmd_create(gh, args.title, read_text(args.body_file), args.milestone, args.blocked_by)
     if verb == "edit":
-        sections = read_text(args.sections_file) if args.sections_file else None
-        return cmd_edit(gh, args.number, args.title, sections, args.milestone, args.no_milestone)
+        def text(path: str | None) -> str | None:
+            return read_text(path) if path is not None else None
+        return cmd_edit(gh, args.number, title=args.title, old=text(args.old_text_file),
+                        new=text(args.new_text_file), append=text(args.append_file), body=text(args.body_file),
+                        expected_sha256=args.expected_sha256, blocked_by=[] if args.no_blockers else args.blocked_by,
+                        milestone=args.milestone, clear_milestone=args.no_milestone)
     if verb == "assign":
         return cmd_assign(gh, args.number, args.who, args.holders)
     if verb == "move":
@@ -1340,8 +1254,23 @@ def dispatch(gh: GitHub, args: argparse.Namespace) -> dict[str, Any]:
     return {"show": cmd_run_show, "close": cmd_run_close}[args.action](gh, args.number)
 
 
+def check_edit_args(parser: argparse.ArgumentParser, args: argparse.Namespace) -> None:
+    if (args.old_text_file is None) != (args.new_text_file is None):
+        parser.error("--old-text-file and --new-text-file go together")
+    if args.body_file is not None and args.expected_sha256 is None:
+        parser.error("--body-file replaces the whole body and needs --expected-sha256 from show")
+    if args.expected_sha256 is not None and not (args.old_text_file or args.append_file or args.body_file):
+        parser.error("--expected-sha256 checks a body change; give one")
+    files = [args.old_text_file, args.new_text_file, args.append_file, args.body_file]
+    if files.count("-") > 1:
+        parser.error("only one text file can be standard input")
+
+
 def main(argv: list[str] | None = None, gh: GitHub | None = None) -> int:
-    args = build_parser().parse_args(argv)
+    parser = build_parser()
+    args = parser.parse_args(argv)
+    if args.verb == "edit":
+        check_edit_args(parser, args)
     label = args.verb + (f" {args.action}" if getattr(args, "action", None) else "")
     try:
         gh = gh or GitHub(args.repo or origin_repo())
