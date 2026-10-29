@@ -15,7 +15,7 @@ push check, and review rules still hold, whichever model runs them.
 - 5. Start the worker
 - 6. After the worker
 - 7. Questions from a worker
-- 8. Manual calls outside Claude Code
+- 8. Manual calls outside Claude Code, and blocked calls
 
 ## 1. Worker or coordinator
 
@@ -29,10 +29,11 @@ the person ends the worker's run instead: its final message starts `Question:`, 
 write that depends on the answer. Under `--run`, decide or park as the skill says.
 
 **The coordinator** is any other Claude Code session that runs the skill with a pair, or a Codex
-session when `headless_workers` lists `claude-code`; other sessions follow section 8. The
-coordinator runs the skill's reads, mode choice, and checks up to the step itself: for a build, `wkc-implement` sections 1 and
-2, the claim and branch included; for a review, `wkc-code-review` sections 1 and 2. Then it
-resolves the selection, starts one fresh worker for the step, checks what the worker did, and
+session when `headless_workers` lists `claude-code`; other sessions follow section 8. It runs the
+skill's reads and mode choice: `wkc-implement` section 1, or `wkc-code-review` sections 1 and 2.
+Before any write, it resolves the selection (section 2) and runs section 4's checks, so a call
+that stops leaves the ticket unclaimed. A build then runs `wkc-implement` section 2, the claim and
+branch. The coordinator starts one fresh worker for the step, checks what the worker did, and
 reports. It never builds or reviews in its own context. Status reports, `finish`, and `verify`
 never dispatch and never change the turn; a follow-up build that `finish` opens is a build, and
 dispatches.
@@ -55,11 +56,12 @@ ticket's pair. With no pair anywhere, a manual call runs as it always has, in th
 file stops here. A run without a pair runs as its config's `Coordinator model:` says; the worker
 still writes the `Execution:` lines with that confirmed selection.
 
-**Headless workers.** The project's list, intersected with the run config's under `--run`. A ticket
+**Headless workers.** The project's list, intersected with the run config's under `--run`; a run
+config with no `Headless workers:` line uses the project's list. A ticket
 never sets it: a `headless_workers` key in `## Execution` is invalid.
 
-**Valid.** Each selection is data, never a command. Stop before any dispatch, name the problem and
-what is allowed, and change nothing when:
+**Valid.** Each selection is data, never a command. Stop before any write or dispatch, name the
+problem and what is allowed, give section 8's handoff, and change nothing when:
 
 - the pair is not a list of exactly two entries, or an entry is not a map of `harness`, `model`, and
   optionally `effort`, or `## Execution` holds any other key;
@@ -67,8 +69,10 @@ what is allowed, and change nothing when:
   until the SPEC defines their dispatch;
 - a `claude-code` model is not `opus`, `sonnet`, `haiku`, or `fable`, and is not a pinned ID that
   `claude -p` can take because `headless_workers` lists `claude-code`;
-- a `codex` entry while `headless_workers` does not list `codex`;
-- an `effort` the selected harness does not accept for that model. A missing `effort` is `medium`.
+- a `codex` entry while `headless_workers` does not list `codex`, or its model is not one plain
+  model ID, such as one holding spaces or shell characters;
+- an `effort` the selected harness does not accept for that model, by its CLI help or
+  documentation. A missing `effort` is `medium`.
   Never lower or swap a model or effort to make it fit;
 - both entries name the same harness and model. Effort is not identity: `opus` at `high` and `opus`
   at `low` are the same model.
@@ -88,7 +92,7 @@ resolved to. Compare harness and model only.
 | The first entry | The second entry |
 | The second entry | The first entry |
 | Neither, because a ticket edit replaced it | The second entry |
-| Unknown: no such record, or no `Execution:` line | Ask the person; under `--run`, park. Never infer it from round numbers |
+| Unknown: no such record, or no `Execution:` line | Ask the person which model made the preceding step; under `--run`, park with `Needs: a person to name that model`. Never infer it from round numbers |
 
 Two verdicts with the same round number and `Reviewed` sha are one step. A launch that failed, or a
 worker that returned without its record, completed no step. Verdict numbers and fixing rounds are
@@ -119,9 +123,12 @@ Before every `codex exec` launch or resume, in the worker's checkout:
   any profile they select, `model_provider` is absent or `openai`, and no provider for it sets
   `env_key`, `base_url`, `http_headers`, `env_http_headers`, or a bearer token. `OPENAI_BASE_URL`
   is unset.
-- Read only the names of keys and variables; never print a value.
+- Read only the names of keys and variables; never print a value. Use `grep -o` or a parser that
+  prints names, never `cat`.
 
-Any failure blocks the call, with no API-key fallback and no login change.
+Before a native worker, `CLAUDE_CODE_EFFORT_LEVEL`, when set, must equal the resolved effort; it
+would override the worker's. Any failure blocks the call with section 8's handoff, with no API-key
+fallback, no login change, and no other effort.
 
 ## 5. Start the worker
 
@@ -159,7 +166,7 @@ Ticket: <id>
 Pull request: <URL and head sha | none yet>
 Checkout: <absolute path>
 Execution: <harness>, <model>, effort <effort>
-Run the installed <skill> skill's steps yourself, once, for this invocation. Do not dispatch, and start no subagent, worker, AI test session, or other harness. Read the ticket, the documents it cites, the pull request, and earlier verdicts yourself. Write the Execution line above on your handoff, update, or verdict. In a manual call, end with a final message starting "Question:" instead of any write that depends on a person's answer.
+Work in the checkout above. Run the installed <skill> skill's steps yourself, once, for this invocation. Do not dispatch, and start no subagent, worker, AI test session, or other harness. Read the ticket, the documents it cites, the pull request, and earlier verdicts yourself. Write the Execution line above on your handoff, update, or verdict. In a manual call, end with a final message starting "Question:" instead of any write that depends on a person's answer.
 ```
 
 A review worker gets nothing else: no implementation conversation, summary, or reasoning. Returning
@@ -215,7 +222,7 @@ checks run again. Otherwise start a fresh worker in that role. Either way, the w
 writes that already landed and never repeats one. Earlier work keeps its own `Execution:` record.
 A review never resumes or forks an implementation session.
 
-## 8. Manual calls outside Claude Code
+## 8. Manual calls outside Claude Code, and blocked calls
 
 A manual call in Codex coordinates as above only when `headless_workers` lists `claude-code`: Claude
 workers through `claude -p`, Codex workers through `codex exec`, and the Codex session launched with
@@ -225,8 +232,8 @@ and, for a review, whether this session wrote none of the pull request's code. A
 read its own model, so never infer a match. On a yes, run the step here and write the `Execution:`
 lines with `Observed execution: unavailable`.
 
-Otherwise, and for any unsupported selection, permission, or access, give a manual handoff and do no
-work with another model:
+Otherwise, and in any harness for a selection, permission, or access that section 2 or 4 blocks,
+give a manual handoff and do no work with another model:
 
 ```
 Blocked: <what is unsupported or missing>

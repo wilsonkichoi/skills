@@ -28,6 +28,7 @@ Keep raw logs and fixtures outside tracked files.
 - Dated report: 2026-10-28, finish names the milestone (#88)
 - Review round 1: 2026-10-28, PR #93
 - Dated report: 2026-10-29, finish runs the backend script (#94)
+- Dated report: 2026-10-29, model routing (#83)
 
 ## Preparation
 
@@ -483,7 +484,8 @@ error while a flag file is absent, a check the merged code fails, and a smoke te
     `codex` building in the fourth; a missing effort reads `medium`; every invalid fixture stops with its reason and
     no command; the pinned ID is blocked by default and becomes a `claude -p --model <id>` command with
     `claude-code` listed; the shell command is never run and is refused as a model; the comment changes nothing;
-    no pair means the session builds in place. Score from the printed results against this list. New, from #83.
+    no pair means the session builds in place; every stop comes before the claim, so the ticket stays unclaimed.
+    Score from the printed results against this list. New, from #83.
 
 75. **Turn fixtures.** AI session, dry run, as case 74, with the default pair and staged comment histories on one
     pull request. Histories: an `opus` handoff; that, then a `gpt-6.1-sol` verdict; a `gpt-6.1-sol` `approve`, then
@@ -1341,3 +1343,26 @@ About 64k subagent tokens, six tool calls, 53 s.
 The session read only the first 120 lines of `wkc-tracker/SKILL.md` and the first 150 of `github.md`, which is all
 of it. Still unverified: harness-loaded skills, Codex and Kiro, finish under `--run`, and the other callers of
 `wkc-tracker` (`wkc-backlog`, `wkc-code-review`, `wkc-plan`, `wkc-yolo`) running the script.
+
+## Dated report: 2026-10-29, model routing (#83)
+
+Candidate: branch `feat/83-model-routing`. Harness: Claude Code 2.1.312; local `codex-cli 0.165.0` for help
+output only. Selected: cases 73, 74, 75, 76, 77, and 79; `wkc-code-review` case 2; `wkc-backlog` case 3;
+`wkc-setup` case 10. AI test sessions: 1 of 6 for `build feat/83-model-routing`, one native Claude Code agent
+(`opus`, default effort), dry run, starting nothing.
+
+| Case | Result | Evidence |
+|---|---|---|
+| 73 | PASS, direct | Handoff and update blocks equal SPEC Contracts by extraction and comparison. |
+| 74, 75, 77 | PASS, one AI session on `60f1b20` | All 33 fixtures gave the expected result: A1 to A4, A11, A15 dispatched the first entry with the listed command; A5 to A10, A12, A13 stopped; A16 built in place; B1 to B8 and B11 picked the expected reviewer, B9 asked, B10 parked; C1 to C5 blocked and C6 dispatched. A14 stopped only on the session's judgment; no rule covered a Codex model holding shell characters. |
+| 74, follow-up | Fixed, static only | The session also found that the coordinator claimed before validating, so an invalid pair stopped after a write. `routing.md` now resolves the selection and runs section 4 before any write, rejects a Codex model that is not one plain ID, reads a missing run `Headless workers:` line as the project's list, checks `CLAUDE_CODE_EFFORT_LEVEL` before a native worker, names the question and `Needs:` line for an unknown preceding model, and gives section 8's handoff for every blocked call. Not rerun in a session. |
+| 76 | PASS, direct | Every listed flag is in `routing.md` and in local `claude --help`, `codex exec --help`, and `codex exec resume --help`; the forbidden forms appear only in "Never" sentences. |
+| 79 | PASS, direct | Read of sections 1 and 5. |
+| `wkc-code-review` 2, `wkc-backlog` 3 | PASS, direct | Verdict and work-ticket blocks equal SPEC Contracts. |
+| `wkc-setup` 10 | PASS, direct | PyYAML parses the template pair and `[codex, kiro-cli]`; Section F carries the listed text. |
+| 78, `wkc-setup` 11, `wkc-backlog` 53, `wkc-code-review` 62 | SKIP | Not selected for this attempt; they need throwaway fixtures and sessions. |
+| 80 | SKIP | Mixed-provider pilot; needs the person's approval of fixture, session count, and cross-harness scope. |
+
+The session noted that it read fixture Codex configs with `cat`, which printed values; section 4 now says to
+print key names only.
+
