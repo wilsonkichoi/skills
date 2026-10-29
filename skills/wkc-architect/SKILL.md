@@ -1,7 +1,7 @@
 ---
 name: wkc-architect
 description: Write or update the technical specification (SPEC) from an approved PRD and the existing code, covering components, contracts, data, failure handling, and the decisions behind them, with ADRs for the big ones. Use when a product or change needs technical design before it is planned or built.
-argument-hint: "[change summary, file paths, or URLs]"
+argument-hint: "[change summary, file paths, or URLs] [--run <ref>]"
 disable-model-invocation: false
 ---
 
@@ -14,16 +14,21 @@ disable-model-invocation: false
   components, or a decision someone will later ask about. Re-run it when the PRD changes. A small
   feature or fix that fits the current design does not need it: do the work and update the SPEC
   afterwards if something it says changed. Callers are people, a model acting on a person's
-  request, and `wkc-backlog`, which invokes it for a change it classifies as a SPEC change; never
-  `wkc-yolo`. A model runs it only when a person asked for that work. Model invocation approves
-  nothing: the SPEC stays `Status: draft` until the person approves it in the conversation.
+  request, and `wkc-backlog`, which invokes it for a change it classifies as a SPEC change, in a
+  run as outside one. `wkc-yolo` reaches it only through `wkc-backlog`. A model runs it only when
+  a person or `wkc-yolo` asked for that work. Model invocation approves nothing: outside a run, the
+  SPEC stays `Status: draft` until the person approves it in the conversation.
 - **Dependencies:** `prd_file` and `spec_file` from `docs/dev-agents/config.md`, falling back to
   `docs/dev-agents/PRD.md` and `docs/dev-agents/SPEC.md` when there is no config. `wkc-tracker`
-  `list`, only when updating a SPEC in a project with a configured tracker.
+  `list`, only when updating a SPEC in a project with a configured tracker, and `run show` for a
+  call with `--run`.
 - **Input:** free text: a change to design, file paths, or URLs. With nothing given, read the PRD and
   any existing SPEC, then write the missing SPEC, or say where the SPEC no longer matches the PRD.
+  `--run <ref>` marks a call from `wkc-backlog` in a `wkc-yolo` run and names its run config
+  (section 7).
 - **Output:** the SPEC file, any ADRs, and a short report of what changed, which decisions are still
   open, and whether the SPEC is approved. `wkc-plan` reads an approved SPEC next and owns the ROADMAP.
+  Under a run, the change and each decision it took, or `parked` with nothing written.
 
 Writes only the SPEC and ADRs: no PRD, product code, scaffolding, ROADMAP, tickets, or config. Keep what
 the user wrote in the SPEC unless they ask to change it.
@@ -131,7 +136,7 @@ instead of guessing.
 
 The line under the title records approval: `Status: draft` until the user approves the SPEC, then
 `Status: approved (YYYY-MM-DD)` with that day's date. Write the approved line only when the user
-approves in this conversation.
+approves in this conversation, or under a run as section 7 says.
 
 Show the open decisions and unknowns and ask for approval. An update that changes a component,
 contract, data model, or decision sets an approved SPEC back to `Status: draft`. Clarifications
@@ -143,3 +148,29 @@ Say what changed, which ADRs were written, which decisions and unknowns are stil
 tickets the change affects, and the status line as it now stands. When the SPEC names a test
 command that `test_command` in the config lacks or contradicts, say so; the user updates the config. When the SPEC is
 approved, the next step is `wkc-plan`.
+
+## 7. Under a run
+
+A call is unattended only when it passes `--run <ref>`; without it, the call is manual, whatever
+its text says. First read the run config with `wkc-tracker run show <ref>`. When that refuses, or
+the config does not say `Planning: delegated`, write nothing and return the reason. Such a call
+never ends a turn on a question:
+
+- Wherever sections 1 to 5 would ask, decide from the PRD, the SPEC, the code, and the change's
+  evidence, and return each decision with the section that settled it. When they leave it
+  undecided, or the PRD is missing or not approved, write nothing and return `parked`: the
+  question, what leaves it open, and who must answer.
+- Technical requirements, contracts, components, and decisions, ADRs and **Requirements**
+  included, may be revised, replaced, or removed when the evidence shows they are unnecessary,
+  obsolete, too restrictive, or in the way of a better design. An earlier approval is never by
+  itself a reason to keep one.
+- Never delegated: a PRD change; removing or weakening an entry in **Security**, the project's
+  `push_check`, or a review's security checks; an authorization limit, such as the run branch
+  boundary, a run config and its grants, or a `(needs authorization)` step; a stop in **Failure
+  handling**, a **Boundaries** entry from a PRD non-goal, or a requirement the PRD sets; and what
+  a run's person controls: initial ticket IDs, admission ceilings, model selections, headless
+  workers, grants, and phase renewal. A change that needs one writes nothing and returns `parked`
+  with `Needs: a person`.
+- Write the line under the title as `Status: approved (YYYY-MM-DD, delegated: <ref>)` with today's
+  date, and a **Changes** entry that says run `<ref>` made it and gives the evidence and the reason.
+  Commit nothing: `wkc-yolo` owns the planning pull request.

@@ -27,8 +27,9 @@ installed. Each runs in a session started in the fixture, so the harness discove
 1. **Package and discovery.** Parse the frontmatter and `agents/openai.yaml`. List and install the candidate.
    PASS: valid YAML, matching names, model invocation on both settings (`disable-model-invocation: false`,
    `policy.allow_implicit_invocation: true`), callers named as people, a model acting on a person's request, and
-   `wkc-backlog`, never `wkc-yolo`, a **When to use it** that keeps the SPEC at `Status: draft` until the person
-   approves it, five opening fields in order, `wkc-architect` in public discovery, installed copy identical to the
+   `wkc-backlog` in a run as outside one, with `wkc-yolo` reaching it only through `wkc-backlog`, and
+   `grep -n 'never .wkc-yolo.'` empty; a **When to use it** that keeps the SPEC at `Status: draft` outside a run until
+   the person approves it, five opening fields in order, `wkc-architect` in public discovery, installed copy identical to the
    source, and each harness links to it.
 
 2. **Document ownership is consistent.** Read `wkc-architect`, `wkc-research`, `wkc-setup`, and the root `README.md`.
@@ -86,6 +87,23 @@ installed. Each runs in a session started in the fixture, so the harness discove
     [wkc-plan case 33](./wkc-plan.md).
     PASS: the transcript shows no skill-tool call for `wkc-architect` or `wkc-plan`, and `git status --porcelain` is
     empty. New, from #67.
+
+Cases 14 to 17 are from #77 (SPEC Delegated run authority). Each runs through a `wkc-backlog` case, which invokes
+this skill with `--run <ref>`.
+
+14. **Delegated SPEC change.** [wkc-backlog case 43](./wkc-backlog.md).
+    PASS: as there: the SPEC reads `Status: approved (<today>, delegated: <ref>)`, a **Changes** entry cites the
+    item's evidence, and no question is asked.
+
+15. **A technical requirement removed.** [wkc-backlog case 45](./wkc-backlog.md).
+    PASS: as there.
+
+16. **Never delegated.** [wkc-backlog case 46](./wkc-backlog.md), a Security weakening and a PRD change.
+    PASS: as there: nothing written, `shasum` of the SPEC and PRD unchanged.
+
+17. **A run config without delegation.** Invoke with `--run <ref>` naming a config that says `Planning: none`.
+    PASS: nothing written, by `shasum`; the reply names the config's `Planning:` line and asks nothing. Case 9
+    covers the manual call, which still ends on the approval question.
 
 ## Dated report: 2026-10-17
 
@@ -176,3 +194,17 @@ model, and usage are in the [wkc-backlog report](./wkc-backlog.md#dated-report-2
 | 1, selected subchecks | PASS, direct | PyYAML: `disable-model-invocation: false`, `allow_implicit_invocation: true`, names match, five opening fields; **When to use it** names people, a model acting on a person's request, and `wkc-backlog`, never `wkc-yolo`, and keeps the SPEC at `Status: draft` until the person approves it. Installed copies equal the archive by `diff -r`. |
 | 12 | PASS | wkc-backlog case 33: a `Skill(wkc-architect)` call; the SPEC reads `Status: draft`; `issues_dir` unchanged. |
 | 13 | PASS | S1's first prompt, before any skill ran, asked how to upper-case a string in bash. The JSONL shows no tool call of any kind in that turn, so no skill loaded and no file changed. |
+
+## Dated report: 2026-10-29, delegated planning (#77)
+
+Scope: SPEC Delegated run authority. Selected: case 1's caller and `grep` subchecks as direct checks, and cases 14 to
+17 in Claude Code. Codex and Kiro CLI: SKIP. Candidate, fixture, sessions, and model are in the
+[wkc-backlog report](./wkc-backlog.md#dated-report-2026-10-29-delegated-planning-77).
+
+| Case | Result | Evidence |
+|---|---|---|
+| 1, selected subchecks | PASS, direct | **When to use it** names `wkc-backlog` in a run as outside one, with `wkc-yolo` only through it. `grep -n 'never .wkc-yolo.'` gives no output. Metadata is unchanged. `wc -l` is 176, over 150: section 7 carries the SPEC's delegation contract. |
+| 14 | PASS | wkc-backlog case 43, S2. |
+| 15 | PASS | wkc-backlog case 45, S1. |
+| 16 | PASS | wkc-backlog case 46, S3: the Security change parked, and the SPEC and PRD hashes are unchanged. |
+| 17 | PASS | S3: under `Planning: none`, it wrote nothing and named the config's line. In S5, the manual call ended on the approval question at `Status: draft`. |

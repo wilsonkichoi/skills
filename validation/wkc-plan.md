@@ -30,8 +30,9 @@ the skill's report.
 1. **Package and discovery.** Parse the frontmatter and `agents/openai.yaml`. List and install the candidate.
    PASS: valid YAML, matching names, model invocation on both settings (`disable-model-invocation: false`,
    `policy.allow_implicit_invocation: true`), callers named as people, a model acting on a person's request, and
-   `wkc-backlog`, never `wkc-yolo`, a **When to use it** that keeps the ROADMAP at `Status: draft` until the person
-   approves it, `wc -l` of `SKILL.md` under 150, five
+   `wkc-backlog` in a run as outside one, with `wkc-yolo` reaching it only through `wkc-backlog`, and
+   `grep -n 'never .wkc-yolo.'` empty; a **When to use it** that keeps the ROADMAP at `Status: draft` outside a run
+   until the person approves it, `wc -l` of `SKILL.md` under 250 (150 before #77's run section), five
    opening fields in order, `wkc-plan` in public discovery, installed copy identical to the source, and each
    harness links to it.
 
@@ -107,6 +108,20 @@ the skill's report.
     PASS: the turn shows the counts and exit check and asks; after `1`, the reply comes from `wkc-tracker milestone
     close` and says the backend has no milestone state; `shasum` of every ticket file and the ROADMAP is unchanged
     and `git status --porcelain` is empty. New, from #66.
+
+Cases 37 to 39 are from #77 (SPEC Delegated run authority).
+
+37. **Delegated ROADMAP change.** [wkc-backlog case 44](./wkc-backlog.md).
+    PASS: as there: the ROADMAP gains the milestone and reads `Status: approved (<today>, delegated: <ref>)`, and
+    no question is asked.
+
+38. **A delegated SPEC line is approved.** Set the fixture SPEC's line to `Status: approved (<date>, delegated:
+    <ref>)` and run case 10's update.
+    PASS: no stop on SPEC approval; the turn ends on section 3's question.
+
+39. **Close under a run.** Run `wkc-plan close <milestone> --run <ref>` on a milestone with only terminal tickets,
+    under a `Planning: delegated` config.
+    PASS: the reply returns `parked` with `Needs: a person` and asks nothing; the milestone is still open.
 
 ## Moved cases
 
@@ -394,3 +409,17 @@ session also placed a policy quote after an architect decision question; see the
 
 Chain total: PASS 8, FAIL 2, SKIP 0 across research 3/5/8, architect 3/5/9/11 second half, and plan 3/5/11. The
 failures were research case 5 and plan case 3.
+
+## Dated report: 2026-10-29, delegated planning (#77)
+
+Scope: SPEC Delegated run authority. Selected: case 1's caller, `grep`, and size subchecks as direct checks, and
+cases 37 and 39 in Claude Code. Case 38 is covered by wkc-backlog case 48's reader check for the backlog side; plan's own reader
+sentence was not run in a session: SKIP. Codex and Kiro CLI: SKIP. Candidate, fixture, sessions, and model are in
+the [wkc-backlog report](./wkc-backlog.md#dated-report-2026-10-29-delegated-planning-77).
+
+| Case | Result | Evidence |
+|---|---|---|
+| 1, selected subchecks | PASS, direct | The callers are as in architect case 1. `grep` gives no output. `wc -l` is 167, under 250; past 150 because of section 6, the SPEC's delegation contract. |
+| 37 | PASS | wkc-backlog case 44, S2: M3 was added with the delegated line. |
+| 39 | PASS | S3: `close M2: Export --run`, with every M2 ticket `done`, returned `parked` with `Needs: a person`. `milestone close` did not run, and the ROADMAP hash is unchanged. |
+| Manual | PASS | S5: `wkc-plan` with no run left the ROADMAP at `Status: draft` and ended on section 3's three options. |
