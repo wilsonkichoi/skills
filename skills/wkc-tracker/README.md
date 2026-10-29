@@ -260,6 +260,11 @@ timeline, which is most of the value for none of the machinery.
 | Blockers | Native issue dependencies | "Blocked by" relations | `blocked_by` in frontmatter |
 | Multiple sessions | Yes | Yes, with a weaker race check | **One session at a time** |
 
+On GitHub, every verb runs through `github.py`, a standard-library Python script beside
+`SKILL.md` that `uv` runs. It reads, checks, writes, and verifies in code, so a session never writes
+its own `gh` or `jq` query and drops a safeguard. You need `uv` and an authenticated `gh`; there is
+no virtual environment to set up.
+
 Two consequences worth knowing:
 
 On GitHub a closed issue carries no status label, because its close reason already records whether

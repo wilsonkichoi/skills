@@ -49,7 +49,7 @@ graph LR
 | Skill | State | Responsibility | Input | Depends on |
 |---|---|---|---|---|
 | `wkc-setup` | shipped, changes | Config and scaffold. Adds the review, AI test allowance, admission, model-selection, push-check, and run-store fields to the interview and template | none | `git`, `gh` or Linear MCP |
-| `wkc-tracker` | shipped, changes | Ticket state mechanics on three backends; on local, commits each write; closes a milestone on request; stores immutable run-phase configs (`run create`, `run show`, `run close`) | verb and args | config, `git` for local, `run_config` |
+| `wkc-tracker` | shipped, changes | Ticket state mechanics on three backends; on local, commits each write; closes a milestone on request; stores immutable run-phase configs (`run create`, `run show`, `run close`) | verb and args | config, `git` for local, `run_config`; on GitHub, the bundled `github.py` run with `uv` (ADR-011) |
 | `wkc-research` | shipped | PRD | free text | none |
 | `wkc-architect` | shipped, changes | SPEC and ADRs; opts into model invocation; under a delegated run, approves its own change (ADR-006) | free text | PRD |
 | `wkc-plan` | shipped, changes | ROADMAP, and closing a finished milestone; hands an approved milestone to `wkc-backlog` (ADR-004); opts into model invocation; under a delegated run, approves its own change (ADR-006) | a ROADMAP change, `close <milestone>`, or none | PRD, SPEC, `wkc-tracker` reads and `milestone close` |
@@ -1332,8 +1332,8 @@ From the PRD non-goals:
   limit, or operational safeguard, or weakens an acceptance criterion to make failing work pass.
 - No `wkc-fix`, `wkc-qa`, `wkc-verify`, `wkc-git-fu`, or `wkc-create-ticket`.
 - No status file beside the tracker, no priority, no separate ticket per step of one change.
-- No scripts in installed skills unless a concrete failure requires one. Branch setup is written as
-  instructions.
+- No scripts in installed skills unless a person approves one for a concrete failure (AGENTS.md).
+  `wkc-tracker`'s `github.py` is one (ADR-011). Branch setup is written as instructions.
 
 ## Deployment
 
@@ -1370,6 +1370,8 @@ the previous tag. Each port also updates the README roster, the repository map u
   records the options and proposed contract details; the user's requirements are settled.
 
 - Ticket lifecycle and definition of done: [ADR-001](./adr/ADR-001-ticket-lifecycle.md).
+- The GitHub tracker backend runs through one approved Python script, `github.py`, run with
+  `uv run --script`: [ADR-011](./adr/ADR-011-github-backend-script.md).
 - Each build and each review round has its own AI test allowance, counted from ticket records, and
   `max_fix_attempts` defaults to 5: [ADR-010](./adr/ADR-010-per-attempt-ai-test-allowances.md).
 - `wkc-backlog` owns tickets and `wkc-plan` the ROADMAP: [ADR-004](./adr/ADR-004-backlog-separate-from-plan.md),
@@ -1515,6 +1517,11 @@ the previous tag. Each port also updates the README roster, the repository map u
   `--effort` for a run without a pair. Local `kiro-cli 2.33.0` help lists both; no session ran.
 
 ## Changes
+
+- 2026-10-29: Maintainer decision in #94. `wkc-tracker`'s GitHub backend runs every verb through
+  `github.py`, after a session that read the backend's commands in full still wrote its own
+  (Components, Boundaries; ADR-011). The script treats ticket text as opaque: the session passes
+  dependency edges explicitly and changes a body by exact text. No verb's meaning changed.
 
 - 2026-10-28: Maintainer decision in #91. `max_fix_attempts` defaults to 5, and the new
   `max_ai_test_sessions_per_attempt`, default 6, gives each build and each review round its own AI

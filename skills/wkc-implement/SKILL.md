@@ -36,7 +36,8 @@ disable-model-invocation: false
   Verify: gate comments, status unchanged. Under `wkc-yolo`, also the discovered items, each gate's
   result, and `parked` when the ticket parked.
 
-Every ticket read and write goes through `wkc-tracker` verbs. Never create or edit another ticket;
+Every ticket read and write goes through `wkc-tracker` verbs, run with the commands its backend
+file gives, never a query of your own. Never create or edit another ticket;
 out-of-scope work goes to `wkc-backlog`, or back to `wkc-yolo` under a run (section 7). Never merge,
 publish, or deploy on an implementation request: a step marked `(needs authorization)` runs only
 when a person authorized that step in this conversation, or under a run, as the run config

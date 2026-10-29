@@ -1,7 +1,7 @@
 # wkc-setup validation
 
 Follow [Validation](../AGENTS.md#validation). This catalog covers the review-round field added by #54, the
-`run_config` field added by #78, the `push_check` field added by #76, and the AI test allowance added by #91. It does not claim baseline coverage of the
+`run_config` field added by #78, the `push_check` field added by #76, the AI test allowance added by #91, and the `uv` prerequisite added by #94. It does not claim baseline coverage of the
 rest of setup.
 
 ## Cases
@@ -39,6 +39,9 @@ rest of setup.
 8. **Existing allowance.** Run setup on a fixture whose config has `max_ai_test_sessions_per_attempt: 2` and no
    `max_fix_attempts`.
    PASS: the value stays `2`, setup asks only for the missing `max_fix_attempts`, and the body is unchanged.
+9. **`uv` for the GitHub backend.** Direct. Read Section A's prerequisite table.
+   PASS: the `github` row checks `uv --version` beside `gh auth status` and the remote, and says `wkc-tracker`
+   cannot run on GitHub without it. New, from #94 (ADR-011).
 
 ## Dated report: 2026-10-22
 

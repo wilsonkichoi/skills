@@ -86,7 +86,7 @@ knowing whether the first one will work.
 
 | Backend | Check | When it is missing |
 |---|---|---|
-| `github` | `gh auth status`, and a GitHub remote in `git remote -v` | Ask which repository, and offer both answers: an existing one is `git remote add origin <url>`, a new one is `gh repo create <name> --private --source=. --remote=origin`. Creating a repository is the user's call, so offer it and wait for an answer. |
+| `github` | `gh auth status`, a GitHub remote in `git remote -v`, and `uv --version`, which runs `wkc-tracker`'s bundled `github.py` | No `uv`: say so and point at https://docs.astral.sh/uv/getting-started/installation/; `wkc-tracker` cannot run on GitHub without it. No remote: ask which repository, and offer both answers: an existing one is `git remote add origin <url>`, a new one is `gh repo create <name> --private --source=. --remote=origin`. Creating a repository is the user's call, so offer it and wait for an answer. |
 | `linear` | the Linear MCP server answers `list_teams`, and the chosen team has the seven statuses below | No server: stop, say how to connect it, and write no Linear fields into the config until it answers. A missing status: see below. |
 | `local` | nothing | |
 

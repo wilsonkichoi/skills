@@ -105,7 +105,7 @@ by that line. It changes no verb, and it is still not nothing. Restore it or rei
 edit the source tree to get it.
 
 **S1 install layout.** Check: `ls .agents/skills/wkc-tracker/`. Expect `SKILL.md`, `README.md`,
-`github.md`, `linear.md`, `local.md`, `agents`. The `README.md` is there on purpose: the installer
+`github.md`, `github.py` (executable), `linear.md`, `local.md`, `agents`. The `README.md` is there on purpose: the installer
 copies the whole skill directory, so the human-facing explainer ships to every consumer.
 
 **S2 sibling resolution.** Check: `head -1 .claude/skills/wkc-tracker/github.md` and the same under
@@ -520,10 +520,9 @@ its own blocker, with `gh` and the `link` pair, not the skill:
 | K6 | an issue in a second scratch repository, closed as not planned, with the same number as a local issue closed as completed |
 
 Record `gh issue list --repo <R> --state all --json number,state,stateReason,labels,assignees,updatedAt`.
-Check the fixture first: the blocker query from `github.md`'s **Blockers and duplicate originals**
-section shows `duplicateOf` O for K3's blocker and the completed issue for K4's, and K6's blocker
-under the second repository's `nameWithOwner`. The `next` query run by hand lists K1 to K6 in
-`check`, none in `frontier`. Then
+Check the fixture first with a direct `gh api graphql` read of each blocker's `duplicateOf` and
+`repository { nameWithOwner }`: `duplicateOf` O for K3's blocker and the completed issue for K4's,
+and K6's blocker under the second repository's `nameWithOwner`. Then
 `$wkc-tracker next`. Expect K1 and K4 on the frontier, and K2, K3, and K5 named as held: K2's
 blocker as `cancel` with the decision left to a person, K3's chain ending at O still open, and K5's
 chain as one that cannot be followed, and K6's blocker named with its own repository as `cancel`.
@@ -611,10 +610,12 @@ gh issue create --repo <R> --title "A32 T" --body "in a cycle"
 gh issue create --repo <R> --title "A32 U" --body "in a cycle"
 ```
 
-Make P blocked by Q, and S blocked by T, T by U, U by S, with the `gh api` pair from `github.md`'s
-`link` section for each edge. GitHub accepts that three-issue cycle. Then `$wkc-tracker next`.
-Check first that the fixture is what it claims: the `next` query from `github.md`, run by hand,
-returns `frontier: []`, and `held` lists P, R, and S.
+Make P blocked by Q, and S blocked by T, T by U, U by S, each with `gh api repos/<R>/issues/<blocker>
+--jq .id` and `gh api --method POST repos/<R>/issues/<n>/dependencies/blocked_by -F issue_id=<id>`.
+`github.py link` refuses the edge that closes the cycle, which is why the fixture uses the endpoint.
+GitHub accepts that three-issue cycle. Then `$wkc-tracker next`.
+Check first that the fixture is what it claims: `github.py next`, run directly, returns
+`frontier: []`, and `held` lists P, R, and S.
 Expect the reply to say the frontier is empty and to name all three: P with Q as its open blocker,
 at `in-review`; R as reserved for your login; S with the cycle as a path through S, T, and U.
 A reply that says only that the frontier is empty is a FAIL, and so is one that misses the cycle.
@@ -625,17 +626,16 @@ written so the leg can run against one you keep.
 
 ---
 
-**A48 run configs in the `tracker` store, from #78.** Direct, then model. Write two run configs with the
-`run create` commands in `github.md` **Run configs**, then edit the second one's body with `gh issue edit --body-file`.
+**A48 run configs in the `tracker` store, from #78.** Direct, then model. Write two run configs with
+`github.py run create`, then edit the second one's body with `gh issue edit --body-file`.
 
-1. Direct: the GraphQL read in **Run configs** shows the label `wkc-run` on both, `lastEditedAt` null on the first and
-   set on the second.
+1. Direct: a `gh api graphql` read of `labels` and `lastEditedAt` shows the label `wkc-run` on both, `lastEditedAt`
+   null on the first and set on the second.
 2. Model, through a caller's `--run <ref>`: `run show` on the first returns its text, and on the second refuses.
    Covered by `wkc-implement` cases 43 and 44.
-3. Direct: execute the documented `list` and `next` jq queries on the fixture's fresh issue list. Neither issue
-   appears in tickets, frontier, held, check, inconsistent, or the open map. On a controlled mixed milestone page,
-   `milestone show` counts only tickets. All queries keep `rows` equal to the unfiltered page length, including a
-   page containing only run configs. Model behavior is a separate check.
+3. Direct: run `github.py list`, `next`, and `milestone show` on the fixture. Neither issue appears in `tickets`,
+   `frontier`, `held`, `inconsistent`, `open_counts`, or a milestone's `counts`. A page holding only run configs
+   gives empty results, not an error. Model behavior is a separate check.
 
 **A49 run configs in the `github-variable` store, from #78.** Direct, then model. Set a variable with the
 `run create` name rule and the exact command from `SKILL.md`, with its text on standard input.
@@ -656,6 +656,43 @@ and `close` and logs each call.
 
 `run create` and `run close` by a model, and the Linear and local `tracker` stores, are covered when `wkc-yolo` (#74)
 calls them.
+
+**A51 `github.py` contract tests, from #94.** Direct. `make test-tracker`.
+PASS: every test passes. The tests run each verb against an in-memory GitHub and cover status mapping, unfiltered
+lists that raise the limit on a full page, the `wkc-run` exclusion, exact milestone titles against closed and
+near-match ones, blocker verdicts for cancel, duplicate chains, loops, and other repositories, cycles, exact bodies,
+edges only from explicit arguments (any Markdown body kept and never parsed), exact text replacement that refuses
+missing, repeated, and empty old text, append, whole-body replacement checked against the body's digest, a stale
+body refused before writing, edit edge sets that are kept, replaced, or cleared, case-insensitive repository
+names in edge verification, the edit argument rules,
+each `assign` form and its tie-break, half-landed and silently dropped writes,
+failed writes that are not retried, earlier identical comments that cannot verify dropped or failed writes,
+successful repeated comments, post-write read failures returning exit 3, concurrent closure,
+run configs refused as edge targets, pull request targets refused before any ticket write,
+cycles through complete lists, duplicates and other repositories,
+and text kept off the command line and kept UTF-8 under a Latin-1 locale, text that is not UTF-8
+refused as JSON before any write, exact CRLF input bodies,
+and the rest of a body kept byte for byte, with mixed line endings and Unicode separators.
+
+**A52 `github.py` from an installed copy, from #94.** Direct. Install the candidate into an empty directory with
+`npx skills add "<clean-candidate>" -s wkc-tracker -a claude-code -y`, then run every verb from `/` as
+`uv run --script "<install>/.claude/skills/wkc-tracker/github.py" --repo <R> <verb>` on a throwaway repository,
+and once as `"<install>/.claude/skills/wkc-tracker/github.py" --repo <R> milestone list`.
+PASS: each verb's exit code matches its outcome (0 done, 1 refused, 4 read failed), and independent `gh` reads
+confirm each write: the exact title and body of a create with quotes, `$(...)`, and non-ASCII text; an edge from
+`--blocked-by` with mixed-case repository names on create and edit, and none from a `## Blocked by` in the body
+alone; two identical comments append twice; the bare claim, and a second claim refused; a terminal move with no status label; a refused move out of
+`done`; a refused cycle with its path; link, unlink, and a refused second unlink; an edit that replaces exact text
+and clears the edges (`--no-blockers`) and the milestone; an edit refused for missing old text and one refused for
+a stale `--expected-sha256`, each with the body unchanged; a duplicate with its original; milestone ensure, show, and close, with a refused
+ensure of the closed one; run create, show, and close; a run config refused by `show` and missing from `list`; a
+ticket refused by `run close`; and a missing issue refused by `show` and by `run show`.
+Use a CRLF body file and standard input for comments, creates, and run configs. Compare the original
+UTF-8 bytes with independent reads. Replace exact text in a body with mixed line endings and Unicode
+separators; the rest of the body must remain exact.
+Also give a pull request number to `show`, `edit`, `assign`, `move`, `comment`, `link`, and `unlink`.
+Each exits 1 with a pull request refusal. An independent `gh pr view` confirms that its title,
+body, state, labels, assignees, and comments are unchanged.
 
 ## B. Local backend
 
@@ -1426,7 +1463,7 @@ actually prescribes.
 The backend files state rules without the measurements behind them. The measurements live here, or
 in the run log below, so a rule can be re-checked when a backend changes.
 
-- **GitHub status prelude.** Checked against eight label shapes: none, `backlog`, `ready`, a topic
+- **GitHub status mapping** (`Issue.status` in `github.py`, the `jq` prelude before #94). Checked against eight label shapes: none, `backlog`, `ready`, a topic
   label alone, a topic label with `backlog`, `backlog` with `ready`, `ready` with `in-progress` and a
   topic label, and `in-review`. The first five and the last resolve to a status, and the two
   multi-status shapes to `inconsistent`. Closed issues resolve through `stateReason`, and a stale
@@ -1534,6 +1571,387 @@ here.
 Versions 0.0.9 to 0.0.41 below were development steps on the `feat/tracker` branch. They shipped
 together as 0.0.8, so an entry's version names a branch state, and its skill ref names the exact
 commit it tested.
+
+### 2026-10-29T12:23:31-07:00 PR #95 review round 13
+
+Attempt: `review round 13 on https://github.com/wilsonkichoi/skills/pull/95`.
+Reviewed `b7d2c65ccc926b3e65eb928ae653fb849d765d2a`. The maintainer authorized one additional
+fixing round and live calls on a throwaway repository. Selected A51 and focused input-encoding
+subchecks. GitHub backend; direct checks in Claude Code. AI test sessions: **0 of 6** for this
+attempt. Reused `wilsonkichoi/wkc-review95-round7-20261029`.
+
+- **Verified finding:** the reviewed script, run from `/`, printed a Python traceback
+  (`UnicodeDecodeError`) and exited 1 for `comment 1 --body-file <UTF-16 file>`, and for Latin-1
+  bytes on standard input. `github.md` promises one JSON object. Nothing was written, because the
+  text is read before any `gh` call. `read_text` now refuses such input with exit 1 and a JSON
+  `refused` result, and both CLI runs return that.
+- **A51 PASS:** all 98 existing tests passed at the reviewed head. The new test failed in both
+  subchecks (UTF-16 file, Latin-1 standard input) there. All 99 pass after the fix.
+- **Not a defect:** a UTF-8 file with a byte-order mark. The reviewed script created
+  [issue #16](https://github.com/wilsonkichoi/wkc-review95-round7-20261029/issues/16) from one with
+  exit 0; GitHub kept the body, U+FEFF included, so the exact-body verification held.
+- **Read-only live checks PASS:** `show 99999` and `link 10 '#99999'` each exited 1 `refused`.
+  The gh source (`pkg/cmd/issue/view/view.go`, `preloadIssueComments`) loads every comment page
+  for `--json comments`, so round 12's comment count reads complete data.
+
+These are focused checks, not a full A52 PASS or model-behavior evidence. Case 72 and
+cross-harness sessions were not rerun. Harness loading and finish under `--run` remain unestablished.
+
+### 2026-10-29T11:56:21-07:00 PR #95 review round 12
+
+Attempt: `review round 12 on https://github.com/wilsonkichoi/skills/pull/95`.
+Reviewed `0b642b55b595f4f7421ad4ef7f8cb8b4eff069f7`. The maintainer authorized one additional
+fixing round and live calls on a throwaway repository. Selected A51 and focused A52 subchecks for
+explicit blocker references, exact body edits, and repeated comments. GitHub backend; direct
+checks in Codex. AI test sessions: **0 of 6** for this attempt. Reused
+`wilsonkichoi/wkc-review95-round7-20261029`.
+
+- **Verified finding:** installed reviewed code, run from `/`, created
+  [issue #14](https://github.com/wilsonkichoi/wkc-review95-round7-20261029/issues/14) with
+  `--blocked-by WilsonKiChoi/WKC-Review95-Round7-20261029#10` and returned exit 3, naming
+  `blockers` as the difference. An exact Notes replacement with the same edge argument also
+  returned exit 3. Independent `gh issue view` reads confirmed the exact bodies and edge [10]
+  after both calls. The requested repository and the returned repository differ only in case.
+  Edge-set verification now uses `Ref` equality, which already compares repository names without case.
+- **Verified finding:** with an earlier identical comment and a silently dropped write, the
+  in-memory contract reproduction returned `commented: true`; with a failed request, it reported
+  `landed: true`. Neither appended a comment. Verification now requires the number of exact-body
+  matches to increase. No live silent drop was observed or induced.
+- **A51 PASS:** all 94 existing tests passed at the reviewed head. Three of four new tests failed
+  there, including both dropped/failed-comment subchecks. All 98 tests pass after the fixes.
+  The existing failed-but-landed comment test now also starts with an identical earlier comment.
+  Earlier fixes remain resolved; Markdown-parser behavior was superseded by the recorded
+  maintainer decision in ADR-011.
+- **A52 focused subchecks PASS:** installed with `npx skills add`, run from `/` under
+  `LC_ALL=en_US.ISO8859-1`, `PYTHONUTF8=0`, and `PYTHONCOERCECLOCALE=0`.
+  [Issue #15](https://github.com/wilsonkichoi/wkc-review95-round7-20261029/issues/15) was created
+  and edited with the same mixed-case blocker reference, each exiting 0. Independent `gh` reads
+  confirmed edge [10] and the exact mixed-ending UTF-8 body. Exact replacement, append, digest-checked
+  whole-body replacement, and clearing blockers together with their body text all verified exactly.
+  Missing old text and a stale digest each exited 1 with the body unchanged. `show` and `edit`
+  returned the independently computed SHA-256. Two identical CRLF comments each exited 0, and
+  independent reads showed the matching count increase from 0 to 1 to 2. Tested script SHA256:
+  `db56ba6e790334d1bacccb4b1ea7179b0caadc665796965a684e6fe94912dd01`.
+- **Static checks PASS:** the final installed skill matches the source, excluding `__pycache__`,
+  and retains the executable bit. Metadata, opening fields, line ceilings, supporting contents,
+  the existing 0.0.44 version/changelog entry, and `git diff --check` pass. The history and diff
+  review found no secret, authorization defect, sensitive-data destination, or unrelated network
+  call. `uv` is the dependency approved in ADR-011; the script uses only the standard library.
+  Gitleaks over all branch commits passed before push.
+
+These are focused A52 subchecks, not a full-case PASS or model-behavior evidence. Case 72 and
+cross-harness sessions were not rerun. Harness loading and finish under `--run` remain unestablished.
+No `test_command` is configured; GitHub reports no PR checks. The live fixtures remain as evidence.
+
+### 2026-10-29T11:43:36-07:00 PR #95 opaque ticket text
+
+Attempt: `build fix/94-tracker-backend-queries`, after the maintainer's architecture decision that
+`github.py` stops parsing Markdown. Candidate `b28792c`. Selected A51, focused A52 subchecks for the
+new `create` and `edit` arguments, and model cases A6, A8, and focused A39 and A41 subchecks.
+GitHub backend on `wilsonkichoi/wkc-review95-round7-20261029`; direct checks and one model session in
+Claude Code. AI test sessions: **3 of 6** for this attempt, counting the build's earlier two.
+
+- **A51 PASS:** 94 tests. The parser's edge-case tests are replaced by contract tests: edges only
+  from `--blocked-by`, any Markdown body kept and unparsed, exact replacement that refuses missing,
+  repeated, and empty old text, append, whole-body replacement checked against the digest, a stale
+  body refused before writing, edit edge sets kept, replaced, or cleared, and the argument rules
+  (exit 2). The other regression tests are unchanged and pass.
+- **A52 focused subchecks PASS:** installed with `npx skills add` into an empty directory
+  (`diff -r` clean) and run from `/` under `LC_ALL=en_US.ISO8859-1`, `PYTHONUTF8=0`. Independent
+  `gh` reads: #11 created with `--blocked-by #10` has edge [10] and its exact CRLF body, which holds
+  a list-item fence and an HTML comment; #12 with `## Blocked by` in the body and no argument has no
+  edge. Exact replacement on #11 kept the rest byte for byte; a missing old text and a stale
+  `--expected-sha256` each exited 1 with the body unchanged; append and the whole-body replacement
+  landed exactly, and `show`'s `body_sha256` matched a local SHA-256. `--blocked-by #12` replaced
+  the edge, `--no-blockers` cleared it with the body unchanged, an edit closing #10 → #11 → #12 → #10
+  exited 1 with no edge written, and a pull request as `--blocked-by` exited 1 with no issue
+  created. `--body-file` without a digest exited 2. Script SHA256 at the candidate:
+  `aebaec238fd307a6f10b7509cf861374c7ba05d6b4e95c9953ffb2c8699fc89e`.
+- **Model session 3 PASS for the selected subchecks:** Claude Code `general-purpose` subagent,
+  Sonnet, effort medium, reading the installed `SKILL.md` by hand in a fixture project. It ran
+  every tracker operation through `github.py` and no `gh issue`, `gh api`, or `gh label` command.
+  A6: it created #13 with `--blocked-by '#10'`, and the edge read back [10]. A8: `## Related - #12`
+  made no edge. A39 (focused): it changed the title and added `## Notes` with `--append-file`; the
+  other sections read back exactly. A41 (focused): it swapped `## Blocked by` with an exact
+  replacement plus `--blocked-by '#12'`, and the edges read back [12]; its edit of #10 to be blocked
+  by #12 was refused as the cycle #10 → #12 → #10, and #10's body and edges are unchanged.
+
+A39 and A41 are focused subchecks: the fixture had no milestone, label, or assignee, and A41's
+three-ticket swap was not run. Codex and Kiro CLI: SKIP. Case 72 was not rerun; its verbs
+(`show`, `move`, `comment`, `milestone show`) did not change. A pull request given as a blocker is
+refused with "does not exist" rather than naming it a pull request; nothing is written.
+
+### 2026-10-29T11:04:41-07:00 PR #95 review round 10
+
+Attempt: `review round 10 on https://github.com/wilsonkichoi/skills/pull/95`.
+Reviewed `16370a9d8088d3740ccba3ffa6c716afdd56fd85` independently. The maintainer authorized one
+additional fixing round, making the limit ten, and live calls on a throwaway GitHub repository.
+Reused `wilsonkichoi/wkc-review95-round7-20261029`. Selected A51, focused A52 subchecks for
+`create` and `edit` on bodies with a fence opened on a list item's line, a differential check
+against GitHub's renderer, and static checks. GitHub backend; direct checks in Claude Code.
+AI test sessions: **0 of 6**.
+
+- **Live reproduction:** the reviewed script, run from `/`, created
+  [issue #8](https://github.com/wilsonkichoi/wkc-review95-round7-20261029/issues/8) with exit 0 and
+  no dependency edge, although its body ends with `## Blocked by` / `- #6`. Its Notes section holds
+  a list item that opens a fence on its own line (`- ` then three backticks) around a literal
+  `## Related`. The script read that literal as a heading and the item's indented closing fence as
+  an opener, which hid every later heading. `edit 8` with a new `## Related` then exited 0, and an
+  independent `gh issue view` shows the literal example, the real Related, `## Other`, and
+  `## Blocked by` deleted. GitHub's renderer shows the literal as code and the later sections as
+  headings.
+- **A51 PASS:** all 94 existing tests passed before changes. Two of three added tests failed on the
+  reviewed implementation in 12 subchecks: `create` refused or dropped the edge for `-`, `*`, `+`,
+  `1.`, and `1)` items with backtick and tilde fences, and `edit` deleted later sections. All 97
+  tests pass after the fix, including nested markers, a tab after the marker, and an item that ends
+  its fence by a less indented line.
+- **Differential check:** 19 bodies rendered with `gh api markdown` (mode `gfm`), comparing GitHub's
+  top-level `h1` and `h2` with the script's section headings. The reviewed script differed on 6;
+  the fix resolves 4 and adds none. The 2 left are present at the reviewed head too: a heading
+  indented under a list item, which GitHub renders inside the item and the script reads as a
+  section heading. `github.md` states that limit.
+- **A52 focused subchecks PASS:** the fixed source, run from `/`, created
+  [issue #9](https://github.com/wilsonkichoi/wkc-review95-round7-20261029/issues/9) from the same
+  body with exit 0. Independent reads show `blockedBy` [6] and the exact body. `edit 9` with the
+  same `## Related` exited 0; an independent read matches the expected body exactly, with only the
+  real Related changed. Tested script SHA256:
+  `cac92f01a45bd7b153c8b6d6fbcc2c741438c5142d7fb872c75949b3be78ef43`.
+- **Static checks PASS:** `git diff --check`, `github.md` `## Contents`, and version/changelog.
+  Security review found no secret, authorization defect, sensitive-data destination, or unrelated
+  network call.
+
+These are focused A52 checks from the source, not an installed copy and not a full-case PASS.
+Case 72 was not rerun. Harness loading, cross-harness behavior, and finish under `--run` remain
+unestablished. No other AI session or harness was launched.
+
+### 2026-10-29T10:53:19-07:00 PR #95 review round 9
+
+Attempt: `review round 9 on https://github.com/wilsonkichoi/skills/pull/95`.
+Reviewed `16d6a3a74081019aaa1c422d0c9edd5c82d7e2e9` independently. The maintainer authorized one
+additional fixing round, making the limit nine, and a throwaway GitHub repository. Reused
+`wilsonkichoi/wkc-review95-round7-20261029`. Selected A51, focused A52 subchecks for exact input
+and section preservation, and static checks. GitHub backend; direct checks in Codex.
+AI test sessions: **0 of 6**.
+
+- **Live reproduction:** the reviewed script, installed with `npx skills add` and called from `/`,
+  returned exit 0 for a CRLF comment file but stored LF. The
+  [stored comment](https://github.com/wilsonkichoi/wkc-review95-round7-20261029/issues/2#issuecomment-6504136388)
+  contains `"Round 9 CRLF reproduction: café → 🎉\nSecond line.\n"`; the input had `\r\n` at both
+  breaks. A [direct gh control](https://github.com/wilsonkichoi/wkc-review95-round7-20261029/issues/2#issuecomment-6504137235)
+  preserved both CRLF breaks. Python's file reader translated them before the script verified its own
+  normalized text. Section reconstruction also changed all untouched line endings and Unicode separators.
+- **A51 PASS:** all 91 existing tests passed before changes. Two added tests and the extended locale
+  test failed on the reviewed implementation in seven subchecks: file bodies for create, comment,
+  and run create; section preservation with CRLF, CR, and LF; and the process-level CRLF comment.
+  All 94 tests pass after the fix, including an added boundary regression for bodies without a final
+  newline. Input keeps its line endings, `gh` exchanges UTF-8 bytes without platform newline translation,
+  and section replacement retains original spans. Earlier fixed findings remain resolved in the code
+  read and their regression tests pass.
+- **A52 focused subchecks PASS:** installed the fixed candidate with `npx skills add` and ran it from
+  `/` under `LC_ALL=en_US.ISO8859-1`, `PYTHONUTF8=0`, and `PYTHONCOERCECLOCALE=0`. Independent `gh issue view`
+  reads confirmed the exact create body on [issue #6](https://github.com/wilsonkichoi/wkc-review95-round7-20261029/issues/6),
+  exact CRLF comments from a file and stdin, and an edited Notes section with untouched mixed line
+  endings and U+2028. Run config [#7](https://github.com/wilsonkichoi/wkc-review95-round7-20261029/issues/7)
+  retained its exact CRLF body through create, show, close, and show after close. Its CLOSED state was
+  independently confirmed. Tested script SHA256:
+  `19de81d78a8e84a9dbf25be8f496fd39d747ca5b1769b930faad9d5b9174857d`.
+- **Fixture correction:** the first fixed-candidate create returned exit 3 on
+  [issue #5](https://github.com/wilsonkichoi/wkc-review95-round7-20261029/issues/5).
+  An independent read showed GitHub changed U+0085 to the literal text `^E`. The script correctly
+  reported the mismatch and did not retry. The next fixture omitted this control character.
+- **Static checks PASS:** changed skill metadata, opening fields, line ceilings, supporting contents,
+  version/changelog, and `git diff --check`. Security review found no secret, authorization defect,
+  sensitive-data destination, or unrelated network call. The only added dependency remains `uv`,
+  approved by ADR-011; Python uses only its standard library.
+
+These are focused A52 checks, not a full-case PASS. Windows itself was not run. Case 72 was not
+rerun; earlier model evidence applies only to its recorded candidate. Harness loading,
+cross-harness behavior, and finish under `--run` remain unestablished. No `test_command` is
+configured, and GitHub reports no PR checks. No other AI session or harness was launched.
+
+### 2026-10-29T10:37:23-07:00 PR #95 review round 8
+
+Attempt: `review round 8 on https://github.com/wilsonkichoi/skills/pull/95`.
+Reviewed `27052b6e4c5bfdb4cd60dbf38611218b20cc1079` independently. The maintainer authorized one
+more fixing round, making the limit eight, and live calls on a throwaway GitHub repository.
+Selected A51, focused A52 subchecks for non-ASCII text under a Latin-1 locale
+(`LC_ALL=en_US.ISO8859-1`), and static checks. GitHub backend; direct checks in Claude Code.
+AI test sessions: **0 of 6**.
+
+- **Live reproduction:** the reviewed script decoded and encoded `gh`'s text with the locale
+  encoding. On [fixture issue #2](https://github.com/wilsonkichoi/wkc-review95-round7-20261029/issues/2),
+  `comment 2` with `→` in the body raised `UnicodeEncodeError` with a traceback and exit 1, the
+  "nothing written" code, after the write had started. `comment 2` with `café` exited 3, and an
+  independent `gh issue view` shows the comment landed as `caf�`.
+- **A51 PASS:** 90 existing tests passed. The new `Locale` test runs the script as a process with
+  a fake `gh` that speaks UTF-8; its file-body subcheck failed on the reviewed script, and its stdin
+  and `run show` subchecks fail when only the `gh` encoding is fixed. All 91 tests pass.
+- **A52 focused subchecks PASS:** the fixed source, run from `/` under the Latin-1 locale, posted
+  comments with `→` and an emoji, with `café`, and with `ü → 日本` through `--body-file -`. Each
+  exited 0, and an independent `gh issue view` shows each body exactly. `show 2` printed its
+  title's `ü` correctly.
+
+This is focused A52 evidence on the source script, not an installed copy and not a full-case PASS.
+Windows itself was not run; the Latin-1 locale exercises the same locale-encoding path. Case 72
+was not rerun. Harness loading, cross-harness behavior, and finish under `--run` remain
+unestablished. There is no configured `test_command`, and GitHub reports no PR checks.
+
+### 2026-10-29T10:26:25-07:00 PR #95 review round 7
+
+Attempt: `review round 7 on https://github.com/wilsonkichoi/skills/pull/95`.
+Reviewed `576649703af1002e01cec5bf079f48670426fa40` independently. The maintainer authorized one
+additional fixing round, making the limit seven, and a throwaway GitHub repository. Selected A51,
+focused A52 subchecks for pull request refusal and ordinary issue operations, and static checks.
+GitHub backend; direct checks in Codex. AI test sessions: **0 of 6**.
+
+- **A51 PASS:** 89 existing tests passed before changes. The new regression test failed on all
+  seven subchecks against the reviewed implementation. All 90 tests pass with the shared read fix.
+- **Live reproduction:** `comment 1` through the reviewed script returned exit 0 and
+  `commented: true` on [fixture PR #1](https://github.com/wilsonkichoi/wkc-review95-round7-20261029/pull/1).
+  An independent `gh pr view` read confirmed the comment text:
+  `Round 7 reproduction: a ticket comment incorrectly reaches this pull request.`
+  `gh issue view` returns a pull request with dependency data, so the old ticket check accepted it.
+- **A52 focused subchecks PASS:** installed a local candidate snapshot with `npx skills add` into
+  an empty directory for `claude-code`, then ran the installed script from `/`. Its SHA256 was
+  `0261cd3f5d362e6db32b843cac8f4fe74a7c4e286cb84ba069627566296f05f5`, equal to the fixed source.
+  `show`, `edit`, `assign`, `move`, `comment`, `link`, and `unlink` on fixture PR #1 all exited 1
+  with a pull request refusal. Independent before and after `gh pr view` snapshots were equal for
+  title, body, state, labels, assignees, and comments.
+- **Ordinary issue regression subchecks PASS:** all verb names ran successfully on fixture issues
+  #2 to #4 and milestone `Round 7: Exact milestone`. Independent `gh issue view` reads confirmed
+  exact quoted and Unicode create text, #3's initial body, blocker and milestone, its claim and
+  assignment, its exact comment, and its edited body with no blockers or milestone. Independent
+  reads confirmed #2 `CLOSED` `COMPLETED`, #3 `CLOSED` `DUPLICATE`, and no status labels.
+  Cycle, second claim, second unlink, terminal reopen, closed milestone ensure, ticket/run-config
+  confusion, and missing issue refusals exited 1. Closed run configs remained readable. The direct
+  executable form ran `milestone list`. An independent milestones read confirmed it closed.
+
+Static metadata, opening field order, line ceiling, supporting contents, branch version/changelog,
+and `git diff --check` passed. Security review and the history scan found no secret, authorization
+defect, sensitive-data destination, or unrelated network call. The only new dependency remains
+`uv`, approved by ADR-011; Python dependencies remain standard library only.
+
+This is focused A52 evidence, not a full-case PASS: independent reads did not check every
+intermediate link or assignment write. Case 72 was not rerun. Its earlier report applies to its
+recorded candidate. Harness loading, cross-harness behavior, and finish under `--run` remain
+unestablished. There is no configured `test_command`, and GitHub reports no PR checks. The private
+fixture remains available as durable evidence. Raw command logs stay outside the repository.
+
+### 2026-10-29T10:02:16-07:00 PR #95 review round 5
+
+Attempt: `review round 5 on https://github.com/wilsonkichoi/skills/pull/95`.
+Reviewed `95540722d5be452fdc3daaa523cf2638acedc1c2` independently. Selected A51 and static
+contract/security checks. GitHub backend; direct checks in Codex. AI test sessions: 0 of 6.
+
+The 87 existing tests passed. Two new regression tests failed in 12 subchecks at the reviewed head.
+A marker indented with a tab, one space and a tab, or two spaces and a tab incorrectly opened or
+closed a fence, for both backticks and tildes. `create` dropped a real Blocked by edge; `edit`
+deleted a literal Notes example. The shared fence matcher now accepts only zero to three spaces.
+[CommonMark 0.31.2 sections 2.2 and 4.5](https://spec.commonmark.org/0.31.2/#fenced-code-blocks)
+confirm that tab indentation reaches at least four columns and cannot delimit the fenced block.
+All 89 tests pass after the fix. The earlier fixed findings remain resolved in the code read.
+
+`git diff --check` and gitleaks over the branch history passed. The backend adds only the approved
+`uv` prerequisite, uses the standard library, and calls `gh` without a shell. No unrelated network
+call or sensitive-data destination was found. Version 0.0.44 remains this branch's single bump.
+No `test_command` is configured; GitHub reports no PR checks.
+
+No live call ran because the parser is exercised directly. A52 live integration and model case 72
+were not rerun; their reports cover their recorded candidates only. This round does not establish
+harness loading, cross-harness execution, or finish under `--run`.
+
+### 2026-10-29T09:58:01-07:00 PR #95 review round 4
+
+Attempt: `review round 4 on https://github.com/wilsonkichoi/skills/pull/95`.
+Reviewed `a22bb6ff04c3a5dc0fa6ac7e9ddd035a9a496958` independently. Selected A51. GitHub backend; direct
+checks in Claude Code. AI test sessions: 0 of 6.
+
+The 84 existing tests passed. Three new regression tests failed at the reviewed head in seven subchecks:
+`create` made no edge for a `## Blocked by` heading indented one or three spaces, closed with `##`, or
+followed by a tab, or one that came after a line starting with inline triple-backtick code; `edit` of
+`## Notes` added a second Notes section beside an indented or closed one. GitHub renders each of these
+as a heading. The parser now reads headings with up to three leading spaces and an optional closing
+sequence, and a backtick line whose info string holds a backtick opens no fence. All 87 tests pass
+with `make test-tracker`.
+
+No live call ran: the change is the body parser, which the contract tests drive directly. A52 and
+model case 72 were not rerun. This round does not establish harness loading, Claude Code/Kiro
+execution, or finish under `--run`.
+
+### 2026-10-29T09:47:49-07:00 PR #95 review round 3
+
+Attempt: `review round 3 on https://github.com/wilsonkichoi/skills/pull/95`.
+Reviewed `3dfbe8871cbff96ac0bd3aa19673aaf58d1c3eff` independently. Selected A51 and focused read-only
+A52 subchecks (`run show` of a missing issue and `next` from `/`). GitHub backend; direct checks in Codex.
+AI test sessions: 0 of 6.
+
+The 82 existing tests passed. Two new regression tests failed at the reviewed head for both backtick and
+tilde fences: a fence-like line with trailing text ended the parser's code block early. Editing a real
+`## Notes` section deleted the literal example and the real section. Creating a ticket with a literal
+`## Blocked by` example refused valid input. The parser now closes fences only when the remaining line
+is whitespace. All 84 tests pass with `make test-tracker`.
+
+On `wilsonkichoi/wkc-tracker-fixture-65`, `run show 99999` returned exit 1 `refused`; `next` returned exit 0
+and reported the existing cycle through duplicate #4. Both commands ran from `/`. These are focused
+read checks, not a full A52 rerun or an installed-copy check. Static skill metadata, field order, length,
+supporting contents, version/changelog, and `git diff --check` passed. No `test_command` is configured.
+GitHub reports no PR checks. The pre-fix six-commit gitleaks scan found no leaks.
+
+A52 live writes and model case 72 were not rerun. Earlier evidence covers its recorded candidates only.
+This round does not establish harness loading, Claude Code/Kiro execution, or finish under `--run`.
+
+### 2026-10-29T09:42:38-07:00 PR #95 review round 2
+
+Attempt: `review round 2 on https://github.com/wilsonkichoi/skills/pull/95`.
+Reviewed `ec34e3d4b73e3de98c9e43992ce45eac67466a62`. Selected A51 and focused live subchecks of A52 (`run show`
+of a missing issue, a one-section `edit`). GitHub backend; direct checks in Claude Code. AI test sessions: 0 of 6.
+
+Three regression tests failed on the reviewed head and pass after the fix: `run show 99999` exited 4
+`read_failed` instead of refusing; an `edit` built the body from its first read, so a body change made during its
+milestone and cycle checks was overwritten; a given `## what to build` added a second section instead of replacing
+`## What to build`. `make test-tracker`: 82 tests, OK. Live on `wilsonkichoi/wkc-tracker-fixture-65`:
+`run show 99999` exited 1 `refused`; `edit 6` with a `## Notes` section exited 0 and an independent
+`gh issue view` showed the section added and the rest of the body unchanged. A52 in full and case 72 were not
+rerun.
+
+### 2026-10-29T09:37:05-07:00 PR #95 review round 1
+
+Attempt: `review round 1 on https://github.com/wilsonkichoi/skills/pull/95`.
+Reviewed `c84e7e9d155f905f848a851df1a22bb90aca43ff`. Selected A51 and focused static checks of
+A52 packaging, setup case 9, and the documented contracts. GitHub backend; direct checks in Codex.
+AI test sessions: 0 of 6. No configured `test_command`; GitHub reports no checks.
+
+The original 71 tests passed. Added regressions reproduced four defects: post-write read failures and
+failed link requests returned exit 1 or 4; concurrently closed issues verified as successful moves or
+assignments; ticket edges accepted run configs; cycle reporting missed truncated lists, duplicates,
+and other repositories. The fixes and regression tests pass in `make test-tracker` (79 tests).
+A missing duplicate original remains unmet and is reported in the expanded blocker graph.
+The write transport test confirms real GitHub mutations record an attempt before transport failure.
+Read-only live checks of `next` and `milestone list` on `wilsonkichoi/wkc-tracker-fixture-65`
+both returned exit 0 and JSON results.
+
+Static review: version remains 0.0.44 for this PR, supporting-file contents lists and skill metadata
+remain valid, and `git diff --check` passes. History secret scan: no leaks. New dependency `uv`
+is required by the approved Python backend; no third-party Python dependencies or extra network
+services were added. A52 live writes and case 72 model behavior were not rerun after these fixes.
+Their earlier reports remain evidence for their recorded candidates only. Harness loading, Claude
+Code and Kiro execution, and finish under `--run` are not established by this round.
+
+### 2026-10-29T09:30:00-07:00 #94 `github.py`, direct checks
+
+Candidates on `fix/94-tracker-backend-queries`: `f494965` for A52, `190a268` for A51 and S1. Selected A51, A52, and S1, GitHub backend, direct
+only; no AI session. Codex and Kiro CLI: SKIP, no session in those harnesses, and these direct checks do not
+exercise any harness. `uv` 0.10.7, `gh` 2.102.0, `skills` 1.7.4.
+
+| Case | Result | Evidence |
+|---|---|---|
+| A51 | PASS | `make test-tracker`: 71 tests, OK. The first run failed one test: a create whose issue did not read back exited `refused`, which would tell a caller nothing was written. Fixed to `unverified` in `github.py`; the test stays. |
+| A52 | PASS | Installed from a `git archive` of `f494965` into an empty directory (`diff -r` against the candidate: no output); `github.py` installed executable. Every verb run from `/` against `wilsonkichoi/wkc-tracker-fixture-65` (issues #5 to #8, milestone `Int 94: A`). Exit codes: 0 for each write and read, 1 for the second bare claim, the move out of `done`, the cycle (`#5 → #6 → #5`), the second unlink, the ensure of the closed milestone, `show` on the run config, `run close` on a ticket, and `show 99999`; 4 for a repository that does not exist. Independent `gh` reads: #5's title `T1 'quote' "dq" $(x) & ü` and body exact (`jq --rawfile`), `CLOSED` `COMPLETED`, no labels; #6's edited body exact with no blockers and no milestone, its comment exact; #7 `DUPLICATE` with `duplicateOf` 6; #8 labeled `wkc-run`, `CLOSED`; the milestone `closed`. The direct-exec form, `"<install>/github.py" --repo <R> milestone list`, exited 0. After A52, `show`'s `duplicate_of` was reshaped to name `original`, `chain`, and `ends_at` (`190a268`); `show 7` from the source tree then gave `original` #6 and a chain #7 → #6. |
+| S1 | PASS | The installed `wkc-tracker` directory holds `github.py` with mode `-rwxr-xr-x`. |
+
+On `wilsonkichoi/wkc-implement-fixture-59` (32 issues), `milestone show` took 0.97 s and 1.18 s and `next` 0.58 s,
+with `M4: Busy` at 1 open of 4 and `M5: Last open` at 0 open of 3, matching `gh issue list`. Full output:
+`integration.log` in the session scratchpad, not kept.
 
 ### 2026-10-26T14:40:02-07:00 PR #78 round 6, focused direct checks
 
