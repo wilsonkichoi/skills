@@ -16,6 +16,9 @@
 #   make release [TAG=v0.0.25]     print the plan for VERSION on main, or for that tag; writes nothing
 #   make release TAG=v0.0.25 PUBLISH=<sha>   publish exactly what the plan printed
 #
+# Test the wkc-tracker GitHub backend script (see tools/wkc-tracker/test_github.py):
+#   make test-tracker
+#
 # Choose agents or skills by overriding the defaults:
 #   make install AGENTS=codex SKILLS="wkc-tracker wkc-help"
 #
@@ -29,7 +32,7 @@ HERE   := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
 # `-a '*'` replaces a top-level skills/ source directory with links (see README), so refuse it.
 ADD = $(if $(findstring *,$(AGENTS)),$(error Name the agents; AGENTS='*' can delete skills/ source))npx skills add $(REPO) $(foreach s,$(SKILLS),-s '$(s)') $(foreach a,$(AGENTS),-a $(a)) -y
 
-.PHONY: install update install-internal check-update worktree merge cleanup release
+.PHONY: install update install-internal check-update worktree merge cleanup release test-tracker
 install update:
 	$(ADD)
 
@@ -47,6 +50,9 @@ merge:
 
 cleanup:
 	$(if $(BRANCH),,$(error BRANCH is required, e.g. make cleanup BRANCH=fix/foo))bash $(HERE)tools/branch.sh cleanup '$(BRANCH)'
+
+test-tracker:
+	uv run --script $(HERE)tools/wkc-tracker/test_github.py
 
 release:
 	node $(HERE)tools/release.mjs $(if $(TAG),'$(TAG)') $(if $(PUBLISH),--publish '$(PUBLISH)')

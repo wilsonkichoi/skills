@@ -105,7 +105,7 @@ by that line. It changes no verb, and it is still not nothing. Restore it or rei
 edit the source tree to get it.
 
 **S1 install layout.** Check: `ls .agents/skills/wkc-tracker/`. Expect `SKILL.md`, `README.md`,
-`github.md`, `linear.md`, `local.md`, `agents`. The `README.md` is there on purpose: the installer
+`github.md`, `github.py` (executable), `linear.md`, `local.md`, `agents`. The `README.md` is there on purpose: the installer
 copies the whole skill directory, so the human-facing explainer ships to every consumer.
 
 **S2 sibling resolution.** Check: `head -1 .claude/skills/wkc-tracker/github.md` and the same under
@@ -520,10 +520,9 @@ its own blocker, with `gh` and the `link` pair, not the skill:
 | K6 | an issue in a second scratch repository, closed as not planned, with the same number as a local issue closed as completed |
 
 Record `gh issue list --repo <R> --state all --json number,state,stateReason,labels,assignees,updatedAt`.
-Check the fixture first: the blocker query from `github.md`'s **Blockers and duplicate originals**
-section shows `duplicateOf` O for K3's blocker and the completed issue for K4's, and K6's blocker
-under the second repository's `nameWithOwner`. The `next` query run by hand lists K1 to K6 in
-`check`, none in `frontier`. Then
+Check the fixture first with a direct `gh api graphql` read of each blocker's `duplicateOf` and
+`repository { nameWithOwner }`: `duplicateOf` O for K3's blocker and the completed issue for K4's,
+and K6's blocker under the second repository's `nameWithOwner`. Then
 `$wkc-tracker next`. Expect K1 and K4 on the frontier, and K2, K3, and K5 named as held: K2's
 blocker as `cancel` with the decision left to a person, K3's chain ending at O still open, and K5's
 chain as one that cannot be followed, and K6's blocker named with its own repository as `cancel`.
@@ -611,10 +610,12 @@ gh issue create --repo <R> --title "A32 T" --body "in a cycle"
 gh issue create --repo <R> --title "A32 U" --body "in a cycle"
 ```
 
-Make P blocked by Q, and S blocked by T, T by U, U by S, with the `gh api` pair from `github.md`'s
-`link` section for each edge. GitHub accepts that three-issue cycle. Then `$wkc-tracker next`.
-Check first that the fixture is what it claims: the `next` query from `github.md`, run by hand,
-returns `frontier: []`, and `held` lists P, R, and S.
+Make P blocked by Q, and S blocked by T, T by U, U by S, each with `gh api repos/<R>/issues/<blocker>
+--jq .id` and `gh api --method POST repos/<R>/issues/<n>/dependencies/blocked_by -F issue_id=<id>`.
+`github.py link` refuses the edge that closes the cycle, which is why the fixture uses the endpoint.
+GitHub accepts that three-issue cycle. Then `$wkc-tracker next`.
+Check first that the fixture is what it claims: `github.py next`, run directly, returns
+`frontier: []`, and `held` lists P, R, and S.
 Expect the reply to say the frontier is empty and to name all three: P with Q as its open blocker,
 at `in-review`; R as reserved for your login; S with the cycle as a path through S, T, and U.
 A reply that says only that the frontier is empty is a FAIL, and so is one that misses the cycle.
@@ -625,17 +626,16 @@ written so the leg can run against one you keep.
 
 ---
 
-**A48 run configs in the `tracker` store, from #78.** Direct, then model. Write two run configs with the
-`run create` commands in `github.md` **Run configs**, then edit the second one's body with `gh issue edit --body-file`.
+**A48 run configs in the `tracker` store, from #78.** Direct, then model. Write two run configs with
+`github.py run create`, then edit the second one's body with `gh issue edit --body-file`.
 
-1. Direct: the GraphQL read in **Run configs** shows the label `wkc-run` on both, `lastEditedAt` null on the first and
-   set on the second.
+1. Direct: a `gh api graphql` read of `labels` and `lastEditedAt` shows the label `wkc-run` on both, `lastEditedAt`
+   null on the first and set on the second.
 2. Model, through a caller's `--run <ref>`: `run show` on the first returns its text, and on the second refuses.
    Covered by `wkc-implement` cases 43 and 44.
-3. Direct: execute the documented `list` and `next` jq queries on the fixture's fresh issue list. Neither issue
-   appears in tickets, frontier, held, check, inconsistent, or the open map. On a controlled mixed milestone page,
-   `milestone show` counts only tickets. All queries keep `rows` equal to the unfiltered page length, including a
-   page containing only run configs. Model behavior is a separate check.
+3. Direct: run `github.py list`, `next`, and `milestone show` on the fixture. Neither issue appears in `tickets`,
+   `frontier`, `held`, `inconsistent`, `open_counts`, or a milestone's `counts`. A page holding only run configs
+   gives empty results, not an error. Model behavior is a separate check.
 
 **A49 run configs in the `github-variable` store, from #78.** Direct, then model. Set a variable with the
 `run create` name rule and the exact command from `SKILL.md`, with its text on standard input.
@@ -656,6 +656,25 @@ and `close` and logs each call.
 
 `run create` and `run close` by a model, and the Linear and local `tracker` stores, are covered when `wkc-yolo` (#74)
 calls them.
+
+**A51 `github.py` contract tests, from #94.** Direct. `make test-tracker`.
+PASS: every test passes. The tests run each verb against an in-memory GitHub and cover status mapping, unfiltered
+lists that raise the limit on a full page, the `wkc-run` exclusion, exact milestone titles against closed and
+near-match ones, blocker verdicts for cancel, duplicate chains, loops, and other repositories, cycles, exact bodies,
+section edits around fenced code, each `assign` form and its tie-break, half-landed and silently dropped writes,
+failed writes that are not retried, and text kept off the command line.
+
+**A52 `github.py` from an installed copy, from #94.** Direct. Install the candidate into an empty directory with
+`npx skills add "<clean-candidate>" -s wkc-tracker -a claude-code -y`, then run every verb from `/` as
+`uv run --script "<install>/.claude/skills/wkc-tracker/github.py" --repo <R> <verb>` on a throwaway repository,
+and once as `"<install>/.claude/skills/wkc-tracker/github.py" --repo <R> milestone list`.
+PASS: each verb's exit code matches its outcome (0 done, 1 refused, 4 read failed), and independent `gh` reads
+confirm each write: the exact title and body of a create with quotes, `$(...)`, and non-ASCII text; a `## Blocked by`
+edge; the bare claim, and a second claim refused; a terminal move with no status label; a refused move out of
+`done`; a refused cycle with its path; link, unlink, and a refused second unlink; an edit that replaces one section,
+clears the edges and the milestone; a duplicate with its original; milestone ensure, show, and close, with a refused
+ensure of the closed one; run create, show, and close; a run config refused by `show` and missing from `list`; a
+ticket refused by `run close`; and a missing issue refused.
 
 ## B. Local backend
 
@@ -1426,7 +1445,7 @@ actually prescribes.
 The backend files state rules without the measurements behind them. The measurements live here, or
 in the run log below, so a rule can be re-checked when a backend changes.
 
-- **GitHub status prelude.** Checked against eight label shapes: none, `backlog`, `ready`, a topic
+- **GitHub status mapping** (`Issue.status` in `github.py`, the `jq` prelude before #94). Checked against eight label shapes: none, `backlog`, `ready`, a topic
   label alone, a topic label with `backlog`, `backlog` with `ready`, `ready` with `in-progress` and a
   topic label, and `in-review`. The first five and the last resolve to a status, and the two
   multi-status shapes to `inconsistent`. Closed issues resolve through `stateReason`, and a stale

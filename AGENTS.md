@@ -106,10 +106,26 @@ Skill files name skills without a harness prefix, such as `wkc-tracker list`. Ke
 
 `description` goes on one unquoted physical line, however long.
 
-No scripts unless a skill genuinely cannot be written as prose. Script sprawl and the build steps
-around it are the main reason the previous toolkit became unmaintainable.
-`wkc-workflow-diagram` is the one recorded exception. Its reason and maintainer build live in
-[`tools/workflow-diagram/README.md`](./tools/workflow-diagram/README.md), outside the installed skill.
+No new helper scripts by default. Script sprawl and the build steps around it are the main reason
+the previous toolkit became unmaintainable. A helper is still the right tool for a repetitive,
+deterministic operation, so an agent may propose one: what it does, why prose falls short, its scope,
+and what it costs to maintain. Creating one, or extending one into a new functional area, needs a
+person's explicit approval first. Approval covers the area it names and nothing else.
+
+An approved helper is Python, run with `uv run --script` and PEP 723 inline metadata, in a small
+number of cohesive modules a person can review line by line. Prefer the standard library. Its tests
+state behavioural contracts and live in `tools/<skill>/` behind a `Makefile` target, outside the
+installed skill. An operation an approved helper can own goes into that helper, never into a new,
+narrower one.
+
+Recorded exceptions:
+
+- `wkc-tracker`'s `github.py` runs every GitHub backend verb, approved in #94
+  ([ADR-011](docs/dev-agents/adr/ADR-011-github-backend-script.md)). Tests:
+  `tools/wkc-tracker/test_github.py`, `make test-tracker`.
+- `wkc-workflow-diagram` predates the Python preference. Its reason and maintainer build live in
+  [`tools/workflow-diagram/README.md`](./tools/workflow-diagram/README.md), outside the installed skill.
+
 Maintainer scripts are a separate case. Each one starts from an action repeated by hand, never from a
 guess, and lives in `tools/` behind a `Makefile` target. Keep each one a single readable file whose
 structure follows the process it replaces, so it can be checked against that process and fixed in

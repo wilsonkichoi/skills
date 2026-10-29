@@ -98,7 +98,7 @@ validated before the next starts. See [AGENTS.md](./AGENTS.md) for how a skill i
 | Skill | What it does | Status |
 |---|---|---|
 | [`wkc-setup`](./skills/wkc-setup/SKILL.md) | Configure a repository to use these skills | shipped |
-| [`wkc-tracker`](./skills/wkc-tracker/SKILL.md) | Read and write issues against GitHub, Linear, or local markdown. `milestone close <name>` closes one GitHub milestone with an exact title match; Linear and local report no milestone state and write nothing. `run create`, `run show`, and `run close` store a `wkc-yolo` run config in the store `run_config` names. Ticket lists and milestone counts exclude run configs | shipped |
+| [`wkc-tracker`](./skills/wkc-tracker/SKILL.md) | Read and write issues against GitHub, Linear, or local markdown. `milestone close <name>` closes one GitHub milestone with an exact title match; Linear and local report no milestone state and write nothing. `run create`, `run show`, and `run close` store a `wkc-yolo` run config in the store `run_config` names. Ticket lists and milestone counts exclude run configs. On GitHub, every verb runs through the bundled `github.py`, which needs `uv` and an authenticated `gh` | shipped |
 | [`wkc-workflow-diagram`](./skills/wkc-workflow-diagram/SKILL.md) | Create and update offline maps of actual project skills | shipped |
 | [`wkc-help`](./skills/wkc-help/SKILL.md) | Answer questions about these skills, and install, pin, update, or remove them | shipped |
 | [`wkc-research`](./skills/wkc-research/SKILL.md) | Turn research and an interview into the product requirements document (`PRD.md`) | shipped |

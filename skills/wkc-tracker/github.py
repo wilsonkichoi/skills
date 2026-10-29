@@ -681,7 +681,14 @@ def cmd_show(gh: GitHub, number: int) -> dict[str, Any]:
         "blockers": [blocker_verdict(gh, b) for b in gh.blockers(issue.ref)],
     }
     if issue.status == "duplicate":
-        result["duplicate_of"] = blocker_verdict(gh, gh.node(issue.ref)) | {"ref": str(issue.ref)}
+        node = gh.node(issue.ref)
+        chain = blocker_verdict(gh, node)
+        result["duplicate_of"] = {
+            "original": str(node.duplicate_of) if node.duplicate_of else None,
+            "chain": chain.get("chain", [str(issue.ref)]),
+            "ends_at": chain.get("ends_at"),
+            "ends_done": chain["met"],
+        } | ({"reason": chain["reason"]} if "reason" in chain else {})
     elif issue.status == "inconsistent":
         result["status_labels"] = issue.status_labels
     return result
