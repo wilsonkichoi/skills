@@ -2,6 +2,11 @@
 
 Newest first. Each version is a `## {version} ({ISO 8601 timestamp with local offset})` heading followed by a bullet list of changes.
 
+## 0.0.43 (2026-10-28T23:12:56-07:00)
+
+- `wkc-implement finish` takes the ticket's milestone from `wkc-tracker show <id>` after the move to `done`, names it, and then reads `wkc-tracker milestone show <milestone>` (#88). A read that did not ask for the milestone no longer counts as proof that the ticket has none. In #80's validation, two finish sessions read the ticket with `gh issue view` field lists that left out `milestone`, and reported "the ticket has no milestone" for tickets in `M1: Greetings`, so they never read the milestone and could not name `wkc-plan close`.
+- `validation/wkc-implement.md` cases 32 and 33 check the `milestone show` read, the milestone name, and that a ticket with no milestone runs no `milestone show`, with a dated report.
+
 ## 0.0.42 (2026-10-28T22:42:46-07:00)
 
 - New `max_ai_test_sessions_per_attempt` config field, default 6, integers of 0 or more (#91, ADR-010). Each `wkc-implement` build and each `wkc-code-review` round, the final review-only round included, may start that many additional AI test sessions, so a fixing round can test its own fix. With the defaults a full loop allows at most 42. The limit is a ceiling: direct checks come first, and no AI test session starts when they suffice. Any other value stops the call before a test starts.

@@ -210,13 +210,17 @@ Do not preload `run.md` or tell the session to read it. Observe whether the skil
 32. **Finish names a milestone close.** On the GitHub fixture, stage an `in-review` ticket held by the caller, with a
     merged handoff PR, as the last open ticket of a milestone whose other ticket is `done`. Run
     `wkc-implement finish <N>`.
-    PASS: the ticket is `done` (`CLOSED`, `COMPLETED`) with one finish comment; the report names
-    `wkc-plan close <milestone>`; `gh api` shows the milestone still `open`. New, from #66.
+    PASS: the ticket is `done` (`CLOSED`, `COMPLETED`) with one finish comment; the transcript shows
+    `wkc-tracker milestone show <milestone>`; the report names `wkc-plan close <milestone>`; `gh api` shows the
+    milestone still `open`. New, from #66; the `milestone show` read is from #88.
 
 33. **Finish names no close.** As case 32, once on a ticket whose milestone still has a `ready` ticket, and once on a
     ticket with no milestone.
     PASS: both tickets are `done`, both reports name no `wkc-plan close`, and every milestone keeps its state by
-    `gh api`. New, from #66.
+    `gh api`. The first report names the ticket's milestone exactly as `gh issue view <N> --json milestone` shows it,
+    and its transcript shows `wkc-tracker milestone show <milestone>`. The second reports no milestone, and its
+    transcript shows no `milestone show`. New, from #66; the milestone name and reads are from #88, after two
+    sessions in #80's report read the ticket without its `milestone` field and reported none.
 
 Cases 34 to 45 are from #73. An unattended call passes `--run <ref>`, naming a fixture run config written from
 SPEC Contracts › wkc-yolo run › Run config the way `wkc-tracker run create` writes it. Before #78's review, cases 35 to 41 ran with the older trigger, a call that said it came from

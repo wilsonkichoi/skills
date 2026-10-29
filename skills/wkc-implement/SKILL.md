@@ -306,9 +306,10 @@ Gates: none | all passed | left: <steps, and who must act>
 - **Failed for a cause outside this ticket:** a `Discovered:` comment with `Blocks this ticket:
   yes`, handed to `wkc-backlog` at once; the ticket stays `in-progress`.
 
-**Milestone.** After a move to `done`, when the ticket has a milestone, read `wkc-tracker
-milestone show <milestone>`. When no ticket in it is open or lacks a clean status, name `wkc-plan
-close <milestone>` in the report. Never close a milestone.
+**Milestone.** After a move to `done`, take the ticket's milestone from `wkc-tracker show <id>`,
+which reports it. A read that did not ask for the milestone says nothing about it. When the ticket
+has one, name it and read `wkc-tracker milestone show <milestone>`. When no ticket in it is open or
+lacks a clean status, name `wkc-plan close <milestone>` in the report. Never close a milestone.
 
 Report the gates, their results, the ticket's status, and what is left and who must act. Offer
 `wkc-retro` on the ticket when it is installed.
