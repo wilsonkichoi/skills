@@ -24,6 +24,7 @@ Keep raw logs and fixtures outside tracked files.
 - Dated report: 2026-10-28, push check and security review (#76)
 - Dated report: 2026-10-28, review in the implementation worktree (#89)
 - Review round 1: 2026-10-28, PR #90
+- Review round 2: 2026-10-28, PR #90
 
 ## Preparation
 
@@ -819,3 +820,18 @@ in order. `SKILL.md` is 318 lines, above the 250-line target but below the 500-l
 Security review of the diff and all three PR commits found no new dependency, credential, sensitive-data
 flow, or unrelated network call. Gitleaks passed on the reviewed commits. No repository `test_command`
 or GitHub checks are configured.
+
+## Review round 2: 2026-10-28, PR #90
+
+Reviewed `1549195caa45a78f46897cf4bd07689f7fa19767` against #89. No blocking finding. Round 1's fetch
+fix holds: section 3 fetches `pull/<n>/head` only with a pull request.
+
+Improvement: section 3 said "Read the checks' results before running anything in a worktree", and the
+same paragraph calls `gh pr checks <n>` "the checks", so a reader could take it as CI results. It now
+says to finish the reuse checks first, and names "no worktree on that branch" as a fallback reason
+next to a failed reuse check. The git commands and conditions are unchanged.
+
+Static checks only: `git diff --check`, the five opening fields and frontmatter unchanged, no
+`git worktree lock`, and config and `skill-template/` unchanged. `SKILL.md` is 318 lines. No AI
+session ran; 6 of 6 were used. S6's `index.lock` ordering PASS used the earlier wording, so
+instruction following on this wording is SKIP in Claude Code, Codex, and Kiro.

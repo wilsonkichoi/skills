@@ -101,17 +101,17 @@ Read the ticket's **What to build**, **Why**, **Acceptance criteria**, **After m
 checks <n>`), and enough surrounding code to judge the diff in context.
 
 **Where to work.** Only with a pull request, fetch `H` with `git fetch origin pull/<n>/head`.
-Reuse the worktree that `git worktree list --porcelain` shows on
-`branch refs/heads/<headRefName>` when the pull request is not
-cross-repository and that worktree is clean and idle: not `locked` or `prunable`, an empty `git
-status --porcelain`, no merge, rebase, cherry-pick, or `index.lock` in progress, and a `HEAD` that is
-an ancestor of `H` (`git merge-base --is-ancestor`). When it is behind, fast-forward it with `git
-merge --ff-only H` before the review starts. When a check fails, or with no pull request, work in a
-temporary detached worktree at `H` (`git worktree add --detach <path> H`) and report which check
-failed. When the round ends, remove that worktree with `git worktree remove <path>`, never
-`--force`, and report a removal that fails, with its path. Never switch, stash, reset, or clean a
-checkout, and never commit someone else's changes. Read the checks' results before running anything
-in a worktree; then run the criteria's commands and `test_command` there, where a judgment needs them.
+Reuse the worktree that `git worktree list --porcelain` shows on `branch refs/heads/<headRefName>`
+when the pull request is not cross-repository and that worktree is clean and idle: not `locked` or
+`prunable`, an empty `git status --porcelain`, no merge, rebase, cherry-pick, or `index.lock` in
+progress, and a `HEAD` that is an ancestor of `H` (`git merge-base --is-ancestor`). When it is
+behind, fast-forward it with `git merge --ff-only H` before the review starts. With no pull request,
+no worktree on that branch, or a failed reuse check, work in a temporary detached worktree at `H`
+(`git worktree add --detach <path> H`) and report the reason. When the round ends, remove that
+worktree with `git worktree remove <path>`, never `--force`, and report a removal that fails, with
+its path. Never switch, stash, reset, or clean a checkout, and never commit someone else's changes.
+Finish the reuse checks before running anything else in a worktree; then run the criteria's
+commands and `test_command` in the chosen one, where a judgment needs them.
 
 **An update from the base.** When the latest verdict is `approve` on an older head `A`, and `H` is a
 merge whose parents are `A` and a commit `M` on the base branch (`git merge-base --is-ancestor M
