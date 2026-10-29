@@ -435,6 +435,14 @@ class Create(unittest.TestCase):
         out = g.cmd_create(self.f, "t", body, None)
         self.assertEqual(self.f.issues[ref(out["number"])]["blockers"], [ref(1)])
 
+    def test_tab_indented_fence_does_not_hide_dependency_heading(self):
+        for indent in ("\t", " \t", "  \t"):
+            for fence in ("```", "~~~"):
+                with self.subTest(indent=indent, fence=fence):
+                    body = f"## What to build\nIt.\n\n{indent}{fence}\n\n## Blocked by\n- #1\n"
+                    out = g.cmd_create(self.f, "t", body, None)
+                    self.assertEqual(self.f.issues[ref(out["number"])]["blockers"], [ref(1)])
+
     def test_a_create_that_changes_nothing_is_unverified(self):
         self.f.drop.add("create_issue")
         self.assertEqual(code_of(lambda: g.cmd_create(self.f, "t", "b", None)), g.EXIT_UNVERIFIED)
@@ -502,6 +510,16 @@ class Edit(unittest.TestCase):
                 self.f.issues[ref(1)]["body"] = f"## What to build\nIt.\n\n{heading}\nOld notes.\n"
                 g.cmd_edit(self.f, 1, None, "## Notes\nNew notes.\n", None, False)
                 self.assertEqual(self.f.issues[ref(1)]["body"], "## What to build\nIt.\n\n## Notes\nNew notes.\n")
+
+    def test_tab_indented_fence_does_not_close_a_fenced_example(self):
+        for indent in ("\t", " \t", "  \t"):
+            for fence in ("```", "~~~"):
+                with self.subTest(indent=indent, fence=fence):
+                    body = (f"## What to build\n{fence}\n{indent}{fence}\n## Notes\nLiteral example.\n"
+                            f"{fence}\n\n## Notes\nReal notes.\n")
+                    self.f.issues[ref(1)]["body"] = body
+                    g.cmd_edit(self.f, 1, None, "## Notes\nNew notes.\n", None, False)
+                    self.assertEqual(self.f.issues[ref(1)]["body"], body.replace("Real notes.", "New notes."))
 
     def test_blocked_by_section_becomes_the_edge_set(self):
         self.f.issues[ref(1)]["blockers"] = [ref(2)]

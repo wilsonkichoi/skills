@@ -108,6 +108,7 @@ means `wkc-plan close` is the caller's call: the script never closes a milestone
   leading spaces and an optional closing `#` sequence. They ignore headings inside fenced code,
   including fence-like content with trailing text that cannot close the block. A line that starts
   with inline code in triple backticks opens no block.
+  A tab-indented fence is code content and cannot open or close a fenced block.
 - A closed issue carries no status label; `done`, `cancel`, and `duplicate` are close reasons.
 - Writes send text through standard input, never through a shell or a query string.
 

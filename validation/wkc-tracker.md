@@ -661,7 +661,8 @@ calls them.
 PASS: every test passes. The tests run each verb against an in-memory GitHub and cover status mapping, unfiltered
 lists that raise the limit on a full page, the `wkc-run` exclusion, exact milestone titles against closed and
 near-match ones, blocker verdicts for cancel, duplicate chains, loops, and other repositories, cycles, exact bodies,
-section edits and dependency parsing around fenced code (including fence-like content with trailing text),
+section edits and dependency parsing around fenced code (including fence-like content with trailing text and
+tab-indented markers that cannot open or close a fence),
 each `assign` form and its tie-break, half-landed and silently dropped writes,
 failed writes that are not retried, post-write read failures returning exit 3, concurrent closure,
 run configs refused as edge targets, cycles through complete lists, duplicates and other repositories,
@@ -1556,6 +1557,29 @@ here.
 Versions 0.0.9 to 0.0.41 below were development steps on the `feat/tracker` branch. They shipped
 together as 0.0.8, so an entry's version names a branch state, and its skill ref names the exact
 commit it tested.
+
+### 2026-10-29T10:02:16-07:00 PR #95 review round 5
+
+Attempt: `review round 5 on https://github.com/wilsonkichoi/skills/pull/95`.
+Reviewed `95540722d5be452fdc3daaa523cf2638acedc1c2` independently. Selected A51 and static
+contract/security checks. GitHub backend; direct checks in Codex. AI test sessions: 0 of 6.
+
+The 87 existing tests passed. Two new regression tests failed in 12 subchecks at the reviewed head.
+A marker indented with a tab, one space and a tab, or two spaces and a tab incorrectly opened or
+closed a fence, for both backticks and tildes. `create` dropped a real Blocked by edge; `edit`
+deleted a literal Notes example. The shared fence matcher now accepts only zero to three spaces.
+[CommonMark 0.31.2 sections 2.2 and 4.5](https://spec.commonmark.org/0.31.2/#fenced-code-blocks)
+confirm that tab indentation reaches at least four columns and cannot delimit the fenced block.
+All 89 tests pass after the fix. The earlier fixed findings remain resolved in the code read.
+
+`git diff --check` and gitleaks over the branch history passed. The backend adds only the approved
+`uv` prerequisite, uses the standard library, and calls `gh` without a shell. No unrelated network
+call or sensitive-data destination was found. Version 0.0.44 remains this branch's single bump.
+No `test_command` is configured; GitHub reports no PR checks.
+
+No live call ran because the parser is exercised directly. A52 live integration and model case 72
+were not rerun; their reports cover their recorded candidates only. This round does not establish
+harness loading, cross-harness execution, or finish under `--run`.
 
 ### 2026-10-29T09:58:01-07:00 PR #95 review round 4
 

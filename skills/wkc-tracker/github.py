@@ -180,7 +180,7 @@ def _heading_lines(lines: list[str]) -> list[tuple[int, int, str]]:
     optional closing `#` sequence."""
     headings, fence = [], None
     for index, line in enumerate(lines):
-        marker = re.match(r"\s{0,3}(`{3,}|~{3,})(.*)", line)
+        marker = re.match(r" {0,3}(`{3,}|~{3,})(.*)", line)
         if marker:
             token, rest = marker.groups()
             if fence is None:
