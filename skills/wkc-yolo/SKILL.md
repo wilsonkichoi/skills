@@ -49,7 +49,8 @@ config with `wkc-tracker run show <ref>`; a refusal stops. The run PR is the con
 `gh pr list --head <run branch> --base <default> --state all`. A `wkc-yolo phase:` comment on it
 naming a newer config: report that active ref and start nothing. Merged, closed, or open with
 requested changes or a person's review comment since its last validation: read after.md whole and
-follow it. Otherwise, go to section 2.
+follow it. Otherwise, a ready run PR whose head is not its validated sha goes back to draft first
+(`gh pr ready --undo`); then go to section 2.
 
 ## 2. Run the tickets
 
@@ -131,9 +132,8 @@ the raising ticket with `Needs: a person`. With `Planning: none`, `wkc-backlog` 
 1. When anything merged, merge `origin/<default>` into the run branch if `git merge-tree
    --write-tree` shows no conflict, run `push_check`, and push; with a conflict, change nothing and
    report it. Finish waiting tickets once more.
-2. Open the run PR, or reuse it, as a draft: `gh pr create --draft --base <default> --head <run
-   branch>`, the body below. A ready PR whose head is not its validated sha goes back to draft first
-   (`gh pr ready --undo`).
+2. With merged work, open the run PR, or reuse it, as a draft: `gh pr create --draft --base
+   <default> --head <run branch>`, the body below. With none, report and stop.
 3. At the run branch head, run `test_command` when configured, `wkc-implement verify <id> --run
    <ref>` for every required ticket, and each exit-check item a command decides. A failure on an
    unfinished ticket follows its follow-up path. One in a `done` ticket, or between tickets, is a

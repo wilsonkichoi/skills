@@ -54,6 +54,11 @@ rest of setup.
    the default workers.
    PASS: the written config parses as case 10's template values, and no `claude-code` appears in `headless_workers`.
    New, from #83.
+12. **Additional-ticket allowance.** Direct, then a throwaway project. Read Section D and parse the template.
+   PASS: Section D asks for `max_additional_tickets` after `max_ai_test_sessions_per_attempt`, an integer, 0 or
+   more, `5` recommended, and says initial tickets never count and `0` admits nothing new; the template parses it
+   as `5`; Section E names initial tickets and the allowance, not a budget. In the project, accepting the default
+   writes `max_additional_tickets: 5`. New, from #74.
 
 ## Dated report: 2026-10-22
 
