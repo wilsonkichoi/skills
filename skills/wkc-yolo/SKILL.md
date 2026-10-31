@@ -146,8 +146,8 @@ the raising ticket with `Needs: a person`. With `Planning: none`, `wkc-backlog` 
 4. Run each grant's cleanup command once, here and before every controlled stop, and post `wkc-yolo
    cleanup:` on the ticket whose gate last deployed it.
 5. Update the body. **Ready** only when every required ticket is `done` and every check passed at
-   that head: `gh pr ready`, then confirm `headRefOid` equals the validated sha. Otherwise it stays a
-   draft that names what is left and who must act.
+   that head. Check `headRefOid` before `gh pr ready` and again after it. A mismatch keeps or puts
+   it back in draft with body `draft: not ready`, then restarts readiness. Otherwise name what is left and who acts.
 
 ```markdown
 ready: verified at <sha> | draft: not ready

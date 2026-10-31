@@ -77,6 +77,12 @@ and quota stops still apply.
 
 With the answers, ask nothing more in this phase.
 
+Before any write, validate the answered execution selection with routing.md sections 2 and 5,
+using the answered headless list intersected with the project's. With no pair, the confirmed
+harness must be this coordinator's harness and must have a native worker that accepts its model
+and effort, or its own opted-in headless CLI. A pinned Claude ID needs `claude-code` in that list.
+If no permitted worker can run the selection, stop without creating a branch or config.
+
 1. **Run branch.** `run/<milestone-slug>-<YYYYMMDDTHHMM>`, local time, or `run/ticket-<id>-...` for
    a ticket with no milestone. Push it at the remote default branch's sha after running
    `push_check`. To supersede, start it from the closed run's branch with `origin/<default>`

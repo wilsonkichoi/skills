@@ -166,12 +166,16 @@ never a fork, a resumed implementation session, or `--last`.
 
 | Selection | Worker |
 |---|---|
+| No pair, coordinator has a native tool accepting the confirmed model and effort, excluding pinned Claude IDs | A fresh native agent with that explicit `model` and effort, no inherited conversation; takes precedence over the headless rows below |
 | `claude-code`, an alias, coordinator in Claude Code | A native agent, not a fork, `general-purpose`, with `model` the alias and `effort` the resolved effort |
 | `claude-code`, a pinned ID, or a Codex coordinator | `claude -p`, only when `headless_workers` lists `claude-code` |
 | `codex` | `codex exec`, only when `headless_workers` lists `codex` |
 | `kiro-cli`, a run without a pair | `kiro-cli chat --no-interactive`, only when `headless_workers` lists `kiro-cli` |
 
-A run without a pair uses the coordinator's native subagent when its harness has one. A Claude Code
+A run without a pair uses the coordinator's native subagent when its harness has one that accepts
+the confirmed model and effort. In Codex, set `fork_turns: "none"`, `model`, and `reasoning_effort`
+explicitly on `spawn_agent`; this native path needs no headless opt-in. Otherwise use the harness's
+opted-in headless CLI. A Claude Code
 native agent always gets the alias as `model` and the effort, never an unset model: an unset one can
 run another model than the session's. A pinned ID takes the table's `claude -p` row; without
 `claude-code` in `headless_workers`, stop before any write. Without a native subagent, it uses the

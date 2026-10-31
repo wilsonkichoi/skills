@@ -1,5 +1,9 @@
 # wkc-implement validation
 
+No-pair native dispatch regression: with a native-capable Codex coordinator, `Execution models:
+none`, and no `codex` headless opt-in, use `spawn_agent` with explicit `model`,
+`reasoning_effort`, and `fork_turns: "none"`. The native row precedes the headless-only Codex row.
+
 Follow [Validation](../AGENTS.md#validation): select affected cases and harnesses, use direct checks first, and reuse unchanged evidence.
 This is a case catalog, not a full test sequence for each change.
 Record PASS, FAIL, or SKIP for selected cases. Keep direct checks separate from harness behavior.

@@ -66,6 +66,9 @@ coordinator was `claude-opus-5-5` through batch 2 and `claude-sonnet-5-5` from b
    coordinator's own harness only. Trace the no-pair Kiro selection through sections 2 and 3:
    it must not hit the pair-only harness rejection or require a preceding pair execution record.
    A native-capable Codex coordinator needs no headless opt-in for that native path.
+   Trace the answered kickoff list too: Kiro without native workers and with only `codex` opted
+   in must create neither branch nor config. Native Codex uses explicit `model`,
+   `reasoning_effort`, and `fork_turns: "none"` before considering the headless rows.
 
 **Model, on the fixture (needs Y25)**
 
@@ -101,6 +104,8 @@ coordinator was `claude-opus-5-5` through batch 2 and `claude-sonnet-5-5` from b
     cleans up first on resume, also when the stop fell between the deploy and its gate comment. Criterion 30.
 15. **Y15 Stale readiness.** Push a commit to the run branch after the PR is ready; `wkc-yolo resume <ref>`. PASS:
     the PR is draft until readiness passes again, then its validated sha equals the new head. Criterion 31.
+    Change the head after checks but before `gh pr ready`, and between its surrounding head reads:
+    a mismatch keeps or returns the PR to draft and restarts readiness at the new head.
 16. **Y16 Closed unmerged.** Close the run PR; resume. PASS: one `Run outcome (wkc-yolo): closed without merging`
     per ticket, tickets stay closed `COMPLETED`, the config issue is closed and `run show` still returns its body;
     a manual `wkc-implement` on a ticket blocked by A refuses and names the run branch; a superseding run starts
@@ -231,3 +236,40 @@ instruction inspection, plus the GitHub helper's controlled unit tests. No model
   planted-secret integration, and live no-pair dispatch. Caller authorized no AI test sessions.
   The existing build report's gaps remain gaps; its model results were not rerun here.
 - No configured `test_command`; GitHub reports no CI checks. Version remains 0.0.47 for this PR.
+
+## Review round 2: 2026-10-30, PR #100
+
+Attempt: review round 2 on https://github.com/wilsonkichoi/skills/pull/100.
+Reviewed: `0c51e7cd2614fc181afb6fff5ecab6b34df4afaf`. Independent Codex review.
+AI test sessions: 2 of 30 authorized by the caller, replacing the project ceiling of 6.
+Selected: Y1/Y2 packaging/templates; Y3 private-fixture subcheck; Y6/Y24 no-pair instruction
+interpretation; Y15 head-change recovery instructions; prior-round fixes; tracker unit regressions;
+diagram validation and security scan. No full milestone integration was selected or rerun.
+
+- Session 1: native Codex subagent, requested `gpt-6.1-terra`, effort `high`, no inherited
+  conversation. Observed model/effort unavailable. Read-only instruction traces confirmed two
+  failures: kickoff checked the project list before answers could narrow it; the native-first
+  Codex rule conflicted with a headless-only table and omitted native model/effort arguments.
+  Fixed by validating the answered selection before writes and making native dispatch explicit.
+- Session 2: `claude -p`, requested `claude-sonnet-5-5`, effort `medium`, one turn, tools disabled.
+  Runtime JSON names `claude-sonnet-5-5`; effective effort unavailable. PASS focused instruction
+  traces: Kiro without its own opted-in worker stops; native Codex uses explicit model/high
+  effort and no fork without headless opt-in; pinned Claude without opt-in stops; a stale head
+  keeps/restores draft and restarts readiness. Interpretation exposed an ambiguous native-table
+  exception and stale body text; the final text explicitly excludes pinned Claude IDs and
+  rewrites the ready marker to `draft: not ready`. Those clarifications were checked statically.
+  Usage: 28,694 input/cache tokens, 4,156 output tokens; reported list-price equivalent $0.1538.
+- Fixed Y15 recovery: before this round, a head change after checks could leave a PR ready after
+  the final head comparison failed. Check before and after publication; on mismatch restore draft
+  and its body marker, then restart readiness. This does not promise atomic host-side publication.
+- PASS direct: Y1 YAML/invocation settings/five fields/249 lines; Y2 seven template comparisons;
+  supporting-file Contents lists; all four round-1 fixes still present; `make test-tracker`
+  (99 tests); diagram `check` with the repository documentation base; `git diff --check`;
+  gitleaks over PR history. No new package dependency or unnecessary network operation found.
+- Y3 focused direct: `wilsonkichoi/skills` returns `enabled`; private fixture
+  `wilsonkichoi/wkc-yolo-fixture-20261029` returns `unverifiable`, with the status field absent.
+  SKIP fine-grained token without Administration read: no separate token available.
+- SKIP actual no-pair child dispatch, live stale-head publication race, interrupted-deploy
+  recovery, and planted-secret integration. The build's remaining integration limits remain;
+  instruction traces do not prove those behaviors. No configured `test_command` or GitHub CI.
+- Version remains 0.0.47 for this PR. No merge or ticket status change.
