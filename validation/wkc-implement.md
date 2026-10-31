@@ -1,9 +1,5 @@
 # wkc-implement validation
 
-No-pair native dispatch regression: with a native-capable Codex coordinator, `Execution models:
-none`, and no `codex` headless opt-in, use `spawn_agent` with explicit `model`,
-`reasoning_effort`, and `fork_turns: "none"`. The native row precedes the headless-only Codex row.
-
 Follow [Validation](../AGENTS.md#validation): select affected cases and harnesses, use direct checks first, and reuse unchanged evidence.
 This is a case catalog, not a full test sequence for each change.
 Record PASS, FAIL, or SKIP for selected cases. Keep direct checks separate from harness behavior.
@@ -37,6 +33,7 @@ Keep raw logs and fixtures outside tracked files.
 - Review round 2: 2026-10-29, PR #99
 - Review round 3: 2026-10-29, PR #99
 - Review round 4: 2026-10-29, PR #99
+- No-pair routing subchecks, from #74
 
 ## Preparation
 
@@ -1532,6 +1529,8 @@ person's approval.
 ## No-pair routing subchecks, from #74
 
 Use `validation/wkc-yolo.md` Y6 for direct selection and argument checks and Y24 for authorized
-model runs. A no-pair Kiro selection must bypass the pair-only harness rejection. A native Codex
-selection does not require headless opt-in. Every no-pair step uses the validated Coordinator model
+model runs. A no-pair Kiro selection must bypass the pair-only harness rejection. A native-capable
+Codex coordinator with `Execution models: none` and no `codex` headless opt-in uses `spawn_agent`
+with explicit `model`, `reasoning_effort`, and `fork_turns: "none"`; the native row precedes the
+headless-only Codex row. Every no-pair step uses the validated Coordinator model
 without looking for a preceding pair record. Pair validation and alternation remain unchanged.

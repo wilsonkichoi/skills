@@ -50,7 +50,7 @@ config with `wkc-tracker run show <ref>`; a refusal stops. The run PR is the con
 naming a newer config: report that active ref and start nothing. Merged, closed, or open with
 requested changes or a person's review comment since its last validation: read after.md whole and
 follow it. Otherwise, a ready run PR whose head is not its validated sha goes back to draft first
-(`gh pr ready --undo`); then go to section 2.
+(`gh pr ready --undo`) with body `draft: not ready`; then go to section 2.
 
 ## 2. Run the tickets
 
@@ -145,9 +145,9 @@ the raising ticket with `Needs: a person`. With `Planning: none`, `wkc-backlog` 
    merge restarts readiness at the new head.
 4. Run each grant's cleanup command once, here and before every controlled stop, and post `wkc-yolo
    cleanup:` on the ticket whose gate last deployed it.
-5. Update the body. **Ready** only when every required ticket is `done` and every check passed at
-   that head. Check `headRefOid` before `gh pr ready` and again after it. A mismatch keeps or puts
-   it back in draft with body `draft: not ready`, then restarts readiness. Otherwise name what is left and who acts.
+5. Update the body. **Ready** only when every required ticket is `done`, every check passed at that
+   head, and `headRefOid` equals that sha before and after `gh pr ready`. A mismatch keeps or puts it
+   back in draft with body `draft: not ready` and restarts readiness. A draft names what is left and who acts.
 
 ```markdown
 ready: verified at <sha> | draft: not ready

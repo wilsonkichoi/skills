@@ -103,7 +103,8 @@ coordinator was `claude-opus-5-5` through batch 2 and `claude-sonnet-5-5` from b
     required work that cannot be admitted still cleans up and opens a draft; a run interrupted after the deploy
     cleans up first on resume, also when the stop fell between the deploy and its gate comment. Criterion 30.
 15. **Y15 Stale readiness.** Push a commit to the run branch after the PR is ready; `wkc-yolo resume <ref>`. PASS:
-    the PR is draft until readiness passes again, then its validated sha equals the new head. Criterion 31.
+    the PR is draft, with body `draft: not ready`, until readiness passes again, then its validated sha equals the
+    new head. Criterion 31.
     Change the head after checks but before `gh pr ready`, and between its surrounding head reads:
     a mismatch keeps or returns the PR to draft and restarts readiness at the new head.
 16. **Y16 Closed unmerged.** Close the run PR; resume. PASS: one `Run outcome (wkc-yolo): closed without merging`
@@ -273,3 +274,20 @@ diagram validation and security scan. No full milestone integration was selected
   recovery, and planted-secret integration. The build's remaining integration limits remain;
   instruction traces do not prove those behaviors. No configured `test_command` or GitHub CI.
 - Version remains 0.0.47 for this PR. No merge or ticket status change.
+
+## Review round 3: 2026-10-30, PR #100
+
+Attempt: review round 3 on https://github.com/wilsonkichoi/skills/pull/100.
+Reviewed: `40106617d53968b978ebd1effd8264ba3fb78a54`. Independent Claude Code review.
+AI test sessions: 0 of 6. Direct checks sufficed for wording and placement changes.
+Selected: Y1/Y2 packaging/templates; Y15 resume stale-head marker; all seven earlier fixes;
+tracker unit regressions; security scan.
+
+- Improved Y15 resume: SKILL.md section 1 put a stale ready PR back to draft but left its body at
+  `ready: verified at <old sha>`, unlike section 4's mismatch path. It now writes `draft: not ready`.
+- Improved section 4 step 5: the head comparison names the validated sha again, as before round 2.
+- PASS direct: Y1 YAML/invocation settings/five fields/249 lines; Y2 six template blocks match the
+  SPEC and the `Run:` block is exact; all earlier fixes present; `make test-tracker` (99 tests);
+  `git diff --check`; gitleaks over PR history. Diagram files unchanged since round 2's check.
+- SKIP every model-run case; this round changed no behaviour a direct read cannot check. The
+  build's and round 2's integration SKIPs remain. No configured `test_command` or GitHub CI.
