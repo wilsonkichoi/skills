@@ -57,7 +57,9 @@ follow it. Otherwise, a ready run PR whose head is not its validated sha goes ba
 **Resume first.** Rebuild state from records, never memory. The run is the active config and its
 `Continues:` chain. Its tickets are those whose latest `Run:` comment names a config in the chain.
 Required work is every phase's initial IDs plus admitted tickets, and a superseded run's `done`
-tickets, minus work the person left out or moved. First run each grant's cleanup once, unless its
+tickets, minus work the person left out or moved. Approved split children replace a canceled
+parent's remaining deliverable only after admission; report the parent as replaced, never done.
+First run each grant's cleanup once, unless its
 latest record is a `wkc-yolo cleanup:` comment, as section 4 step 4 says. Then finish interrupted
 tickets again. Continue a planning PR that a Decision comment names. Skip a ticket held by an
 unrelated config. A restart keeps the config, admissions, round counts, and remaining allowance.
@@ -79,9 +81,10 @@ A blocker in the run is met once its PR merged into the run branch and its lates
 failed gate; one outside it follows `wkc-implement` section 2. `wkc-tracker next` reads status
 alone, so decide from these reads.
 
-Run at most 5 workers at once, native and headless together, each ticket in its own detached
-worktree at the fetched run branch, where `wkc-implement` creates the ticket branch. A worker never
-starts another. Serialize tickets that carry a coordination risk. `wkc-implement` and
+On GitHub and Linear, run at most 5 workers at once, native and headless together, each ticket in
+its own detached worktree at the fetched run branch, where `wkc-implement` creates its branch.
+On local, run one ticket at a time in the starting directory. A worker never starts another.
+Serialize tickets that carry a coordination risk. `wkc-implement` and
 `wkc-code-review` pick each step's model and start its fresh worker by routing.md, on the config's
 `Coordinator model:` when there is no pair. A review never sees the implementation's conversation.
 Check the PR head, the handoff or verdict, and the tracker writes yourself before advancing; a
@@ -109,14 +112,15 @@ Only this session admits. Send discovered items to `wkc-backlog <the item and it
 
 A prerequisite of a required ticket, or a readiness repair, joins only with `New prerequisites: run`
 and a slot left. **Used slots** are the distinct tickets absent from this phase's initial IDs with a
-verified `Run:` comment naming its config, found through the admission Decision comments on the
-run's tickets and run PR. A reused out-of-scope ticket and each split or replacement child cost one;
+verified `Run:` comment naming its config. Use `wkc-tracker list` across all statuses and `show`
+to find those comments, including transferred or canceled tickets; Decision comments are not an index. A reused out-of-scope ticket and each split or replacement child cost one;
 a backlog record, and a fix to the same ticket, cost none. Parking, canceling, splitting, or
 transferring refunds none. To admit: post and verify `Run: <active ref>` on it, post a `Decision
 (wkc-yolo):` naming it and the slot on the ticket that raised it, or on the run PR when no ticket
 did, and move it to `ready`. A failed verification stops admission; on resume, read whether it
-landed before spending again. Without `run` or a slot, it stays at `backlog` and what it blocks
-waits. Other items stay outside the run.
+landed before spending again. A landed `Run:` already spends its slot: finish a missing Decision
+or move to `ready` without admitting it again. Without `run` or a slot, new work stays at
+`backlog` and what it blocks waits. Other items stay outside the run.
 
 **Planning changes.** Run each `wkc-backlog` call in a fresh worktree on a `docs/<slug>` branch from
 the run branch. When it changed a document, commit, run `push_check`, push, and open a PR against the
@@ -173,9 +177,7 @@ Refer to tickets only with `Refs`; large tables may live in linked PR comments. 
 incident or the push protection status.
 
 ## 5. Templates
-
 Run config, written once per phase, never edited:
-
 ```markdown
 # Run config: <milestone>
 Started: <ISO 8601 time>. By: <person>.
@@ -199,7 +201,6 @@ Started: <ISO 8601 time>. By: <person>.
 ```
 
 On a ticket, before its first dispatch or on admission:
-
 ```
 Run: <active run config ref>
 ```
@@ -223,7 +224,6 @@ Result: pass | fail, <output summary>
 ```
 
 Written by after.md:
-
 ```
 Run outcome (wkc-yolo): merged | closed without merging
 Run PR: <URL>

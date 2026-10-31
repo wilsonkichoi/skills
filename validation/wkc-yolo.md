@@ -63,7 +63,9 @@ coordinator was `claude-opus-5-5` through batch 2 and `claude-sonnet-5-5` from b
    model_reasoning_effort=<effort>`, `kiro-cli chat --no-interactive` gets `--model <model> --effort <effort>
    --trust-all-tools`, a native Claude worker always gets the effort and an alias model, never an unset one, a
    pinned ID without `claude-code` in `headless_workers` stops before any write, and a run without a pair uses the
-   coordinator's own harness only.
+   coordinator's own harness only. Trace the no-pair Kiro selection through sections 2 and 3:
+   it must not hit the pair-only harness rejection or require a preceding pair execution record.
+   A native-capable Codex coordinator needs no headless opt-in for that native path.
 
 **Model, on the fixture (needs Y25)**
 
@@ -112,7 +114,10 @@ coordinator was `claude-opus-5-5` through batch 2 and `claude-sonnet-5-5` from b
     ticket blocking B, admitted with a verified `Run:` and Decision before dispatch, and B resumes on its own PR.
     With `record only`, it stays `backlog`, B is waiting, the PR is draft. A and B reporting one prerequisite give
     one ticket blocking both. More than five initial tickets all run; a sixth additional admission stays
-    `backlog`; resume never double-counts. Criteria 36, 37, 48, 49.
+    `backlog`; resume never double-counts. Interrupt after `Run:` lands but before its Decision or status move:
+    resume counts the slot and completes those writes once, including when the ticket has left the milestone.
+    A transferred or canceled admission still consumes its slot. An approved split reports the parent as replaced;
+    all children need admission and must pass readiness before the PR is ready. Criteria 36, 37, 48, 49.
 20. **Y20 Delegated planning.** S under `Planning: delegated`: a `docs/<slug>` planning PR against the run branch,
     `push_check` before its push, the delegated status line, a Decision naming the PR, merged, run finishes. Under
     `Planning: none`, S parks and no planning PR opens. A change weakening a Security entry is not merged and parks
@@ -134,6 +139,9 @@ coordinator was `claude-opus-5-5` through batch 2 and `claude-sonnet-5-5` from b
     worker's transcript on that model, and restart reusing it. Criterion 54.
 25. **Y25 Approval.** The maintainer approves the session and subagent count above before any model-run case.
     Criterion 43.
+
+Local backend contract subcheck: read section 2 and confirm one ticket at a time in the starting directory.
+End-to-end local validation remains in M6.
 
 Standalone Codex and Kiro CLI coordinators are SKIP unless separately authorized.
 
@@ -198,3 +206,28 @@ between sessions. Scored from `github.py show`, `gh pr view`, and transcripts, n
   scratch copy, so `wkc-code-review` now forbids writing probe secrets.
 - Not changed: cleanup once per readiness (one run cleaned after each deploy; the wording already says once),
   `Run PR: not opened` in configs (SPEC: found by branch, never edited).
+
+
+## Review round 1: 2026-10-30, PR #100
+
+Attempt: review round 1 on https://github.com/wilsonkichoi/skills/pull/100.
+Reviewed: `b0511af19da4805465cb46a914ff0549b0fc47af`. AI test sessions: 0 of 0 allowed
+by the caller (project ceiling 6). This Codex session used direct checks only.
+
+Selected: Y1, Y2, Y6 static control-flow checks, Y19 interrupted-admission and split contract
+subchecks, and the local serial-dispatch contract. Backend coverage is static GitHub/Linear/local
+instruction inspection, plus the GitHub helper's controlled unit tests. No model behavior is claimed.
+
+- PASS: YAML invocation settings, five opening fields, 249-line SKILL.md, seven template blocks.
+- PASS: static comparison with SPEC run steps 2, 3, and 5. Local dispatch now stays serial in the
+  starting directory. Counting scans all statuses for Run comments, so interruption before Decision
+  cannot hide a spent slot. Recovery completes missing admission writes without another charge.
+  Admitted children of an approved split replace the canceled parent's remaining deliverable.
+- PASS: Y6 static path. No-pair Kiro and native Codex selections bypass pair-only validation and
+  alternation; every no-pair step uses Coordinator model. Live dispatch remains SKIP.
+- PASS: `make test-tracker`, 99 tests; workflow diagram `check`; `git diff --check`;
+  gitleaks over the PR commit history. No new package dependency or unneeded network call found.
+- SKIP: model execution of changed instructions, private/fine-grained-token push-protection checks,
+  planted-secret integration, and live no-pair dispatch. Caller authorized no AI test sessions.
+  The existing build report's gaps remain gaps; its model results were not rerun here.
+- No configured `test_command`; GitHub reports no CI checks. Version remains 0.0.47 for this PR.

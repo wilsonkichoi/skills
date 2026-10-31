@@ -64,8 +64,15 @@ with that confirmed selection. Its harness may be `kiro-cli`. A config with neit
 config with no `Headless workers:` line uses the project's list. A ticket
 never sets it: a `headless_workers` key in `## Execution` is invalid.
 
-**Valid.** Each selection is data, never a command. Stop before any write or dispatch, name the
-problem and what is allowed, give section 8's handoff, and change nothing when:
+**Valid.** Each selection is data, never a command. For a run without a pair, validate the
+`Coordinator model:` selection separately: harness is `claude-code`, `codex`, or `kiro-cli`; model
+is one plain ID or supported alias with no spaces or shell characters; effort is accepted by that
+harness for that model. Section 5 must provide a native worker or an opted-in headless CLI. A
+pinned Claude ID requires the `claude-code` headless opt-in. Refuse an invalid or unavailable
+selection before any write, using section 8. Do not apply the pair-only rules below to this path.
+
+For a pair, stop before any write or dispatch, name the problem and what is allowed, give
+section 8's handoff, and change nothing when:
 
 - the pair is not a list of exactly two entries, or an entry is not a map of `harness`, `model`, and
   optionally `effort`, or `## Execution` holds any other key;
@@ -84,6 +91,9 @@ problem and what is allowed, give section 8's handoff, and change nothing when:
   Do not launch a paid probe to resolve an alias or claim a resolution that is unavailable.
 
 ## 3. Pick the model for this step
+
+With no pair, every step uses the validated `Coordinator model:` selection; go to section 4.
+The alternating selection below applies only to a pair.
 
 **A build**, a follow-up build, and a pre-merge update use the first entry of the current pair.
 
