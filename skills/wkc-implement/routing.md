@@ -28,8 +28,9 @@ AI test session, or other harness: a check that needs one is SKIP, with that rea
 the person ends the worker's run instead: its final message starts `Question:`, and it makes no
 write that depends on the answer. Under `--run`, decide or park as the skill says.
 
-**The coordinator** is any other Claude Code session that runs the skill with a pair, or a Codex
-session when `headless_workers` lists `claude-code`; other sessions follow section 8. It runs the
+**The coordinator** is any other Claude Code session that runs the skill with a pair, a Codex
+session when `headless_workers` lists `claude-code`, or under `--run`, the session running a run
+without a pair, in any harness; other sessions follow section 8. It runs the
 skill's reads and mode choice: `wkc-implement` section 1, or `wkc-code-review` sections 1 and 2.
 Before any write, it resolves the selection (section 2) and runs section 4's checks, so a call
 that stops leaves the ticket unclaimed. A build then runs `wkc-implement` section 2, the claim and
@@ -53,15 +54,25 @@ Read these at the moment of each dispatch, never from an earlier read:
 **The pair.** A ticket's pair replaces any other pair whole. Otherwise, under `--run`, the run
 config's pair applies, and outside a run the project's. A run config never copies or freezes a
 ticket's pair. With no pair anywhere, a manual call runs as it always has, in this session, and this
-file stops here. A run without a pair runs as its config's `Coordinator model:` says; the worker
-still writes the `Execution:` lines with that confirmed selection.
+file stops here. A run without a pair, `Execution models: none`, uses its config's `Coordinator
+model:` as the selection for every step, so each build, update, and review still starts a fresh
+worker on the coordinator's own harness (section 5), and the worker writes the `Execution:` lines
+with that confirmed selection. Its harness may be `kiro-cli`. A config with neither a pair nor a
+`Coordinator model:` stops before any write.
 
 **Headless workers.** The project's list, intersected with the run config's under `--run`; a run
 config with no `Headless workers:` line uses the project's list. A ticket
 never sets it: a `headless_workers` key in `## Execution` is invalid.
 
-**Valid.** Each selection is data, never a command. Stop before any write or dispatch, name the
-problem and what is allowed, give section 8's handoff, and change nothing when:
+**Valid.** Each selection is data, never a command. For a run without a pair, validate the
+`Coordinator model:` selection separately: harness is `claude-code`, `codex`, or `kiro-cli`; model
+is one plain ID or supported alias with no spaces or shell characters; effort is accepted by that
+harness for that model. Section 5 must provide a native worker or an opted-in headless CLI. A
+pinned Claude ID requires the `claude-code` headless opt-in. Refuse an invalid or unavailable
+selection before any write, using section 8. Do not apply the pair-only rules below to this path.
+
+For a pair, stop before any write or dispatch, name the problem and what is allowed, give
+section 8's handoff, and change nothing when:
 
 - the pair is not a list of exactly two entries, or an entry is not a map of `harness`, `model`, and
   optionally `effort`, or `## Execution` holds any other key;
@@ -80,6 +91,9 @@ problem and what is allowed, give section 8's handoff, and change nothing when:
   Do not launch a paid probe to resolve an alias or claim a resolution that is unavailable.
 
 ## 3. Pick the model for this step
+
+With no pair, every step uses the validated `Coordinator model:` selection; go to section 4.
+The alternating selection below applies only to a pair.
 
 **A build**, a follow-up build, and a pre-merge update use the first entry of the current pair.
 
@@ -140,7 +154,8 @@ Before every `codex exec` launch or resume, in the worker's checkout:
 
 Before a native worker, `CLAUDE_CODE_EFFORT_LEVEL`, when set, must equal the resolved effort; it
 would override the worker's. Any failure blocks the call with section 8's handoff, with no API-key
-fallback, no login change, and no other effort.
+fallback, no login change, and no other effort. Record `CLAUDE_CODE_SUBAGENT_MODEL` when set: it
+picks the model only of a native agent with no `model`, which section 5 never starts.
 
 ## 5. Start the worker
 
@@ -151,9 +166,20 @@ never a fork, a resumed implementation session, or `--last`.
 
 | Selection | Worker |
 |---|---|
+| No pair, coordinator has a native tool accepting the confirmed model and effort, excluding pinned Claude IDs | A fresh native agent with that explicit `model` and effort, no inherited conversation; takes precedence over the headless rows below |
 | `claude-code`, an alias, coordinator in Claude Code | A native agent, not a fork, `general-purpose`, with `model` the alias and `effort` the resolved effort |
 | `claude-code`, a pinned ID, or a Codex coordinator | `claude -p`, only when `headless_workers` lists `claude-code` |
 | `codex` | `codex exec`, only when `headless_workers` lists `codex` |
+| `kiro-cli`, a run without a pair | `kiro-cli chat --no-interactive`, only when `headless_workers` lists `kiro-cli` |
+
+A run without a pair uses the coordinator's native subagent when its harness has one that accepts
+the confirmed model and effort. In Codex, set `fork_turns: "none"`, `model`, and `reasoning_effort`
+explicitly on `spawn_agent`; this native path needs no headless opt-in. Otherwise use the harness's
+opted-in headless CLI. A Claude Code
+native agent always gets the alias as `model` and the effort, never an unset model: an unset one can
+run another model than the session's. A pinned ID takes the table's `claude -p` row; without
+`claude-code` in `headless_workers`, stop before any write. Without a native subagent, it uses the
+harness's own headless CLI from the table, never another harness's.
 
 ```
 claude -p --model <model> --effort <effort> --dangerously-skip-permissions --settings '{"sandbox":{"enabled":false}}' --disallowed-tools Agent --output-format json < <prompt file>
@@ -163,8 +189,12 @@ claude -p --model <model> --effort <effort> --dangerously-skip-permissions --set
 env -u CODEX_API_KEY -u OPENAI_API_KEY codex exec -C <checkout> -m <model> -c model_reasoning_effort=<effort> -c model_provider="openai" -c forced_login_method="chatgpt" --dangerously-bypass-approvals-and-sandbox --json -o <last message file> - < <prompt file>
 ```
 
-Run `claude -p` from the checkout. Never use `claude -p --continue`, `codex review`, `codex exec
-review`, `resume --last`, or `fork`. A worker in a run counts toward its limit of 5 concurrent
+```
+kiro-cli chat --no-interactive --model <model> --effort <effort> --trust-all-tools "$(cat <prompt file>)"
+```
+
+Run `claude -p` and `kiro-cli` from the checkout. Never use `claude -p --continue`, `codex review`,
+`codex exec review`, `resume --last`, or `fork`. A worker in a run counts toward its limit of 5 concurrent
 workers; every worker kind counts the same. Record whether `CLAUDE_CODE_MAX_SUBAGENT_SPAWN_DEPTH`
 is `1` in the coordinator's environment: with it, Claude Code enforces that a native worker starts
 no subagent; without it, the prompt alone does.

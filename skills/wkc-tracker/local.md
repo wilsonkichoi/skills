@@ -116,6 +116,8 @@ Never run `git add`, `git commit`, or `git push`.
 
 A run config is a file in `issues_dir/runs/`, never a ticket. `run create` writes the text to
 `issues_dir/runs/<Run branch with each / as ->.md`, such as `runs/run-m4-20261026T0900.md`, and
-refuses when the file exists. The path is the reference. `run show` reads it, and refuses when it is
+refuses when the file exists. A continuation, whose `Continues:` names a prior config, adds
+`-phase-<n>` before `.md`, where `<n>` counts the configs in its chain, itself included, such as
+`runs/run-m4-20261026T0900-phase-2.md`. The path is the reference. `run show` reads it, and refuses when it is
 missing. Nothing shows whether it was edited, so an edit goes undetected. `run close` writes
 nothing: the file stays as the run's record.

@@ -297,6 +297,36 @@
       }
     },
     {
+      "id": "yolo",
+      "label": "wkc-yolo",
+      "lane": "coordination",
+      "summary": "Run a ticket, a wave, or a milestone unattended after one round of questions, ending in one run pull request that a person reviews and merges.",
+      "details": {
+        "body": "Asks every question up front, then builds, reviews, merges into the run branch, and finishes each ticket through wkc-implement, wkc-code-review, and wkc-backlog, with every ticket and run config write through wkc-tracker. It never merges the run pull request; callers are people only.",
+        "when": "Use when a person wants a ticket, a wave, or a milestone done unattended, or to resume, re-verify, or close out such a run.",
+        "commands": [
+          {
+            "label": "Codex",
+            "text": "$wkc-yolo <milestone>"
+          },
+          {
+            "label": "Claude Code / Kiro CLI",
+            "text": "/wkc-yolo <milestone>"
+          }
+        ],
+        "links": [
+          {
+            "label": "Read the wkc-yolo skill",
+            "href": "skills/wkc-yolo/SKILL.md"
+          },
+          {
+            "label": "Resume a run",
+            "href": "skills/wkc-yolo/SKILL.md#2-run-the-tickets"
+          }
+        ]
+      }
+    },
+    {
       "id": "workflow-diagram",
       "label": "wkc-workflow-diagram",
       "lane": "documentation",
@@ -499,6 +529,31 @@
       "to": "implement",
       "kind": "optional",
       "label": "Approved head"
+    },
+    {
+      "id": "yolo-tracker",
+      "from": "yolo",
+      "to": "tracker",
+      "label": "Run configs and ticket state"
+    },
+    {
+      "id": "yolo-implement",
+      "from": "yolo",
+      "to": "implement",
+      "label": "Builds, updates, finishes, verifies"
+    },
+    {
+      "id": "yolo-code-review",
+      "from": "yolo",
+      "to": "code-review",
+      "label": "Runs review rounds"
+    },
+    {
+      "id": "yolo-backlog",
+      "from": "yolo",
+      "to": "backlog",
+      "kind": "optional",
+      "label": "Discovered work and planning changes"
     }
   ]
 }

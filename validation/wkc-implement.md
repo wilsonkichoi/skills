@@ -33,6 +33,7 @@ Keep raw logs and fixtures outside tracked files.
 - Review round 2: 2026-10-29, PR #99
 - Review round 3: 2026-10-29, PR #99
 - Review round 4: 2026-10-29, PR #99
+- No-pair routing subchecks, from #74
 
 ## Preparation
 
@@ -1523,3 +1524,13 @@ that read `routing.md` with this round's fix and started nothing. Direct: five-f
 
 Still not run: case 78, and case 80's live question relay and `--run` handoff, which need the
 person's approval.
+
+
+## No-pair routing subchecks, from #74
+
+Use `validation/wkc-yolo.md` Y6 for direct selection and argument checks and Y24 for authorized
+model runs. A no-pair Kiro selection must bypass the pair-only harness rejection. A native-capable
+Codex coordinator with `Execution models: none` and no `codex` headless opt-in uses `spawn_agent`
+with explicit `model`, `reasoning_effort`, and `fork_turns: "none"`; the native row precedes the
+headless-only Codex row. Every no-pair step uses the validated Coordinator model
+without looking for a preceding pair record. Pair validation and alternation remain unchanged.

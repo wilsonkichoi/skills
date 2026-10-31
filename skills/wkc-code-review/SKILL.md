@@ -143,6 +143,8 @@ Check the implementation and the tests, in this order:
   or in any commit of the pull request (`git log -p origin/<baseRefName>..H`), an authentication or
   authorization defect, sensitive data logged, stored, or sent where it should not be, and network
   calls the ticket does not need. A secret is named by its file and line, never by its value.
+  Find one by reading the diff and running `push_check`; never write a secret-shaped value or make
+  a commit to test the scanner, in any checkout or copy.
   Name each new or changed dependency in a verdict line: a finding when the ticket does not need it,
   otherwise a `suggestion` line saying why the ticket needs it.
 - **Tests** check the specified behaviour and its important edge cases. A weakened or deleted
