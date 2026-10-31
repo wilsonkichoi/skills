@@ -968,7 +968,9 @@ config records the answer as `Coordinator model:` (maintainer, 2026-10-28). Ever
 confirmed effort. A headless worker also gets the confirmed model:
 `codex exec -m <model> -c model_reasoning_effort=<effort>`, or
 `kiro-cli chat --model <model> --effort <effort>`. A native
-Claude subagent gets the model when it is an alias, and otherwise inherits the session model.
+Claude subagent always gets the confirmed alias as its model, never an unset one, because an unset
+model can resolve to another model than the session's. A pinned ID runs `claude -p` only when
+`headless_workers` lists `claude-code`, and otherwise stops before any write.
 Handoff and verdict comments carry the `Execution:` lines with that confirmed selection, and a
 runtime model that differs from it is reported as a mismatch.
 
@@ -1009,8 +1011,9 @@ runtime model that differs from it is reported as a mismatch.
    Continue `in-progress` and `in-review` work and tickets whose discovered blocker is now met.
    `wkc-implement <id> --run <active ref>` builds or reports review state. No ticket is claimed
    twice. A ticket held by an unrelated config is skipped. Continue a planning PR named by a
-   Decision comment instead of recreating it. Clean up any environment recorded as deployed
-   without recorded cleanup first, then finish interrupted tickets again. Use the active phase's
+   Decision comment instead of recreating it. First run each grant's cleanup once unless that
+   environment's latest record is a cleanup comment, because a crash can fall between a deploy and
+   its gate comment. Then finish interrupted tickets again. Use the active phase's
    grants for new operations, never an expired predecessor grant. A normal restart keeps the same
    config, admissions, model-round counts, and remaining allowance.
 3. **Then new work:** reread the graph and take eligible initial tickets and already admitted work.
@@ -1033,6 +1036,8 @@ runtime model that differs from it is reported as a mismatch.
    directory ([local.md](../../skills/wkc-tracker/local.md)). Serialize tickets with recorded
    coordination risks. Implement against the run branch, review in fresh contexts using the
    selected alternating models, and merge only the approved head. Every call passes `--run`.
+   The coordinator never reviews, closes an approved PR, or overrides a verdict: a defect it sees
+   in approved work goes on the PR with its evidence, and another review round on that head decides.
    Merges run one at a time after the base update and confirming/full review in Failure handling.
    Immediately `finish <id> --run <active ref>` after each merge. Follow-ups use the same review
    and merge path. Revisit every run ticket waiting on an environment or dependency after a merge
@@ -1517,6 +1522,12 @@ the previous tag. Each port also updates the README roster, the repository map u
   `--effort` for a run without a pair. Local `kiro-cli 2.33.0` help lists both; no session ran.
 
 ## Changes
+
+- 2026-10-30: Maintainer decisions from #74's validation. Resume runs each grant's cleanup unless
+  its latest record is a cleanup, after a crash between a deploy and its gate comment left an
+  environment unseen. The coordinator sends a defect in approved work to another review round
+  instead of closing the PR. A native Claude worker never gets an unset model, after one ran Opus
+  under a Sonnet coordinator (wkc-yolo run).
 
 - 2026-10-29: Maintainer decision in #94. `wkc-tracker`'s GitHub backend runs every verb through
   `github.py`, after a session that read the backend's commands in full still wrote its own

@@ -2,13 +2,15 @@
 
 Newest first. Each version is a `## {version} ({ISO 8601 timestamp with local offset})` heading followed by a bullet list of changes.
 
-## 0.0.47 (2026-10-29T17:20:00-07:00)
+## 0.0.47 (2026-10-30T22:09:03-07:00)
 
 - New manual skill `wkc-yolo` (#74, SPEC Contracts › wkc-yolo run, ADR-006 to ADR-009). `SKILL.md` runs the tickets, admissions, planning PRs, readiness, cleanup, and the run PR, and carries the run config, `Run:`, Decision, Parked, cleanup, Run outcome, and phase templates word for word from the SPEC. `kickoff.md` holds the one round of questions and the run start; `after.md` holds outcomes, config retirement, and review continuations. Readiness merges the default branch in when clean, verifies every required ticket at one head, cleans up grants, and opens the run PR as a draft, made ready only when every required ticket is `done` and every check passed there; a later commit puts it back to draft.
-- `wkc-implement` `routing.md`: a run without a pair uses the config's `Coordinator model:` for every step and still starts a fresh worker, a native subagent first, otherwise the harness's own headless CLI, `kiro-cli chat --no-interactive` included.
+- `wkc-implement` `routing.md`: a run without a pair uses the config's `Coordinator model:` for every step and still starts a fresh worker, a native subagent first, otherwise the harness's own headless CLI, `kiro-cli chat --no-interactive` included. A native Claude worker always gets an alias `model`, never an unset one, and a pinned ID runs `claude -p` only when `headless_workers` lists `claude-code`, otherwise stopping before any write. Why: in validation an unset-model review worker ran Opus under a Sonnet coordinator, and the record named Sonnet. The kickoff records the coordinator model as an alias when native workers will run. The coordinator check records `CLAUDE_CODE_SUBAGENT_MODEL` when set; in validation it did not override an explicit `model`.
 - `wkc-tracker`: each run phase has its own config; a `github-variable` continuation appends `_PHASE_<n>` and never overwrites, and a local one adds `-phase-<n>`.
 - `wkc-setup` asks for `max_additional_tickets` (default 5) and writes it in `config-template.md`.
-- Validation: new `validation/wkc-yolo.md` (cases Y1 to Y25), `wkc-tracker` case A52, and `wkc-setup` case 12. Model-run cases wait for the maintainer's session-count approval (Y25).
+- Fixes from model validation: on resume, `wkc-yolo` runs each grant's cleanup unless that environment's latest record is a cleanup, because a crash between a deploy and its gate comment left one unseen. The coordinator never reviews, closes an approved PR, or overrides a verdict; a defect it sees in approved work goes on the PR and to another review round on that head. It checks each command's own exit status before the next write, after two shell chains hid one. SPEC updated to match.
+- `wkc-code-review`: the Security check finds secrets by reading the diff and running `push_check`, and never writes a secret-shaped value or a probe commit in any checkout or copy, after a reviewer committed a `ghp_` value with hooks disabled in a scratch copy.
+- Validation: new `validation/wkc-yolo.md` (cases Y1 to Y25), `wkc-tracker` case A52, and `wkc-setup` case 12. The 2026-10-30 report covers Y7 to Y24 on a private fixture, about 117 of 148 approved sessions; Y21's secret block is SKIP, and the Y14 and Y24 fixes were not re-run. `wkc-code-review` case 43 also checks for probe secrets.
 
 ## 0.0.46 (2026-10-29T13:27:46-07:00)
 

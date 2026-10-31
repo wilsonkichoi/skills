@@ -144,7 +144,8 @@ Before every `codex exec` launch or resume, in the worker's checkout:
 
 Before a native worker, `CLAUDE_CODE_EFFORT_LEVEL`, when set, must equal the resolved effort; it
 would override the worker's. Any failure blocks the call with section 8's handoff, with no API-key
-fallback, no login change, and no other effort.
+fallback, no login change, and no other effort. Record `CLAUDE_CODE_SUBAGENT_MODEL` when set: it
+picks the model only of a native agent with no `model`, which section 5 never starts.
 
 ## 5. Start the worker
 
@@ -160,9 +161,11 @@ never a fork, a resumed implementation session, or `--last`.
 | `codex` | `codex exec`, only when `headless_workers` lists `codex` |
 | `kiro-cli`, a run without a pair | `kiro-cli chat --no-interactive`, only when `headless_workers` lists `kiro-cli` |
 
-A run without a pair uses the coordinator's native subagent when its harness has one: a Claude Code
-native agent gets the effort, and the model when it is an alias, otherwise inheriting the session
-model. Without one, it uses the harness's own headless CLI from the table, never another harness's.
+A run without a pair uses the coordinator's native subagent when its harness has one. A Claude Code
+native agent always gets the alias as `model` and the effort, never an unset model: an unset one can
+run another model than the session's. A pinned ID takes the table's `claude -p` row; without
+`claude-code` in `headless_workers`, stop before any write. Without a native subagent, it uses the
+harness's own headless CLI from the table, never another harness's.
 
 ```
 claude -p --model <model> --effort <effort> --dangerously-skip-permissions --settings '{"sandbox":{"enabled":false}}' --disallowed-tools Agent --output-format json < <prompt file>

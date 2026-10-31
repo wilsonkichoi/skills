@@ -60,7 +60,8 @@ recommended one first, a digit accepted:
 7. **Execution.** The project's model pair, or the default `claude-code`/`opus` then
    `codex`/`gpt-6.1-sol`, both effort `medium`, or none. List each ticket's `## Execution` override
    as read; a run never freezes it. Headless workers: the project's list or fewer. With no pair,
-   confirm the coordinator's harness, model, and effort; a session cannot read its own. Confirm the
+   confirm the coordinator's harness, model, and effort; a session cannot read its own. When native
+   workers will run, record the model as an alias, such as `sonnet`. Confirm the
    coordinator runs with full permissions and no sandbox: `claude --dangerously-skip-permissions`,
    `codex --dangerously-bypass-approvals-and-sandbox`, or `kiro-cli chat --trust-all-tools`.
 8. **Security.** The push protection status and its reason; accept a `disabled` or `unverifiable`
