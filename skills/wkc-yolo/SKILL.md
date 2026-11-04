@@ -168,11 +168,11 @@ the raising ticket with `Needs: a person`. With `Planning: none`, `wkc-backlog` 
    <default> --head <run branch>`, the body below. With none, report and stop.
 3. At the run branch head, run `test_command` when configured and each exit-check item a command decides,
    and post each result on the run PR as a `wkc-yolo readiness:` record. Then run `wkc-implement verify
-   <id> --run <ref>` for every required ticket merged into the run branch, each its own step, whatever
-   its `## After merge` says. This session never decides which gates a ticket has, or whether one passed
-   or is covered: verify finds them from the ticket and **Conventions**, skips a covered gate, and records it. A failure on an unfinished ticket follows its follow-up
-   path. One in a `done` ticket, or between tickets, is a repair ticket from `wkc-backlog`, related to it,
-   admitted as section 3 says; done stays done. Any merge restarts readiness at the new head.
+   <id> --run <ref>` for every required ticket merged into the run branch, each its own step on the model its own
+   pair picks. This session never decides which gates a ticket has, or whether one passed or is covered: verify finds
+   them from the ticket and **Conventions**, skips a covered gate, and records it. A failure on an unfinished ticket
+   follows its follow-up path; one in a `done` ticket, or between tickets, is a repair ticket from `wkc-backlog`,
+   related to it, admitted as section 3 says; done stays done. Any merge restarts readiness at the new head.
 4. Run each grant's cleanup command once, here and before every controlled stop, and post `wkc-yolo
    cleanup:` on the ticket whose gate last deployed it.
 5. Update the body. **Ready** only when every required ticket is `done`, every check passed at that
