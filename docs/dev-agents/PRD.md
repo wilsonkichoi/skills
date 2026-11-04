@@ -71,8 +71,9 @@ Ranked. Ranking is importance, not delivery order; the ROADMAP sets the order.
    ordered pair of models: the first builds, and each review uses the other model from the
    preceding build, update, or review step, so the first review uses the second. Each ticket can
    override the pair.
-   The same selection works for manual calls and unattended runs. A configured manual call still
-   performs only its requested step and keeps its approval boundaries (decided 2026-10-27).
+   The selection applies to unattended runs. A manual call runs in the session that calls it,
+   whatever pair is configured, and warns when that session's harness and model made the
+   preceding step (decided 2026-10-27, revised 2026-11-03).
    After the merge, `wkc-implement
    finish <id>` runs the ticket's post-merge steps and moves it to `done`; in a run, that merge is
    into the run branch and the steps run there. Each ticket carries its own definition of done,
@@ -124,8 +125,9 @@ Ranked. Ranking is importance, not delivery order; the ROADMAP sets the order.
    on that branch and PR. Completed tickets and their evidence remain intact. Corrections become
    new tickets in the same milestone, or reuse unfinished tickets that already cover them.
    Required planning changes use their responsible skills. The PR returns to draft while its
-   result changes, and readiness is checked again at its new head. A person explicitly approves
-   an immutable continuation config when new scope or grants need approval. A restart never resets
+   result changes, and readiness is checked again at its new head. A run keeps one config for its
+   whole life. Only the person's approval changes its scope, allowance, or grants; a confirmed
+   grant never changes, and a new grant is added beside it (revised 2026-11-03). A restart never resets
    budgets, consumed fixing rounds, or grants (decided 2026-10-27). Product intent,
    security protections, authorization limits, and operational safeguards are outside its
    authority: a person sets them and reviews the outcome.
@@ -175,12 +177,11 @@ Ranked. Ranking is importance, not delivery order; the ROADMAP sets the order.
   review-only round included, may start at most `max_ai_test_sessions_per_attempt` additional AI
   test sessions, default 6. A full loop of five fixing rounds allows at most 42. The allowance is a
   ceiling, and a restart keeps an attempt's usage (decided 2026-10-28, #91). Arbitrary cross-harness
-  launches and nested workers remain prohibited. The approved model-routing workflow permits
-  Claude Code to coordinate native Claude agents and non-interactive `codex exec` workers, and,
-  under the `headless_workers` opt-in, `claude -p` workers or a Codex coordinator. Every worker
-  counts against the same concurrency and session limits. Workers cannot delegate or launch another
-  harness ([token usage](./rules/token-usage.md), [AI harness testing](./rules/ai-harness-testing.md);
-  decided 2026-10-27).
+  launches and nested workers remain prohibited. The approved model-routing workflow lets a run's
+  coordinator, in any supported harness, start one fresh worker per step through the harness
+  adapters the SPEC defines. Every worker counts against the same concurrency and session limits.
+  Workers cannot delegate or launch another harness ([token usage](./rules/token-usage.md),
+  [AI harness testing](./rules/ai-harness-testing.md); decided 2026-10-27, revised 2026-11-03).
 - **Model selection** (decided 2026-10-27): the default pair is the latest Opus, selected by the
   `opus` alias, then `gpt-6.1-sol`. Opus builds, and each review uses the other model from the
   preceding step: with no update in between, reviews alternate `gpt-6.1-sol` and a fresh
@@ -189,26 +190,24 @@ Ranked. Ranking is importance, not delivery order; the ROADMAP sets the order.
   `claude-opus-5-5` is valid where the harness can honor it. Approval ends the loop. Effort defaults
   to `medium` for both models, and a selection may name another supported value. Project and ticket
   selections may change the next dispatch. The ticket owns its selection, and a run never freezes
-  it. They do not reset review limits or grant unattended authority. Projects without routing
-  configuration keep their existing manual behavior in Claude Code, Codex, or Kiro CLI. A
+  it. They do not reset review limits or grant unattended authority. Manual calls run in the
+  session that calls them, in Claude Code, Codex, or Kiro CLI, whatever pair is configured; the
+  pair and its alternation apply under `wkc-yolo` runs (maintainer, 2026-11-03). A
   `wkc-yolo` run without a pair runs every role on its own harness and model, each build and review
   in a fresh session: a native subagent first, otherwise that harness's own headless CLI
-  (maintainer, 2026-10-28). More harnesses, such as Kiro CLI or OpenCode, may join the routed
-  workflow later.
-- **Subscription execution** (maintainer, 2026-10-27): Claude Code on the latest Opus coordinates
-  the mixed-model workflow. Claude work uses its native agents. Codex work uses `codex exec` with
-  the user's existing subscription login. The maintainer reports that `codex exec` works and
-  `claude -p` is unreliable with their subscription. This is their operating constraint, not a
-  universal product claim. The workflow does not use API billing fallback, authentication
-  changes, or automatic model substitution. `claude -p` runs only when the project lists
-  `claude-code` in `headless_workers`, which is off by default. That opt-in accepts the login
-  `claude -p` uses, API billing included; it is the person's choice, not a fallback. It lets a
-  Codex session coordinate Claude workers and a Claude Code coordinator pass a pinned Claude model
-  ID. The maintainer's projects leave it off and use native agents (maintainer, 2026-10-28).
-  Unsupported settings or coordinators
-  produce a blocked result or concrete manual handoff. Quota, rate-limit, or authentication errors
-  stop all worker dispatch. Workers run with full permissions and no sandbox (maintainer,
-  2026-10-27). No skill can read its session's permission mode, so the person launches the
+  (maintainer, 2026-10-28). Any harness with a complete adapter in the SPEC can be a pair entry, a
+  worker, or a coordinator (maintainer, 2026-11-03).
+- **Subscription execution** (maintainer, 2026-10-27, revised 2026-11-03): any supported harness
+  coordinates a run when it can start a fresh worker for each step's selection, through its own
+  native subagent or a headless CLI that `headless_workers` lists. Workers use the user's existing
+  subscription login. The workflow does not use API billing fallback, authentication changes, or
+  automatic model substitution. Before each headless launch, the coordinator checks that the
+  harness will use a subscription login and no API key. `claude-code` is in the default
+  `headless_workers` on that condition, and a project may remove any harness from the list.
+  Unsupported settings or coordinators produce a blocked result or a parked ticket. A quota or
+  rate-limit error pauses only that harness's steps, so a pair never reviews its own work while
+  one harness waits. An authentication error stops all worker dispatch. Workers run with full
+  permissions and no sandbox (maintainer, 2026-10-27). No skill can read its session's permission mode, so the person launches the
   coordinator with full permissions, and adopter documentation says how. The secret scan,
   independent review, and the person's merge remain the safeguards.
 - **Authoring:** `wkc-` identifiers, the five opening fields, manual invocation by default, and a
@@ -288,6 +287,23 @@ in [ADR-009](./adr/ADR-009-run-budgets-continuations-and-model-routing.md). Thei
 and integration validation remain downstream work.
 
 ## Changes
+
+- 2026-11-03: Maintainer decisions from the PR #100 review. Corrected the record: the 2026-10-27
+  and 2026-10-28 entries said `claude -p` was unreliable on the maintainer's subscription. That
+  came from the mistaken belief that a third-party harness could not launch `claude -p` locally
+  on a subscription. On 2026-11-03, `claude -p` ran on the subscription login from Claude Code and
+  from a `codex exec` coordinator. Any supported harness may now coordinate a run, through
+  harness adapters the SPEC defines, and `claude-code` joins the default headless workers behind
+  a subscription-login check. Manual calls run in the calling session, and the pair applies under
+  runs. A quota or rate-limit error pauses one harness instead of the whole run. A run keeps one
+  config, changed only on the person's approval, with grants that never change once confirmed.
+  Replaced "Claude Code on the latest Opus coordinates the mixed-model workflow", "`claude -p` is
+  unreliable with their subscription", "which is off by default", "The same selection works for
+  manual calls and unattended runs", "an immutable continuation config", "Quota, rate-limit, or
+  authentication errors stop all worker dispatch", and "More harnesses, such as Kiro CLI or
+  OpenCode, may join the routed workflow later". Review: SPEC Config fields, Model selection and
+  dispatch, Harness adapters, wkc-yolo run, Failure handling, Security; ROADMAP M4; ADR-012,
+  ADR-013, ADR-014; #74. Status stays approved.
 
 - 2026-10-28: Maintainer decision in #91. The AI session budget is per attempt instead of per
   change, with separate allowances for the build, each fixing round, and the final review.
