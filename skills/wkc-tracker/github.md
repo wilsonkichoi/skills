@@ -53,6 +53,7 @@ stops with exit 4 and suggests the `local` backend.
 | `milestone show <name>` | `milestone show <title>` |
 | `run create <text>` (store `tracker`) | `run create --run-branch <branch> --body-file <file>` |
 | `run show <ref>`, `run close <ref>` | `run show <n>`, `run close <n>` |
+| `run edit <ref> <text>` | `run edit <n> --body-file <file> --expected-sha256 <text_sha256 from run show>` |
 
 ## Input
 
@@ -104,15 +105,21 @@ read or a claim that lost its tie-break.
 
 `list` gives each ticket's number, title, status, assignees, milestone, and blockers, and the
 inconsistent tickets apart. `show` adds the body, its `body_sha256`, comments, labels, each
-blocker's verdict, and a duplicate's chain. `edit` returns the new `body_sha256`. `next` gives
+blocker's verdict, and a duplicate's chain. Each comment carries its `author` and
+`author_can_write`: whether that login's collaborator role is `admin`, `maintain`, or `write`. A
+failed lookup, a deleted account, or a bot without a collaborator record is `false`. `edit`
+returns the new `body_sha256`. `next` gives
 `frontier`, `held` with each unmet blocker's status, holder, and reason, `inconsistent`,
 `open_counts`, `cycles`, and `blocker_graph`. The graph includes transitive blockers and
 unreadable references. Cycles use issue numbers within this repository and full refs
 when they cross repositories. An empty frontier is explained from these.
 `milestone show` gives `total`, `counts` for every status, and `open_or_unclean`. Whether that
 means `wkc-plan close` is the caller's call: the script never closes a milestone it shows.
-`run show` gives the config's `text` and its `state`. A closed run config stays readable with
-`run show`, so `run close` verifies the `CLOSED` state. The script never reads a run config's
+`run show` gives the config's `text`, its `text_sha256`, its `state`, its `by` login from the
+`Started:` line, and its `last_editor`. It refuses a config edited by anyone but that `By:` login.
+`run edit` replaces the text only for the `By:` login, only on an open config, only from the
+`text_sha256` it last read, and never changes the `By:` login. A closed run config stays readable
+with `run show`, so `run close` verifies the `CLOSED` state. The script never reads a run config's
 comments: on a public repository anyone can comment.
 
 ## What the script holds to

@@ -74,7 +74,7 @@ Terminal statuses are `done`, `cancel`, and `duplicate`.
 | Verb | File operation |
 |---|---|
 | `list` | Read every frontmatter in `issues_dir` and filter. Only files directly in it are tickets, never `runs/` |
-| `show` | Read the one file whole. For a duplicate, name its `duplicate_of` |
+| `show` | Read the one file whole. For a duplicate, name its `duplicate_of`. A comment needs repository write, so each counts as able to write |
 | `next` | Keep `status: ready` with an empty `assignee` and every `blocked_by` id met. Sort by id |
 | `create` | Write one file with `status: 'backlog'`, its `blocked_by`, and its `milestone` when given, in one write. No cycle walk. When no other file carries that milestone, say the ticket starts it and name the milestones that exist, so a typo shows |
 | `assign` | Bare: require `ready` with no `assignee`, then set `in-progress` and `assignee` in one write. Explicit: set `assignee` only, `''` for `none`. Refuse a terminal status and an unnamed holder |
@@ -116,8 +116,6 @@ Never run `git add`, `git commit`, or `git push`.
 
 A run config is a file in `issues_dir/runs/`, never a ticket. `run create` writes the text to
 `issues_dir/runs/<Run branch with each / as ->.md`, such as `runs/run-m4-20261026T0900.md`, and
-refuses when the file exists. A continuation, whose `Continues:` names a prior config, adds
-`-phase-<n>` before `.md`, where `<n>` counts the configs in its chain, itself included, such as
-`runs/run-m4-20261026T0900-phase-2.md`. The path is the reference. `run show` reads it, and refuses when it is
-missing. Nothing shows whether it was edited, so an edit goes undetected. `run close` writes
-nothing: the file stays as the run's record.
+refuses when the file exists. The path is the reference. `run show` reads it, and refuses when it
+is missing. `run edit` rewrites the file whole and reads it back. Nothing shows who edited it, so
+an edit by anyone goes undetected. `run close` writes nothing: the file stays as the run's record.

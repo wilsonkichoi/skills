@@ -214,8 +214,18 @@ NODE_QUERY = (
 RUN_QUERY = (
     "query($owner: String!, $name: String!, $n: Int!) {"
     " repository(owner: $owner, name: $name) { issue(number: $n) {"
-    " number state body lastEditedAt labels(first: 100) { nodes { name } } } } }"
+    " number state body lastEditedAt editor { login } labels(first: 100) { nodes { name } } } } }"
 )
+
+# The kickoff login on a run config's first line: `Started: <time>. By: <login>.`
+RUN_OWNER = re.compile(r"^Started:.*?\bBy:\s*([A-Za-z0-9](?:[A-Za-z0-9-]*[A-Za-z0-9])?)", re.M)
+
+WRITE_ROLES = {"admin", "maintain", "write"}
+
+
+def run_owner(text: str | None) -> str | None:
+    match = RUN_OWNER.search(text or "")
+    return match.group(1) if match else None
 
 
 def split_repo(repo: str) -> tuple[str, str]:
@@ -288,6 +298,7 @@ class GitHub:
     def __init__(self, repo: str) -> None:
         self.repo = repo
         self._login: str | None = None
+        self._writers: dict[str, bool] = {}
         self.write_attempted = False
 
     # -- plumbing
@@ -412,6 +423,21 @@ class GitHub:
 
     def issue_id(self, ref: Ref) -> int:
         return self.gh_json(["api", f"repos/{ref.repo}/issues/{ref.number}"])["id"]
+
+    def can_write(self, login: str | None) -> bool:
+        """Whether `login` has write access to the repository: admin, maintain, or write.
+        A failed lookup, a deleted account, or a bot without a collaborator record is no."""
+        if not login:
+            return False
+        cache = self._writers
+        if login not in cache:
+            try:
+                data = self.gh_json(["api", f"repos/{self.repo}/collaborators/{login}/permission"])
+            except GhError:
+                cache[login] = False
+            else:
+                cache[login] = (data.get("role_name") or data.get("permission")) in WRITE_ROLES
+        return cache[login]
 
     # -- writes
 
@@ -623,7 +649,7 @@ def cmd_show(gh: GitHub, number: int) -> dict[str, Any]:
         "labels": issue.labels,
         "body": issue.body,
         "body_sha256": body_digest(issue.body or ""),
-        "comments": issue.comments,
+        "comments": [c | {"author_can_write": gh.can_write(c.get("author"))} for c in issue.comments or []],
         "blockers": [blocker_verdict(gh, b) for b in gh.blockers(issue.ref)],
     }
     if issue.status == "duplicate":
@@ -1108,9 +1134,36 @@ def cmd_run_show(gh: GitHub, number: int) -> dict[str, Any]:
         refuse(f"#{number} does not exist")
     if RUN_LABEL not in [label["name"] for label in node["labels"]["nodes"]]:
         refuse(f"#{number} is not a run config: it lacks the {RUN_LABEL} label")
-    if node["lastEditedAt"] is not None:
-        refuse(f"run config #{number} was edited after it was written", lastEditedAt=node["lastEditedAt"])
-    return {"reference": number, "state": node["state"], "text": node["body"]}
+    owner = run_owner(node["body"])
+    editor = (node.get("editor") or {}).get("login") if node["lastEditedAt"] is not None else None
+    if node["lastEditedAt"] is not None and (owner is None or editor != owner):
+        refuse(f"run config #{number} was edited by {editor or 'an unknown account'}, not its By: login "
+               f"{owner or '(none)'}", lastEditedAt=node["lastEditedAt"], editor=editor, by=owner)
+    return {"reference": number, "state": node["state"], "text": node["body"],
+            "text_sha256": body_digest(node["body"] or ""), "by": owner, "last_editor": editor}
+
+
+def cmd_run_edit(gh: GitHub, number: int, text: str, expected_sha256: str) -> dict[str, Any]:
+    """Replace a run config's text. Only its By: login edits it, from the text it last read."""
+    if not text.strip():
+        refuse("run edit needs the new config text")
+    shown = cmd_run_show(gh, number)
+    if shown["state"] != "OPEN":
+        refuse(f"run config #{number} is closed")
+    if shown["text_sha256"] != expected_sha256:
+        refuse(f"run config #{number} changed since it was read; read it again", text_sha256=shown["text_sha256"])
+    if run_owner(text) != shown["by"]:
+        refuse("run edit cannot change the config's By: login", by=shown["by"], given=run_owner(text))
+    if gh.login() != shown["by"]:
+        refuse(f"only {shown['by'] or 'the By: login'} may edit run config #{number}; this session is {gh.login()}")
+    try:
+        gh.update_issue(number, {"body": text})
+    except GhError as error:
+        unverified(f"the run config edit failed; it may still have landed. Read #{number} first", gh=error.detail)
+    after = cmd_run_show(gh, number)
+    if after["text"] != text:
+        unverified(f"run config #{number} does not read back as the text given", reference=number)
+    return {"reference": number, "edited": True, "text_sha256": after["text_sha256"]}
 
 
 def cmd_run_close(gh: GitHub, number: int) -> dict[str, Any]:
@@ -1216,6 +1269,10 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--run-branch", required=True)
     p.add_argument("--body-file", required=True)
     run.add_parser("show").add_argument("number", type=number_arg)
+    p = run.add_parser("edit")
+    p.add_argument("number", type=number_arg)
+    p.add_argument("--body-file", required=True)
+    p.add_argument("--expected-sha256", required=True)
     run.add_parser("close").add_argument("number", type=number_arg)
     return parser
 
@@ -1254,6 +1311,8 @@ def dispatch(gh: GitHub, args: argparse.Namespace) -> dict[str, Any]:
         return handler[args.action](gh, args.title)
     if args.action == "create":
         return cmd_run_create(gh, args.run_branch, read_text(args.body_file))
+    if args.action == "edit":
+        return cmd_run_edit(gh, args.number, read_text(args.body_file), args.expected_sha256)
     return {"show": cmd_run_show, "close": cmd_run_close}[args.action](gh, args.number)
 
 

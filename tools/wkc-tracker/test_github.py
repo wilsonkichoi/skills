@@ -58,6 +58,7 @@ class FakeGitHub(g.GitHub):
         self.list_node_cap: int | None = None
         self.no_dependencies = False
         self.after_edit = None  # hook run after edit_issue, to simulate another session
+        self.writers = {login}  # logins with write access to the repository
 
     # -- fixture helpers
 
@@ -138,7 +139,11 @@ class FakeGitHub(g.GitHub):
         d = self.issues[r]
         return {"number": number, "state": d["state"], "body": d["body"],
                 "lastEditedAt": "2026-01-01" if d["edited"] else None,
+                "editor": {"login": d.get("editor")} if d["edited"] else None,
                 "labels": {"nodes": [{"name": n} for n in d["labels"]]}}
+
+    def can_write(self, login) -> bool:
+        return login in self.writers
 
     def issue_id(self, r: g.Ref) -> int:
         if r not in self.issues:
@@ -158,6 +163,8 @@ class FakeGitHub(g.GitHub):
             d = self.issues[ref(number)]
             for key, value in fields.items():
                 d[key] = value
+            if "body" in fields:
+                d["edited"], d["editor"] = True, self._login
 
     def edit_issue(self, number, add_labels=(), remove_labels=(), add_assignees=(), remove_assignees=()) -> None:
         add_labels, remove_labels = list(add_labels), list(remove_labels)
@@ -722,6 +729,31 @@ class Comment(unittest.TestCase):
         self.assertEqual(len(self.f.issues[ref(1)]["comments"]), 2)
 
 
+class CommentAuthors(unittest.TestCase):
+    def test_show_says_whether_each_comment_author_can_write(self):
+        f = FakeGitHub()
+        f.add(1)
+        f.issues[ref(1)]["comments"] += [{"author": "me", "body": "Run: 9"}, {"author": "drive-by", "body": "Run: 9"},
+                                         {"author": None, "body": "ghost"}]
+        shown = g.cmd_show(f, 1)
+        self.assertEqual([c["author_can_write"] for c in shown["comments"]], [True, False, False])
+
+    def test_real_lookup_reads_role_name_and_treats_a_failure_as_no(self):
+        gh = g.GitHub(REPO)
+        answers = {"api repos/o/r/collaborators/w/permission": '{"permission": "write", "role_name": "maintain"}',
+                   "api repos/o/r/collaborators/t/permission": '{"permission": "read", "role_name": "triage"}'}
+        calls = []
+
+        def fake(args, stdin=None):
+            calls.append(" ".join(args))
+            if " ".join(args) in answers:
+                return answers[" ".join(args)]
+            raise g.GhError(args, "Not Found")
+        with mock.patch.object(gh, "gh", side_effect=fake):
+            self.assertEqual([gh.can_write(x) for x in ("w", "t", "nobody", "w", None)], [True, False, False, True, False])
+        self.assertEqual(len(calls), 3)
+
+
 class Links(unittest.TestCase):
     def setUp(self):
         f = self.f = FakeGitHub()
@@ -812,6 +844,47 @@ class RunConfigs(unittest.TestCase):
         self.f.add(2)
         for n in (1, 2, 99):
             self.assertEqual(code_of(lambda: g.cmd_run_show(self.f, n)), g.EXIT_REFUSED)
+
+    def config(self, by: str = "me") -> int:
+        text = f"# Run config: M4\nStarted: 2026-11-03T10:00-08:00. By: {by}.\n- Run PR: not opened\n"
+        return g.cmd_run_create(self.f, "run/m4", text)["reference"]
+
+    def test_run_edit_by_its_owner_reads_back_and_stays_accepted(self):
+        n = self.config()
+        shown = g.cmd_run_show(self.f, n)
+        new = shown["text"].replace("not opened", "https://x/pr/7")
+        g.cmd_run_edit(self.f, n, new, shown["text_sha256"])
+        again = g.cmd_run_show(self.f, n)
+        self.assertEqual((again["text"], again["last_editor"], again["by"]), (new, "me", "me"))
+
+    def test_run_edit_refuses_another_login_a_stale_read_and_a_changed_owner(self):
+        n = self.config(by="someone")
+        sha = g.cmd_run_show(self.f, n)["text_sha256"]
+        text = self.f.issues[ref(n)]["body"]
+        writes = len(self.f.writes)
+        self.assertEqual(code_of(lambda: g.cmd_run_edit(self.f, n, text + "x\n", sha)), g.EXIT_REFUSED)
+        self.assertEqual(len(self.f.writes), writes)
+        mine = self.config()
+        sha = g.cmd_run_show(self.f, mine)["text_sha256"]
+        body = self.f.issues[ref(mine)]["body"]
+        writes = len(self.f.writes)
+        self.assertEqual(code_of(lambda: g.cmd_run_edit(self.f, mine, body + "x\n", "0" * 64)), g.EXIT_REFUSED)
+        self.assertEqual(code_of(lambda: g.cmd_run_edit(self.f, mine, body.replace("By: me", "By: other"), sha)),
+                         g.EXIT_REFUSED)
+        self.assertEqual(len(self.f.writes), writes)
+
+    def test_show_refuses_an_edit_by_anyone_but_the_owner(self):
+        n = self.config()
+        d = self.f.issues[ref(n)]
+        d["edited"], d["editor"] = True, "intruder"
+        self.assertEqual(code_of(lambda: g.cmd_run_show(self.f, n)), g.EXIT_REFUSED)
+
+    def test_run_edit_refuses_a_closed_config(self):
+        n = self.config()
+        g.cmd_run_close(self.f, n)
+        shown = g.cmd_run_show(self.f, n)
+        self.assertEqual(code_of(lambda: g.cmd_run_edit(self.f, n, shown["text"] + "x\n", shown["text_sha256"])),
+                         g.EXIT_REFUSED)
 
     def test_run_close_refuses_a_ticket(self):
         self.f.add(2)

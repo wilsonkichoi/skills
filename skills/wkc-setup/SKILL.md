@@ -174,12 +174,13 @@ run branch. It holds no credentials. Every skill in the run reads it, from any m
 
 1. `tracker`: an issue labeled `wkc-run`, or a file in `issues_dir/runs/` on the local backend. On a
    public GitHub repository, say the issue is public, so anyone can read the run's limits. On
-   Linear or local, say an edit to it goes undetected.
+   Linear or local, say an edit to it goes undetected, so it holds no grants.
 2. `github-variable`, on GitHub only: a repository variable that only collaborators read. Say every
-   Actions workflow in the repository can read it, and GitHub does not mask it in logs.
+   Actions workflow in the repository can read it, GitHub does not mask it in logs, and a
+   collaborator who can write variables can change it unseen.
 3. `command <cmd>`: the project's own store, with its own permissions. `<cmd> put` takes the config
    on standard input and prints a reference, `<cmd> get <ref>` prints it or exits non-zero to
-   refuse, and `<cmd> close <ref>` retires it.
+   refuse, `<cmd> edit <ref>` replaces it from standard input, and `<cmd> close <ref>` retires it.
 
 Read the repository's visibility with `gh repo view <OWNER/REPO> --json visibility`, for the
 repository Section A resolved, before giving the GitHub warnings.

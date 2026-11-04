@@ -158,8 +158,8 @@ never ends a turn on a question, and never invokes `wkc-backlog`, which called i
   skill instead of offering it. When they leave a question undecided, write nothing and return
   `parked`: the question, what leaves it open, and who must answer.
 - Never delegated: a PRD or SPEC change, closing a milestone, and what a run's person controls:
-  initial ticket IDs, admission ceilings, model selections, headless workers, grants, and phase
-  renewal. A milestone a run adds or widens never adds its tickets to the run's `Initial tickets:`.
+  initial ticket IDs, admission ceilings, model selections, headless workers, grants, and config
+  changes. A milestone a run adds or widens never adds its tickets to the run's `Initial tickets:`.
   A change that needs one, and any `close`, writes nothing and returns `parked` with
   `Needs: a person`.
 - Write the line under the title as `Status: approved (YYYY-MM-DD, delegated: <ref>)` with today's

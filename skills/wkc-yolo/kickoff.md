@@ -52,7 +52,7 @@ recommended one first, a digit accepted:
    command can decide; readiness runs those.
 5. **Grants**, one per shared non-production environment: show its exact commands, limits (count,
    cost, duration, retries), cleanup command, and expiry, and whether it lacks its own expiry.
-   Default none. Offer none when the store cannot detect edits: `tracker` on Linear or local.
+   Default none. Offer none when the store cannot report an editor: `tracker` on Linear or local.
 6. **Moves.** For each production step, propose moving it word for word to a separate release
    ticket. For each acceptance or release approval only a person gives, such as "A person
    confirms", propose the run PR's review checklist. Engineering verification that needs a person
@@ -76,7 +76,7 @@ and quota stops still apply.
 
 ## 2. Start the run
 
-With the answers, ask nothing more in this phase.
+With the answers, ask nothing more in this run.
 
 Before any write, validate the answered execution selection with routing.md sections 2 and 5,
 using the answered headless list intersected with the project's. With no pair, the confirmed
@@ -90,9 +90,12 @@ If no permitted worker can run the selection, stop without creating a branch or 
    merged in; when `git merge-tree --write-tree` shows a conflict, stop before creating anything.
    Its `done` tickets are carried, never rebuilt: they are no initial IDs, and readiness verifies
    them with the rest.
-2. **Config.** Fill the run config template (SKILL.md section 5) from the answers, and store it with
+2. **Config.** Fill the run config template (SKILL.md section 5) from the answers, with `By:` the
+   `gh` login read above and each grant as a numbered `Grant <n>:` entry, and store it with
    `wkc-tracker run create`. It holds no credentials, scan command, push protection status, or
-   ticket status. Read it back with `run show`; this ref is the active ref.
+   ticket status. Read it back with `run show`; this is the run's one ref. For each grant, post a
+   `Decision (wkc-yolo):` comment holding the entry word for word on the ticket whose gate needs
+   it, and read it back; a grant counts only while its entry equals that copy.
 3. **Moves.** For each approved move, one at a time, call `wkc-backlog <the move> --run <ref>`. It
    posts the `Decision (wkc-yolo):` comment citing `Moved by the person:`. Release tickets stay at
    `backlog`, outside the run.
