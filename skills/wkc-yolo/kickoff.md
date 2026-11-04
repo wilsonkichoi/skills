@@ -28,8 +28,8 @@ Before asking, read without writing anything:
   config and run PR.
 - Whether this harness can start a fresh worker: a native start, or a headless start that
   `headless_workers` lists, by adapters.md. With neither, a run gets no independent review: stop,
-  create nothing. For each listed headless harness, run its pre-launch checks and note the login
-  they show.
+  create nothing. For each listed headless harness, run its pre-launch checks now, before asking,
+  and note the login they show; question 7 names those logins.
 
 Then ask everything in one message, as numbered questions, each with numbered options and the
 recommended one first, a digit accepted:
