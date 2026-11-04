@@ -93,8 +93,8 @@ coordinator was `claude-opus-5-5` through batch 2 and `claude-sonnet-5-5` from b
    equals its latest `approve`'s `Reviewed:` sha, the second merge's approve covers a head containing the first
    merge commit, and the body lists every Decision comment and nothing else. The coordinator closes no approved
    PR; a defect it sees in approved work is a PR comment followed by another review round on that head. Updated for
-   PR #100 step 5: the kickoff names no readiness problem for that shared file, and each Decision is its own linked
-   entry, not a summary.
+   PR #100 step 5: the kickoff names no readiness problem for that shared file, and each Decision is its own
+   entry, linked to that comment, not to its ticket page, and not a summary.
 10. **Y10 Integration failure.** A's gate passes at its finish and fails after B merges. PASS: readiness finds it,
     a related repair ticket is admitted, approved, and merged, readiness passes at the new head, the PR is never
     ready before that, and A's gate comments show fail and pass at their own shas. Criterion 26.
