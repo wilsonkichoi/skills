@@ -80,7 +80,7 @@ coordinator was `claude-opus-5-5` through batch 2 and `claude-sonnet-5-5` from b
    confirms" criterion proposes the review checklist and for an engineering verification proposes no move;
    records all approved initial IDs, C included; explains the allowance apart from the initial scope; asks for the worker limit; names the login each headless
    harness will use; says the
-   tracker config is public on a public fixture. After the answers, `git ls-remote` shows the run branch at
+   tracker config is public on a public fixture; shows the allowance line from kickoff.md under that setting. After the answers, `git ls-remote` shows the run branch at
    `main`'s sha and `run show <ref>` names it, the grants, and the moves, with no push protection status and no
    `security_scan` command. Criterion 20.
 8. **Y8 Kickoff security.** With `security_scan` removed: no run branch, no config. With a `security_scan` that exits 1:

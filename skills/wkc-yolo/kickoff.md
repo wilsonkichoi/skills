@@ -44,9 +44,9 @@ recommended one first, a digit accepted:
    file, or config with no coordination note (a recorded note makes the run serialize them); a
    missing prerequisite. Each is fixed first, accepted, or left out.
 3. **Planning:** `delegated` (recommended) or `none`. **New prerequisites:** `run` (recommended) or
-   `record only`. **Additional allowance:** the project's `max_additional_tickets`, or lower. Explain
-   it apart from the initial scope: initial work costs no slot, and only new prerequisites and
-   readiness repairs spend one. **`max_fix_attempts`:** the project's, or lower. **Worker limit:**
+   `record only`. **Additional allowance:** the project's `max_additional_tickets`, or lower, shown
+   with this line under it: "Initial tickets spend no slot; only new prerequisites and readiness
+   repairs spend one." **`max_fix_attempts`:** the project's, or lower. **Worker limit:**
    the project's `max_parallel_workers`, or lower.
 4. **Gates.** Classify every `## After merge` step, every post-merge criterion, and every exit-check
    item, by its `Target:`, command, and **Conventions**, never by its verb: **local** runs with no
