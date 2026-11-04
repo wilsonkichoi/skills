@@ -131,8 +131,9 @@ A gate with a passing gate comment at that head, from any finish or verify, is n
 covered by a `wkc-yolo readiness:` record on the run PR at that head, from an account with write
 access, is not run either: its command is that record's command, or it names a test the record's
 output shows passing. Post its gate comment as `Result: pass, covered by <the record's link>`. A
-covered gate still runs when the run branch changed a file the ticket's pull request changed after
-that pull request merged (`git diff --name-only <merge commit> <head>`). Every other local or
+covered gate still runs when the run branch changed one of the pull request's own files again after
+it merged: a path in both `git diff --name-only <merge commit>^1 <merge commit>` and `git diff
+--name-only <merge commit> <head>`. A path only the second lists does not count. Every other local or
 granted gate runs, one recorded `not run, environment unavailable` included. A
 failed gate is never skipped because a record exists. **Failures** applies as written. Return each
 gate's result, and the gates left out with their class; a reproduced failure goes back to

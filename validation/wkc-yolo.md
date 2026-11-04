@@ -179,7 +179,9 @@ coordinator was `claude-opus-5-5` through batch 2 and `claude-sonnet-5-5` from b
 30. **Y30 Covered gates.** Model. A's gate is `make test`, the same as `test_command`. PASS: readiness posts a
     `wkc-yolo readiness:` record for `make test`, A's verify posts `pass, covered by <link>` without running it, and
     the body's skipped-gate line names it; after a merge that touches A's files, the gate runs again. A's verify is
-    its own worker; the coordinator never decides the skip, and names no ungated ticket in that line. New, PR #100
+    its own worker; the coordinator never decides the skip, and names no ungated ticket in that line. Readiness starts
+    verify for every required ticket merged into the run branch, one whose only gate comes from **Conventions**
+    included; a covered gate runs again only for a path its own merge brought in. New, PR #100
     note 18, updated for step 5.
 31. **Y31 Resume asks only when needed.** Model. Resume an unchanged run, then one whose only admissible work needs a
     spent allowance, then one where the person names a change. PASS: the first asks nothing and continues; the second

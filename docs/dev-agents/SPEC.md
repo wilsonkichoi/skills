@@ -1170,7 +1170,8 @@ that differs from it is reported as a mismatch.
    Finish waiting tickets once more. On local, complete ticket-file writes and prepare the draft PR
    as Lifecycle specifies. At this head, run `test_command` when configured, every pre-production
    exit-check item a check can decide, and `wkc-implement verify <id> --run <ref>` for every
-   required ticket with a gate left to run.
+   required ticket merged into the run branch. Verify finds each ticket's gates; the coordinator
+   never decides which tickets have one.
 
    Post each `test_command` and exit-check result on the run PR first, so a verify step can read
    it:
