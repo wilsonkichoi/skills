@@ -49,7 +49,8 @@ coordinator was `claude-opus-5-5` through batch 2 and `claude-sonnet-5-5` from b
 
 1. **Y1 Package.** Parse `SKILL.md` frontmatter and `agents/openai.yaml` with a YAML parser.
    PASS: `disable-model-invocation: true`, `policy.allow_implicit_invocation: false`, the five opening fields in
-   order, callers are people only, and `wc -l skills/wkc-yolo/SKILL.md` is under 250.
+   order, callers are people only, and `wc -l skills/wkc-yolo/SKILL.md` is under 250, or the PR body names the
+   lines past 249 by section (#74). Updated for PR #100: the maintainer kept 295 lines (2026-11-03).
 2. **Y2 Templates.** Extract each fenced block from `SKILL.md` and SPEC Contracts that starts with `# Run config:`,
    `Run outcome (wkc-yolo):`, `wkc-yolo cleanup:`, `wkc-yolo readiness:`, `Decision (`, `needs-decision (`, or
    `Answer:`, dedent each, replace `<skill>` with `wkc-yolo` in the SPEC's, and `diff` the pairs. PASS: no output.
