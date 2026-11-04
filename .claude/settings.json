@@ -1,0 +1,16 @@
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "startup",
+        "hooks": [
+          {
+            "type": "command",
+            "timeout": 180,
+            "command": "[ \"${CLAUDE_CODE_REMOTE:-}\" = true ] || exit 0; cd \"$HOME\" && INSTALL_INTERNAL_SKILLS=1 npx -y skills add wilsonkichoi/skills -g -s '*' -a claude-code -y >/dev/null 2>&1 || { echo 'SessionStart: refreshing wkc- skills failed' >&2; exit 1; }"
+          }
+        ]
+      }
+    ]
+  }
+}
