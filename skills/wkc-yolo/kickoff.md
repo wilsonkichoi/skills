@@ -42,7 +42,9 @@ recommended one first, a digit accepted:
    ROADMAP; an open decision ticket that blocks scope; a SPEC section a ticket cites that does not
    exist; a criterion with no check; side-by-side tickets that edit one schema, migration, generated
    file, or config with no coordination note (a recorded note makes the run serialize them); a
-   missing prerequisite. Each is fixed first, accepted, or left out.
+   missing prerequisite. Each is fixed first, accepted, or left out. Any other file two tickets
+   share, such as a source file both add to, is not a readiness problem: the run reconciles it at
+   merge, so do not list it.
 3. **Planning:** `delegated` (recommended) or `none`. **New prerequisites:** `run` (recommended) or
    `record only`. **Additional allowance:** the project's `max_additional_tickets`, or lower, shown
    with this line under it: "Initial tickets spend no slot; only new prerequisites and readiness
