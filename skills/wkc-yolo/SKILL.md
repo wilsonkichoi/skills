@@ -208,8 +208,8 @@ Run config: <ref>. Supersedes: <ref | none>
 - The run merged nothing into the default branch and changed nothing in production.
 ```
 
-Refer to tickets only with `Refs`; large tables may live in linked PR comments. Never name a secret
-incident or the push protection status.
+Refer to tickets only with `Refs`; large tables may live in linked PR comments. Decisions are one
+linked entry per comment, never a summary. Never name a secret incident or the push protection status.
 
 ## 5. Templates
 Run config, one per run, changed only with `wkc-tracker run edit`: `Run PR:` by the run once the
