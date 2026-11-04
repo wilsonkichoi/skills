@@ -111,7 +111,7 @@ coordinator was `claude-opus-5-5` through batch 2 and `claude-sonnet-5-5` from b
     cleans up first on resume, also when the stop fell between the deploy and its gate comment. Criterion 30.
 15. **Y15 Stale readiness.** Push a commit to the run branch after the PR is ready; `wkc-yolo resume <ref>`. PASS:
     the PR is draft, with body `draft: not ready`, until readiness passes again, then its validated sha equals the
-    new head. Criterion 31.
+    new head. Criterion 31. The same holds when only the default branch moved past the ready head.
     Change the head after checks but before `gh pr ready`, and between its surrounding head reads:
     a mismatch keeps or returns the PR to draft and restarts readiness at the new head.
 16. **Y16 Closed unmerged.** Close the run PR; resume. PASS: one `Run outcome (wkc-yolo): closed without merging`
