@@ -101,6 +101,6 @@ If no permitted worker can run the selection, stop without creating a branch or 
    `Decision (wkc-yolo):` comment holding the entry word for word on the ticket whose gate needs
    it, and read it back; a grant counts only while its entry equals that copy.
 3. **Moves.** For each approved move, one at a time, call `wkc-backlog <the move> --run <ref>`. It
-   posts the `Decision (wkc-yolo):` comment citing `Moved by the person:`. Release tickets stay at
+   posts the `Decision (wkc-backlog):` comment citing `Moved by the person:`. Release tickets stay at
    `backlog`, outside the run.
 4. **Statuses.** Move each included `backlog` ticket to `ready`.

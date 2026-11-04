@@ -90,9 +90,10 @@ A ticket parked since its last step, or with an unmet blocker, waits. Otherwise 
 | `in-progress` with no PR, or an incomplete handoff | `wkc-implement <id> --run <ref>`, which continues its branch |
 | `in-review`, no verdict on the head, or `fixed` | `wkc-code-review <PR> --run <ref>`, a fresh round |
 | `approve` on the head | The merge queue below. A defect this session sees goes on the PR with its evidence, then to a new `wkc-code-review` round on that head; it never reviews, closes the PR, or overrides the verdict |
-| `stopped` on the head | Post `Parked (wkc-yolo):` with `Needs: a person` and the open findings |
+| `stopped` on the head | Post `needs-decision (wkc-yolo):` with `Needs: a person` and the open findings |
+| `needs-decision` verdict, finish, or record, with no `Answer:` | Parked: it waits. With an `Answer:` from a writer, take the step the answer allows |
 | `MERGED` into the run branch, no finish since | `wkc-implement finish <id> --run <ref>` at once |
-| Finish `waiting` or `follow-up` | Revisit after each merge or newly met blocker, and before readiness |
+| Finish `waiting` or `follow-up` | Revisit after each merge or newly met blocker, and before readiness; `waiting` needs nobody |
 
 A blocker in the run is met once its PR merged into the run branch and its latest finish found no
 failed gate; one outside it follows `wkc-implement` section 2. `wkc-tracker next` reads status
@@ -115,7 +116,7 @@ update and fully reviews a conflict fix. Merge only the head of the latest `appr
 when `gh pr view` shows `MERGED` with a merge commit. A merge queue or auto-merge is waiting. Branch
 protection that blocks the merge stops that merge; report it. Then finish at once.
 
-**Returns.** A `parked` ticket keeps its status; others continue. Each discovered item goes to
+**Returns.** A ticket that returned `needs-decision` keeps its status; others continue. Each discovered item goes to
 section 3; a ticket waiting on a prerequisite is not parked. A secret that reached a remote is an
 incident: park the ticket with `Needs: a person to revoke <kind of credential>`, push nothing more
 from that branch, never write the value, and continue unrelated tickets.
@@ -186,7 +187,8 @@ Run config: <ref>. Supersedes: <ref | none>
 ## Run record
 - Grants: <grant lines> | none. Cleanup: <environment>: <result>
 - Planning PRs: <URL and changed documents> | none
-- Decisions: <every Decision (wkc-yolo) comment, with its link>
+- Decisions: <every `Decision (<skill>):` comment on the run's tickets and PRs, with its link>
+- Open requests: <every `needs-decision` record, verdict, or finish with no `Answer:`, and who answers> | none
 - Admissions: initial <ids>; additional <ids>, <k> of <max_additional_tickets>
 - Config changes: <each Changes line> | none
 - The run merged nothing into the default branch and changed nothing in production.
@@ -233,9 +235,16 @@ Source: <PRD, SPEC, or ROADMAP section, the ticket, or the run limit>
 ```
 
 ```
-Parked (wkc-yolo): <question>
+needs-decision (wkc-yolo): <question>
 Open because: <what the documents and limits leave undecided>
+Recommendation: <the choice you would make, and why>
 Needs: <who must answer>
+```
+
+A person answers on the same ticket or PR; only an account with write access counts:
+```
+Answer: <the decision>
+To: <link to the needs-decision record, verdict, or finish comment>
 ```
 
 ```

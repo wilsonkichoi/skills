@@ -1,6 +1,6 @@
 ---
 name: wkc-code-review
-description: Run one review round on a pull request from wkc-implement, fix its verified blocking findings and apply worthwhile in-scope improvements in one commit, and post a verdict comment of approve, fixed, or stopped. Use when someone asks to review a ticket's pull request, or to run the next review round after a fixed verdict.
+description: Run one review round on a pull request from wkc-implement, fix its verified blocking findings and apply worthwhile in-scope improvements in one commit, and post a verdict comment of approve, fixed, stopped, or needs-decision. Use when someone asks to review a ticket's pull request, or to run the next review round after a fixed verdict.
 argument-hint: "[PR or ticket id] [--run <ref>]"
 disable-model-invocation: false
 ---
@@ -10,7 +10,8 @@ disable-model-invocation: false
 - **What it does:** runs one review round on one pull request. It judges the implementation and its
   tests against the ticket and the SPEC, verifies each blocking finding, and, while a fixing round
   is left, fixes those findings and applies worthwhile in-scope improvements in one commit. It posts
-  one verdict comment: `approve`, `fixed`, or `stopped`.
+  one verdict comment: `approve`, `fixed`, `stopped`, or `needs-decision` when only a person can
+  answer what the round needs. It decides what the documents settle, as [run.md](./run.md) says.
 - **When to use it:** after `wkc-implement` hands a ticket to `in-review`, and again after each
   `fixed` round, every round in a fresh session. Callers are people, `wkc-yolo`, and a model acting
   on a person's request. A model runs it only when a person or `wkc-yolo` asked for that work.
@@ -21,7 +22,8 @@ disable-model-invocation: false
   body. The `wkc-tracker` skill for every ticket read and write: `show`, `list`, and `comment`.
   `git`, and `gh` against a GitHub remote. The `wkc-backlog` skill for work found out of scope.
   When the prompt starts `Routed worker:`, the `wkc-implement` skill's `routing.md`, read at
-  `../wkc-implement/routing.md` from this skill's own directory.
+  `../wkc-implement/routing.md` from this skill's own directory. [run.md](./run.md) for the decision
+  formats and a call with `--run`.
 - **Input:** a pull request (number or URL) or a ticket id, which is the preferred input: tickets
   run in parallel worktrees, and an explicit target cannot review the wrong pull request. With no
   argument, review the one open pull request whose head is the current branch, which in a worktree
@@ -31,7 +33,8 @@ disable-model-invocation: false
 - **Output:** one verdict comment on the pull request, or on the ticket when there is no pull
   request. A `fixed` round also pushes one commit to the pull request's branch. A round that is not
   independent and finds nothing to change posts nothing. The ticket's status and holder and the
-  pull request's state are unchanged. Under `wkc-yolo`, also the discovered items, or `parked`.
+  pull request's state are unchanged. Under `wkc-yolo`, also the discovered items, or
+  `needs-decision`.
 
 Never merge, close, or approve a pull request through GitHub's review state, and never move,
 assign, create, or edit a ticket: the verdict comment is the record, and a person or `wkc-yolo`
@@ -97,6 +100,10 @@ verdict. Commits are not rounds: a fix commit, or several commits pushed between
 Two verdicts with the same round number and `Reviewed` sha are one round posted twice, counted once.
 This round's number is the rounds counted, plus one. When an earlier verdict already reviewed `H`,
 report it and post nothing, unless the caller asks for another round on that head.
+
+**An open request.** When the latest verdict is `needs-decision` and no `Answer:` from an account
+with write access follows it, and no later head or config change resolves it, report that open
+request and post nothing ([run.md](./run.md)). A fresh round runs once it is answered.
 
 **Fixing rounds.** Every round that committed code has a `fixed` verdict and used one fixing round,
 whether its change fixed findings, applied improvements, or both. A round that changed nothing used
@@ -238,6 +245,7 @@ there with no fix and no verdict. Other items wait for section 6.
 | Blocking findings, and a fixing round is left | Fix them and apply worthwhile in-scope improvements where appropriate: `fixed` |
 | No blocking finding, worthwhile improvements, and at least one fixing round left | Apply them: `fixed` |
 | No blocking finding, and no change the row above allows | `approve`, with no change made |
+| The round cannot finish without a person: more AI test sessions, a check only a person can confirm, or a choice the documents leave undecided ([run.md](./run.md)) | `needs-decision, <what>`, with no change made |
 
 A round that is not independent never approves: where the table says `approve`, post nothing and
 report that a fresh session must review `H`.
@@ -295,7 +303,9 @@ new round must review the new head. Otherwise post one comment with `gh pr comme
 <file>`, or `wkc-tracker comment` on the ticket when there is no pull request:
 
 ```
-wkc-code-review round <n>: approve | fixed | stopped
+wkc-code-review round <n>: approve | fixed | stopped | needs-decision, <what>
+Open requests: <each request a person must answer> | none
+SKIP: <each check that could not run, and why> | none
 Reviewed: <full head sha>
 Fixed in: <full sha of the fix commit>     <!-- fixed rounds only -->
 Fixing rounds used: <k> of <max_fix_attempts>
@@ -310,6 +320,8 @@ Observed execution: <model and effort from runtime evidence | unavailable>
 ```
 
 `Reviewed` is `H`. Keep the `Fixed in` line only in a `fixed` round, without its HTML comment.
+Post `fixed` only when `Fixed in` is on the branch (`git merge-base --is-ancestor <Fixed in> <head>`);
+a round with no commit is never `fixed`.
 In a manual call, `Execution:` names this session's harness and its model and effort as the session reports them, or `unknown`, and `Observed execution:` is `unavailable`. On
 the `Fixing rounds used` line, `k` counts the `fixed` rounds, this one included when it is `fixed`.
 List each blocking finding fixed and each improvement applied in this round, each blocking finding
@@ -330,32 +342,13 @@ results, the AI test sessions used of the limit, and the next step:
 - `approve`: a person merges that sha, then `wkc-implement finish <id>` finishes the ticket. A
   merge of any other head needs another round.
 - `stopped`: the open findings, why the review stopped, and the fixing rounds used. A person decides.
+- `needs-decision`: the open request and who must answer. A person posts an `Answer:` comment
+  ([run.md](./run.md)), and then a fresh round runs.
 - No verdict: a fresh session reviews the head. Say why: the round was not independent, the head
   moved, or git refused the commit, whose sha you give.
 
 ## 7. Calls from wkc-yolo
 
 A call is unattended only when it passes `--run <ref>`; without it, the call is manual, whatever
-its text says. First read the run config with `wkc-tracker run show <ref>`. When that refuses, stop:
-report the refusal, post nothing, and ask nothing. The config holds the run's limits, and a lower
-`max_fix_attempts` there replaces the project config's. Such a call never ends a turn on a question. Wherever this skill would ask, decide from the ticket,
-PRD, SPEC, ROADMAP, and limits, and post the decision on the ticket with `wkc-tracker comment`:
-
-```
-Decision (wkc-yolo): <question>
-Choice: <what was chosen>
-Source: <PRD, SPEC, or ROADMAP section, the ticket, or the run limit>
-```
-
-When they leave it undecided, park: post this, keep the ticket's status, post no verdict, stop,
-and return `parked`:
-
-```
-Parked (wkc-yolo): <question>
-Open because: <what the documents and limits leave undecided>
-Needs: <who must answer>
-```
-
-`Discovered:` comments are posted as in section 3, and the items go back to `wkc-yolo` in the
-return, never to `wkc-backlog`. A blocker goes back at once, and the round stops with no fix and no
-verdict.
+its text says. Read [run.md](./run.md) whole and follow it: it reads the run config, decides or
+parks, and returns the discovered items. Such a call never ends a turn on a question.

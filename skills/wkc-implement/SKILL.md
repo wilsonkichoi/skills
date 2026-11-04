@@ -35,7 +35,7 @@ disable-model-invocation: false
 - **Output:** build: a branch, a pull request, and the ticket at `in-review` with a handoff comment.
   Finish: gate and finish comments, and the ticket at `done`, or `in-progress` with what is left.
   Verify: gate comments, status unchanged. Under `wkc-yolo`, also the discovered items, each gate's
-  result, and `parked` when the ticket parked.
+  result, and `needs-decision` when the ticket parked.
 
 Every ticket read and write goes through `wkc-tracker` verbs, run with the commands its backend
 file gives, never a query of your own. Never create or edit another ticket;
@@ -151,7 +151,22 @@ session started, because ticket files on a branch are invisible from other check
 
 Read the ticket's **What to build**, **Why**, **Acceptance criteria**, **After merge**, and
 **Notes**, and the SPEC sections they cite. The criteria are the goal; **Why** decides a choice they
-leave open. A question only a person can answer ends the turn on that question.
+leave open.
+
+**Decide first.** When the ticket, PRD, SPEC, ROADMAP, and limits settle a choice, decide, build,
+and post it on the ticket with `wkc-tracker comment`, then list it in the report so the person can
+reverse it:
+
+```
+Decision (wkc-implement): <question>
+Choice: <what was chosen>
+Source: <PRD, SPEC, or ROADMAP section, the ticket, or the run limit>
+```
+
+Ask only when they are silent or conflict, or the choice is costly or hard to undo, such as a data
+migration, a public interface, or an irreversible step: give a recommendation and its reasons, and
+end the turn on the question. Deciding never authorizes a `(needs authorization)` step. Under a
+run, [run.md](./run.md) says what replaces the question.
 
 - The ticket is its outcome, not the narrowest reading of its criteria. Build the smallest change
   that delivers all of it, in the project's style. Also fix a problem the outcome needs fixed, or one
@@ -244,9 +259,9 @@ pushed or local branch, leave the ticket `in-progress`, and say so.
 
 ## 5. Hand off
 
-Under a run, first list each behaviour the criteria did not state and the build had to settle, such
-as an exit code or a message, even one a SPEC section dictates. Post each as a `Decision (wkc-yolo):`
-comment ([run.md](./run.md)) whose `Source:` names where it was settled.
+First list each behaviour the criteria did not state and the build had to settle, such as an exit
+code or a message, even one a SPEC section dictates. Post each as a `Decision (wkc-implement):`
+comment (section 3) whose `Source:` names where it was settled, unless one already records it.
 
 Post the handoff with `wkc-tracker comment`, then `wkc-tracker move <id> in-review`:
 
@@ -297,7 +312,7 @@ A `(needs authorization)` step that nobody authorized in this conversation is `n
 post the finish comment, posted on every finish run:
 
 ```
-wkc-implement: done | waiting | follow-up
+wkc-implement: done | needs-decision, <what> | waiting | follow-up
 Merged: <PR URL> into <branch> at <merge commit sha>
 Verified at: <branch>@<full sha>          <!-- in a run only -->
 Gates: none | all passed | left: <steps, and who must act>
@@ -306,15 +321,20 @@ Gates: none | all passed | left: <steps, and who must act>
 `Merged:` names the branch the merge commit is on.
 
 - **All passed:** `done`, then `wkc-tracker move <id> done`.
-- **Not run:** `waiting`, the ticket stays `in-progress`, and the gates left name who must act. End
-  on a question offering to run the unauthorized steps now; under a run, ask nothing.
+- **Not run, a person must act:** an unauthorized `(needs authorization)` step, a
+  production-affecting gate, an unclear gate class, or a missing grant. `needs-decision, <what>`,
+  the ticket stays `in-progress`, and the gates left name who must act. End on a question offering
+  to run the unauthorized steps now; under a run, ask nothing.
+- **Not run, nobody needs to act:** an environment unavailable within its grant. `waiting`, the
+  ticket stays `in-progress`, and the run finishes it again.
 - **Failed because of this ticket's change:** a merged pull request cannot be reopened. After the
   uncommitted planning documents check in section 2, branch from the current default branch, or
   the run branch under a run, fix or revert the change, and open a follow-up pull request with the
   follow-up line, through sections 4 and 5. Post `follow-up` before the handoff. A release that
   shipped the bad build ships a new patch version.
-- **The same gate failed before for the same cause,** after a follow-up: `waiting`, the ticket stays
-  `in-progress`, and a person decides; under a run, it parks. Open no second follow-up.
+- **The same gate failed before for the same cause,** after a follow-up: `needs-decision, <what>`,
+  the ticket stays `in-progress`, and a person decides; under a run, it parks. Open no second
+  follow-up.
 - **Failed for a cause outside this ticket:** a `Discovered:` comment with `Blocks this ticket:
   yes`, handed to `wkc-backlog` at once; the ticket stays `in-progress`.
 

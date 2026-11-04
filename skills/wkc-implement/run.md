@@ -15,22 +15,20 @@ SKILL.md still holds.
 
 ## Decide or park
 
-Wherever SKILL.md would ask, and for each choice section 5 lists, decide from the ticket, PRD,
-SPEC, ROADMAP, and limits, and post the decision on the ticket with `wkc-tracker comment`:
+Wherever SKILL.md would ask, decide from the ticket, PRD, SPEC, ROADMAP, and limits, and post a
+`Decision (wkc-implement):` comment as SKILL.md section 3 shows. When they leave it undecided, park:
+post this, keep the ticket's status, stop, and return `needs-decision`:
 
 ```
-Decision (wkc-yolo): <question>
-Choice: <what was chosen>
-Source: <PRD, SPEC, or ROADMAP section, the ticket, or the run limit>
-```
-
-When they leave it undecided, park: post this, keep the ticket's status, stop, and return `parked`:
-
-```
-Parked (wkc-yolo): <question>
+needs-decision (wkc-implement): <question>
 Open because: <what the documents and limits leave undecided>
+Recommendation: <the choice you would make, and why>
 Needs: <who must answer>
 ```
+
+A person answers with an `Answer:` comment whose `To:` line links the request. It counts only from
+an account with write access. A later call reads the answer and continues; without one, the
+request stays open and the ticket stays parked. An older `Parked (wkc-yolo):` record reads as one.
 
 `Discovered:` comments are posted as in section 3, and the items go back to `wkc-yolo` in the
 return, never to `wkc-backlog`. A blocker goes back at once and stops the build. The ticket keeps
@@ -108,13 +106,13 @@ its command, and the **Conventions**, never by the verb that names it:
 
 A shared gate's code-failure rerun also needs remaining grant authority. When that rerun cannot
 run, keep the gate `fail` with the observed code failure, `rerun not run`, and the limit or expiry.
-Do not claim reproduction. Finish posts `waiting`, keeps the ticket `in-progress`, and names who
-must authorize the rerun. Open no follow-up until the failure reproduces. A later finish that
+Do not claim reproduction. Finish posts `needs-decision`, keeps the ticket `in-progress`, and names
+who must authorize the rerun. Open no follow-up until the failure reproduces. A later finish that
 cannot run the gate retains that unresolved failure; only later passing evidence resolves it.
 
-Otherwise section 6 decides as written, asking nothing. `waiting` names who must act on each gate left:
-a person for a missing grant, production, or an unclear class, or the run once the environment is
-back. Finished again, finish runs only the gates with no pass at the current head; a head that
+Otherwise section 6 decides as written, asking nothing. `needs-decision` names the person who must
+act on each gate left, for a missing grant, production, or an unclear class. `waiting` means only
+an environment is down, and the run finishes the ticket again once it is back. Finished again, finish runs only the gates with no pass at the current head; a head that
 moved runs every gate again.
 
 ## Verify
