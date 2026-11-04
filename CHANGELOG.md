@@ -14,6 +14,7 @@ Newest first. Each version is a `## {version} ({ISO 8601 timestamp with local of
 - `wkc-code-review`: the Security check finds secrets by reading the diff and running `push_check`, and never writes a secret-shaped value or a probe commit in any checkout or copy, after a reviewer committed a `ghp_` value with hooks disabled in a scratch copy.
 - Validation: new `validation/wkc-yolo.md` (cases Y1 to Y25), `wkc-tracker` case A52, and `wkc-setup` case 12. The 2026-10-30 report covers Y7 to Y24 on a private fixture, about 117 of 148 approved sessions; Y21's secret block is SKIP, and the Y14 and Y24 fixes were not re-run. `wkc-code-review` case 43 also checks for probe secrets.
 - Config ownership (PR #100 review notes 1, 2, 20): `wkc-setup` writes every required field, and a skill that finds one missing stops and names `wkc-setup` instead of using a default of its own. New `max_parallel_workers` (default 5), which a run may lower. `push_check` is renamed `security_scan`; for one release the skills read `push_check` when `security_scan` is absent, with a warning, and `wkc-setup` offers the rename. The default `headless_workers` is `[claude-code, codex, kiro-cli]`.
+- `wkc-code-review` reads `routing.md` at `../wkc-implement/routing.md` from its own skill directory, one rule for every harness, since the installer puts skills side by side (note 21).
 
 ## 0.0.46 (2026-10-29T13:27:46-07:00)
 

@@ -20,8 +20,8 @@ disable-model-invocation: false
   `test_command`, `security_scan`, `context_file`, `rules_dir`, `prd_file`, `spec_file`, and the **Conventions**
   body. The `wkc-tracker` skill for every ticket read and write: `show`, `list`, and `comment`.
   `git`, and `gh` against a GitHub remote. The `wkc-backlog` skill for work found out of scope.
-  When a model pair applies, the `wkc-implement` skill's `routing.md`, read from that installed
-  skill's directory, with `claude` or `codex` for the workers it starts.
+  When a model pair applies, the `wkc-implement` skill's `routing.md`, read at
+  `../wkc-implement/routing.md` from this skill's own directory, with `claude` or `codex` for the workers it starts.
 - **Input:** a pull request (number or URL) or a ticket id, which is the preferred input: tickets
   run in parallel worktrees, and an explicit target cannot review the wrong pull request. With no
   argument, review the one open pull request whose head is the current branch, which in a worktree
@@ -48,8 +48,8 @@ names the field and its allowed values. With no `security_scan`, read the deprec
 and warn that it was renamed.
 
 **Routing.** When `execution_models` is in the config, the ticket's `## Execution`, or the run
-config, or the prompt starts `Routed worker:`, read `routing.md` in the installed `wkc-implement`
-skill's directory whole once sections 1 and 2 have found the target and the round. It decides
+config, or the prompt starts `Routed worker:`, read `../wkc-implement/routing.md`, relative to this
+skill's own directory, whole once sections 1 and 2 have found the target and the round. It decides
 whether this session reviews or starts a fresh worker on the other model. When that file is
 missing, stop, post nothing, and name the `wkc-implement` dependency.
 
