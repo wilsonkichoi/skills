@@ -141,7 +141,7 @@ nothing. Resolve a conflict so both sides keep their intent. Rerun section 4's c
 failure the update caused; one that cannot be fixed parks. Run the security scan (section 4), push,
 confirm the head with `gh pr view`, and post no second handoff: the ticket stays `in-review`.
 When the head changed, post the `wkc-implement: updated for review` record from
-[routing.md](./routing.md) section 6, with the selection that made the update on its `Execution:`
+[routing.md](./routing.md) section 5, with the selection that made the update on its `Execution:`
 line: the pair's first entry, or the config's `Coordinator model:` in a run without a pair. The
 next review reads it to pick its model.
 Return the new head, and whether the merge was clean or needed a conflict fix.

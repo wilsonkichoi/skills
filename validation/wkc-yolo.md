@@ -59,7 +59,7 @@ coordinator was `claude-opus-5-5` through batch 2 and `claude-sonnet-5-5` from b
    read; `disabled` only when the field says so, a missing field or failed call `unverifiable`.
 4. **Y4 Store phases.** `wkc-tracker` case A52.
 5. **Y5 Setup allowance.** `wkc-setup` case 12.
-6. **Y6 No-pair worker argument shape.** Read `routing.md` section 5. PASS: `codex exec` gets `-m <model> -c
+6. **Y6 No-pair worker argument shape.** Read `adapters.md`. PASS: `codex exec` gets `-m <model> -c
    model_reasoning_effort=<effort>`, `kiro-cli chat --no-interactive` gets `--model <model> --effort <effort>
    --trust-all-tools`, a native Claude worker always gets the effort and an alias model, never an unset one, a
    pinned ID without `claude-code` in `headless_workers` stops before any write, and a run without a pair uses the

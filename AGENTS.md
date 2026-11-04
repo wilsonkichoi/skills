@@ -93,7 +93,8 @@ Dependencies must name the exact `wkc-` identifier. Report an unavailable or blo
 instead of substituting an unprefixed skill. A skill reads another skill's supporting file only
 when two skills must follow one contract that neither can carry alone, and only by naming that
 skill as a dependency and the file inside its installed directory. The cases are
-`wkc-code-review` and `wkc-yolo` reading `wkc-implement`'s `routing.md`, so model routing has one copy. A dependency declaration does not bypass invocation settings.
+`wkc-code-review` and `wkc-yolo` reading `wkc-implement`'s `routing.md` and `adapters.md`, so model
+routing and the harness adapters have one copy. A dependency declaration does not bypass invocation settings.
 
 Every `SKILL.md` body opens with five fields, in order: **What it does**, **When to use it**,
 **Dependencies**, **Input**, and **Output**. The skeleton is in [Skill template](#skill-template).

@@ -20,14 +20,16 @@ Before asking, read without writing anything:
   `unverifiable`, with its reason, such as no admin access. An authentication error stops.
 - The `gh` identity the run will push as (`gh api user --jq .login`), the repository's visibility,
   and `sandbox.enabled` and `permissions.disableBypassPermissionsMode` as
-  [routing.md](../wkc-implement/routing.md) section 4 reads them. A forced sandbox or disabled
-  bypass mode stops routed dispatch.
+  [adapters.md](../wkc-implement/adapters.md) reads them. A forced sandbox or disabled bypass mode
+  stops Claude workers.
 - The scope: `wkc-tracker milestone show`, `list --milestone`, and `show` on every ticket in it, the
   PRD, SPEC, and ROADMAP, and the milestone's exit check. A wave is the milestone's tickets in
   `wkc-tracker next`'s frontier. A closed, unmerged run the person may name to supersede, by its
   config and run PR.
-- Whether this harness can start a fresh worker: a native subagent, or a headless CLI that
-  `headless_workers` lists. With neither, a run gets no independent review: stop, create nothing.
+- Whether this harness can start a fresh worker: a native start, or a headless start that
+  `headless_workers` lists, by adapters.md. With neither, a run gets no independent review: stop,
+  create nothing. For each listed headless harness, run its pre-launch checks and note the login
+  they show.
 
 Then ask everything in one message, as numbered questions, each with numbered options and the
 recommended one first, a digit accepted:
@@ -60,7 +62,8 @@ recommended one first, a digit accepted:
    production or a person keeps the run PR a draft.
 7. **Execution.** The project's model pair, or the default `claude-code`/`opus` then
    `codex`/`gpt-6.1-sol`, both effort `medium`, or none. List each ticket's `## Execution` override
-   as read; a run never freezes it. Headless workers: the project's list or fewer. With no pair,
+   as read; a run never freezes it. Headless workers: the project's list or fewer, each with the
+   login its pre-launch check showed, so quota and billing are a choice. With no pair,
    confirm the coordinator's harness, model, and effort; a session cannot read its own. When native
    workers will run, record the model as an alias, such as `sonnet`. Confirm the
    coordinator runs with full permissions and no sandbox: `claude --dangerously-skip-permissions`,
@@ -78,7 +81,8 @@ and quota stops still apply.
 
 With the answers, ask nothing more in this run.
 
-Before any write, validate the answered execution selection with routing.md sections 2 and 5,
+Before any write, validate the answered execution selection with routing.md section 2 and
+adapters.md,
 using the answered headless list intersected with the project's. With no pair, the confirmed
 harness must be this coordinator's harness and must have a native worker that accepts its model
 and effort, or its own opted-in headless CLI. A pinned Claude ID needs `claude-code` in that list.

@@ -128,18 +128,20 @@ For reported problems, `wkc-backlog` copies the evidence lines into ticket Notes
 Set `execution_models` to one ordered pair, and the first model builds while each review uses the
 other model from the step before. `wkc-setup` offers `claude-code`, `opus`, then `codex`,
 `gpt-6.1-sol`, both at effort `medium`. A ticket's `## Execution` section replaces the pair for that
-ticket, and an edit applies to the next build or review. With no pair, every skill runs in the
-session that calls it, as before.
+ticket, and an edit applies to the next build or review. The pair applies to `wkc-yolo` runs. A
+manual `wkc-implement` or `wkc-code-review` call always runs in the session that calls it, whatever
+pair is set, and a manual review warns when the same harness and model made the step before.
 
 Pairs must name different models, including known alias resolutions. Codex dispatch checks effective
 provider configuration and endpoint overrides before launch or resume. An unverified custom endpoint
 blocks the call even with a ChatGPT login.
 
-The session you call `wkc-implement` or `wkc-code-review` in coordinates. It starts a native Claude
-Code agent for a Claude alias and `codex exec` for a Codex model, using your ChatGPT login, never an
-API key. `claude -p` runs only when `headless_workers` lists `claude-code`, which accepts whatever
-login it finds, API billing included. Routing changes which model does a step, not what a manual call
-may do: `wkc-implement` still builds one ticket, and `wkc-code-review` still runs one round.
+In a run, the `wkc-yolo` session coordinates, from Claude Code, Codex, or Kiro CLI. Every step,
+`finish` and `verify` included, runs in its own fresh session: a native agent where the harness has
+one, otherwise `claude -p`, `codex exec`, or `kiro-cli chat --no-interactive`, each only when
+`headless_workers` lists it. Before each headless launch the run checks that the CLI will use your
+subscription login and no API key, and refuses the launch otherwise. A quota error pauses only that
+harness's steps. The adapters live in `skills/wkc-implement/adapters.md`.
 
 Workers run with full permissions and no sandbox. No skill can read its own permission mode, so
 launch the coordinator in bypass mode:
@@ -150,9 +152,8 @@ claude --dangerously-skip-permissions
 
 Or set `permissions.defaultMode: "bypassPermissions"` in `~/.claude/settings.json`. A project's
 `.claude/settings.json` and `.claude/settings.local.json` cannot turn bypass mode on, and
-`sandbox.enabled: true` in any settings file blocks routed work. A Codex coordinator, allowed only
-when `headless_workers` lists `claude-code`, launches with `codex
---dangerously-bypass-approvals-and-sandbox`. A run without a pair validates its coordinator selection separately from pair rules. A `wkc-yolo` run without a pair in Kiro CLI launches with
+`sandbox.enabled: true` in any settings file blocks Claude workers. A Codex coordinator launches with
+`codex --dangerously-bypass-approvals-and-sandbox`, and a Kiro CLI coordinator with
 `kiro-cli chat --trust-all-tools`.
 
 ## Workflow diagrams

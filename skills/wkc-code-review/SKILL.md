@@ -16,12 +16,12 @@ disable-model-invocation: false
   on a person's request. A model runs it only when a person or `wkc-yolo` asked for that work.
   `wkc-implement` never starts it, because the review must not run in the context that wrote the code.
 - **Dependencies:** `docs/dev-agents/config.md`: `max_fix_attempts`,
-  `max_ai_test_sessions_per_attempt`, `execution_models`, `headless_workers`, `issue_tracker`,
+  `max_ai_test_sessions_per_attempt`, `issue_tracker`,
   `test_command`, `security_scan`, `context_file`, `rules_dir`, `prd_file`, `spec_file`, and the **Conventions**
   body. The `wkc-tracker` skill for every ticket read and write: `show`, `list`, and `comment`.
   `git`, and `gh` against a GitHub remote. The `wkc-backlog` skill for work found out of scope.
-  When a model pair applies, the `wkc-implement` skill's `routing.md`, read at
-  `../wkc-implement/routing.md` from this skill's own directory, with `claude` or `codex` for the workers it starts.
+  When the prompt starts `Routed worker:`, the `wkc-implement` skill's `routing.md`, read at
+  `../wkc-implement/routing.md` from this skill's own directory.
 - **Input:** a pull request (number or URL) or a ticket id, which is the preferred input: tickets
   run in parallel worktrees, and an explicit target cannot review the wrong pull request. With no
   argument, review the one open pull request whose head is the current branch, which in a worktree
@@ -51,11 +51,10 @@ review before any test and posts nothing, naming it and saying `wkc-setup` adds 
 names the field and its allowed values. With no `security_scan`, read the deprecated `push_check`
 and warn that it was renamed.
 
-**Routing.** When `execution_models` is in the config, the ticket's `## Execution`, or the run
-config, or the prompt starts `Routed worker:`, read `../wkc-implement/routing.md`, relative to this
-skill's own directory, whole once sections 1 and 2 have found the target and the round. It decides
-whether this session reviews or starts a fresh worker on the other model. When that file is
-missing, stop, post nothing, and name the `wkc-implement` dependency.
+**Routing.** When the prompt starts `Routed worker:`, read `../wkc-implement/routing.md`, relative
+to this skill's own directory, whole: this session is a run's worker. When that file is missing,
+stop, post nothing, and name the `wkc-implement` dependency. Otherwise this session reviews itself,
+whatever pair the config or the ticket names, and never starts a worker for the round.
 
 **The pull request.** A pull request URL or a number the caller identifies as a pull request is read
 with `gh pr view`. For a bare number on the GitHub tracker, try `gh pr view`; when GitHub says that
@@ -108,6 +107,9 @@ already used count against the current limit, whatever limit their verdicts name
 earlier fix commits included. A fresh session on the same model is independent; this is about the
 context, not the model or the directory it works in. A round that is not independent still reviews,
 and may fix or stop, but it never approves (section 4). Its verdict says `Independent: no, <why>`.
+In a manual round, read the `Execution:` line of the latest handoff, `wkc-implement: updated for
+review` comment, or verdict on this pull request. When it names this session's harness and model,
+say in the report that the round is independent but not a second model's review. It still runs.
 Never claim independence this session does not have.
 
 ## 3. Review
@@ -299,16 +301,16 @@ Fixed in: <full sha of the fix commit>     <!-- fixed rounds only -->
 Fixing rounds used: <k> of <max_fix_attempts>
 AI test sessions: <k> of <limit> for round <n>. Checks: <the checks they ran, or none>
 Independent: yes | no, <why>
-Execution: <harness>, <requested model>, effort <requested value>   <!-- routed calls and runs without a pair -->
-Observed execution: <model and effort from runtime evidence | unavailable>           <!-- routed calls and runs without a pair -->
+Execution: <harness>, <requested model>, effort <requested value>
+Observed execution: <model and effort from runtime evidence | unavailable>
 - fixed <file:line> <finding>
 - improved <file:line> <change>
 - open <file:line> <finding>
 - suggestion <file:line> <note>
 ```
 
-`Reviewed` is `H`. Keep the `Fixed in` line only in a `fixed` round, and the two execution lines
-only in a routed call or a run without a pair, each without its HTML comment. On
+`Reviewed` is `H`. Keep the `Fixed in` line only in a `fixed` round, without its HTML comment.
+In a manual call, `Execution:` names this session's harness and its model and effort as the session reports them, or `unknown`, and `Observed execution:` is `unavailable`. On
 the `Fixing rounds used` line, `k` counts the `fixed` rounds, this one included when it is `fixed`.
 List each blocking finding fixed and each improvement applied in this round, each blocking finding
 left open, and each suggestion not applied, unconfirmed findings included; drop a line kind with

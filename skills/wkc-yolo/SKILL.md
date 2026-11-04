@@ -18,7 +18,7 @@ disable-model-invocation: true
   `test_command`, `max_fix_attempts`, `max_ai_test_sessions_per_attempt`, `max_additional_tickets`,
   `max_parallel_workers`, `execution_models`, `headless_workers`, `prd_file`, `spec_file`, `roadmap_file`, and the
   **Conventions** body. The `wkc-tracker` skill for every ticket and run config read and write.
-  `wkc-implement` with its `routing.md`, `wkc-code-review`, and `wkc-backlog`, called with `--run
+  `wkc-implement` with its `routing.md` and `adapters.md`, `wkc-code-review`, and `wkc-backlog`, each started as a step with `--run
   <ref>` inside a run. `git`, and `gh` against a GitHub remote. [kickoff.md](./kickoff.md) for a new
   run, and [after.md](./after.md) once a run PR merged, closed, or got requested changes.
 - **Input:** `<id>`, one ticket. `wave <milestone>`, the milestone's eligible frontier now.
@@ -37,8 +37,9 @@ ticket comments, and for a PR comment, `gh api repos/<owner>/<repo>/collaborator
 --jq .role_name` gives `admin`, `maintain`, or `write`. A `Run:` comment or an `approve` verdict from
 anyone else admits, merges, and proves nothing.
 On every start, read tracker, git, and PR state first, and never repeat a write, push, merge, deploy,
-or comment that landed. Check each command's own exit status before the next write. Quota,
-rate-limit, and authentication errors stop all work at once, with no retry.
+or comment that landed. Check each command's own exit status before the next write. An
+authentication error stops all work at once, with no retry; a quota or rate-limit error pauses
+that harness, as routing.md section 6 says.
 
 ## 1. Read and pick the mode
 
@@ -97,14 +98,15 @@ A blocker in the run is met once its PR merged into the run branch and its lates
 failed gate; one outside it follows `wkc-implement` section 2. `wkc-tracker next` reads status
 alone, so decide from these reads.
 
-On GitHub and Linear, run at most the config's `max_parallel_workers` workers at once, native and headless together, each ticket in
-its own detached worktree at the fetched run branch, where `wkc-implement` creates its branch.
-On local, run one ticket at a time in the starting directory. A worker never starts another.
-Serialize tickets that carry a coordination risk. `wkc-implement` and
-`wkc-code-review` pick each step's model and start its fresh worker by routing.md, on the config's
-`Coordinator model:` when there is no pair. A review never sees the implementation's conversation.
-Check the PR head, the handoff or verdict, and the tracker writes yourself before advancing; a
-failed launch or a missing record advances nothing.
+This session is the coordinator: read [routing.md](../wkc-implement/routing.md) whole. Every step
+in the table, `finish` and `verify` included, runs in its own fresh session on the model routing.md
+picks, started as it says, and returns a short result; this session never runs a skill's steps
+itself. On GitHub and Linear, run at most the config's `max_parallel_workers` workers at once, every
+kind together. On local, run one ticket at a time in the starting directory. A worker never starts
+another. Serialize tickets that carry a coordination risk. A review never sees the implementation's
+conversation. Check the PR head, the handoff or verdict, and the tracker writes yourself before
+advancing; a failed launch or a missing record advances nothing. A step whose harness is paused
+waits.
 
 **Merge queue.** One merge at a time. Ask `wkc-implement <id> --run <ref>` for the pre-merge update.
 When the head changed, run a fresh `wkc-code-review` round on the new head: it only confirms a clean
@@ -138,8 +140,8 @@ landed before spending again. A landed `Run:` already spends its slot: finish a 
 or move to `ready` without admitting it again. Without `run` or a slot, new work stays at
 `backlog` and what it blocks waits. Other items stay outside the run.
 
-**Planning changes.** Run each `wkc-backlog` call in a fresh worktree on a `docs/<slug>` branch from
-the run branch. When it changed a document, commit, run `security_scan`, push, and open a PR against the
+**Planning changes.** Run each `wkc-backlog` call as a step (routing.md section 4), in a fresh
+worktree on a `docs/<slug>` branch from the run branch. When it changed a document, commit, run `security_scan`, push, and open a PR against the
 run branch. Post a `Decision (wkc-yolo):` naming that PR on the ticket that raised it. A fresh
 subagent that did not write the change checks that the diff stays inside the PRD and weakens nothing
 never delegated: a Security entry, `security_scan`, a review security check, the run branch boundary, a
