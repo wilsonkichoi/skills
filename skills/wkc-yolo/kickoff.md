@@ -40,8 +40,9 @@ recommended one first, a digit accepted:
    is adopted or left out; adopting from another run needs evidence that it stopped.
 2. **Readiness problems and blind spots**, each named with its ticket: an unapproved PRD, SPEC, or
    ROADMAP; an open decision ticket that blocks scope; a SPEC section a ticket cites that does not
-   exist; a criterion with no check; tickets that change the same files with no coordination note,
-   which the run serializes; a missing prerequisite. Each is fixed first, accepted, or left out.
+   exist; a criterion with no check; side-by-side tickets that edit one schema, migration, generated
+   file, or config with no coordination note (a recorded note makes the run serialize them); a
+   missing prerequisite. Each is fixed first, accepted, or left out.
 3. **Planning:** `delegated` (recommended) or `none`. **New prerequisites:** `run` (recommended) or
    `record only`. **Additional allowance:** the project's `max_additional_tickets`, or lower. Explain
    it apart from the initial scope: initial work costs no slot, and only new prerequisites and

@@ -86,12 +86,14 @@ coordinator was `claude-opus-5-5` through batch 2 and `claude-sonnet-5-5` from b
 8. **Y8 Kickoff security.** With `security_scan` removed: no run branch, no config. With a `security_scan` that exits 1:
    the same, and the output shown. Criterion 21.
 9. **Y9 Milestone run.** A, B, C after the round. PASS: no further question; each ticket `done` right after its
-   merge into the run branch, before the run PR opens; A and B `in-progress` at once by their timelines; C claimed
+   merge into the run branch, before the run PR opens; A and B `in-progress` at once by their timelines, though both
+   edit one dispatcher file and record no coordination risk; C claimed
    after both finishes show no failed gate; the run PR open, ready, unmerged, its validated sha equal to
    `headRefOid`; `gh pr list --base main --state merged` unchanged. Criteria 23, 24, 25, 42: each merge's head
    equals its latest `approve`'s `Reviewed:` sha, the second merge's approve covers a head containing the first
    merge commit, and the body lists every Decision comment and nothing else. The coordinator closes no approved
-   PR; a defect it sees in approved work is a PR comment followed by another review round on that head.
+   PR; a defect it sees in approved work is a PR comment followed by another review round on that head. Updated for
+   PR #100 step 5: the kickoff names no readiness problem for that shared file.
 10. **Y10 Integration failure.** A's gate passes at its finish and fails after B merges. PASS: readiness finds it,
     a related repair ticket is admitted, approved, and merged, readiness passes at the new head, the PR is never
     ready before that, and A's gate comments show fail and pass at their own shas. Criterion 26.

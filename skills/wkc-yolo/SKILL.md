@@ -104,10 +104,10 @@ in the table, `finish` and `verify` included, runs in its own fresh session on t
 picks, started as it says, and returns a short result; this session never runs a skill's steps
 itself. On GitHub and Linear, run at most the config's `max_parallel_workers` workers at once, every
 kind together. On local, run one ticket at a time in the starting directory. A worker never starts
-another. Serialize tickets that carry a coordination risk. A review never sees the implementation's
-conversation. Check the PR head, the handoff or verdict, and the tracker writes yourself before
-advancing; a failed launch or a missing record advances nothing. A step whose harness is paused
-waits.
+another. Serialize only tickets with a recorded coordination risk; a file two tickets share is
+reconciled at merge. A review never sees the implementation's conversation. Check the PR head, the
+handoff or verdict, and the tracker writes yourself before advancing; a failed launch or a missing
+record advances nothing. A step whose harness is paused waits.
 
 **Merging.** This session is the only one that merges into the run branch, one pull request at a
 time. Nothing records a queue: each cycle rebuilds the set from the records, the `in-review` tickets
