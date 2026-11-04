@@ -1,7 +1,7 @@
 # wkc-setup validation
 
 Follow [Validation](../AGENTS.md#validation). This catalog covers the review-round field added by #54, the
-`run_config` field added by #78, the `push_check` field added by #76, the AI test allowance added by #91, the `uv` prerequisite added by #94, and the execution model fields added by #83. It does not claim baseline coverage of the
+`run_config` field added by #78, the `security_scan` field added by #76, the AI test allowance added by #91, the `uv` prerequisite added by #94, and the execution model fields added by #83. It does not claim baseline coverage of the
 rest of setup.
 
 ## Cases
@@ -25,9 +25,9 @@ rest of setup.
    PASS: the warning about the public repository appears before the choice is taken, and the written config holds
    `run_config: github-variable`.
 
-6. **Push check field.** Direct. `grep -n push_check skills/wkc-setup/SKILL.md skills/wkc-setup/config-template.md`,
+6. **Security scan field.** Direct. `grep -n security_scan skills/wkc-setup/SKILL.md skills/wkc-setup/config-template.md`,
    and parse the template's YAML frontmatter.
-   PASS: Section D asks for `push_check`, offers the gitleaks command first with a check that `gitleaks` is installed,
+   PASS: Section D asks for `security_scan`, offers the gitleaks command first with a check that `gitleaks` is installed,
    then the project's own command and none, and says a manual push without one only warns. PyYAML parses the template
    value as the gitleaks command string, and its comment says the default is none.
 

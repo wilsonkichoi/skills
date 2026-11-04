@@ -7,7 +7,11 @@ spec_file: docs/dev-agents/SPEC.md
 roadmap_file: docs/dev-agents/ROADMAP.md
 max_fix_attempts: 5                         # review rounds that may change code on one PR
 max_ai_test_sessions_per_attempt: 6         # AI test sessions each build or review round may launch
-push_check: 'gitleaks git --redact --log-opts="origin/main..HEAD"'  # scans the commits about to be pushed for secrets; exit 0 passes
+max_additional_tickets: 5                   # tickets a wkc-yolo run may admit beyond its approved initial tickets
+max_parallel_workers: 5                     # fresh sessions a wkc-yolo run keeps running at once
+run_config: tracker                         # where wkc-yolo stores run configs
+headless_workers: [claude-code, codex, kiro-cli]  # headless CLIs a wkc-yolo run may start, each after its login check
+security_scan: 'gitleaks git --redact --log-opts="origin/main..HEAD"'  # scans the commits about to be pushed for secrets; exit 0 passes
 ---
 
 # Project development conventions

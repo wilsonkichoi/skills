@@ -14,9 +14,9 @@ disable-model-invocation: true
 - **When to use it:** when a person wants a ticket, a wave, or a milestone done unattended, and
   again on the run to resume it, re-verify a stale head, start a review continuation, or record the
   outcome after the run PR merged or closed. Callers are people only; no model or skill starts it.
-- **Dependencies:** `docs/dev-agents/config.md`: `issue_tracker`, `run_config`, `push_check`,
+- **Dependencies:** `docs/dev-agents/config.md`: `issue_tracker`, `run_config`, `security_scan`,
   `test_command`, `max_fix_attempts`, `max_ai_test_sessions_per_attempt`, `max_additional_tickets`,
-  `execution_models`, `headless_workers`, `prd_file`, `spec_file`, `roadmap_file`, and the
+  `max_parallel_workers`, `execution_models`, `headless_workers`, `prd_file`, `spec_file`, `roadmap_file`, and the
   **Conventions** body. The `wkc-tracker` skill for every ticket and run config read and write.
   `wkc-implement` with its `routing.md`, `wkc-code-review`, and `wkc-backlog`, called with `--run
   <ref>` inside a run. `git`, and `gh` against a GitHub remote. [kickoff.md](./kickoff.md) for a new
@@ -37,9 +37,12 @@ rate-limit, and authentication errors stop all work at once, with no retry.
 
 ## 1. Read and pick the mode
 
-Read the config. `max_fix_attempts` (default `5`), `max_ai_test_sessions_per_attempt` (default
-`6`), and `max_additional_tickets` (default `5`) are integers, 0 or more. `run_config` is
-`tracker` (default), `github-variable`, or `command <cmd>`. Validate `execution_models` and
+Read the config. `max_fix_attempts`, `max_ai_test_sessions_per_attempt`, and
+`max_additional_tickets` are integers, 0 or more; `max_parallel_workers` is an integer, 1 or more.
+`run_config` is `tracker`, `github-variable`, or `command <cmd>`. These and `headless_workers` are
+required: a missing one stops before any branch, config, or dispatch, naming the field and saying
+`wkc-setup` adds it. `security_scan` is optional; with none set, read the deprecated `push_check`
+and warn that it was renamed. Validate `execution_models` and
 `headless_workers` as [routing.md](../wkc-implement/routing.md) section 2 does, through the
 installed `wkc-implement`. Any invalid value stops before any branch, config, or dispatch: name the
 field and its allowed values.
@@ -81,7 +84,7 @@ A blocker in the run is met once its PR merged into the run branch and its lates
 failed gate; one outside it follows `wkc-implement` section 2. `wkc-tracker next` reads status
 alone, so decide from these reads.
 
-On GitHub and Linear, run at most 5 workers at once, native and headless together, each ticket in
+On GitHub and Linear, run at most the config's `max_parallel_workers` workers at once, native and headless together, each ticket in
 its own detached worktree at the fetched run branch, where `wkc-implement` creates its branch.
 On local, run one ticket at a time in the starting directory. A worker never starts another.
 Serialize tickets that carry a coordination risk. `wkc-implement` and
@@ -123,10 +126,10 @@ or move to `ready` without admitting it again. Without `run` or a slot, new work
 `backlog` and what it blocks waits. Other items stay outside the run.
 
 **Planning changes.** Run each `wkc-backlog` call in a fresh worktree on a `docs/<slug>` branch from
-the run branch. When it changed a document, commit, run `push_check`, push, and open a PR against the
+the run branch. When it changed a document, commit, run `security_scan`, push, and open a PR against the
 run branch. Post a `Decision (wkc-yolo):` naming that PR on the ticket that raised it. A fresh
 subagent that did not write the change checks that the diff stays inside the PRD and weakens nothing
-never delegated: a Security entry, `push_check`, a review security check, the run branch boundary, a
+never delegated: a Security entry, `security_scan`, a review security check, the run branch boundary, a
 grant, a `(needs authorization)` step, a Failure handling stop, a PRD Boundary, or a criterion.
 Passing, merge it with `--match-head-commit` at the checked sha. Failing, leave it unmerged and park
 the raising ticket with `Needs: a person`. With `Planning: none`, `wkc-backlog` parks instead.
@@ -134,7 +137,7 @@ the raising ticket with `Needs: a person`. With `Planning: none`, `wkc-backlog` 
 ## 4. Readiness, cleanup, and the run PR
 
 1. When anything merged, merge `origin/<default>` into the run branch if `git merge-tree
-   --write-tree` shows no conflict, run `push_check`, and push; with a conflict, change nothing and
+   --write-tree` shows no conflict, run `security_scan`, and push; with a conflict, change nothing and
    report it. Finish waiting tickets once more.
 2. With merged work, open the run PR, or reuse it, as a draft: `gh pr create --draft --base
    <default> --head <run branch>`, the body below. With none, report and stop.
@@ -189,7 +192,8 @@ Started: <ISO 8601 time>. By: <person>.
 - Continues: <prior config ref> | none
 - Supersedes: <closed run config ref> | none
 - max_fix_attempts: <n>              <!-- never higher than the project config -->
-- max_additional_tickets: <n>        <!-- default 5; never higher than the project config -->
+- max_additional_tickets: <n>        <!-- never higher than the project config -->
+- max_parallel_workers: <n>          <!-- never higher than the project config -->
 - Execution models: <first harness/model/effort>; <second harness/model/effort> | none
 - Coordinator model: <harness>, <model>, effort <effort> | not used   <!-- with no pair: the person's confirmed answer -->
 - Headless workers: <harnesses> | none   <!-- never more than the project config -->

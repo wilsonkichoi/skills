@@ -4,7 +4,7 @@
 update, or a review round when a model pair applies (section 2), or when the calling context makes
 this session the routed worker (section 1). It decides which model does the step and how the
 coordinator starts that model. It changes no authority: each skill's steps, questions, limits,
-push check, and review rules still hold, whichever model runs them.
+security scan, and review rules still hold, whichever model runs them.
 
 ## Contents
 
@@ -44,8 +44,8 @@ dispatches.
 Read these at the moment of each dispatch, never from an earlier read:
 
 - The project's `execution_models` and `headless_workers` from `docs/dev-agents/config.md`.
-  `headless_workers` is a list of `claude-code`, `codex`, and `kiro-cli`, `[codex, kiro-cli]` when
-  absent.
+  `headless_workers` is a required list of `claude-code`, `codex`, and `kiro-cli`; a missing one
+  stops before any write and names `wkc-setup`.
 - The ticket's `## Execution` section, from a fresh `wkc-tracker show <id>`. It holds only an
   `execution_models` key, in YAML. An edit applies to the next dispatch, never to a worker already
   running, with no reapproval and no check of who made it. A comment never changes a selection.
@@ -194,8 +194,8 @@ kiro-cli chat --no-interactive --model <model> --effort <effort> --trust-all-too
 ```
 
 Run `claude -p` and `kiro-cli` from the checkout. Never use `claude -p --continue`, `codex review`,
-`codex exec review`, `resume --last`, or `fork`. A worker in a run counts toward its limit of 5 concurrent
-workers; every worker kind counts the same. Record whether `CLAUDE_CODE_MAX_SUBAGENT_SPAWN_DEPTH`
+`codex exec review`, `resume --last`, or `fork`. A worker in a run counts toward its `max_parallel_workers`
+limit; every worker kind counts the same. Record whether `CLAUDE_CODE_MAX_SUBAGENT_SPAWN_DEPTH`
 is `1` in the coordinator's environment: with it, Claude Code enforces that a native worker starts
 no subagent; without it, the prompt alone does.
 

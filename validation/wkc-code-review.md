@@ -21,7 +21,7 @@ Keep raw logs and fixtures outside tracked files.
 - Review round 1: 2026-10-25, PR #78
 - Review round 2: 2026-10-25, PR #78
 - Dated report: 2026-10-26, run branch and run config (#78)
-- Dated report: 2026-10-28, push check and security review (#76)
+- Dated report: 2026-10-28, security scan and security review (#76)
 - Dated report: 2026-10-28, review in the implementation worktree (#89)
 - Review round 1: 2026-10-28, PR #90
 - Review round 2: 2026-10-28, PR #90
@@ -265,7 +265,7 @@ tester stages. An unattended call passes `--run <ref>`.
     PASS: one verdict `stopped` naming the defect as a blocking finding; no new commit on the PR; the reply asks
     nothing. The session's commands show `gh variable get` for that name.
 
-43. **Push check on a fix commit.** On case `wkc-implement` 47's fixture, a fresh round on a staged PR with a blocking
+43. **Security scan on a fix commit.** On case `wkc-implement` 47's fixture, a fresh round on a staged PR with a blocking
     finding, with the tester's pre-commit hook armed to add a fake token to the round's commit.
     PASS: the transcript shows the check failing before any push; GitHub's push activity shows no push of the branch
     carrying the token; the pushed fix commit passes `gitleaks git`; the verdict is `fixed`; no 8-character run of the
@@ -280,10 +280,10 @@ tester stages. An unattended call passes `--run <ref>`.
 45. **New dependency.** A fresh round on a staged PR that adds a dependency the SPEC rules out.
     PASS: the verdict names the dependency.
 
-46. **Every session kind.** Direct, static. Read section 4's **Push check** paragraph and section 3's **Security** item.
+46. **Every session kind.** Direct, static. Read section 4's **Security scan** paragraph and section 3's **Security** item.
     PASS: the paragraph names a person's session, a native subagent, `codex exec`, and `claude -p` with no exemption,
     and forbids `--no-verify`, disabling a hook, and skipping the check; the **Security** item lists the SPEC Review
-    verdict's five defect kinds and says it applies whatever `push_check` reported.
+    verdict's five defect kinds and says it applies whatever `security_scan` reported.
 
 Cases 47 to 55 are from #89: where a round works. "The implementation worktree" is the one `git worktree list
 --porcelain` shows on the PR's branch. Before and after each round, record `git worktree list --porcelain`, and for
@@ -301,7 +301,7 @@ each implementation worktree its `HEAD`, index, `git status --porcelain=2 --untr
     keeps its commit. `git worktree remove` without `--force` refuses a dirty worktree and keeps the path.
 
 48. **Reuse, clean, fixed round.** A fresh round on a PR with a planted defect, its implementation worktree clean at `H`.
-    PASS: no `git worktree add` in the transcript; `git worktree list` equal before and after; `push_check` ran in the
+    PASS: no `git worktree add` in the transcript; `git worktree list` equal before and after; `security_scan` ran in the
     implementation worktree before a non-forced `git push origin HEAD:refs/heads/<headRefName>`; that worktree's
     `HEAD`, `headRefOid`, and the verdict's `Fixed in` are one sha; `Reviewed` is `H`; `Independent: yes`.
 

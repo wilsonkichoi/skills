@@ -17,7 +17,7 @@ disable-model-invocation: false
   branch. Callers are people, `wkc-yolo`, and a model acting on a person's request. A model runs it only when a person or `wkc-yolo` asked for that
   work. It never starts `wkc-code-review`, because the review must not run in the context that
   wrote the code.
-- **Dependencies:** `docs/dev-agents/config.md`: `issue_tracker`, `run_config`, `test_command`, `push_check`,
+- **Dependencies:** `docs/dev-agents/config.md`: `issue_tracker`, `run_config`, `test_command`, `security_scan`,
   `max_ai_test_sessions_per_attempt`, `execution_models`, `headless_workers`, `context_file`,
   `rules_dir`, `prd_file`, `spec_file`, `roadmap_file`, `issues_dir`, and the **Conventions** body.
   The `wkc-tracker` skill for every ticket read and write: `show`, `list`, `next`, `assign`,
@@ -49,8 +49,10 @@ instructions.
 ## 1. Read and pick the mode
 
 Read the config, the `context_file`, and the rule files in `rules_dir`.
-`max_ai_test_sessions_per_attempt` is an integer, 0 or more, and `6` when the field is absent. Any
-other value stops the call before any write or test: name the field and its allowed values. Then
+`max_ai_test_sessions_per_attempt` is required, an integer, 0 or more. A missing field stops the
+call before any write or test, naming it and saying `wkc-setup` adds it; any other value names the
+field and its allowed values. With no `security_scan`, read the deprecated `push_check` and warn
+that it was renamed. Then
 `wkc-tracker show <id>`. When `execution_models` is in the config, the ticket's `## Execution`, or
 the run config, or the prompt starts `Routed worker:`, read [routing.md](./routing.md) whole before
 a build or a pre-merge update: it decides whether this session builds or starts a worker. **The ticket's pull request** is the one on the `PR:` line of its latest handoff comment or
@@ -203,15 +205,15 @@ Checks: <the cases or subchecks this session runs>
 `k` counts the ticket's records for this attempt from any session, this one included. With none
 left, start no more: a required check still unrun is SKIP, never passed.
 
-**Push check.** Before every `git push`, in a build, a follow-up, or the pre-merge update, run
-`push_check` in the checkout holding the commits. This binds every session that runs this skill: a person's, a native
+**Security scan.** Before every `git push`, in a build, a follow-up, or the pre-merge update, run
+`security_scan` in the checkout holding the commits. This binds every session that runs this skill: a person's, a native
 subagent, `codex exec`, or `claude -p`. Never pass `--no-verify` to any git command, disable a
 hook, or skip the check; a hook that puts the finding back is the same finding failing again. A
 non-zero exit blocks the push. Remove the finding from the unpushed commits, rewriting
 this branch's unpushed commits when it is in their history, run the check again, and push only on a
 pass. Name the file, line, and rule, never the value, in reports, comments, and commit messages.
 The same finding failing again with no new evidence stops the build; under a run, it parks. With no
-`push_check`, a manual push goes ahead and the report warns that no push check is configured;
+`security_scan`, a manual push goes ahead and the report warns that no security scan is configured;
 under a run, park instead of pushing.
 
 Push the branch and open the pull request with this body, filled in, and the ticket's title:

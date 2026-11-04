@@ -12,7 +12,7 @@ branch and the run config written; SKILL.md section 2 then runs the tickets.
 
 Before asking, read without writing anything:
 
-- Run `push_check` once in the current checkout. With no `push_check`, or a non-zero exit, the run
+- Run `security_scan` once in the current checkout. With no `security_scan`, or a non-zero exit, the run
   cannot start: show the command and its output first, ask nothing else, and end. No branch, no
   config.
 - Push protection: `gh api repos/<owner>/<repo> --jq '.security_and_analysis.secret_scanning_push_protection.status // "unverifiable"'`.
@@ -43,7 +43,8 @@ recommended one first, a digit accepted:
 3. **Planning:** `delegated` (recommended) or `none`. **New prerequisites:** `run` (recommended) or
    `record only`. **Additional allowance:** the project's `max_additional_tickets`, or lower. Explain
    it apart from the initial scope: initial work costs no slot, and only new prerequisites and
-   readiness repairs spend one. **`max_fix_attempts`:** the project's, or lower.
+   readiness repairs spend one. **`max_fix_attempts`:** the project's, or lower. **Worker limit:**
+   the project's `max_parallel_workers`, or lower.
 4. **Gates.** Classify every `## After merge` step, every post-merge criterion, and every exit-check
    item, by its `Target:`, command, and **Conventions**, never by its verb: **local** runs with no
    grant; **shared non-production** runs only under a grant; **production-affecting** never runs.
@@ -70,7 +71,7 @@ recommended one first, a digit accepted:
    public; with `github-variable`, that every Actions workflow can read it.
 9. **Supersede** a closed, unmerged run, or none.
 
-End the turn. There is no elapsed-time budget; command limits, grant expiry, 5 concurrent workers,
+End the turn. There is no elapsed-time budget; command limits, grant expiry, the worker limit,
 and quota stops still apply.
 
 ## 2. Start the run
@@ -85,7 +86,7 @@ If no permitted worker can run the selection, stop without creating a branch or 
 
 1. **Run branch.** `run/<milestone-slug>-<YYYYMMDDTHHMM>`, local time, or `run/ticket-<id>-...` for
    a ticket with no milestone. Push it at the remote default branch's sha after running
-   `push_check`. To supersede, start it from the closed run's branch with `origin/<default>`
+   `security_scan`. To supersede, start it from the closed run's branch with `origin/<default>`
    merged in; when `git merge-tree --write-tree` shows a conflict, stop before creating anything.
    Its `done` tickets are carried, never rebuilt: they are no initial IDs, and readiness verifies
    them with the rest.

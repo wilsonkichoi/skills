@@ -17,7 +17,7 @@ disable-model-invocation: false
   `wkc-implement` never starts it, because the review must not run in the context that wrote the code.
 - **Dependencies:** `docs/dev-agents/config.md`: `max_fix_attempts`,
   `max_ai_test_sessions_per_attempt`, `execution_models`, `headless_workers`, `issue_tracker`,
-  `test_command`, `push_check`, `context_file`, `rules_dir`, `prd_file`, `spec_file`, and the **Conventions**
+  `test_command`, `security_scan`, `context_file`, `rules_dir`, `prd_file`, `spec_file`, and the **Conventions**
   body. The `wkc-tracker` skill for every ticket read and write: `show`, `list`, and `comment`.
   `git`, and `gh` against a GitHub remote. The `wkc-backlog` skill for work found out of scope.
   When a model pair applies, the `wkc-implement` skill's `routing.md`, read from that installed
@@ -41,10 +41,11 @@ request body is the implementer's claim, not evidence.
 
 ## 1. Read the config and the target
 
-Read the config, the `context_file`, and the rule files in `rules_dir`. `max_fix_attempts` is an
-integer, 0 or more, and `5` when the field is absent. `max_ai_test_sessions_per_attempt` is an
-integer, 0 or more, and `6` when absent. Any other value of either stops the review before any test:
-name the field and its allowed values, and post nothing.
+Read the config, the `context_file`, and the rule files in `rules_dir`. `max_fix_attempts` and
+`max_ai_test_sessions_per_attempt` are required, each an integer, 0 or more. A missing one stops the
+review before any test and posts nothing, naming it and saying `wkc-setup` adds it; any other value
+names the field and its allowed values. With no `security_scan`, read the deprecated `push_check`
+and warn that it was renamed.
 
 **Routing.** When `execution_models` is in the config, the ticket's `## Execution`, or the run
 config, or the prompt starts `Routed worker:`, read `routing.md` in the installed `wkc-implement`
@@ -139,11 +140,11 @@ Check the implementation and the tests, in this order:
   `## After merge` steps are not judged here.
 - **SPEC compliance**: a deviation from a cited contract is a finding even when the code works.
 - **Correctness** of the code itself, including error paths.
-- **Security**, in every round, whatever `push_check` reported: a credential or secret in the diff
+- **Security**, in every round, whatever `security_scan` reported: a credential or secret in the diff
   or in any commit of the pull request (`git log -p origin/<baseRefName>..H`), an authentication or
   authorization defect, sensitive data logged, stored, or sent where it should not be, and network
   calls the ticket does not need. A secret is named by its file and line, never by its value.
-  Find one by reading the diff and running `push_check`; never write a secret-shaped value or make
+  Find one by reading the diff and running `security_scan`; never write a secret-shaped value or make
   a commit to test the scanner, in any checkout or copy.
   Name each new or changed dependency in a verdict line: a finding when the ticket does not need it,
   otherwise a `suggestion` line saying why the ticket needs it.
@@ -258,14 +259,14 @@ wkc-code-review round <n> on <PR URL>, reviewed <full head sha>.
 
 List every fix and improvement in its body.
 
-**Push check.** Before every push to a remote, run `push_check` in the worktree holding the commit.
+**Security scan.** Before every push to a remote, run `security_scan` in the worktree holding the commit.
 This binds every session that runs this skill: a person's, a native subagent, `codex exec`, or
 `claude -p`. Never pass `--no-verify` to any git command, disable a hook, or skip the check; a
 hook that puts the finding back is the same finding failing again. A non-zero exit blocks the push. Remove the finding from the round's unpushed commit, run the check again, and push only
 on a pass. Name the file, line, and rule, never the value, in reports, comments, and commit
 messages. The same finding failing again with no new evidence stops the round: post nothing and
-report it; under a run, park. With no `push_check`, a manual push goes ahead and the report warns
-that no push check is configured; under a run, park instead of pushing.
+report it; under a run, park. With no `security_scan`, a manual push goes ahead and the report warns
+that no security scan is configured; under a run, park instead of pushing.
 
 Push the commit to the pull request's branch with `git push origin HEAD:refs/heads/<headRefName>`,
 never with force. A refused push means the head moved: post nothing, and report it with the

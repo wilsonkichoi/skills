@@ -17,7 +17,7 @@ Keep raw logs and fixtures outside tracked files.
 - Dated report: 2026-10-25, unattended calls (#73)
 - Dated report: 2026-10-26, run branch and run config (#78)
 - Review round 4: 2026-10-26, PR #78
-- Dated report: 2026-10-28, push check (#76)
+- Dated report: 2026-10-28, security scan (#76)
 - Dated report: 2026-10-28, run completion (#80)
 - Review round 1: 2026-10-28, PR #87
 - Review round 2: 2026-10-28, PR #87
@@ -298,7 +298,7 @@ SPEC Contracts › wkc-yolo run › Run config the way `wkc-tracker run create` 
     branch (case 54). After the run PR merges, finish is manual and its follow-up targets the default branch, as
     for any manual finish.
 
-47. **Push check blocks and recovers.** On a private fixture whose config sets `push_check: 'gitleaks git --redact
+47. **Security scan blocks and recovers.** On a private fixture whose config sets `security_scan: 'gitleaks git --redact
     --log-opts="origin/main..HEAD"'`, with a tester's pre-commit hook armed to add `ci.env` holding a generated fake
     `github-pat` token to the next commit, and never a real or published key: manual `wkc-implement <N>` on a `ready`
     ticket.
@@ -311,10 +311,10 @@ SPEC Contracts › wkc-yolo run › Run config the way `wkc-tracker run create` 
     PASS: the report and every comment the session posted name the file, line, and rule; no 8-character run of the
     token appears in `gh issue view --json comments`, `gh pr view --json body,comments`, or the pushed commit messages.
 
-49. **No push check configured.** As case 47 with `push_check` removed from the fixture's config and no hook armed.
-    PASS: the session pushes and opens the pull request, and its report warns that no push check is configured.
+49. **No security scan configured.** As case 47 with `security_scan` removed from the fixture's config and no hook armed.
+    PASS: the session pushes and opens the pull request, and its report warns that no security scan is configured.
 
-50. **Every session kind.** Direct, static. Read section 4's **Push check** paragraph and section 7's pre-merge update.
+50. **Every session kind.** Direct, static. Read section 4's **Security scan** paragraph and section 7's pre-merge update.
     PASS: the paragraph binds every push in a build, a follow-up, and the pre-merge update; it names a person's session,
     a native subagent, `codex exec`, and `claude -p` with no exemption; it forbids `--no-verify`, disabling a hook,
     and skipping the check; the pre-merge update cites it. Dispatching each worker kind is #83's validation.
