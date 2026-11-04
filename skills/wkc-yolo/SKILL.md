@@ -168,8 +168,8 @@ the raising ticket with `Needs: a person`. With `Planning: none`, `wkc-backlog` 
    <default> --head <run branch>`, the body below. With none, report and stop.
 3. At the run branch head, run `test_command` when configured and each exit-check item a command
    decides, and post each result on the run PR as a `wkc-yolo readiness:` record. Then run
-   `wkc-implement verify <id> --run <ref>` for every required ticket with a local or granted gate;
-   verify skips a gate that one of those records covers. A failure on an
+   `wkc-implement verify <id> --run <ref>` for every required ticket with a local or granted gate,
+   covered or not; verify, never this session, skips a covered gate and records it. A failure on an
    unfinished ticket follows its follow-up path. One in a `done` ticket, or between tickets, is a
    repair ticket from `wkc-backlog`, related to it, admitted as section 3 says; done stays done. Any
    merge restarts readiness at the new head.
