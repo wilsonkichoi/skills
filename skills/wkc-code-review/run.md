@@ -35,7 +35,7 @@ account with write access, or a later head or config change resolves it, such as
 
 ```
 Answer: <the decision>
-To: <link to the needs-decision verdict>
+To: <link to the needs-decision record, verdict, or finish comment>
 ```
 
 A round that finds the latest verdict an open `needs-decision` reports the request and posts

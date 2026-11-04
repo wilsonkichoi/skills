@@ -986,7 +986,7 @@ finds every open request:
 ```
 needs-decision (<skill>): <question>
 Open because: <what the documents and limits leave undecided>
-Recommendation: <the choice the skill would make, and why>
+Recommendation: <the choice you would make, and why>
 Needs: <who must answer>
 ```
 
