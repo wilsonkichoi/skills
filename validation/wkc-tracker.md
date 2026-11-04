@@ -657,15 +657,23 @@ and `close` and logs each call.
 `run create` and `run close` by a model, and the Linear and local `tracker` stores, are covered when `wkc-yolo` (#74)
 calls them.
 
-**A52 one config per run phase, from #74.** Direct. On a throwaway repository, with a first config for run branch
-`run/m-20261029T1000` and a continuation whose `Continues:` names it:
+**A52 one config per run, edited in place, from PR #100 (note 17, ADR-013).** Direct. On a throwaway repository,
+with a config for run branch `run/m-20261029T1000` whose `Started:` line says `By: <the tester's login>`:
 
-1. `tracker` on GitHub: `github.py run create` twice gives two issue numbers, both titled `Run config:
-   run/m-20261029T1000`; `run show` returns each text.
-2. `github-variable`: the first is `WKC_RUN_M_20261029T1000`, the continuation `WKC_RUN_M_20261029T1000_PHASE_2`, and a
-   third config continuing the second is `_PHASE_3`. A `run create` whose name already exists is refused and the
-   variable's `updated_at` is unchanged. Creating a continuation leaves the predecessor readable.
-3. `local`: the continuation is `runs/run-m-20261029T1000-phase-2.md`; an existing file is refused.
+1. `tracker` on GitHub: `github.py run create` gives one issue titled `Run config: run/m-20261029T1000`. `run edit`
+   with the `text_sha256` from `run show` replaces the text, and `run show` then returns it, with `last_editor` the
+   tester. An edit from a stale `text_sha256`, one that changes `By:`, and one run under another login are refused
+   with nothing written. Editing the issue body by hand as another account makes `run show` refuse.
+2. `github-variable`: the name is `WKC_RUN_M_20261029T1000`, with no `_PHASE_<n>` suffix. A `run create` whose name
+   already exists is refused and the variable's `updated_at` is unchanged. `run edit` replaces the value, and `run
+   show` still returns it.
+3. `local`: the file is `runs/run-m-20261029T1000.md`; an existing file is refused; `run edit` rewrites it whole.
+4. `command`: the fixture command's `edit <ref>` replaces the text from standard input; a non-zero exit is a failure.
+
+**A53 comment authors, from PR #100 (note 4).** Direct. On the GitHub fixture, comment on a ticket as the tester and,
+from a second account without write access, comment again. `github.py show <n>`.
+PASS: each comment carries `author`, and `author_can_write` is `true` for the tester and `false` for the second
+account. `make test-tracker` covers the lookup's role names and failure cases.
 
 **A51 `github.py` contract tests, from #94.** Direct. `make test-tracker`.
 PASS: every test passes. The tests run each verb against an in-memory GitHub and cover status mapping, unfiltered

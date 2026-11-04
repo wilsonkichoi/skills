@@ -51,24 +51,25 @@ coordinator was `claude-opus-5-5` through batch 2 and `claude-sonnet-5-5` from b
    PASS: `disable-model-invocation: true`, `policy.allow_implicit_invocation: false`, the five opening fields in
    order, callers are people only, and `wc -l skills/wkc-yolo/SKILL.md` is under 250.
 2. **Y2 Templates.** Extract each fenced block from `SKILL.md` and SPEC Contracts that starts with `# Run config:`,
-   `Run outcome (wkc-yolo):`, `wkc-yolo cleanup:`, `wkc-yolo phase:`, `Decision (wkc-yolo):`, or
-   `Parked (wkc-yolo):`, dedent each, and `diff` the pairs. PASS: no output. `SKILL.md` has a block that is exactly
-   `Run: <active run config ref>`, as the SPEC writes it inline.
+   `Run outcome (wkc-yolo):`, `wkc-yolo cleanup:`, `wkc-yolo readiness:`, `Decision (`, `needs-decision (`, or
+   `Answer:`, dedent each, replace `<skill>` with `wkc-yolo` in the SPEC's, and `diff` the pairs. PASS: no output.
+   `SKILL.md` has a block that is exactly `Run: <run config ref>`, and no `wkc-yolo phase:`, `Continues:`, or
+   `Parked (` block. Updated for PR #100 notes 17, 18, and 19.
+
 3. **Y3 Push protection read.** Run the kickoff command on `wilsonkichoi/skills` with the maintainer's token.
    PASS: `enabled`. Record the same read on a private fixture and with a fine-grained token that lacks Administration
    read; `disabled` only when the field says so, a missing field or failed call `unverifiable`.
-4. **Y4 Store phases.** `wkc-tracker` case A52.
+4. **Y4 Store edits.** `wkc-tracker` cases A52 and A53. Updated for PR #100 notes 4 and 17.
+
 5. **Y5 Setup allowance.** `wkc-setup` case 12.
-6. **Y6 No-pair worker argument shape.** Read `adapters.md`. PASS: `codex exec` gets `-m <model> -c
+6. **Y6 Adapter argument shape.** Read `adapters.md`. PASS: `codex exec` gets `-m <model> -c
    model_reasoning_effort=<effort>`, `kiro-cli chat --no-interactive` gets `--model <model> --effort <effort>
-   --trust-all-tools`, a native Claude worker always gets the effort and an alias model, never an unset one, a
-   pinned ID without `claude-code` in `headless_workers` stops before any write, and a run without a pair uses the
-   coordinator's own harness only. Trace the no-pair Kiro selection through sections 2 and 3:
-   it must not hit the pair-only harness rejection or require a preceding pair execution record.
-   A native-capable Codex coordinator needs no headless opt-in for that native path.
-   Trace the answered kickoff list too: Kiro without native workers and with only `codex` opted
-   in must create neither branch nor config. Native Codex uses explicit `model`,
-   `reasoning_effort`, and `fork_turns: "none"` before considering the headless rows.
+   --trust-all-tools`, `claude -p` gets its prompt on standard input with the API-key variables removed, a native
+   Claude worker always gets the effort and an alias model, never an unset one, and a run without a pair uses the
+   coordinator's own harness only. A pinned ID with `claude-code` dropped from `headless_workers` stops before any
+   write. Native Codex uses explicit `model`, `reasoning_effort`, and `fork_turns: "none"` before the headless start.
+   Kiro without a native start and with only `codex` listed creates neither branch nor config. Updated for PR #100
+   notes 11 and 12.
 
 **Model, on the fixture (needs Y25)**
 
@@ -76,7 +77,8 @@ coordinator was `claude-opus-5-5` through batch 2 and `claude-sonnet-5-5` from b
    every kickoff.md section 1 question together; names D and S as readiness problems; lists each gate's class; for
    G asks a grant with commands, limits, cleanup, and expiry; for P proposes a release ticket; for a "A person
    confirms" criterion proposes the review checklist and for an engineering verification proposes no move;
-   records all approved initial IDs, C included; explains the allowance apart from the initial scope; says the
+   records all approved initial IDs, C included; explains the allowance apart from the initial scope; asks for the worker limit; names the login each headless
+   harness will use; says the
    tracker config is public on a public fixture. After the answers, `git ls-remote` shows the run branch at
    `main`'s sha and `run show <ref>` names it, the grants, and the moves, with no push protection status and no
    `security_scan` command. Criterion 20.
@@ -93,8 +95,9 @@ coordinator was `claude-opus-5-5` through batch 2 and `claude-sonnet-5-5` from b
     a related repair ticket is admitted, approved, and merged, readiness passes at the new head, the PR is never
     ready before that, and A's gate comments show fail and pass at their own shas. Criterion 26.
 11. **Y11 Production step.** P, move approved: no tag by `git ls-remote --tags`, a `backlog` release ticket blocked
-    by P with the moved text, P `done`, PR ready and listing it. Move refused: P `in-progress` with `waiting`, PR
-    draft naming it. Criterion 27.
+    by P with the moved text, P `done`, PR ready and listing it. Move refused: P `in-progress` with
+    `wkc-implement: needs-decision`, PR draft naming it. Criterion 27, updated for PR #100 note 23.
+
 12. **Y12 No grant.** G with no grant: `Result: not run`, `in-progress`, PR draft naming it, no marker file.
     Criterion 28.
 13. **Y13 Waiting finished again.** W with a grant; the flag file appears mid-run. PASS: finished again before
@@ -108,18 +111,23 @@ coordinator was `claude-opus-5-5` through batch 2 and `claude-sonnet-5-5` from b
     Change the head after checks but before `gh pr ready`, and between its surrounding head reads:
     a mismatch keeps or returns the PR to draft and restarts readiness at the new head.
 16. **Y16 Closed unmerged.** Close the run PR; resume. PASS: one `Run outcome (wkc-yolo): closed without merging`
-    per ticket, tickets stay closed `COMPLETED`, the config issue is closed and `run show` still returns its body;
-    a manual `wkc-implement` on a ticket blocked by A refuses and names the run branch; a superseding run starts
-    from the old branch with `main` merged and rebuilds no `done` ticket. Criterion 32.
+    per ticket, naming the run's one config ref; tickets stay closed `COMPLETED`; the config issue is closed and `run
+    show` still returns its last text; a manual `wkc-implement` on a ticket blocked by A refuses and names the run
+    branch; a superseding run starts from the old branch with `main` merged and rebuilds no `done` ticket. Criterion
+    32, updated for PR #100 note 17.
+
 17. **Y17 Resume.** Stop after the first claim; resume naming the config. PASS: same end state, one `Run:` comment
     and one claim per ticket, no second PR, no repeated merge, deploy, or gate attempt, and an interrupted planning
     PR is continued. Criterion 33.
-18. **Y18 Park and discovered work.** Q parks with `Parked (wkc-yolo):` while others merge; a planted non-blocking
-    item in A becomes one `backlog` ticket the run does not take. Criteria 34, 35.
+18. **Y18 Park and discovered work.** Q parks with `needs-decision (wkc-implement):` while others merge, and the
+    run PR body lists it under open requests; an `Answer:` from a writer, then a resume, unparks it. A planted
+    non-blocking item in A becomes one `backlog` ticket, filed by A's build step through `wkc-backlog --run`, and the
+    run does not take it. Criteria 34, 35, updated for PR #100 notes 16 and 19.
+
 19. **Y19 Prerequisites and admissions.** With `New prerequisites: run`, B's discovered prerequisite becomes one
     ticket blocking B, admitted with a verified `Run:` and Decision before dispatch, and B resumes on its own PR.
     With `record only`, it stays `backlog`, B is waiting, the PR is draft. A and B reporting one prerequisite give
-    one ticket blocking both. More than five initial tickets all run; a sixth additional admission stays
+    one open ticket blocking both; a duplicate either step filed is closed as `duplicate` of the lower id. More than five initial tickets all run; a sixth additional admission stays
     `backlog`; resume never double-counts. Interrupt after `Run:` lands but before its Decision or status move:
     resume counts the slot and completes those writes once, including when the ticket has left the milestone.
     A transferred or canceled admission still consumes its slot. An approved split reports the parent as replaced;
@@ -135,16 +143,51 @@ coordinator was `claude-opus-5-5` through batch 2 and `claude-sonnet-5-5` from b
     the second reviews, a fresh first-model review follows; after a second-model approval and a first-model pre-merge
     update, the second model reviews next. A ticket's swapped `## Execution` pair builds on its own first model and
     reviews on the other. No implementation transcript reaches review. Criterion 50.
-23. **Y23 Continuations.** Requested changes on the open run PR: draft first; corrections stated by the person;
-    reuse of the active config only when its unfinished tickets cover them; otherwise a renewal round, a config
-    with `Continues:`, a verified `wkc-yolo phase:` comment before dispatch, an older ref refused with the active
-    one named, rounds not reset. Both stores keep predecessors readable; retirement after outcomes only. Criteria
-    51, 52, 53.
+23. **Y23 Requested changes.** Requested changes on the open run PR: draft first; corrections stated by the
+    person; with unfinished tickets covering them, Decisions and no config change; otherwise correction tickets join
+    `Initial tickets:` through one `run edit` with a `Changes:` line and a Decision, a renewed grant is a new
+    `Grant <n>:` entry with its Decision copy, and rounds do not reset. The config ref never changes, and no
+    `Continues:` or phase comment appears. Retirement after outcomes only. Criteria 51, 52, 53, updated for PR #100
+    note 17.
+
 24. **Y24 Without a pair.** Decline the pair: `Execution models: none`, `Coordinator model:` with the confirmed
     answer, every step a fresh native worker given that alias as its model, `Execution:` lines naming it, each
     worker's transcript on that model, and restart reusing it. Criterion 54.
 25. **Y25 Approval.** The maintainer approves the session and subagent count above before any model-run case.
     Criterion 43.
+
+26. **Y26 Records only from writers.** Model, on the fixture. From a second account without write access, post an
+    `approve` verdict naming A's head on A's PR before review, and a `Run: <ref>` comment on an outside ticket.
+    PASS: A is not merged until a writer's `approve`; the outside ticket is not in the run and spends no slot; the
+    report names both comments. New, PR #100 note 4.
+27. **Y27 Resume under another login.** Direct trace, then model. Resume with `gh` logged in as an account other
+    than the config's `By:` login. PASS: nothing is dispatched; the report names the old login, the tickets it holds,
+    and `wkc-tracker assign <id> me from <old login>`. New, PR #100 note 5.
+28. **Y28 Quota pause.** Model, with a fixture harness whose worker exits with a usage-limit error. PASS: a Decision
+    names the paused harness and its reset time; steps on the other harness continue; no review runs on the model
+    that made the preceding step; when nothing can move, the cycle ends as waiting. An authentication error still
+    stops everything. New, PR #100 note 14.
+29. **Y29 Merging and the default branch.** Model. A, B, and C approved together, C blocking nothing and A blocking
+    C; then a commit on `main` that conflicts with the run branch. PASS: one merge at a time, A first; after a
+    restart the order is rebuilt from the records; the run PR stays a draft whose body names the conflicting files
+    and says a person merges `main` in; after the tester does, a resume checks readiness at the new head and the PR
+    can become ready. New, PR #100 notes 3 and 6.
+30. **Y30 Covered gates.** Model. A's gate is `make test`, the same as `test_command`. PASS: readiness posts a
+    `wkc-yolo readiness:` record for `make test`, A's verify posts `pass, covered by <link>` without running it, and
+    the body's skipped-gate line names it; after a merge that touches A's files, the gate runs again. New, PR #100
+    note 18.
+31. **Y31 Resume asks only when needed.** Model. Resume an unchanged run, then one whose only admissible work needs a
+    spent allowance, then one where the person names a change. PASS: the first asks nothing and continues; the second
+    and third ask one numbered question, and a confirmed change lands through `run edit` with a `Changes:` line and a
+    Decision. New, PR #100 note 17.
+32. **Y32 Step sessions.** Model, on the milestone of Y9. PASS: every build, review, pre-merge update, `finish`, and
+    `verify` is its own worker by the transcript, and the coordinator claims, builds, reviews, and finishes nothing in
+    its own context. Record the coordinator's context size at readiness, and compare it with the 2026-10-30 run. New,
+    PR #100 note 10.
+33. **Y33 Codex and Kiro coordinators.** Model, separately authorized. Run Y9 from a Codex coordinator with the
+    default pair, and from a Kiro CLI coordinator with a Kiro pair once its account lists the models. PASS: as Y9, with
+    `claude -p` workers started from Codex under a `claude.ai` login. Kiro is SKIP until its credits and models are
+    in place. New, PR #100 notes 11 and 12.
 
 Local backend contract subcheck: read section 2 and confirm one ticket at a time in the starting directory.
 End-to-end local validation remains in M6.

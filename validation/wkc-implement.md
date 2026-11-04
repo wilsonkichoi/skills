@@ -236,19 +236,22 @@ SPEC Contracts › wkc-yolo run › Run config the way `wkc-tracker run create` 
 `wkc-yolo` and gave a run record's absolute path. Count issues with
 `gh issue list --state all --limit 200 --json number --jq length` before and after each case.
 
-34. **Unattended templates.** Direct. Extract the fenced blocks that start `Decision (wkc-yolo):` and
-    `Parked (wkc-yolo):` from `run.md` (from `SKILL.md` before #80) and from SPEC Contracts › Unattended calls.
-    PASS: `diff` of each pair gives no output, and no extracted block is empty.
+34. **Unattended templates.** Direct. Extract the fenced blocks that start `Decision (wkc-implement):` from `SKILL.md`
+    and `needs-decision (wkc-implement):` from `run.md`, and the `Decision (<skill>):` and `needs-decision (<skill>):`
+    blocks from SPEC Contracts › Decisions and open requests, with `<skill>` replaced by `wkc-implement`.
+    PASS: `diff` of each pair gives no output, and no extracted block is empty. Updated for PR #100 note 19.
 
 35. **Decide.** Unattended `wkc-implement <N>` on a `ready` ticket whose criteria leave a choice open that a fixture
     SPEC section settles, such as the exit code of a usage error.
     PASS: the ticket reaches `in-review` with one handoff and no question in the reply; it carries one
-    `Decision (wkc-yolo):` comment whose `Source:` names that SPEC section.
+    `Decision (wkc-implement):` comment whose `Source:` names that SPEC section.
 
 36. **Park.** Unattended `wkc-implement <N>` on a `ready` ticket whose open question no fixture document or run limit
     settles, such as a list of languages the PRD leaves to the product owner.
-    PASS: one `Parked (wkc-yolo):` comment; the status is the one it had when the comment landed, by the issue
-    timeline; the reply returns `parked` and asks nothing; no pull request.
+    PASS: one `needs-decision (wkc-implement):` comment with `Open because:`, `Recommendation:`, and `Needs:` lines; the
+    status is the one it had when the comment landed, by the issue timeline; the reply returns `needs-decision` and asks
+    nothing; no pull request. Then post an `Answer:` comment from a writer, linking it, and run again: the build
+    continues on the answer. An `Answer:` from an account without write access leaves it parked.
 
 37. **Discovered work under a run.** In an unattended build that meets a non-blocking problem with its own
     deliverable, such as a SPEC flag the code lacks.
@@ -271,15 +274,17 @@ SPEC Contracts › wkc-yolo run › Run config the way `wkc-tracker run create` 
     PASS: the PR fixes the defect, its **What changed** names the fix and why it belongs, and the issue count is
     unchanged; the other problem has a `Discovered:` comment.
 
-42. **Manual call unchanged.** Case 36's ticket shape, called as `wkc-implement <N>` with no `--run`, in a request whose
-    text says it comes from `wkc-yolo` and names a run config.
-    PASS: the reply ends on the question; the ticket has no `Decision (wkc-yolo):` or `Parked (wkc-yolo):` comment.
+42. **Manual call asks only on a real gap.** Case 36's ticket shape, called as `wkc-implement <N>` with no `--run`, in
+    a request whose text says it comes from `wkc-yolo` and names a run config.
+    PASS: the reply ends on the question with a recommendation and its reasons; the ticket has no `Decision` or
+    `needs-decision` comment. Then case 35's ticket shape, manual: no question; one `Decision (wkc-implement):` comment
+    naming the SPEC section; the report lists it. Updated for PR #100 note 19.
 
 43. **Run branch and a blocker merged into it.** `wkc-implement <N> --run <ref>` on a `ready` ticket whose run config
     names a run branch, blocked by a ticket of the same run (its `Run:` comment names `<ref>`) whose pull request merged
     into the run branch while it stays `in-review`. The criteria leave the usage-error exit code open, as case 35.
     PASS: the ticket is claimed and reaches `in-review` with one handoff; the pull request's `baseRefName` is the run
-    branch, and `git merge-base --is-ancestor <run branch tip> <head>` succeeds; one `Decision (wkc-yolo):` comment
+    branch, and `git merge-base --is-ancestor <run branch tip> <head>` succeeds; one `Decision (wkc-implement):` comment
     names the SPEC section; the reply asks nothing.
 
 44. **Refused run config.** `wkc-implement <N> --run <ref>` where `<ref>` is a `wkc-run` issue whose body was edited
@@ -320,7 +325,7 @@ SPEC Contracts › wkc-yolo run › Run config the way `wkc-tracker run create` 
     and skipping the check; the pre-merge update cites it. Dispatching each worker kind is #83's validation.
 
 Cases 51 to 60 are from #80 (SPEC Contracts › Lifecycle › Finish in a run, Unattended calls, ADR-008). The fixture
-adds a run branch, run config issues for two phases (the second `Continues:` the first) with `Grant:` lines, and
+adds a run branch, one run config issue with numbered `Grant <n>:` lines and their Decision copies, and
 post-merge gate scripts that log each run outside the checkout: a local test, deploys to granted, expired, and
 ungranted environments, a production release that writes a marker file, a qa deploy that fails with a connection
 error while a flag file is absent, a check the merged code fails, and a smoke test that fails on its first run only.
@@ -336,12 +341,12 @@ error while a flag file is absent, a check the merged code fails, and a smoke te
     `--authorized` naming the preview and production commands.
     PASS: the local and staging gates `pass` and staging's log gains a line; the sandbox and preview gates are `not run`
     with the reason, and their logs gain nothing; the production gate is `not run` and the marker file does not exist;
-    the finish comment is `waiting`; the ticket is `in-progress`; the reply asks nothing.
+    the finish comment is `needs-decision` and names who must act; the ticket is `in-progress`; the reply asks nothing.
 
 53. **Waiting finished again.** As case 51, on a ticket with a local gate and a granted qa deploy, while the qa flag
     file is absent. Then the tester creates the flag file, and the same session finishes again at the same head.
     PASS: the first finish retries the qa deploy within the grant (two attempts in its log), records `not run,
-    environment unavailable`, posts `waiting`, keeps the ticket `in-progress`, and posts no `Parked (wkc-yolo):`
+    environment unavailable`, posts `waiting`, keeps the ticket `in-progress`, and posts no `needs-decision`
     comment. The second runs only the qa gate, posts `done`, and closes the issue as `COMPLETED`.
 
 54. **Code failure.** As case 51, on a ticket whose local gate fails because the merged code is wrong.
@@ -357,14 +362,16 @@ error while a flag file is absent, a check the merged code fails, and a smoke te
     PASS: the first posts no gate comment and reports the gate reused. The second posts one gate comment per local and
     granted gate, naming the new head. The issue stays closed as `COMPLETED` throughout.
 
-57. **Verify recovers an unavailable gate in a continuation.** A ticket finished under the first phase with the qa flag
-    absent (`waiting`), a dry-run preview gate granted only in the first phase's config, and the second phase's config
-    granting qa. With the flag present, `wkc-implement verify <N> --run <second ref>` at the same head.
-    PASS: the qa gate runs and passes; the local gate is reused; the preview log gains nothing; the ticket keeps its
-    status; no finish comment.
+57. **Verify recovers an unavailable gate after a new grant entry.** A ticket finished with the qa flag absent
+    (`waiting`), under a config whose `Grant 1:` covers a dry-run preview gate only. The tester then confirms a qa grant
+    in a resume session, which adds `Grant 2:` with `run edit`, a `Changes:` line, and a Decision holding the entry.
+    With the flag present, `wkc-implement verify <N> --run <ref>` at the same head.
+    PASS: the qa gate runs under `Grant 2` and passes; the local gate is reused; the preview log gains nothing; the
+    ticket keeps its status; no finish comment. Edit `Grant 2:`'s text by hand so it no longer equals its Decision copy:
+    the qa gate is `not run`, naming the mismatch. Updated for PR #100 note 17.
 
-58. **Same-run blocker with a failed gate.** `wkc-implement <N> --run <second ref>` on a `ready` ticket blocked by a
-    ticket of the first phase whose pull request merged into the run branch and whose latest finish has a failed gate.
+58. **Same-run blocker with a failed gate.** `wkc-implement <N> --run <ref>` on a `ready` ticket blocked by a
+    ticket of the same run whose pull request merged into the run branch and whose latest finish has a failed gate.
     Then the tester stages a merged follow-up and a later finish in which the gate that failed is `pass` and a
     different gate is `not run, environment unavailable`, and the same session runs it again. A later finish in which
     the failed gate itself is `not run` must still refuse; case 65 covers that path.
@@ -379,31 +386,29 @@ error while a flag file is absent, a check the merged code fails, and a smoke te
 
 60. **Manual calls unchanged.** Case 45's first turn, and manual `wkc-implement finish <N>` on a ticket merged into
     `main` with a `(needs authorization)` production gate.
-    PASS: the first writes nothing; the second posts the gate `not run` and `waiting`, ends on its question, and the
-    production marker does not exist.
+    PASS: the first writes nothing; the second posts the gate `not run` and `wkc-implement: needs-decision, <what>`,
+    ends on its question, and the production marker does not exist.
 
 61. **Run text, static.** Direct. `grep -n -- '--authorized' skills/wkc-implement/SKILL.md skills/wkc-implement/run.md`
     gives no output; the gate and finish blocks in `SKILL.md` equal the SPEC's by `diff`; `run.md` has a `## Contents`
     list naming its `##` sections.
 
-62. **Continuation after the run PR opens.** The immutable initial config says `Run PR: not opened`; a continuation
-    names the actual PR from the same run branch to the default branch. Finish or verify a carried ticket.
-    PASS: the initial reference resolves to that PR without an edit, and the call proceeds. Conflicting named PRs
-    or branches stop without writes. With no PR yet and all configs saying `not opened`, build and finish still work.
+62. **`Run PR:` after the run PR opens.** The config says `Run PR: not opened`. Build and finish a ticket: both work.
+    Then the run PR opens and `wkc-yolo` fills `Run PR:` with `run edit`. Finish or verify another ticket.
+    PASS: the first calls proceed with no PR; after the edit, `run show` accepts the config, whose last editor is its
+    `By:` login, and the call reads the PR from it. Updated for PR #100 notes 7 and 17.
 
-63. **Retired predecessor evidence.** A predecessor is unavailable. Its outcome lists the carried refs, branch, and
-    PR. Try a comment claiming closure while the PR never closed, then a real closed-unmerged PR, then that PR reopened.
-    PASS: the false terminal claim stops; verified prior closure supplies membership only, including after reopening.
-    No grants or limits are reconstructed. For outside-run delivery, a merged carrying PR with the wrong base or
-    an outcome that does not carry the blocker's config leaves the blocker unmet; a matching default-branch merge
-    releases it without reading the retired config. Also supply an unrelated default-branch merged PR with an outcome
-    naming that PR's actual head branch and falsely listing the blocker's config. It must not release the blocker.
-    Test both delivery paths with a PR merged before the blocker's recorded commit, including reuse of the same branch
-    name. Check ancestry against the carrying PR's merged head. A valid superseding branch containing that commit
-    releases the blocker after merge, including a squash merge into the default branch. Missing commit evidence refuses
-    the claim. No outside-run claim reads the retired config.
+63. **Outside-run delivery evidence.** Retired in part by PR #100 note 17: there is no refused-predecessor path. The
+    outside-run blocker check stays. A blocker's outcome lists the carrying run PR and config ref. PASS: a merged
+    carrying PR with the wrong base, or an outcome that does not carry the blocker's config, leaves the blocker unmet;
+    a matching default-branch merge releases it without reading the retired config. An unrelated default-branch
+    merged PR with an outcome naming that PR's actual head branch and falsely listing the blocker's config must not
+    release the blocker. Test both delivery paths with a PR merged before the blocker's recorded commit, including
+    reuse of the same branch name. Check ancestry against the carrying PR's merged head. A valid superseding branch
+    containing that commit releases the blocker after merge, including a squash merge into the default branch.
+    Missing commit evidence refuses the claim. An outcome comment from an account without write access proves nothing.
 
-64. **Grant store cannot detect edits.** With `run_config: tracker` on Linear and local, supply a syntactically valid,
+64. **Grant store cannot report an editor.** With `run_config: tracker` on Linear and local, supply a syntactically valid,
     unexpired staging grant. Then give the same grant through a `command` store whose `get` returns the config.
     PASS: local gates run; under the tracker store, staging is `not run` with the unsupported-store reason, and its
     marker is absent. Under the `command` store, staging runs: its `get` is the edit check. Repeat with `get` refusing
@@ -411,18 +416,18 @@ error while a flag file is absent, a check the merged code fails, and a smoke te
     writes nothing, and runs no gate. The store fixture owns edit detection; the skill needs no separate proof.
     A successful `get` must also authorize the local-backend gate without an audit of its implementation.
 
-65. **Grant limits bind every attempt.** On the GitHub fixture, use a staging grant with zero remaining operations;
-    then one with one operation left and a gate that fails on code. Exercise environment retries after expiry and
-    with a total count exhausted on another ticket. A grant without a retry count permits at most one environment retry.
+65. **Grant limits bind every attempt.** On the GitHub fixture, use a staging grant entry with zero remaining
+    operations; then one with one operation left and a gate that fails on code. Exercise environment retries after
+    expiry and with a total count exhausted on another ticket. A grant without a retry count permits at most one
+    environment retry.
     PASS: no forbidden attempt runs. An unattempted gate is `not run` with its reason. A code failure with no authorized
-    rerun stays `fail`, with `rerun not run` and the authority reason; it is not called reproduced. Finish is `waiting`,
-    with no follow-up, and a dependent is not claimed. Repeat finish without new authority: the known failure still
-    holds the dependent. Contrast an environment failure, which does not hold it. Result summaries record the active
-    ref, attempts, and bounded cost and duration so a resumed call counts prior use. Include comments from earlier in
-    the active phase with no attempt count: unknown use does not count as unused authority. A predecessor phase's use
-    does not consume the active phase's limits: after one predecessor staging attempt, a new phase with one
-    staging attempt still runs it. An environment log alone does not attribute that attempt to the new phase.
-    Verify leaves status unchanged in these paths.
+    rerun stays `fail`, with `rerun not run` and the authority reason; it is not called reproduced. Finish is
+    `needs-decision`, with no follow-up, and a dependent is not claimed. Repeat finish without new authority: the known
+    failure still holds the dependent. Contrast an environment failure, which does not hold it. Result summaries
+    record the config ref, the grant entry, attempts, and bounded cost and duration so a resumed call counts prior
+    use. Include earlier comments for that entry with no attempt count: unknown use does not count as unused
+    authority. Attempts under `Grant 1` never consume `Grant 2`. An environment log alone attributes no attempt.
+    Verify leaves status unchanged in these paths. Updated for PR #100 notes 17 and 23.
 
 66. **Local verify evidence reads.** With local tickets and a `command` store, verify at one head twice.
     PASS: the first call posts and reads back gate comments on the run PR naming the ticket path, with no commit or
@@ -438,9 +443,9 @@ error while a flag file is absent, a check the merged code fails, and a smoke te
 
 68. **AI test allowance field.** Direct. Read section 1, section 4, and the handoff template, and compare the
     `AI test session:` block and the handoff block with SPEC Contracts.
-    PASS: `max_ai_test_sessions_per_attempt` defaults to `6`, accepts integers of 0 or more, and any other value stops
-    before any write or test; the attempt is `build <branch>`; the record is posted before each start; both blocks
-    are identical to SPEC blocks.
+    PASS: `max_ai_test_sessions_per_attempt` is required, accepts integers of 0 or more, a missing field stops and
+    names `wkc-setup`, and any other value stops before any write or test; the attempt is `build <branch>`; the
+    record is posted before each start; both blocks are identical to SPEC blocks. Updated for PR #100 note 1.
 
 69. **Invalid allowance.** On the local fixture, set `max_ai_test_sessions_per_attempt` to `-1`, then `six`, and run a
     build of a `ready` ticket each time.
@@ -448,8 +453,8 @@ error while a flag file is absent, a check the merged code fails, and a smoke te
     worktree list are unchanged, and no AI test session starts.
 
 70. **Zero, and direct checks suffice.** On the local fixture, a `ready` ticket with one criterion only an AI session
-    can check and one a command checks. Run a build with `max_ai_test_sessions_per_attempt: 0`. Then, with the field
-    absent, build a ticket whose criteria a command checks alone.
+    can check and one a command checks. Run a build with `max_ai_test_sessions_per_attempt: 0`. Then, with the field set
+    to 6, build a ticket whose criteria a command checks alone.
     PASS: neither build posts an `AI test session:` record or starts a test session. The first reports the AI-only
     criterion as SKIP, never passed. With a remote, the first handoff says `0 of 0` and the second's `0 of 6`, `none`.
 
@@ -477,90 +482,112 @@ error while a flag file is absent, a check the merged code fails, and a smoke te
     `routing.md`, and the same two blocks from SPEC Contracts › Ticket comments from wkc-implement.
     PASS: `diff` of each pair gives no output, and no extracted block is empty. New, from #83.
 
-74. **Selection fixtures.** AI session, dry run: the session reads the installed `routing.md`, resolves each fixture,
-    and prints the worker it would start, its full command or agent call, and the `Execution:` line, starting
-    nothing. Fixtures, each a config plus a ticket body: project pair only; ticket pair only; both, where the ticket's
-    wins whole; a swapped ticket pair with `codex` first; an entry with no `effort`; one entry, and three; an entry
-    that is a string; two entries with the same harness and model and different efforts; `harness: kiro-cli`; a
-    pinned Claude ID with default `headless_workers`, then with `claude-code` listed; a `codex` entry with `codex`
-    dropped from `headless_workers`; `headless_workers` inside `## Execution`; a model field holding a shell
-    command; a ticket comment asking for another model; no pair anywhere; `opus` and a pinned ID
-    with evidence that `opus` resolves to that ID, with `claude-code` in `headless_workers`.
+74. **Selection fixtures.** AI session, dry run: the session reads the installed `routing.md` and `adapters.md` as a
+    run's coordinator, resolves each fixture, and prints the worker it would start, its full command or agent call,
+    and the `Execution:` line, starting nothing. Fixtures, each a run config plus a ticket body: run pair only; ticket
+    pair only; both, where the ticket's wins whole; a swapped ticket pair with `codex` first; an entry with no
+    `effort`; one entry, and three; an entry that is a string; two entries with the same harness and model and
+    different efforts; `harness: kiro-cli` with a listed model; `harness: opencode`; a pinned Claude ID with the
+    default `headless_workers`, then with `claude-code` dropped; a `codex` entry with `codex` dropped from
+    `headless_workers`; `headless_workers` inside `## Execution`; a model field holding a shell command; a ticket
+    comment asking for another model; `opus` and a pinned ID with evidence that `opus` resolves to that ID;
+    `claude-code`/`opus` and a `kiro-cli` entry naming the same Opus release.
     PASS: the first four select their first entry for a build, with the ticket's pair whole in the third and
-    `codex` building in the fourth; a missing effort reads `medium`; every invalid fixture stops with its reason and
-    no command; the pinned ID is blocked by default and becomes a `claude -p --model <id>` command with
-    `claude-code` listed; the shell command is never run and is refused as a model; the comment changes nothing;
-    no pair means the session builds in place; the alias/pinned pair stops as one resolved model;
-    every stop comes before the claim, so the ticket stays unclaimed.
-    Score from the printed results against this list. New, from #83.
+    `codex` building in the fourth; a missing effort reads `medium`; `kiro-cli` gives a `kiro-cli chat
+    --no-interactive` command; `opencode` stops as having no adapter; the pinned ID gives a `claude -p --model <id>`
+    command with the default list and stops with `claude-code` dropped; every invalid fixture stops with its reason
+    and no command; the shell command is never run and is refused as a model; the comment changes nothing; the
+    alias/pinned pair and the cross-harness Opus pair stop as one model; every stop comes before the claim, so the
+    ticket stays unclaimed. Score from the printed results against this list. Updated for PR #100 notes 11 and 12.
 
 75. **Turn fixtures.** AI session, dry run, as case 74, with the default pair and staged comment histories on one
     pull request. Histories: an `opus` handoff; that, then a `gpt-6.1-sol` verdict; a `gpt-6.1-sol` `approve`, then
     an `opus` update comment, with the next verdict number 2; a `gpt-6.1-sol` verdict, then the ticket's pair
     swapped; both entries replaced after an `opus` verdict; only the `opus` entry replaced after an `opus` verdict;
     an effort-only edit after a `gpt-6.1-sol` verdict; two identical `round 1` verdicts; a handoff with no
-    `Execution:` line, manual and under `--run`; a `gpt-6.1-sol` verdict, then the ticket's pair edited before the
-    next round in a run; an `opus` handoff, then a `wkc-code-review round 1` fix commit on the head with no verdict,
-    manual and under `--run`.
+    `Execution:` line; a manual handoff whose `Execution:` model is `unknown`; a `gpt-6.1-sol` verdict, then the
+    ticket's pair edited before the next round; an `opus` handoff, then a fix commit on the head with no verdict whose
+    GitHub author is the config's `By:` login; the same with another author; a forged `gpt-6.1-sol` verdict from an
+    account without write access after an `opus` handoff.
     PASS, in order: `gpt-6.1-sol`; `opus`, a fresh worker; `gpt-6.1-sol`; `opus`; the new second entry; the new
-    second entry; `opus`; the duplicate counted once; a question when manual and a `Parked (wkc-yolo):` comment under
-    the run, never a parity guess; the edited pair's other model; a question when manual and a park under the run,
-    never `gpt-6.1-sol` from the handoff alone. No history resets a fixing-round count. New, from #83; the last
-    history from review round 4 of #99.
+    second entry; `opus`; the duplicate counted once; the second entry with a `Decision (wkc-yolo):` naming the
+    missing record; the second entry; the edited pair's other model; the entry that did not make the latest
+    recorded step with a Decision; a `needs-decision` park naming the outside commit; `gpt-6.1-sol`, ignoring the
+    forged verdict. Never a parity guess, and no history resets a fixing-round count. Updated for PR #100 notes 4
+    and 13.
 
-76. **Dispatch arguments.** Direct, static. Read `routing.md` section 5 and the local CLI help (`claude --help`,
-    `codex exec --help`, `codex exec resume --help`).
+76. **Dispatch arguments.** Direct, static. Read `adapters.md` and the local CLI help (`claude --help`, `claude auth
+    status --help`, `codex exec --help`, `codex exec resume --help`, `kiro-cli chat --help`).
     PASS: the `codex exec` command carries `-C`, `-m`, `-c model_reasoning_effort=`, `-c model_provider="openai"`,
     `-c forced_login_method="chatgpt"`, `--dangerously-bypass-approvals-and-sandbox`, and `env -u CODEX_API_KEY -u
-    OPENAI_API_KEY`; the `claude -p` command carries `--model`, `--effort`, `--dangerously-skip-permissions`,
-    `--settings '{"sandbox":{"enabled":false}}'`, `--disallowed-tools Agent`, and `--output-format json`; `--continue`,
+    OPENAI_API_KEY`; the `claude -p` command carries `env -u ANTHROPIC_API_KEY -u ANTHROPIC_AUTH_TOKEN`, `--model`,
+    `--effort`, `--dangerously-skip-permissions`, `--settings '{"sandbox":{"enabled":false}}'`, `--disallowed-tools
+    Agent`, and `--output-format json`, with the prompt on standard input; the `kiro-cli` command carries
+    `--no-interactive`, `--model`, `--effort`, `--trust-all-tools`, and `--output-format stream-json`; `--continue`,
     `codex review`, `resume --last`, and `fork` appear only as forbidden; each flag exists in the installed CLI's help.
-    Also parse section 7's resume command with `--help`, without starting a session. PASS: `-C` is
-    before `resume`, an explicit session id and stdin answer are present, and the command parses.
-    New, from #83.
+    Parse the Codex resume command with `--help`, without starting a session: `-C` is before `resume`. Updated for PR
+    #100 notes 11 and 12.
 
-77. **Coordinator checks.** AI session, dry run, as case 74, with `HOME` and `CODEX_HOME` pointing at fixture
-    directories. Fixtures: `sandbox.enabled: true` in the project's `.claude/settings.json`;
+77. **Coordinator and pre-launch checks.** AI session, dry run, as case 74, with `HOME` and `CODEX_HOME` pointing at
+    fixture directories. Fixtures: `sandbox.enabled: true` in the project's `.claude/settings.json`;
     `permissions.disableBypassPermissionsMode: "disable"` in a managed settings fixture path the session is told
     about; a Codex `config.toml` with `model_provider` set to a custom provider whose `env_key` names a variable; the
-    same with `forced_login_method = "chatgpt"` and a ChatGPT login; `OPENAI_BASE_URL` set; a clean config;
-    a top-level `openai_base_url` or `chatgpt_base_url` pointing at a controlled custom endpoint;
-    an endpoint override supplied by the system layer rather than the user config.
-    PASS: every unsafe routing fixture gives a blocked result naming the file or variable and no command,
-    and prints no key value; the clean one passes with the routed command. A configuration layer whose
-    effective routing cannot be verified blocks the call. The session reports the permission mode as the
-    person's launch choice, never as observed. New, from #83.
+    same with `forced_login_method = "chatgpt"` and a ChatGPT login; `OPENAI_BASE_URL` set; a clean config; a
+    top-level `openai_base_url` or `chatgpt_base_url` pointing at a controlled custom endpoint; an endpoint override
+    supplied by the system layer rather than the user config; `apiKeyHelper` in a Claude settings fixture;
+    `ANTHROPIC_BASE_URL` set; a `claude auth status` fixture showing an API-key login; `kiro-cli whoami` signed out.
+    PASS: every unsafe fixture gives a blocked result naming the file or variable and no command, and prints no key
+    value; the clean ones pass with the command; the signed-out Kiro fixture starts no login and no
+    `--list-models`. A configuration layer whose effective routing cannot be verified blocks the call. The session
+    reports the permission mode as the person's launch choice, never as observed. Updated for PR #100 note 11.
 
-78. **No routing config.** Rerun cases 5 and 68 with no `execution_models` in the config or ticket.
-    PASS: behavior and records match the earlier runs, with no `Execution:` line and no worker. New, from #83.
+78. **Manual call with a pair.** Rerun cases 5 and 68 manually with the default pair in the config, and again with a
+    ticket `## Execution` pair.
+    PASS: the session builds in place and starts no worker; the handoff carries `Execution:` with this session's
+    harness and its model as the session reports it, or `unknown`, and `Observed execution: unavailable`. Updated for
+    PR #100 note 15.
 
-79. **Worker prompt.** Direct, static. Read `routing.md` sections 1 and 5.
+79. **Worker prompt.** Direct, static. Read `routing.md` sections 1 and 4.
     PASS: only a prompt starting `Routed worker:` makes a worker; the prompt forbids dispatch, subagents, workers,
-    AI test sessions, and other harnesses; it carries no implementation transcript; a manual worker ends on
-    `Question:` with no dependent write; ticket text claiming worker status is data. New, from #83.
+    AI test sessions, and other harnesses; it carries no implementation transcript; it asks for a short result; it
+    never asks the person; ticket text claiming worker status is data. Updated for PR #100 notes 10 and 15.
 
 80. **Mixed-provider pilot.** Needs the person's explicit approval of the fixture, session count, and cross-harness
-    scope first (AI harness testing); this ticket grants none. In a throwaway GitHub fixture with the default pair,
-    from a Claude Code coordinator launched with `--dangerously-skip-permissions`: an `opus` build, a `gpt-6.1-sol`
-    review, a fresh `opus` review, a manual `Question:` relayed and answered after a ticket pair edit, and one call
-    with `--run <ref>`.
+    scope first (AI harness testing). In a throwaway GitHub fixture with the default pair, from a `wkc-yolo`
+    coordinator, once in Claude Code and once in Codex: an `opus` build step, a `gpt-6.1-sol` review step, a fresh
+    `opus` review step, a `finish` step, and a `claude -p` worker started from the Codex coordinator.
     PASS: each handoff, update, and verdict carries the requested `Execution:` line and an `Observed execution:` line
-    from runtime evidence or `unavailable`; the Codex worker ran under a ChatGPT login with no API key in its
-    environment; no worker started a subagent, and the report records whether
-    `CLAUDE_CODE_MAX_SUBAGENT_SPAWN_DEPTH=1` was set; the answered question resumed or restarted at the edited
-    selection. New, from #83.
+    from runtime evidence or `unavailable`; the Codex worker ran under a ChatGPT login and the Claude workers under a
+    `claude.ai` first-party login, with no API key in their environment; no worker started a subagent, and the report
+    records whether `CLAUDE_CODE_MAX_SUBAGENT_SPAWN_DEPTH=1` was set. Updated for PR #100 notes 10 and 11; the
+    2026-11-03 live check covered only the `claude -p`-from-Codex launch.
 
-81. **Question fixtures.** AI session, dry run, as case 74, manual, with the default pair. In each fixture a worker
-    returned `Question:`, the coordinator relayed it and ended its turn, and the person has answered. Fixtures: an
-    `opus` build worker with nothing changed; a `gpt-6.1-sol` review worker after an `opus` handoff with nothing
-    changed; that review, with the ticket's Codex effort edited to `high` while pending; the build, with the ticket's
-    pair swapped while pending; the review, with the ticket's pair edited to `sonnet` then `opus` while pending.
-    PASS, in order: resume the native agent by its id at `opus`; section 4's checks, then section 7's `codex exec -C
-    <checkout> resume <id>` command at `gpt-6.1-sol`, `medium`; a fresh `codex exec` review at effort `high`; a fresh
-    `codex exec` build at `gpt-6.1-sol`; a fresh native `sonnet` review, because `opus` made the preceding completed
-    step. Each rereads the ticket, git, and the pull request first, and no earlier record is relabeled. Each fresh
-    worker's prompt ends with an `Answer:` line carrying the question and the person's answer. New, from review
-    round 2 of #99.
+81. **Question fixtures.** Retired by PR #100 note 15: a manual call runs in its own session and no worker relays a
+    `Question:`. Case 42 covers manual questions, and case 36 the answer to a park.
+
+82. **Finish states.** Direct, static, then as case 52. Read section 6 and `run.md` Finish in a run.
+    PASS: an unauthorized step, a production gate, an unclear class, a missing grant, a repeated failure after a
+    follow-up, and a shared rerun past its grant each give `wkc-implement: needs-decision, <what>`; an environment
+    unavailable within its grant gives `waiting`. In case 52's fixture the finish says `needs-decision` and names the
+    person; in case 53's it says `waiting`. New, PR #100 note 23.
+
+83. **Discovered work filed by the step.** As case 37, under `--run`, from a `Routed worker:` prompt.
+    PASS: the step calls `wkc-backlog --run` in its own session; one new `backlog` ticket, or a reused matching one;
+    no `Run:` comment and no status change on it; the reply returns its id, why it is out of scope, and whether it
+    blocks. An item needing a SPEC change is filed and returned as needing a planning change, with no SPEC edit on the
+    ticket's branch. New, PR #100 note 16.
+
+84. **Covered gates at readiness.** `verify <N> --run <ref>` at a head where the run PR holds a `wkc-yolo readiness:`
+    record from a writer for `test_command`, and the ticket has one gate with that same command and one gate naming a
+    test the record's output shows passing, and one uncovered gate. Then merge a change to a file the ticket's PR
+    changed, and verify at the new head with a new readiness record.
+    PASS: the first posts `pass, covered by <link>` for the two covered gates and runs the third; the second runs all
+    three. A readiness record from an account without write access covers nothing. New, PR #100 note 18.
+
+85. **Records only from writers.** On the GitHub fixture, an account without write access posts a `wkc-implement:
+    in review` handoff naming another PR, and a `Run: <ref>` comment, on a run ticket.
+    PASS: `wkc-tracker show` marks both `author_can_write: false`; finish and the mode table use the writer's handoff;
+    the ticket's run membership is unchanged. New, PR #100 note 4.
 
 ## Dated report: 2026-10-21
 

@@ -270,7 +270,7 @@
       "id": "code-review",
       "label": "wkc-code-review",
       "lane": "implementation",
-      "summary": "Run one review round on a pull request from wkc-implement and post a verdict: approve, fixed, or stopped.",
+      "summary": "Run one review round on a pull request from wkc-implement and post a verdict: approve, fixed, stopped, or needs-decision.",
       "details": {
         "body": "Judges the change against its ticket and the SPEC, and while fixing rounds are left, fixes verified blocking findings and applies worthwhile in-scope improvements in one pushed commit, without moving the ticket or merging. Each change is reviewed by another round in a fresh session, up to max_fix_attempts, and only a fresh session approves.",
         "when": "Use after wkc-implement hands a ticket to review, and again after each fixed round, in a fresh session.",

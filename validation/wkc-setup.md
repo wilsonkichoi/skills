@@ -1,7 +1,7 @@
 # wkc-setup validation
 
 Follow [Validation](../AGENTS.md#validation). This catalog covers the review-round field added by #54, the
-`run_config` field added by #78, the `security_scan` field added by #76, the AI test allowance added by #91, the `uv` prerequisite added by #94, and the execution model fields added by #83. It does not claim baseline coverage of the
+`run_config` field added by #78, the `security_scan` field added by #76 (named `push_check` until PR #100), the AI test allowance added by #91, the `uv` prerequisite added by #94, the execution model fields added by #83, and the required fields and `max_parallel_workers` added by PR #100. It does not claim baseline coverage of the
 rest of setup.
 
 ## Cases
@@ -28,8 +28,9 @@ rest of setup.
 6. **Security scan field.** Direct. `grep -n security_scan skills/wkc-setup/SKILL.md skills/wkc-setup/config-template.md`,
    and parse the template's YAML frontmatter.
    PASS: Section D asks for `security_scan`, offers the gitleaks command first with a check that `gitleaks` is installed,
-   then the project's own command and none, and says a manual push without one only warns. PyYAML parses the template
-   value as the gitleaks command string, and its comment says the default is none.
+   then the project's own command and none, says a manual push without one only warns, and offers to rename an
+   existing `push_check` key, keeping its value. PyYAML parses the template value as the gitleaks command string, and
+   its comment says the field is optional and absent means no scan. Updated for PR #100 note 20.
 
 7. **AI test allowance field.** Direct. Read Section D and parse the config template's YAML frontmatter.
    PASS: Section D asks for `max_ai_test_sessions_per_attempt` as an integer, 0 or more, recommends `6`, says each
@@ -44,21 +45,31 @@ rest of setup.
    cannot run on GitHub without it. New, from #94 (ADR-011).
 
 10. **Execution model fields.** Direct. Read Section F and parse the config template's YAML frontmatter.
-   PASS: Section F offers the default pair first, another pair, and none; it says a missing `effort` is `medium`,
-   that a pinned Claude ID needs `claude -p`, and that listing `claude-code` in `headless_workers` accepts its
-   login, API billing included; it gives the `claude --dangerously-skip-permissions`, `~/.claude/settings.json`
-   `bypassPermissions`, Codex, and Kiro CLI launches, and that project settings cannot turn bypass mode on. The
-   template parses `execution_models` as two maps, `claude-code`/`opus`/`medium` then `codex`/`gpt-6.1-sol`/`medium`,
-   and `headless_workers` as `[codex, kiro-cli]`; the multi-question rule names Sections A to F. New, from #83.
+   PASS: Section F says the pair is for `wkc-yolo` runs and a manual call runs in its own session; it offers the
+   default pair first, another pair, and none; it says a missing `effort` is `medium`, that a pinned Claude ID runs
+   through `claude -p`, that a pair entry may be `claude-code`, `codex`, or `kiro-cli`, and that each headless launch
+   checks for a subscription login and no API key; it gives the `claude --dangerously-skip-permissions`,
+   `~/.claude/settings.json` `bypassPermissions`, Codex, and Kiro CLI launches, and that project settings cannot turn
+   bypass mode on. The template parses `execution_models` as two maps, `claude-code`/`opus`/`medium` then
+   `codex`/`gpt-6.1-sol`/`medium`, and `headless_workers` as `[claude-code, codex, kiro-cli]`; the multi-question rule
+   names Sections A to F. Updated for PR #100 notes 11, 12, and 15.
+
 11. **Write the pair.** In a throwaway project, run setup with both fields missing and choose the default pair and
    the default workers.
-   PASS: the written config parses as case 10's template values, and no `claude-code` appears in `headless_workers`.
-   New, from #83.
+   PASS: the written config parses as case 10's template values. Updated for PR #100 note 11.
+
 12. **Additional-ticket allowance.** Direct, then a throwaway project. Read Section D and parse the template.
    PASS: Section D asks for `max_additional_tickets` after `max_ai_test_sessions_per_attempt`, an integer, 0 or
    more, `5` recommended, and says initial tickets never count and `0` admits nothing new; the template parses it
    as `5`; Section E names initial tickets and the allowance, not a budget. In the project, accepting the default
    writes `max_additional_tickets: 5`. New, from #74.
+
+13. **Required fields and the worker limit.** Direct, then a throwaway project. Parse the template, and run setup
+   on a config that has `issue_tracker` and `push_check` only.
+   PASS: every field the SPEC's Config fields table marks required carries `required` in its template comment, with
+   its setup default; `max_parallel_workers` parses as `5`, `integer, 1 or more`. Setup asks for each missing
+   required field, writes them all, offers the `push_check` rename, and leaves the body unchanged. New, PR #100
+   notes 1, 2, and 20.
 
 ## Dated report: 2026-10-22
 
