@@ -113,12 +113,12 @@ record advances nothing. A step whose harness is paused waits.
 time. Nothing records a queue: each cycle rebuilds the set from the records, the `in-review` tickets
 whose latest `approve` names the head, or an older head with an update to make. A ticket that
 blocks another required ticket merges first, then the earliest `approve`, the lower id breaking a
-tie. Ask `wkc-implement <id> --run <ref>` for the pre-merge update.
-When the head changed, run a fresh `wkc-code-review` round on the new head: it only confirms a clean
-update and fully reviews a conflict fix. Merge only the head of the latest `approve`:
-`gh pr merge <PR> --merge --match-head-commit <Reviewed sha>`, never `--admin`, never twice. It counts
-when `gh pr view` shows `MERGED` with a merge commit. GitHub's merge queue or auto-merge is waiting. Branch
-protection that blocks the merge stops that merge; report it. Then finish at once.
+tie. Before each merge, ask `wkc-implement <id> --run <ref>` for the pre-merge update, even when the
+`approve` names the PR's head. When the head changed, run a fresh `wkc-code-review` round on the new head: it
+only confirms a clean update and fully reviews a conflict fix. Merge only the head of the latest `approve`:
+`gh pr merge <PR> --merge --match-head-commit <Reviewed sha>`, never `--admin`, never twice. It counts when
+`gh pr view` shows `MERGED` with a merge commit. GitHub's merge queue or auto-merge is waiting. Branch
+protection that blocks the merge stops that merge; report it. Then finish it at once, before the next merge.
 
 **Returns.** A ticket that returned `needs-decision` keeps its status; others continue. A step
 files its own discovered work and returns each ticket's id, why it is out of scope, and whether it
