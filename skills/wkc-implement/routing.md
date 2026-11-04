@@ -80,8 +80,9 @@ a `headless_workers` key in `## Execution` is invalid.
 
 With no pair, every step uses `Coordinator model:`; go to section 4.
 
-**A build**, a follow-up build, and a pre-merge update use the first entry of the current pair.
-**`finish`, `verify`, and a planning call** use the first entry too, and never change the turn.
+**A build**, a follow-up build, and a pre-merge update use the first entry of the current pair: the
+ticket's own pair when its `## Execution` has one, the run's otherwise (section 2).
+**`finish`, `verify`, and a planning call** use that same first entry, and never change the turn.
 
 **A review** reads the preceding completed step on this pull request: the latest, by time posted, of
 the `wkc-implement: in review` handoff naming this pull request, each `wkc-implement: updated for

@@ -146,7 +146,7 @@ coordinator was `claude-opus-5-5` through batch 2 and `claude-sonnet-5-5` from b
 22. **Y22 Model routing.** With the run's pair, the project's or the default Opus then Sol: the first model builds,
     the second reviews, a fresh first-model review follows; after a second-model approval and a first-model pre-merge
     update, the second model reviews next. A ticket's swapped `## Execution` pair builds on its own first model and
-    reviews on the other. No implementation transcript reaches review. Criterion 50.
+    reviews on the other; its `finish` and `verify` run on its own first model too. No implementation transcript reaches review. Criterion 50.
 23. **Y23 Requested changes.** Requested changes on the open run PR: draft first; corrections stated by the
     person; with unfinished tickets covering them, Decisions and no config change; otherwise correction tickets join
     `Initial tickets:` through one `run edit` with a `Changes:` line and a Decision, a renewed grant is a new
