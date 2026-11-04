@@ -56,6 +56,9 @@ unconfirmed. Leave `needs-decision` for a choice the documents and limits leave 
 Then post the `needs-decision` verdict with its `Open requests:` line naming who must answer, make
 no change, stop, and return `needs-decision`. That verdict parks the ticket; its status stays.
 
-`Discovered:` comments are posted as in SKILL.md section 3, and the items go back to `wkc-yolo` in
-the return, never to `wkc-backlog`. A blocker goes back at once, and the round stops with no fix
+`Discovered:` comments are posted as in SKILL.md section 3. Then call `wkc-backlog <the item and its
+evidence> --run <ref>` for each one, in this session: from a step it only creates a ticket or
+reuses one that matches, and returns a needed SPEC or ROADMAP change instead of making it. Return
+each ticket's id, why the work is out of scope, and whether it blocks the ticket. Post no `Run:`
+comment and move no ticket you filed. A blocker is filed at once, and the round stops with no fix
 and no verdict.

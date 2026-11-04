@@ -89,7 +89,7 @@ A ticket parked since its last step, or with an unmet blocker, waits. Otherwise 
 | `ready`, no holder | Post and verify `Run: <ref>` unless its latest `Run:` comment already names it. Then `wkc-implement <id> --run <ref>` |
 | `in-progress` with no PR, or an incomplete handoff | `wkc-implement <id> --run <ref>`, which continues its branch |
 | `in-review`, no verdict on the head, or `fixed` | `wkc-code-review <PR> --run <ref>`, a fresh round |
-| `approve` on the head | The merge queue below. A defect this session sees goes on the PR with its evidence, then to a new `wkc-code-review` round on that head; it never reviews, closes the PR, or overrides the verdict |
+| `approve` on the head | **Merging** below. A defect this session sees goes on the PR with its evidence, then to a new `wkc-code-review` round on that head; it never reviews, closes the PR, or overrides the verdict |
 | `stopped` on the head | Post `needs-decision (wkc-yolo):` with `Needs: a person` and the open findings |
 | `needs-decision` verdict, finish, or record, with no `Answer:` | Parked: it waits. With an `Answer:` from a writer, take the step the answer allows |
 | `MERGED` into the run branch, no finish since | `wkc-implement finish <id> --run <ref>` at once |
@@ -109,15 +109,20 @@ conversation. Check the PR head, the handoff or verdict, and the tracker writes 
 advancing; a failed launch or a missing record advances nothing. A step whose harness is paused
 waits.
 
-**Merge queue.** One merge at a time. Ask `wkc-implement <id> --run <ref>` for the pre-merge update.
+**Merging.** This session is the only one that merges into the run branch, one pull request at a
+time. Nothing records a queue: each cycle rebuilds the set from the records, the `in-review` tickets
+whose latest `approve` names the head, or an older head with an update to make. A ticket that
+blocks another required ticket merges first, then the earliest `approve`, the lower id breaking a
+tie. Ask `wkc-implement <id> --run <ref>` for the pre-merge update.
 When the head changed, run a fresh `wkc-code-review` round on the new head: it only confirms a clean
 update and fully reviews a conflict fix. Merge only the head of the latest `approve`:
 `gh pr merge <PR> --merge --match-head-commit <Reviewed sha>`, never `--admin`, never twice. It counts
-when `gh pr view` shows `MERGED` with a merge commit. A merge queue or auto-merge is waiting. Branch
+when `gh pr view` shows `MERGED` with a merge commit. GitHub's merge queue or auto-merge is waiting. Branch
 protection that blocks the merge stops that merge; report it. Then finish at once.
 
-**Returns.** A ticket that returned `needs-decision` keeps its status; others continue. Each discovered item goes to
-section 3; a ticket waiting on a prerequisite is not parked. A secret that reached a remote is an
+**Returns.** A ticket that returned `needs-decision` keeps its status; others continue. A step
+files its own discovered work and returns each ticket's id, why it is out of scope, and whether it
+blocks; those go to section 3. A ticket waiting on a prerequisite is not parked. A secret that reached a remote is an
 incident: park the ticket with `Needs: a person to revoke <kind of credential>`, push nothing more
 from that branch, never write the value, and continue unrelated tickets.
 
@@ -126,8 +131,10 @@ run can change, then go to section 4. A spent allowance stops only new admission
 
 ## 3. Admissions and planning changes
 
-Only this session admits. Send discovered items to `wkc-backlog <the item and its evidence> --run
-<ref>` one at a time; it reuses a ticket that covers one, so a shared prerequisite blocks both.
+Only this session admits; a step never posts `Run:` or moves a ticket it filed. When two returns
+name tickets for the same work, keep the lower id, `wkc-tracker move <other> duplicate <lower>`,
+and `link` each ticket the other one blocked to the survivor, before admitting it. A return that
+needs a SPEC or ROADMAP change goes to **Planning changes** below.
 
 A prerequisite of a required ticket, or a readiness repair, joins only with `New prerequisites: run`
 and a slot left. **Used slots** are the distinct tickets absent from the initial IDs with a verified
@@ -153,19 +160,24 @@ the raising ticket with `Needs: a person`. With `Planning: none`, `wkc-backlog` 
 ## 4. Readiness, cleanup, and the run PR
 
 1. When anything merged, merge `origin/<default>` into the run branch if `git merge-tree
-   --write-tree` shows no conflict, run `security_scan`, and push; with a conflict, change nothing and
-   report it. Finish waiting tickets once more.
+   --write-tree` shows no conflict, run `security_scan`, and push. With a conflict, change nothing,
+   and keep the conflicting files (`git merge-tree --write-tree --name-only`) for the body: a person
+   merges the default branch into the run branch, and the next resume checks readiness at the new
+   head. Finish waiting tickets once more.
 2. With merged work, open the run PR, or reuse it, as a draft: `gh pr create --draft --base
    <default> --head <run branch>`, the body below. With none, report and stop.
-3. At the run branch head, run `test_command` when configured, `wkc-implement verify <id> --run
-   <ref>` for every required ticket, and each exit-check item a command decides. A failure on an
+3. At the run branch head, run `test_command` when configured and each exit-check item a command
+   decides, and post each result on the run PR as a `wkc-yolo readiness:` record. Then run
+   `wkc-implement verify <id> --run <ref>` for every required ticket with a local or granted gate;
+   verify skips a gate that one of those records covers. A failure on an
    unfinished ticket follows its follow-up path. One in a `done` ticket, or between tickets, is a
    repair ticket from `wkc-backlog`, related to it, admitted as section 3 says; done stays done. Any
    merge restarts readiness at the new head.
 4. Run each grant's cleanup command once, here and before every controlled stop, and post `wkc-yolo
    cleanup:` on the ticket whose gate last deployed it.
 5. Update the body. **Ready** only when every required ticket is `done`, every check passed at that
-   head, and `headRefOid` equals that sha before and after `gh pr ready`. A mismatch keeps or puts it
+   head, the head contains the default branch (`git merge-base --is-ancestor origin/<default>
+   <head>`), and `headRefOid` equals that sha before and after `gh pr ready`. A mismatch keeps or puts it
    back in draft with body `draft: not ready` and restarts readiness. A draft names what is left and who acts.
 
 ```markdown
@@ -179,6 +191,8 @@ Run config: <ref>. Supersedes: <ref | none>
 
 ## Readiness at <sha>
 - <command or exit-check item>: <environment>, <result>. <intermittent, when it was>
+- Default branch: merged in | conflict in <files>; a person merges it into the run branch, then resume
+- Gates skipped as covered: <ticket, gate: the readiness record that covered it> | none
 - After the default-branch merge: <exit-check items and production gates left, who acts> | none
 
 ## Review checklist
@@ -245,6 +259,13 @@ A person answers on the same ticket or PR; only an account with write access cou
 ```
 Answer: <the decision>
 To: <link to the needs-decision record, verdict, or finish comment>
+```
+
+```
+wkc-yolo readiness: <test_command or exit-check item>
+Commit: <full sha> on <run branch>
+Command: <command>
+Result: pass | fail, <output summary, with the tests it ran when it names them>
 ```
 
 ```

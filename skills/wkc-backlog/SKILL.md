@@ -297,6 +297,12 @@ Recommendation: <the choice you would make, and why>
 Needs: <who must answer>
 ```
 
+**From a step.** Called with `--run` from inside a `wkc-implement` or `wkc-code-review` step, whose
+prompt starts `Routed worker:`, create a ticket or reuse one that matches the item, and nothing else.
+An item that needs a SPEC or ROADMAP change is filed, invokes neither `wkc-architect` nor
+`wkc-plan`, and is returned as needing a planning change. A call whose own prompt starts `Routed
+worker: wkc-backlog` is a planning step, and the rest of this section applies.
+
 **Moving a requirement.** A change that moves a requirement out of a ticket's definition of done,
 such as a production step, runs only for a ticket the config's `Moved by the person:` line names,
 and only as that line says. Any other such move parks that ticket with `Needs: a person` and

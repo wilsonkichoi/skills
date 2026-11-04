@@ -1172,9 +1172,20 @@ that differs from it is reported as a mismatch.
    exit-check item a check can decide, and `wkc-implement verify <id> --run <ref>` for every
    required ticket with a gate left to run.
 
-   A ticket's gate needs no rerun at readiness when something that ran at the same head covers it:
-   its command is the same as `test_command` or an exit-check item's command, or it names a test
-   that passed in that run's output. The body records the covering check for each skipped gate.
+   Post each `test_command` and exit-check result on the run PR first, so a verify step can read
+   it:
+
+   ```
+   wkc-yolo readiness: <test_command or exit-check item>
+   Commit: <full sha> on <run branch>
+   Command: <command>
+   Result: pass | fail, <output summary, with the tests it ran when it names them>
+   ```
+
+   A ticket's gate needs no rerun at readiness when such a record at the same head, from an
+   account with write access, covers it: its command is the record's command, or it names a test
+   that the record's output shows passing. Verify posts its gate comment as `Result: pass, covered
+   by <the record's link>`, and the body records the covering check for each skipped gate.
    Every other local or granted gate runs, and a gate covered this way still runs when a later
    merge changed the files its ticket changed. A loose judgment that a check "covers" a gate is
    never enough.

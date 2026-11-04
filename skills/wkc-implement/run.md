@@ -30,9 +30,13 @@ A person answers with an `Answer:` comment whose `To:` line links the request. I
 an account with write access. A later call reads the answer and continues; without one, the
 request stays open and the ticket stays parked. An older `Parked (wkc-yolo):` record reads as one.
 
-`Discovered:` comments are posted as in section 3, and the items go back to `wkc-yolo` in the
-return, never to `wkc-backlog`. A blocker goes back at once and stops the build. The ticket keeps
-its status and holder, because waiting on a prerequisite is not parking.
+`Discovered:` comments are posted as in section 3. Then call `wkc-backlog <the item and its
+evidence> --run <ref>` for each one, in this session: from a step it only creates a ticket or
+reuses one that matches, and returns a needed SPEC or ROADMAP change instead of making it. Return
+each ticket's id, why the work is out of scope, and whether it blocks this ticket. Post no `Run:`
+comment and move no ticket you filed: admission is `wkc-yolo`'s. A blocker is filed at once and
+stops the build. The ticket keeps its status and holder, because waiting on a prerequisite is not
+parking.
 
 ## The run and its config
 
@@ -122,8 +126,13 @@ report it and write nothing. At the current head of the run branch, it runs the 
 granted gates as **Finish in a run** says, and posts their gate comments. It never changes status,
 posts no finish comment, and opens no follow-up.
 
-A gate with a passing gate comment at that head, from any finish or verify, is not run again. Every
-other local or granted gate runs, one recorded `not run, environment unavailable` included. A
+A gate with a passing gate comment at that head, from any finish or verify, is not run again. A gate
+covered by a `wkc-yolo readiness:` record on the run PR at that head, from an account with write
+access, is not run either: its command is that record's command, or it names a test the record's
+output shows passing. Post its gate comment as `Result: pass, covered by <the record's link>`. A
+covered gate still runs when the run branch changed a file the ticket's pull request changed after
+that pull request merged (`git diff --name-only <merge commit> <head>`). Every other local or
+granted gate runs, one recorded `not run, environment unavailable` included. A
 failed gate is never skipped because a record exists. **Failures** applies as written. Return each
 gate's result, and the gates left out with their class; a reproduced failure goes back to
 `wkc-yolo`, which chooses the follow-up or the repair. On the local backend, post the gate comments
