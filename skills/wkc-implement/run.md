@@ -122,10 +122,11 @@ moved runs every gate again.
 ## Verify
 
 `verify <id> --run <ref>` needs the ticket's pull request merged into the run branch; otherwise
-report it and write nothing. At the current head of the run branch, it runs the ticket's local and
-granted gates as **Finish in a run** says, and posts their gate comments. It never changes status,
-posts no finish comment, and opens no follow-up.
+report it and write nothing. At the current head of the run branch, it settles the ticket's local
+and granted gates as **Finish in a run** says, skipping the ones below, and posts their gate comments.
+It never changes status, posts no finish comment, and opens no follow-up.
 
+Before running any gate, read the ticket's gate comments and the run PR's comments at that head.
 A gate with a passing gate comment at that head, from any finish or verify, is not run again. A gate
 covered by a `wkc-yolo readiness:` record on the run PR at that head, from an account with write
 access, is not run either: its command is that record's command, or it names a test the record's
