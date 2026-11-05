@@ -4,6 +4,36 @@ Batch S2, Claude cloud, GitHub through MCP only. Candidate 0e649b2. See prefligh
 Process evidence: tool-call extracts and MCP scoring reads on the local fixture's orphan branch
 `s2-evidence` (`raw/<label>.calls.jsonl`, `raw/reads/`, `raw/setup/`).
 
+## Results (2026-11-05)
+
+| Case | Result | File |
+|---|---|---|
+| implement 35 | PASS | impl35.md |
+| implement 36 | PASS | impl36.md |
+| implement 52 | PASS | impl52.md |
+| implement 53 | FAIL (first finish never attempted the QA deploy), reproduced at high; second finish PASS | impl53.md |
+| implement 54 | PASS | impl54.md |
+| implement 55 | PASS on the rerun with a corrected fixture | impl55.md |
+| implement 56 | PASS | impl56.md |
+| implement 57 | FAIL at medium (mismatched grant ran), PASS at high | impl57.md |
+| implement 58 | SKIP (no native-dependency operation in MCP) | impl58.md |
+| implement 62 | SKIP (no last-editor read in MCP) | impl62.md |
+| implement 64 | FAIL at medium (tracker store granted), PASS at high; command arms PASS; Linear SKIP | impl64.md |
+| implement 65 | PARTIAL (repeat finish posted no finish comment; dependent arms SKIP) | impl65.md |
+| implement 70 | PASS | impl70.md |
+| implement 83 | FAIL at medium (seen defect not recorded); high rerun found no item | impl83.md |
+| implement 84 | PASS (arm 1 also ran a covered gate; arm 3 setup cannot isolate the non-writer rule) | impl84.md |
+| code-review 62 | PASS | cr62.md |
+| code-review 64 | PASS | cr64.md |
+| code-review 65 | PASS, deviation: reused round 1 on the same sha | cr65.md |
+| code-review 66 | PASS (arm 2 on a rerun with a corrected fixture) | cr66.md |
+
+Sessions: 30 subagent launches (26 sonnet medium, 4 sonnet high reruns), 45 turns counting
+SendMessage continuations; one launch stopped by the driver after reads only; two launches not scored
+(driver fixture flaws). No quota, rate-limit, or authentication error. Installed-invocation coverage
+is not claimed: each session hand-read the installed SKILL.md. Not tested: `github.py`, its digests,
+paging, `verdicts`, and `run tickets` (sessions used MCP reads instead).
+
 ## Session ledger (copied into HANDOFF.md at the end)
 
 - 2026-11-05, S2, P4 probe, subagent sonnet medium, probe (no skill), agent a3235b2755416b2bd, `s2-evidence:raw/p4-probe.calls.jsonl`
@@ -35,4 +65,4 @@ Process evidence: tool-call extracts and MCP scoring reads on the local fixture'
 - 2026-11-05, S2, code-review 64 arm 1, subagent sonnet medium, `wkc-code-review 16` with the push URL broken, agent a588aced041636a4f, `s2-evidence:raw/cr64-arm1.calls.jsonl`
 - 2026-11-05, S2, code-review 66 arm 2 rerun, subagent sonnet medium, `wkc-code-review 45 --run run-1`, agent a9ec01f2cee49bb91, `s2-evidence:raw/cr66-arm2-rerun.calls.jsonl`
 - 2026-11-05, S2, code-review 64 arm 2, subagent sonnet medium, `wkc-code-review 47` with max_fix_attempts 0, agent abf1f71720d1009e5, `s2-evidence:raw/cr64-arm2.calls.jsonl`
-- 2026-11-05, S2, code-review 65 t1, subagent sonnet medium, `wkc-code-review 20`, agent acd3d3711a22320be, `s2-evidence:raw/cr65-t1.calls.jsonl`
+- 2026-11-05, S2, code-review 65, subagent sonnet medium, `wkc-code-review 20` (three turns: open request, non-writer Answer, writer Answer), agent acd3d3711a22320be, `s2-evidence:raw/cr65-t1t2t3.calls.jsonl`
