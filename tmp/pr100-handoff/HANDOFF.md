@@ -609,3 +609,5 @@ Run batch <batch> of the PR #100 step 5 validation for wkc-yolo, and only that b
 
 - 2026-11-05, R2, Y27, coordinator y27-t1 `/wkc-yolo resume 2` (subagent coordinator, workers unavailable), native agent opus high (observed claude-opus-5-5), coordinator turn, agent a6d3867a7c9c669be; evidence: `r2-evidence:raw/y27-t1.calls.md`
 
+- 2026-11-05, R2, Y31 unchanged parked, coordinator y31-unchanged-t1 `/wkc-yolo resume 4` (subagent coordinator, workers unavailable), native agent opus high (observed claude-opus-5-5), coordinator turn, agent a1def287939f3e934; evidence: `r2-evidence:raw/y31-unchanged-t1.calls.md`
+
