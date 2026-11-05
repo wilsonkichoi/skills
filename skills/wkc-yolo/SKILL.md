@@ -200,7 +200,7 @@ Run config: <ref>. Supersedes: <ref | none>
 ## Run record
 - Grants: <grant lines> | none. Cleanup: <environment>: <result>
 - Planning PRs: <URL and changed documents> | none
-- Decisions: <every `Decision (<skill>):` comment on the run's tickets and PRs, with the comment's own URL: `show`'s comment `url`>
+- Decisions: <every `Decision (<skill>):` comment from the whole run, on its tickets and PRs, read again with `show` at every body update, never only this session's or copied from the earlier body; each with `show`'s comment `url`>
 - Open requests: <every `needs-decision` record, verdict, or finish with no `Answer:`, and who answers> | none
 - Admissions: initial <ids>; additional <ids>, <k> of <max_additional_tickets>
 - Config changes: <each Changes line> | none
