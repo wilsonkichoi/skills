@@ -607,3 +607,5 @@ Run batch <batch> of the PR #100 step 5 validation for wkc-yolo, and only that b
 - 2026-11-05, R2, preflight P5 nested coordinator probe (no GitHub MCP tools; title not read; stop), claude -p opus high (observed claude-opus-5-5), probe, session f06fecae-6195-4b94-9eb0-f20aabe86d03; evidence: `r2-evidence:raw/p5-probe.jsonl`
 - 2026-11-05, R2, preflight P5b subagent coordinator probe (GitHub MCP yes, Agent tool no), native agent opus high (observed claude-opus-5-5), probe, agent a026c58ec92d7f8c6; evidence: `r2-evidence:raw/p5b-subagent-probe.report.md`
 
+- 2026-11-05, R2, Y27, coordinator y27-t1 `/wkc-yolo resume 2` (subagent coordinator, workers unavailable), native agent opus high (observed claude-opus-5-5), coordinator turn, agent a6d3867a7c9c669be; evidence: `r2-evidence:raw/y27-t1.calls.md`
+
