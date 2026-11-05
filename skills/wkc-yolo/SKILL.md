@@ -289,7 +289,7 @@ Production: not changed by the run
 Any secret incident first, by file, line, and rule, never the value. Then the accepted push protection
 status, the permission mode the person confirmed, never as observed, the run PR and whether it is ready,
 and each ticket by state: done, parked with its question, or waiting on a prerequisite, an environment,
-or a person. Then admissions used, counted as section 3 says; each `Run:`, verdict, or other record from
-a non-writer, by ticket or PR; grants and cleanup; each worker's model and effort, requested and
-observed. After a quota, rate-limit, or authentication error or a crash, name each environment that may
-be live and its cleanup command. Offer `wkc-retro` when it is installed.
+or a person. Then admissions used, recounted now by section 3's `list` across all statuses and `show`;
+each `Run:`, verdict, or other record from a non-writer, by ticket or PR; grants and cleanup; each
+worker's model and effort, requested and observed. After a quota, rate-limit, or authentication error or
+a crash, name each environment that may be live and its cleanup command. Offer `wkc-retro` if installed.
