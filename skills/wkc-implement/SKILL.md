@@ -312,7 +312,8 @@ Result: pass | fail | not run, <output summary or why>
 ```
 
 A `(needs authorization)` step that nobody authorized in this conversation is `not run`. Then
-post the finish comment, posted on every finish run:
+post the finish comment. Every finish run posts one, also a repeat that ran no gate and found the
+same result, so each run leaves its own record:
 
 ```
 wkc-implement: done | needs-decision, <what> | waiting | follow-up
