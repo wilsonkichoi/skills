@@ -9,6 +9,7 @@ This map is for the driver's MCP tools. The nested coordinator has none of them 
 | Read an issue: title, body, labels, state, close reason, milestone, assignees | `issue_read` method `get` | yes, #7 and #13 (close reason not seen; both open) |
 | Read every comment on an issue or PR, with author, time, and URL, complete | `issue_read` method `get_comments` (paged, `perPage` up to 100); PR conversation via the same or `pull_request_read` `get_comments` | yes, #7 and #13 |
 | List issues, open and closed, with milestone | `list_issues` (state optional, cursor paging) | not run |
+| Read an issue's edit history or last editor (`run show` `last_editor`) | missing: no field in `issue_read get`, `get_comments`, or `list_issues`; coordinators fell back to `updated_at == created_at` | #1, #2 (`r2-evidence:raw/p3-edit-history.json`) |
 | Read an issue's native blockers | missing: `issue_read get` returns `has_parent`, `has_children`, `closed_by_pull_requests` only; no blocked-by or blocking read | #7: blockers not readable (#9 expected) |
 | Collaborator permission of a login | `list_repository_collaborators` (`role_name`) | yes: only `wilsonkichoi`, `admin` |
 | Edit an issue body, then read it back | `issue_write` method `update` + `issue_read get` | not run |

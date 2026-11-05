@@ -12,6 +12,10 @@ Driver: Claude cloud session (this session), 2026-11-05. Result: **blocked at P5
   no MCP tool returns blocked-by (`r2-evidence:raw/p3-issue-7-blockers.json`). Native blocker writes
   are missing too. Per MCP-TRANSPORT.md, an arm that needs either is SKIP with the operation named;
   this bears on Y31 spent (reads #7's blocker #9), not decided here because no case ran.
+- **P3 addition (person's request): edit history.** No GitHub MCP tool reads an issue's edit
+  history or last editor (`r2-evidence:raw/p3-edit-history.json`). wkc-tracker's `run show`
+  trusts a GitHub config only when its last editor is its `By:` login, so a coordinator stop on that
+  check would be a transport limit, not a skill FAIL. No coordinator stopped on it.
 - **P4 Draft probe: PASS.** Branch `r2-probe` (`4f310e7`, one empty commit) pushed; PR #16 opened
   ready, converted to draft (read back `draft: true`), back to ready (`false`), closed unmerged
   (`state: closed`, `merged: false`). Branch left in place. `r2-evidence:raw/p4-draft-probe.json`.
