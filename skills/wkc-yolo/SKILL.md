@@ -48,10 +48,9 @@ Read the config. `max_fix_attempts`, `max_ai_test_sessions_per_attempt`, and
 `run_config` is `tracker`, `github-variable`, or `command <cmd>`. These and `headless_workers` are
 required: a missing one stops before any branch, config, or dispatch, naming the field and saying
 `wkc-setup` adds it. `security_scan` is optional; with none set, read the deprecated `push_check`
-and warn that it was renamed. Validate `execution_models` and
-`headless_workers` as [routing.md](../wkc-implement/routing.md) section 2 does, through the
-installed `wkc-implement`. Any invalid value stops before any branch, config, or dispatch: name the
-field and its allowed values.
+and warn that it was renamed. Validate `execution_models` and `headless_workers` as
+[routing.md](../wkc-implement/routing.md) section 2 does, through the installed `wkc-implement`. Any
+invalid value stops before any branch, config, or dispatch: name the field and its allowed values.
 
 A scope argument starts a new run: read kickoff.md whole and follow it. `resume <ref>` reads the
 config with `wkc-tracker run show <ref>`; a refusal stops. When `gh api user --jq .login` is not the
@@ -286,10 +285,11 @@ Production: not changed by the run
 
 ## 6. Report
 
-Any secret incident first, by file, line, and rule, never the value. Then the accepted push protection
-status, the permission mode the person confirmed, never as observed, the run PR and whether it is ready,
-and each ticket by state: done, parked with its question, or waiting on a prerequisite, an environment,
-or a person. Then admissions used, recounted now by section 3's `list` across all statuses and `show`;
-each `Run:`, verdict, or other record from a non-writer, by ticket or PR; grants and cleanup; each
-worker's model and effort, requested and observed. After a quota, rate-limit, or authentication error or
-a crash, name each environment that may be live and its cleanup command. Offer `wkc-retro` if installed.
+Before writing it, recount admissions as section 3 does: `wkc-tracker list` across all statuses and
+`show` of each ticket. Any secret incident first, by file, line, and rule, never the value. Then the
+accepted push protection status, the permission mode the person confirmed, never as observed, the run PR
+and whether it is ready, and each ticket by state: done, parked with its question, or waiting on a
+prerequisite, an environment, or a person. Then admissions used; each `Run:`, verdict, or other record
+from a non-writer, by ticket or PR; grants and cleanup; each worker's model and effort, requested and
+observed. After a quota, rate-limit, or authentication error or a crash, name each environment that may
+be live and its cleanup command. Offer `wkc-retro` if installed.
