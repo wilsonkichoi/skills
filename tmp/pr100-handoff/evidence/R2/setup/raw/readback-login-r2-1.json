@@ -1,0 +1,26 @@
+{
+  "ok": true,
+  "verb": "show",
+  "repo": "wilsonkichoi/wkc-yolo-fixture-r2-cloud-20261104",
+  "number": 1,
+  "title": "docs: usage page for kv help",
+  "status": "ready",
+  "assignees": [],
+  "milestone": "login-r2",
+  "url": "https://github.com/wilsonkichoi/wkc-yolo-fixture-r2-cloud-20261104/issues/1",
+  "labels": [
+    "ready"
+  ],
+  "body": "## What to build\n\n`docs/usage/help.md`: a short usage page for `kv help`, from SPEC section 1, with one example and its exit codes.\n\n## Why\n\nPeople read usage pages, not the SPEC.\n\n## Acceptance criteria\n\n- `docs/usage/help.md` exists, names every exit code SPEC gives for `help`, and has one example. `make test` passes.\n\n## After merge\n\nNone.\n",
+  "body_sha256": "62c6e21ec836f9959d668d4f3ce07674db62cbca2f2b2ff09602db18dde08a2d",
+  "comments": [
+    {
+      "author": "wilsonkichoi",
+      "createdAt": "2026-11-05T05:58:59Z",
+      "url": "https://github.com/wilsonkichoi/wkc-yolo-fixture-r2-cloud-20261104/issues/1#issuecomment-6650951188",
+      "body": "Run: 2\n",
+      "author_can_write": true
+    }
+  ],
+  "blockers": []
+}

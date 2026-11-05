@@ -1,0 +1,26 @@
+#!/bin/sh
+# kv: a key-value store. See docs/dev-agents/SPEC.md.
+set -u
+
+KV_FILE=${KV_FILE:-$HOME/.kv}
+
+usage() {
+  echo "usage: kv <command> [args]" >&2
+  echo "run 'kv help' for the commands" >&2
+}
+
+cmd_help() {
+  echo "help    show this list"
+}
+
+main() {
+  [ $# -ge 1 ] || { usage; exit 2; }
+  cmd=$1
+  shift
+  case $cmd in
+    help) cmd_help "$@" ;;
+    *) usage; exit 2 ;;
+  esac
+}
+
+main "$@"

@@ -1,0 +1,11 @@
+{
+  "ok": true,
+  "verb": "run show",
+  "repo": "wilsonkichoi/wkc-yolo-fixture-r2-cloud-20261104",
+  "reference": 6,
+  "state": "OPEN",
+  "text": "# Run config: unchanged-ready-r2\nStarted: 2026-11-05T05:58:46Z. By: wilsonkichoi.\n- Milestone: unchanged-ready-r2\n- Scope: milestone\n- Initial tickets: #5\n- Run branch: run/unchanged-ready-r2-20261105T0558\n- Run PR: not opened\n- Supersedes: none\n- max_fix_attempts: 3\n- max_additional_tickets: 5\n- max_parallel_workers: 3\n- Execution models: claude-code/sonnet/medium; claude-code/opus/medium\n- Coordinator model: not used\n- Headless workers: claude-code\n- Planning: delegated\n- New prerequisites: run\n- Grants: none\n- Moved by the person: none\n- Changes: none\n",
+  "text_sha256": "45a0dc7b2fba1e9c905283312f41f34e84a610fae3e24f7c5901d962893b5d73",
+  "by": "wilsonkichoi",
+  "last_editor": null
+}

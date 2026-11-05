@@ -1,0 +1,54 @@
+{
+  "repo": "wilsonkichoi/wkc-yolo-fixture-r2-cloud-20261104",
+  "fixture_main": "9c91299018cb5091d6ebb21dc777a4bd2966f469",
+  "started": "2026-11-05T05:58:46Z",
+  "login-r2": {
+    "tickets": [
+      1
+    ],
+    "run": 2,
+    "branch": "run/login-r2-20261105T0558",
+    "old_login": "wchoi42",
+    "old_held": []
+  },
+  "unchanged-r2": {
+    "tickets": [
+      3
+    ],
+    "run": 4,
+    "branch": "run/unchanged-r2-20261105T0558"
+  },
+  "unchanged-ready-r2": {
+    "tickets": [
+      5
+    ],
+    "run": 6,
+    "branch": "run/unchanged-ready-r2-20261105T0558"
+  },
+  "spent-r2": {
+    "tickets": [
+      7
+    ],
+    "spent": 8,
+    "helper": 9,
+    "run": 10,
+    "branch": "run/spent-r2-20261105T0558"
+  },
+  "change-r2": {
+    "tickets": [
+      11
+    ],
+    "run": 12,
+    "branch": "run/change-r2-20261105T0558"
+  },
+  "review-r2": {
+    "tickets": [
+      13
+    ],
+    "run": 15,
+    "branch": "run/review-r2-20261105T0558",
+    "pr": "https://github.com/wilsonkichoi/wkc-yolo-fixture-r2-cloud-20261104/pull/14",
+    "pr_head": "4bba7952512975dee2cca2770acd31a9adff5c4a",
+    "grant1": "Grant 1: r23. Target: disposable shared test marker. Impact: writes only /tmp/wkc-yolo-env/r23.deployed and r23.cleaned. Operations: sh scripts/env.sh deploy r23; sh scripts/env.sh smoke r23. Limits: 1 deploy, local only, no cost, no retries. Cleanup: sh scripts/env.sh cleanup r23. Expires: 2026-11-12T23:59:00Z."
+  }
+}

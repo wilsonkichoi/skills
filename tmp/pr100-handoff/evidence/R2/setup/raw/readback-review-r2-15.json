@@ -1,0 +1,11 @@
+{
+  "ok": true,
+  "verb": "run show",
+  "repo": "wilsonkichoi/wkc-yolo-fixture-r2-cloud-20261104",
+  "reference": 15,
+  "state": "OPEN",
+  "text": "# Run config: review-r2\nStarted: 2026-11-05T05:58:46Z. By: wilsonkichoi.\n- Milestone: review-r2\n- Scope: milestone\n- Initial tickets: #13\n- Run branch: run/review-r2-20261105T0558\n- Run PR: https://github.com/wilsonkichoi/wkc-yolo-fixture-r2-cloud-20261104/pull/14\n- Supersedes: none\n- max_fix_attempts: 3\n- max_additional_tickets: 5\n- max_parallel_workers: 3\n- Execution models: claude-code/sonnet/medium; claude-code/opus/medium\n- Coordinator model: not used\n- Headless workers: claude-code\n- Planning: delegated\n- New prerequisites: run\n- Grants: \n- Grant 1: r23. Target: disposable shared test marker. Impact: writes only /tmp/wkc-yolo-env/r23.deployed and r23.cleaned. Operations: sh scripts/env.sh deploy r23; sh scripts/env.sh smoke r23. Limits: 1 deploy, local only, no cost, no retries. Cleanup: sh scripts/env.sh cleanup r23. Expires: 2026-11-12T23:59:00Z.\n- Moved by the person: none\n- Changes: none\n",
+  "text_sha256": "ea78184fd2019191834dc4c54ec298f43012c08182850371373ccdb31b7e23d2",
+  "by": "wilsonkichoi",
+  "last_editor": null
+}

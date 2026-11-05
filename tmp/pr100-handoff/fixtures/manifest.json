@@ -1,0 +1,46 @@
+{
+  "source_fixture_repository": "wilsonkichoi/wkc-yolo-fixture-codex-20261103",
+  "source_fixture_commit": "f11de2b3c2144e84a4f49fa4b0e50e1128e51e79",
+  "candidate_repository": "wilsonkichoi/skills",
+  "candidate_commit": "0e649b298b9790ac8db31a80f2652f7f63177c40",
+  "worker_pair": [
+    {
+      "harness": "claude-code",
+      "model": "sonnet",
+      "effort": "medium"
+    },
+    {
+      "harness": "claude-code",
+      "model": "opus",
+      "effort": "medium"
+    }
+  ],
+  "copied_product_file_sha256": {
+    "Makefile": "739fc43d82a5175852b2e4b8c91f0a00fdffc1d46c9efb690d6404bdb063ba09",
+    "README.md": "fbd8591901b9657418f6c315ff42d31be3828fbcb065ec40200bfab250c4e2e6",
+    "VERSION": "e9dd8507f4bf0c6f42458e41aea833ad0bd3f6127272335eee9bf4d58541ed67",
+    "bin/kv": "1670e74228545534dea931e1e29d7331d46768e7413a39d145195c6c747d0c20",
+    "tests/test_help.sh": "cea40a18ec6c974667dc6ce0fcd300e68e67450881b1ed43caf0f55999a7f8b6",
+    "tests/lib.sh": "3fe08e50e888aaf9d96d75f7d94fbf94bb647a85e1d61131dce25b53cb4bf8ec",
+    "scripts/count-gate.sh": "a64255bbe3a8ca6a79fc8bd3ef5a00426815f4151102b71f3fde3d8656355758",
+    "scripts/env.sh": "df83036de1ee1225929ca44847496edaa237405a5c7187077c1e5048a2639e8b",
+    "docs/dev-agents/PRD.md": "3dd95a822a1e4bb27181b5b5d1c31ad754b18d5f077c810b284c1dfc56884b1e",
+    "docs/dev-agents/ROADMAP.md": "3e9d16264adb63c88f250544a73b004998b09975e79dbd3c024e68f2ca307dfd",
+    "docs/dev-agents/SPEC.md": "1760881ba7ec0373b6c86c257b955ea3c9f910740bbcdb7cb489f4c5dcd9b37d",
+    "docs/dev-agents/rules/.gitkeep": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "fixture_overrides": [
+    "AGENTS.md",
+    "CLAUDE.md",
+    "docs/dev-agents/config.md"
+  ],
+  "ticket_sources": {
+    "25": "help-usage",
+    "11": "keys-order",
+    "18": "append",
+    "20": "retired-prerequisite"
+  },
+  "r2_fixture_repository": "wilsonkichoi/wkc-yolo-fixture-r2-cloud-20261104",
+  "r2_fixture_main": "9c91299018cb5091d6ebb21dc777a4bd2966f469",
+  "r2_seed": "evidence/R2/setup/fixtures.json"
+}

@@ -1,0 +1,55 @@
+{
+  "ok": true,
+  "verb": "show",
+  "repo": "wilsonkichoi/wkc-yolo-fixture-r2-cloud-20261104",
+  "number": 7,
+  "title": "kv append: add to a value",
+  "status": "ready",
+  "assignees": [],
+  "milestone": "spent-r2",
+  "url": "https://github.com/wilsonkichoi/wkc-yolo-fixture-r2-cloud-20261104/issues/7",
+  "labels": [
+    "ready"
+  ],
+  "body": "## What to build\n\n`kv append <key> <value>`, as SPEC 3.8 says, reading and writing the store through the store helpers (SPEC 2.3).\n\n## Why\n\nScripts build up a log value over several runs.\n\n## Acceptance criteria\n\n- `tests/test_append.sh` writes the store file directly, then covers: append to an existing value, a missing key exits 1. `make test` passes.\n- `kv append` uses `read_store` and `write_store` from `bin/lib.sh`.\n\n## After merge\n\nNone.\n",
+  "body_sha256": "6150834a36b981c7a7ab23f36d839dc87936209923582687e5231f4988603bd9",
+  "comments": [
+    {
+      "author": "wilsonkichoi",
+      "createdAt": "2026-11-05T05:59:55Z",
+      "url": "https://github.com/wilsonkichoi/wkc-yolo-fixture-r2-cloud-20261104/issues/7#issuecomment-6650964581",
+      "body": "Run: 10\n",
+      "author_can_write": true
+    },
+    {
+      "author": "wilsonkichoi",
+      "createdAt": "2026-11-05T06:00:00Z",
+      "url": "https://github.com/wilsonkichoi/wkc-yolo-fixture-r2-cloud-20261104/issues/7#issuecomment-6650965694",
+      "body": "Decision (wkc-yolo): prior prerequisite admission\nChoice: #8 used slot 1 of 1 before it was canceled. No refund.\nSource: run limit\n",
+      "author_can_write": true
+    },
+    {
+      "author": "wilsonkichoi",
+      "createdAt": "2026-11-05T06:00:07Z",
+      "url": "https://github.com/wilsonkichoi/wkc-yolo-fixture-r2-cloud-20261104/issues/7#issuecomment-6650967512",
+      "body": "Discovered: SPEC 2.3 store helpers are missing. Out of scope because bin/lib.sh is its own component and must land before append. Blocks this ticket: yes.\nObserved: bin/lib.sh and tests/test_lib.sh do not exist at fixture main. SPEC 2.3 requires both.\nReproduce: rg --files bin tests.\nBecause: append acceptance criteria require read_store and write_store.\nVerified: yes. Unchecked: nothing.\n",
+      "author_can_write": true
+    },
+    {
+      "author": "wilsonkichoi",
+      "createdAt": "2026-11-05T06:00:09Z",
+      "url": "https://github.com/wilsonkichoi/wkc-yolo-fixture-r2-cloud-20261104/issues/7#issuecomment-6650968241",
+      "body": "Decision (wkc-implement): Can append proceed?\nChoice: wait for prerequisite #9, filed at backlog. No branch or PR exists.\nSource: ticket acceptance criteria and SPEC 2.3.\nExecution: claude-code, sonnet, effort medium\nObserved execution: unavailable\n",
+      "author_can_write": true
+    }
+  ],
+  "blockers": [
+    {
+      "ref": "wilsonkichoi/wkc-yolo-fixture-r2-cloud-20261104#9",
+      "status": "backlog",
+      "assignees": [],
+      "met": false,
+      "reason": "open, backlog"
+    }
+  ]
+}

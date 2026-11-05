@@ -1,0 +1,12 @@
+{
+  "ok": true,
+  "verb": "create",
+  "repo": "wilsonkichoi/wkc-yolo-fixture-r2-cloud-20261104",
+  "number": 9,
+  "title": "store: provide read_store and write_store helpers",
+  "status": "backlog",
+  "assignees": [],
+  "milestone": "spent-r2",
+  "url": "https://github.com/wilsonkichoi/wkc-yolo-fixture-r2-cloud-20261104/issues/9",
+  "blockers": []
+}

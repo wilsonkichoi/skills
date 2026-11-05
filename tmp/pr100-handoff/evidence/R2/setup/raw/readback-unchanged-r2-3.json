@@ -1,0 +1,33 @@
+{
+  "ok": true,
+  "verb": "show",
+  "repo": "wilsonkichoi/wkc-yolo-fixture-r2-cloud-20261104",
+  "number": 3,
+  "title": "kv keys: list the keys",
+  "status": "ready",
+  "assignees": [],
+  "milestone": "unchanged-r2",
+  "url": "https://github.com/wilsonkichoi/wkc-yolo-fixture-r2-cloud-20261104/issues/3",
+  "labels": [
+    "ready"
+  ],
+  "body": "## What to build\n\n`kv keys` prints every key in the store, one per line.\n\n## Why\n\nScripts iterate over stored keys.\n\n## Acceptance criteria\n\n- `tests/test_keys.sh` checks the output order. `make test` passes.\n\n## Open question\n\nShould `kv keys` print keys sorted, or in store order? Nobody has decided. The PRD and SPEC do not say, and the answer changes the test.\n",
+  "body_sha256": "ad2228690076f1154d3231fce42590ec6d6c24d3b35b4460aeee5c4f70af954b",
+  "comments": [
+    {
+      "author": "wilsonkichoi",
+      "createdAt": "2026-11-05T05:59:12Z",
+      "url": "https://github.com/wilsonkichoi/wkc-yolo-fixture-r2-cloud-20261104/issues/3#issuecomment-6650954189",
+      "body": "Run: 4\n",
+      "author_can_write": true
+    },
+    {
+      "author": "wilsonkichoi",
+      "createdAt": "2026-11-05T05:59:15Z",
+      "url": "https://github.com/wilsonkichoi/wkc-yolo-fixture-r2-cloud-20261104/issues/3#issuecomment-6650954771",
+      "body": "needs-decision (wkc-implement): Should kv keys be sorted or in store order?\nOpen because: the ticket and SPEC leave the order undecided.\nRecommendation: sorted order for stable output.\nNeeds: a person\n",
+      "author_can_write": true
+    }
+  ],
+  "blockers": []
+}

@@ -1,0 +1,12 @@
+{
+  "ok": true,
+  "verb": "milestone ensure",
+  "repo": "wilsonkichoi/wkc-yolo-fixture-r2-cloud-20261104",
+  "milestone": {
+    "number": 3,
+    "title": "unchanged-ready-r2",
+    "state": "open",
+    "url": "https://github.com/wilsonkichoi/wkc-yolo-fixture-r2-cloud-20261104/milestone/3"
+  },
+  "created": true
+}
