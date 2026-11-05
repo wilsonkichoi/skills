@@ -162,7 +162,7 @@ the raising ticket with `Needs: a person`. With `Planning: none`, `wkc-backlog` 
    --write-tree` shows no conflict, run `security_scan`, and push. With a conflict, change nothing,
    and keep the conflicting files (`git merge-tree --write-tree --name-only`) for the body: a person
    merges the default branch into the run branch, and the next resume checks readiness at the new
-   head. Finish waiting tickets once more.
+   head. Finish waiting tickets once more, and check each of those steps' results before step 2.
 2. With merged work, open the run PR, or reuse it, as a draft: `gh pr create --draft --base
    <default> --head <run branch>`, the body below. With none, report and stop.
 3. At the run branch head, run `test_command` when configured and each exit-check item a command decides,
