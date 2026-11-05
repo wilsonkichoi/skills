@@ -34,3 +34,5 @@ Process evidence: tool-call extracts and MCP scoring reads on the local fixture'
 - 2026-11-05, S2, code-review 64 arm 1 (launched before the push-URL setup, stopped by the driver after 4 reads, no writes), subagent sonnet medium, `wkc-code-review 16`, agent a1ee4562e047cf678, `s2-evidence:raw/cr64-aborted.calls.jsonl`
 - 2026-11-05, S2, code-review 64 arm 1, subagent sonnet medium, `wkc-code-review 16` with the push URL broken, agent a588aced041636a4f, `s2-evidence:raw/cr64-arm1.calls.jsonl`
 - 2026-11-05, S2, code-review 66 arm 2 rerun, subagent sonnet medium, `wkc-code-review 45 --run run-1`, agent a9ec01f2cee49bb91, `s2-evidence:raw/cr66-arm2-rerun.calls.jsonl`
+- 2026-11-05, S2, code-review 64 arm 2, subagent sonnet medium, `wkc-code-review 47` with max_fix_attempts 0, agent abf1f71720d1009e5, `s2-evidence:raw/cr64-arm2.calls.jsonl`
+- 2026-11-05, S2, code-review 65 t1, subagent sonnet medium, `wkc-code-review 20`, agent acd3d3711a22320be, `s2-evidence:raw/cr65-t1.calls.jsonl`
