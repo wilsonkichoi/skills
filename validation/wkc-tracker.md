@@ -675,6 +675,15 @@ from a second account without write access, comment again. `github.py show <n>`.
 PASS: each comment carries `author`, and `author_can_write` is `true` for the tester and `false` for the second
 account. `make test-tracker` covers the lookup's role names and failure cases.
 
+**A54 `run tickets`, from PR #100 (Y26).** Direct. On the GitHub fixture, with run config `<ref>`: a run ticket
+with the tester's `Run: <ref>` and a second account's `Run: <other>`; a closed run ticket; a ticket outside the run
+with only the second account's `Run: <ref>`; and a ticket with no `Run:` comment. `github.py run tickets <ref>`,
+then again with `#<ref>`.
+PASS: both list the same three tickets and no run config or pull request; the run tickets have `member: true`, the
+outside one `member: false` and `named_by_writer: false`; each `Run:` comment carries `author`, `author_can_write`,
+and the reference it names, the second account's `false`. Local and Linear: the same fixture shape read as their
+backend files say, every commenter able to write.
+
 **A51 `github.py` contract tests, from #94.** Direct. `make test-tracker`.
 PASS: every test passes. The tests run each verb against an in-memory GitHub and cover status mapping, unfiltered
 lists that raise the limit on a full page, the `wkc-run` exclusion, exact milestone titles against closed and
@@ -687,6 +696,8 @@ each `assign` form and its tie-break, half-landed and silently dropped writes,
 failed writes that are not retried, earlier identical comments that cannot verify dropped or failed writes,
 successful repeated comments, post-write read failures returning exit 3, concurrent closure,
 run configs refused as edge targets, pull request targets refused before any ticket write,
+`run tickets` membership from writers only across statuses, issue and text references, and paged
+issues and comments that fail on a short count,
 cycles through complete lists, duplicates and other repositories,
 and text kept off the command line and kept UTF-8 under a Latin-1 locale, text that is not UTF-8
 refused as JSON before any write, exact CRLF input bodies,

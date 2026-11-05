@@ -72,7 +72,7 @@ its Decision holds the entry word for word. Nothing here raises a limit above th
 ## 2. Run the tickets
 
 **Resume first.** Rebuild state from records, never memory. The run's tickets are those whose
-latest `Run:` comment from a writer names its config. Required work is the initial IDs plus
+latest `Run:` comment from a writer names its config: `member` in `wkc-tracker run tickets <ref>`. Required work is the initial IDs plus
 admitted tickets, and a superseded run's `done` tickets, minus work the person left out or moved. Approved split children replace a canceled
 parent's remaining deliverable only after admission; report the parent as replaced, never done.
 First run each grant's cleanup once, unless its
@@ -137,8 +137,8 @@ needs a SPEC or ROADMAP change goes to **Planning changes** below.
 
 A prerequisite of a required ticket, or a readiness repair, joins only with `New prerequisites: run`
 and a slot left. **Used slots** are the distinct tickets absent from the initial IDs with a verified
-`Run:` comment from a writer naming the config. Use `wkc-tracker list` across all statuses and `show`
-to find those comments, including transferred or canceled tickets; Decision comments are not an index. A reused out-of-scope ticket and each split or replacement child cost one;
+`Run:` comment from a writer naming the config: `named_by_writer` in `wkc-tracker run tickets <ref>`,
+which includes transferred or canceled tickets; Decision comments are not an index. A reused out-of-scope ticket and each split or replacement child cost one;
 a backlog record, and a fix to the same ticket, cost none. Parking, canceling, splitting, or
 transferring refunds none. To admit: post and verify `Run: <ref>` on it, post a `Decision
 (wkc-yolo):` naming it and the slot on the ticket that raised it, or on the run PR when no ticket
@@ -285,11 +285,11 @@ Production: not changed by the run
 
 ## 6. Report
 
-Before writing it, recount admissions as section 3 does: `wkc-tracker list` across all statuses and
-`show` of each ticket. Any secret incident first, by file, line, and rule, never the value. Then the
-accepted push protection status, the permission mode the person confirmed, never as observed, the run PR
-and whether it is ready, and each ticket by state: done, parked with its question, or waiting on a
-prerequisite, an environment, or a person. Then admissions used; each `Run:`, verdict, or other record
-from a non-writer, by ticket or PR; grants and cleanup; each worker's model and effort, requested and
+Before writing it, run `wkc-tracker run tickets <ref>` again. Any secret incident first, by file, line,
+and rule, never the value. Then the accepted push protection status, the permission mode the person
+confirmed, never as observed, the run PR and whether it is ready, and each ticket by state: done, parked
+with its question, or waiting on a prerequisite, an environment, or a person. Then admissions used, from
+that read; each `Run:` comment it lists from a non-writer, and each other non-writer record seen, such
+as a verdict, by ticket or PR; grants and cleanup; each worker's model and effort, requested and
 observed. After a quota, rate-limit, or authentication error or a crash, name each environment that may
 be live and its cleanup command. Offer `wkc-retro` if installed.

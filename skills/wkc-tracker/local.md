@@ -119,3 +119,8 @@ A run config is a file in `issues_dir/runs/`, never a ticket. `run create` write
 refuses when the file exists. The path is the reference. `run show` reads it, and refuses when it
 is missing. `run edit` rewrites the file whole and reads it back. Nothing shows who edited it, so
 an edit by anyone goes undetected. `run close` writes nothing: the file stays as the run's record.
+
+`run tickets <ref>` reads every ticket file directly in `issues_dir`, terminal ones included. A
+`## Comments` entry whose first line under its `###` heading is `Run: <x>` is a `Run:` comment, and
+every entry counts as able to write, as `show` says. Report each ticket with an entry that names
+`<ref>`, with its `Run:` entries, `member` when the last one names `<ref>`, and `named_by_writer`.

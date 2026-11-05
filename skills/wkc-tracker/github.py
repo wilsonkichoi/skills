@@ -217,6 +217,27 @@ RUN_QUERY = (
     " number state body lastEditedAt editor { login } labels(first: 100) { nodes { name } } } } }"
 )
 
+COMMENT_PAGE = "totalCount pageInfo { hasNextPage endCursor } nodes { body createdAt url author { login } }"
+
+COMMENTED_ISSUES_QUERY = (
+    "query($owner: String!, $name: String!, $after: String) {"
+    " repository(owner: $owner, name: $name) {"
+    " issues(first: 50, after: $after, states: [OPEN, CLOSED], orderBy: {field: CREATED_AT, direction: ASC}) {"
+    " totalCount pageInfo { hasNextPage endCursor } nodes {"
+    " number title url state stateReason(enableDuplicate: true)"
+    " labels(first: 100) { nodes { name } } assignees(first: 100) { nodes { login } }"
+    " milestone { number title } comments(first: 100) {" + COMMENT_PAGE + "} } } } }"
+)
+
+ISSUE_COMMENTS_QUERY = (
+    "query($owner: String!, $name: String!, $n: Int!, $after: String) {"
+    " repository(owner: $owner, name: $name) { issue(number: $n) {"
+    " comments(first: 100, after: $after) {" + COMMENT_PAGE + "} } } }"
+)
+
+# A `Run:` comment's first line, `Run: <run config ref>`.
+RUN_LINE = re.compile(r"Run:[ \t]*(\S(?:.*\S)?)[ \t]*")
+
 # The kickoff login on a run config's first line: `Started: <time>. By: <login>.`
 RUN_OWNER = re.compile(r"^Started:.*?\bBy:\s*([A-Za-z0-9](?:[A-Za-z0-9-]*[A-Za-z0-9])?)", re.M)
 
@@ -226,6 +247,21 @@ WRITE_ROLES = {"admin", "maintain", "write"}
 def run_owner(text: str | None) -> str | None:
     match = RUN_OWNER.search(text or "")
     return match.group(1) if match else None
+
+
+def run_named(body: str | None) -> str | None:
+    """The reference a `Run:` comment names, from its first line, or None for any other comment."""
+    lines = (body or "").strip().splitlines()
+    match = RUN_LINE.fullmatch(lines[0]) if lines else None
+    return match.group(1) if match else None
+
+
+def same_run_ref(named: str, ref: str, repo: str) -> bool:
+    """Issue references match as issues (`10`, `#10`, a URL); any other reference matches as text."""
+    try:
+        return parse_ref(named, repo) == parse_ref(ref, repo)
+    except TrackerError:
+        return named.strip() == ref.strip()
 
 
 def split_repo(repo: str) -> tuple[str, str]:
@@ -354,6 +390,41 @@ class GitHub:
             if len(rows) < limit:
                 return [issue_from_gh(row, self.repo) for row in rows]
             limit *= 4
+
+    def commented_issues(self) -> list[Issue]:
+        """Every issue in any state with every comment. Each page count is checked
+        against its total, so the result is never a truncated read."""
+        owner, name = split_repo(self.repo)
+        issues: list[Issue] = []
+        after = None
+        while True:
+            page = self.graphql(COMMENTED_ISSUES_QUERY, owner=owner, name=name, after=after)["repository"]["issues"]
+            for node in page["nodes"]:
+                comments = node["comments"]
+                rows = list(comments["nodes"])
+                cursor = comments["pageInfo"]["endCursor"]
+                more = comments["pageInfo"]["hasNextPage"]
+                while more:
+                    rest = self.graphql(ISSUE_COMMENTS_QUERY, owner=owner, name=name, n=node["number"],
+                                        after=cursor)["repository"]["issue"]["comments"]
+                    rows += rest["nodes"]
+                    cursor, more = rest["pageInfo"]["endCursor"], rest["pageInfo"]["hasNextPage"]
+                if len(rows) != comments["totalCount"]:
+                    read_failed(f"#{node['number']} returned {len(rows)} of {comments['totalCount']} comments")
+                issues.append(Issue(
+                    ref=Ref(self.repo, node["number"]), title=node.get("title", ""), state=node["state"],
+                    state_reason=node.get("stateReason") or "",
+                    labels=[label["name"] for label in node["labels"]["nodes"]],
+                    assignees=[person["login"] for person in node["assignees"]["nodes"]],
+                    milestone=_milestone(node.get("milestone")), url=node.get("url", ""),
+                    comments=[{"author": (c.get("author") or {}).get("login"), "createdAt": c.get("createdAt"),
+                               "url": c.get("url"), "body": c.get("body")} for c in rows],
+                ))
+            if not page["pageInfo"]["hasNextPage"]:
+                if len(issues) != page["totalCount"]:
+                    read_failed(f"the issue read returned {len(issues)} of {page['totalCount']} issues")
+                return issues
+            after = page["pageInfo"]["endCursor"]
 
     def issue(self, number: int) -> Issue:
         try:
@@ -1178,6 +1249,30 @@ def cmd_run_close(gh: GitHub, number: int) -> dict[str, Any]:
     return {"reference": number, "closed": True}
 
 
+def cmd_run_tickets(gh: GitHub, ref: str) -> dict[str, Any]:
+    """Every ticket with a `Run:` comment naming `ref`, in any status, from anyone."""
+    if not ref.strip():
+        refuse("run tickets needs the run config reference")
+    found = []
+    for issue in gh.commented_issues():
+        if issue.is_run_config:
+            continue
+        runs = [c | {"names": run_named(c.get("body")), "author_can_write": gh.can_write(c.get("author"))}
+                for c in issue.comments or [] if run_named(c.get("body")) is not None]
+        naming = [c for c in runs if same_run_ref(c["names"], ref, gh.repo)]
+        if not naming:
+            continue
+        by_writers = [c for c in runs if c["author_can_write"]]
+        found.append(issue.summary() | {
+            "url": issue.url,
+            "member": bool(by_writers) and same_run_ref(by_writers[-1]["names"], ref, gh.repo),
+            "named_by_writer": any(c["author_can_write"] for c in naming),
+            "run_comments": [{key: c.get(key) for key in ("author", "author_can_write", "names", "createdAt", "url")}
+                             for c in runs],
+        })
+    return {"reference": ref, "tickets": sorted(found, key=lambda t: t["number"])}
+
+
 # ---------------------------------------------------------------- CLI
 
 
@@ -1274,6 +1369,7 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--body-file", required=True)
     p.add_argument("--expected-sha256", required=True)
     run.add_parser("close").add_argument("number", type=number_arg)
+    run.add_parser("tickets").add_argument("ref")
     return parser
 
 
@@ -1313,6 +1409,8 @@ def dispatch(gh: GitHub, args: argparse.Namespace) -> dict[str, Any]:
         return cmd_run_create(gh, args.run_branch, read_text(args.body_file))
     if args.action == "edit":
         return cmd_run_edit(gh, args.number, read_text(args.body_file), args.expected_sha256)
+    if args.action == "tickets":
+        return cmd_run_tickets(gh, args.ref)
     return {"show": cmd_run_show, "close": cmd_run_close}[args.action](gh, args.number)
 
 

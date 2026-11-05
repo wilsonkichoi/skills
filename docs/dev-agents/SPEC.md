@@ -51,7 +51,7 @@ graph LR
 | Skill | State | Responsibility | Input | Depends on |
 |---|---|---|---|---|
 | `wkc-setup` | shipped, changes | Config and scaffold. Adds the review, AI test allowance, admission, model-selection, push-check, and run-store fields to the interview and template | none | `git`, `gh` or Linear MCP |
-| `wkc-tracker` | shipped, changes | Ticket state mechanics on three backends; on local, commits each write; closes a milestone on request; stores one config per run (`run create`, `run show`, `run edit`, `run close`); reports each comment's author and whether that author can write | verb and args | config, `git` for local, `run_config`; on GitHub, the bundled `github.py` run with `uv` (ADR-011) |
+| `wkc-tracker` | shipped, changes | Ticket state mechanics on three backends; on local, commits each write; closes a milestone on request; stores one config per run (`run create`, `run show`, `run edit`, `run close`); reports each comment's author and whether that author can write, and lists every ticket a `Run:` comment names (`run tickets`) | verb and args | config, `git` for local, `run_config`; on GitHub, the bundled `github.py` run with `uv` (ADR-011) |
 | `wkc-research` | shipped | PRD | free text | none |
 | `wkc-architect` | shipped, changes | SPEC and ADRs; opts into model invocation; under a delegated run, approves its own change (ADR-006) | free text | PRD |
 | `wkc-plan` | shipped, changes | ROADMAP, and closing a finished milestone; hands an approved milestone to `wkc-backlog` (ADR-004); opts into model invocation; under a delegated run, approves its own change (ADR-006) | a ROADMAP change, `close <milestone>`, or none | PRD, SPEC, `wkc-tracker` reads and `milestone close` |
@@ -106,7 +106,10 @@ section. `assign <id>` already claims a ticket and sets `in-progress` in one wri
 - `wkc-implement` and `wkc-code-review` run each step under `--run` in its own session, on the
   selected model (Model selection and dispatch). Manual calls run in the calling session. `wkc-yolo` owns the unattended sequence; a manual caller still authorizes each step.
 - `wkc-tracker` gains `run edit`, which replaces a run config's text, and `show` reports each
-  comment's author and whether that author has write access (ADR-013). Config retirement follows
+  comment's author and whether that author has write access (ADR-013). `run tickets <ref>` lists
+  every ticket, in any status, that a `Run:` comment names, with each comment's author, write access,
+  and whether the ticket is in the run, so membership, the admission count, and the run report come
+  from one complete read. Config retirement follows
   terminal outcome evidence.
 - `wkc-tracker` gains `run create`, `run show`, and `run close`, which store, read, and retire a run config in the store
   `run_config` names (Contracts, wkc-yolo run). Ticket verbs never read a run config.
@@ -1110,7 +1113,7 @@ that differs from it is reported as a mismatch.
    adds a `Changes:` line, and gets a `Decision (wkc-yolo):` comment.
 
    The run's tickets are those whose latest `Run:` comment, from an account with write access,
-   names this config. Continue unfinished ones. For an admitted `ready` ticket, recheck
+   names this config, as `wkc-tracker run tickets <ref>` reports them. Continue unfinished ones. For an admitted `ready` ticket, recheck
    eligibility and claim without another admission or budget charge. Continue `in-progress` and
    `in-review` work and tickets whose discovered blocker is now met. No ticket is claimed twice. A
    ticket held by an unrelated config is skipped. Continue a planning PR named by a Decision
@@ -1263,7 +1266,7 @@ every required ticket at the new head and never reuses an earlier ready marker o
 **Run config and allowance** (ADR-013). One config holds the run's authorized limits and initial
 IDs for its whole life, never mutable counters or ticket status. Count distinct additional tickets
 with this config's `Run:` comment, from an account with write access, that are absent from its
-initial IDs. Parked or transferred tickets still count. Resuming costs nothing. The latest `Run:`
+initial IDs, from `wkc-tracker run tickets <ref>`. Parked or transferred tickets still count. Resuming costs nothing. The latest `Run:`
 comment assigns ownership. The tracker account alone does not identify a run. Outside dependents
 still wait for default-branch delivery even when a run ticket is done.
 

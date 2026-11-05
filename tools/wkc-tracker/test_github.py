@@ -120,6 +120,9 @@ class FakeGitHub(g.GitHub):
     def issue(self, number: int) -> g.Issue:
         return self._issue(ref(number))
 
+    def commented_issues(self) -> list[g.Issue]:
+        return self.issue_list("all")
+
     def node(self, r: g.Ref) -> g.Issue:
         return self._issue(r)
 
@@ -899,6 +902,52 @@ class RunConfigs(unittest.TestCase):
         self.assertEqual(self.f.writes, [])
 
 
+class RunTickets(unittest.TestCase):
+    """`run tickets <ref>`: every ticket a `Run:` comment names, with each author's write access."""
+
+    def say(self, f, n, *comments):
+        f.issues[ref(n)]["comments"] += [{"author": a, "body": b} for a, b in comments]
+
+    def test_names_every_ticket_in_any_status_with_who_wrote_each_run_comment(self):
+        f = FakeGitHub()
+        for n, status in ((1, "in-progress"), (2, "done"), (3, "ready"), (4, "cancel"), (5, "ready"), (7, "ready")):
+            f.add(n, status=status)
+        f.add(6, labels=[g.RUN_LABEL])
+        self.say(f, 1, ("me", "Run: 10\n"), ("drive-by", "Run: 99"))
+        self.say(f, 2, ("me", "Run: #10"))
+        self.say(f, 3, ("drive-by", "Run: 10"))
+        self.say(f, 4, ("me", "Run: 10"), ("me", "Run: 12"))
+        self.say(f, 5, ("me", "Run: 11"))
+        self.say(f, 6, ("me", "Run: 10"))
+        self.say(f, 7, ("me", "As agreed, Run: 10 covers this"), ("me", "Decision (wkc-yolo): x\nRun: 10"))
+        out = g.cmd_run_tickets(f, "10")
+        got = {t["number"]: (t["status"], t["member"], t["named_by_writer"]) for t in out["tickets"]}
+        self.assertEqual(got, {1: ("in-progress", True, True), 2: ("done", True, True),
+                               3: ("ready", False, False), 4: ("cancel", False, True)})
+        first = out["tickets"][0]["run_comments"]
+        self.assertEqual([(c["author"], c["author_can_write"], c["names"]) for c in first],
+                         [("me", True, "10"), ("drive-by", False, "99")])
+        self.assertEqual(f.writes, [])
+
+    def test_a_later_non_writer_run_comment_changes_no_membership(self):
+        f = FakeGitHub()
+        f.add(1, status="in-review")
+        self.say(f, 1, ("me", "Run: 10"), ("drive-by", "Run: 11"))
+        self.assertTrue(g.cmd_run_tickets(f, "10")["tickets"][0]["member"])
+        self.assertEqual(g.cmd_run_tickets(f, "11")["tickets"][0]["member"], False)
+
+    def test_other_references_match_as_exact_text(self):
+        f = FakeGitHub()
+        f.add(1)
+        f.add(2)
+        self.say(f, 1, ("me", "Run: WKC_RUN_M4_20261026T0900"))
+        self.say(f, 2, ("me", "Run: WKC_RUN_M4_20261026T0901"))
+        self.assertEqual([t["number"] for t in g.cmd_run_tickets(f, "WKC_RUN_M4_20261026T0900")["tickets"]], [1])
+
+    def test_an_empty_reference_is_refused(self):
+        self.assertEqual(code_of(lambda: g.cmd_run_tickets(FakeGitHub(), "  ")), g.EXIT_REFUSED)
+
+
 class Parsing(unittest.TestCase):
     def test_refs(self):
         self.assertEqual(g.parse_ref("#12", REPO), ref(12))
@@ -974,6 +1023,32 @@ class RealGitHub(unittest.TestCase):
         with mock.patch.object(gh, "graphql", return_value=page([node(1)], False, 3)):
             self.assertEqual(code_of(lambda: gh.blockers(ref(9))), g.EXIT_READ_FAILED)
 
+    def test_commented_issues_page_through_issues_and_comments_and_fail_short(self):
+        def comments(bodies, more, total):
+            return {"totalCount": total, "pageInfo": {"hasNextPage": more, "endCursor": "c"},
+                    "nodes": [{"body": b, "createdAt": "t", "url": "u", "author": {"login": "me"}} for b in bodies]}
+
+        def issue(n, page):
+            return {"number": n, "title": "", "url": "", "state": "OPEN", "stateReason": None,
+                    "labels": {"nodes": []}, "assignees": {"nodes": []}, "milestone": None, "comments": page}
+
+        def issues(nodes, more, total):
+            return {"repository": {"issues": {"totalCount": total, "pageInfo": {"hasNextPage": more, "endCursor": "i"},
+                                              "nodes": nodes}}}
+
+        rest = {"repository": {"issue": {"comments": comments(["Run: 10"], False, 2)}}}
+        gh = g.GitHub(REPO)
+        replies = [issues([issue(1, comments(["a"], True, 2))], True, 2), rest,
+                   issues([issue(2, comments([], False, 0))], False, 2)]
+        with mock.patch.object(gh, "graphql", side_effect=replies) as stub:
+            got = gh.commented_issues()
+        self.assertEqual([(i.ref.number, [c["body"] for c in i.comments]) for i in got], [(1, ["a", "Run: 10"]), (2, [])])
+        self.assertEqual(stub.call_args_list[1].kwargs["n"], 1)
+        for short in ([issues([issue(1, comments(["a"], False, 2))], False, 1)],
+                      [issues([issue(1, comments([], False, 0))], False, 2)]):
+            with mock.patch.object(gh, "graphql", side_effect=short):
+                self.assertEqual(code_of(gh.commented_issues), g.EXIT_READ_FAILED)
+
     def test_text_goes_on_stdin_never_into_arguments(self):
         calls = []
 
@@ -1031,6 +1106,8 @@ class Cli(unittest.TestCase):
         self.assertEqual((code, out["ok"], out["verb"], out["total"]), (0, True, "milestone show", 0))
         code, out = self.run_cli(["milestone", "show", "m1"], f)
         self.assertEqual((code, out["ok"], out["error"]), (1, False, "refused"))
+        code, out = self.run_cli(["run", "tickets", "#10"], f)
+        self.assertEqual((code, out["verb"], out["reference"], out["tickets"]), (0, "run tickets", "#10", []))
 
     def test_file_bodies_keep_their_line_endings(self):
         body = "## Notes\r\nKeep café → 🎉.\r\n"

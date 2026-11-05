@@ -223,3 +223,9 @@ by whom, so an edit goes undetected; `wkc-setup` says so when it asks for `run_c
 its description, and read it back.
 
 `run close <id>`: move it to `Done`. It stays readable with `run show`.
+
+`run tickets <ref>`: `list_issues` once for each status in `list_issue_statuses`, terminal ones with
+`includeArchived: true`, following `hasNextPage`, then `list_comments` on each issue that is not a
+run config. A comment whose first line is `Run: <x>` is a `Run:` comment, and every commenter counts
+as able to write, as `show` says. Report each issue one names `<ref>` on, with its `Run:` comments,
+`member` when the latest one names `<ref>`, and `named_by_writer`.

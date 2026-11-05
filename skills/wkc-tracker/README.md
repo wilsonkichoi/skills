@@ -78,6 +78,7 @@ filed by hand in the web UI is a real ticket immediately, with no import step.
 /wkc-tracker run create <text>
 /wkc-tracker run show <ref>
 /wkc-tracker run close <ref>
+/wkc-tracker run tickets <ref>
 ```
 
 **`list`** shows tickets with their id, title, status, assignee, and blockers. Both arguments are
@@ -165,6 +166,9 @@ a person approved for one unattended run, for its whole life. They are not ticke
 config never shows up as a ticket. `wkc-yolo` writes one with `run create`, which returns a
 reference; every skill in the run reads it with `run show <ref>`; `run edit` replaces it when the
 run PR opens or the person confirms a change; `run close` retires it when the run is over.
+**`run tickets <ref>`** finds every ticket that a `Run:` comment names for that config, closed ones
+included, with who wrote each comment and whether they can write. `wkc-yolo` uses it to count
+admissions and to report `Run:` comments from people without write access.
 
 `run_config` in the config picks the store, and you pick it by who should see it:
 
