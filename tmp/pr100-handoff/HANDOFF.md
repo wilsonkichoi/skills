@@ -1,20 +1,17 @@
 # Handoff: PR #100 step 5 validation (wkc-yolo, review notes 1 to 23)
 
-## R2 cloud handoff: this snapshot's scope
+## S2 and M2 cloud handoff: this snapshot's scope
 
-This copy is for the temporary branch test/pr100-r2-claude-cloud. The original local handoff is
-unchanged. R2.md and MCP-TRANSPORT.md govern R2 where historical local-driver instructions differ.
-For R2, all paths are relative to this directory, not /Users/wchoi or ~/tmp on the old computer.
-The driver reads this file whole. Historical evidence paths are references, not required downloads.
-Do not run any batch other than R2. The existing R row and ledger are historical and stay unchanged.
-R2 uses GitHub MCP directly and treats wkc-tracker and the other skills as behavioral references.
-The user explicitly authorized that transport exception. No github.py or gh bridge is required.
-R2's model results describe that MCP-based run, not compatibility of the bundled GitHub helper.
-Candidate: 0e649b298b9790ac8db31a80f2652f7f63177c40. Original R tested d8093ed.
-Driver: Claude cloud, separate from the coordinator under test.
-Coordinator: claude -p opus, effort high. Workers: sonnet medium, then opus medium.
-Fixture: private wilsonkichoi/wkc-yolo-fixture-r2-cloud-20261104, main 9c91299, seeded locally
-with evidence/R2/setup/prepare.py (no AI session). R2.md lists every seeded number.
+This copy is for the temporary branches test/pr100-s2-claude-cloud (batch S2) and
+test/pr100-m2-claude-cloud (batch M2), which start from the same commit. Run only the batch your
+prompt names, and change only its row and ledger lines. S2.md, M2.md, and MCP-TRANSPORT.md govern
+those batches where historical local-driver instructions differ. Paths are relative to this
+directory, not /Users/wchoi or ~/tmp on the old computer. Historical evidence paths are references.
+R2 runs on its own branch, test/pr100-r2-claude-cloud; its row here is a stale copy.
+GitHub goes through MCP only; the wkc-* skills are workflow references. Test sessions are native
+sonnet medium subagents of the cloud driver, because a nested `claude -p` has no GitHub MCP tools
+in the cloud (R2, P5). Candidate: 0e649b298b9790ac8db31a80f2652f7f63177c40.
+Fixtures are created on 2026-11-04 and not seeded; each batch prepares its own case state.
 No test session has been launched by the packet preparer. See CLOUD-PROMPT.md to start.
 
 Two prompts are at the bottom: one for a Claude Code session and one for a Codex session, both started in `/Users/wchoi/src/skills`. The Tracker section is the only tracker.
@@ -158,6 +155,8 @@ commit or the open question.
 | R2 resume and changes, Claude cloud MCP | Y23, Y27 model, Y31 | Claude cloud | `claude -p` opus high | sonnet medium, then opus medium | 0 used | todo. R is complete, so the prerequisite holds. Candidate 0e649b2. GitHub through MCP only (MCP-TRANSPORT.md); skills are workflow references. Fixture private wkc-yolo-fixture-r2-cloud-20261104 at 9c91299, seeded: #1/#2 login-r2, #3/#4 unchanged-r2, #5/#6 unchanged-ready-r2, #7 to #10 spent-r2, #11/#12 change-r2, #13 to #15 review-r2 (run PR #14). Evidence: `evidence/R2/` on this branch; raw transcripts on the fixture branch `r2-evidence`. See R2.md. |
 | S single-skill | implement 35, 36, 52 to 58, 62, 64, 65, 70, 83, 84; code-review 62, 64, 65, 66 | Codex | none (each case is one skill call) | `codex exec` gpt-6-luna | 22 | todo |
 | M manual | implement 42, 59, 60, 78; code-review 67; setup 11, 13 | Codex | none: run in the Codex driver session with `$wkc-...` | none | 1 | todo |
+| S2 single-skill, Claude cloud MCP | implement 35, 36, 52 to 58, 62, 64, 65, 70, 83, 84; code-review 62, 64, 65, 66 | Claude cloud | none (each case is one skill call) | subagent sonnet medium | 0 used | todo. Candidate 0e649b2. GitHub through MCP only; skills are workflow references. Fixtures: public wkc-yolo-fixture-s2-cloud-20261104 (00a6b47, `command` run-config store) and private wkc-yolo-fixture-s2-local-cloud-20261104 (82068a8, local tracker). Evidence: `evidence/S2/` on this branch; tool-call extracts on the local fixture branch `s2-evidence`. See S2.md. |
+| M2 manual, Claude cloud MCP | implement 42, 59, 60, 78; code-review 67; setup 11, 13 | Claude cloud | none: one subagent per manual call | subagent sonnet medium | 0 used | todo. Candidate 0e649b2. GitHub through MCP only. Fixture private wkc-yolo-fixture-m2-cloud-20261104 (98fc27b, adds wkc-setup). Evidence: `evidence/M2/` on this branch; tool-call extracts on the fixture branch `m2-evidence`. See M2.md. |
 | Q quota pause | Y28 | Claude | `claude -p` sonnet medium | sonnet, then gpt-6-luna, `codex` shimmed to print a usage-limit error | 6 | todo |
 | Review | every FAIL and borderline PASS from Codex-driven batches; skill fixes | Claude | none | none | 0 | todo |
 
@@ -374,6 +373,8 @@ with a note saying where it stopped; the next session for that batch continues i
 | 5b | R2 | Claude cloud, direct GitHub MCP | R done; satisfied by its completed FAIL result |
 | 6 | S | Codex | V done (uses the Codex fixture) |
 | 7 | M | Codex | nothing |
+| 6b | S2 | Claude cloud, direct GitHub MCP | nothing; own fixtures, may run beside R2 and M2 |
+| 7b | M2 | Claude cloud, direct GitHub MCP | nothing; own fixture, may run beside R2 and S2 |
 | 8 | Review | Claude, Opus high | A, A2, T, V, V2, P, R, S, and M done |
 | 9 | Q plus reports | Claude, Opus high | Review done |
 
