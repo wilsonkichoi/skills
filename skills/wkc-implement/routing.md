@@ -144,7 +144,7 @@ Pull request: <URL and head sha | none yet>
 Run PR: <URL and head sha, and for verify the links of its `wkc-yolo readiness:` records at that head | none yet>
 Checkout: <absolute path>
 Execution: <harness>, <model>, effort <effort>
-Work in the checkout above. Read the <skill> skill installed in that checkout's harness skill directory and run its steps yourself, once, for this invocation. Do not dispatch, and start no subagent, worker, AI test session, or other harness. Read the ticket, the documents it cites, the pull request, and earlier verdicts yourself. Write the Execution line above on your handoff, update, or verdict. Decide or park as the skill says; never ask. End with a short result: the state, the pull request and head sha, the verdict or finish result, the discovered tickets, and any open request.
+Work in the checkout above. Write temporary files, such as comment bodies, in a new `mktemp -d` directory, never at a fixed path another worker could also use. Read the <skill> skill installed in that checkout's harness skill directory and run its steps yourself, once, for this invocation. Do not dispatch, and start no subagent, worker, AI test session, or other harness. Read the ticket, the documents it cites, the pull request, and earlier verdicts yourself. Write the Execution line above on your handoff, update, or verdict. Decide or park as the skill says; never ask. End with a short result: the state, the pull request and head sha, the verdict or finish result, the discovered tickets, and any open request.
 ```
 
 A review worker gets nothing else: no implementation conversation, summary, or reasoning.
