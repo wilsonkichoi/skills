@@ -26,3 +26,5 @@ Process evidence: tool-call extracts and MCP scoring reads on the local fixture'
 - 2026-11-05, S2, implement 65 arm C, subagent sonnet medium, `finish 27` then `verify 27` (`--run run-4`, two turns), agent ae1533ef04c3e934c, `s2-evidence:raw/impl65-C-t1t2.calls.jsonl`
 - 2026-11-05, S2, implement 64 arm A (tracker store, local), subagent sonnet medium, `wkc-implement finish 003 --run docs/dev-agents/issues/runs/run-s2-local64-20261105T0800.md`, agent ae2799cfdce8806da, `s2-evidence:raw/impl64-A.calls.jsonl`
 - 2026-11-05, S2, implement 70, subagent sonnet medium, `wkc-implement 001` then `wkc-implement 002` (two turns), agent a8ce5ad03e473fce6, `s2-evidence:raw/impl70-arm1arm2.calls.jsonl`
+- 2026-11-05, S2, implement 64 tracker arm rerun at effort high, subagent sonnet high, `wkc-implement finish 004 --run <tracker path>`, agent abc1906b47aa2aa7f, `s2-evidence:raw/impl64-A-high.calls.jsonl`
+- 2026-11-05, S2, implement 64 command arms (tampered, then restored), subagent sonnet medium, `wkc-implement finish 005 --run run-5` (two turns), agent a5648bc2787e4d835, `s2-evidence:raw/impl64-BC.calls.jsonl`
