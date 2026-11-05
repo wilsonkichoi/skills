@@ -128,8 +128,9 @@ default branch's merge commit, so squash and rebase merges count.
 Missing commits or an unconfirmed ancestry leave the blocker unmet, with the missing evidence named.
 Under a run, a blocker in the same run is met
 as section 7 says. A ticket the caller already holds, `in-progress` or `in-review`, is not claimed
-again: continue its branch. When its pull request is already open, go to section 5 and post only
-the handoff writes that are missing, each verified. Any other ticket must be `ready` with no
+again. When its pull request is already open, the build is done: go to section 5, post only the
+handoff writes that are missing, each verified, and change no code; review and the pre-merge update
+handle what it still lacks. Otherwise continue its branch. Any other ticket must be `ready` with no
 assignee. When a check fails, say which blocker is unmet, which pull request is open, or who holds
 it, and stop, changing nothing. For a blocker waiting on a run, name its run branch and any open
 run PR. Never take another ticket in its place.
