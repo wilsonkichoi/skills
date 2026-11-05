@@ -182,7 +182,8 @@ run, [run.md](./run.md) says what replaces the question.
 - Commit in the project's commit convention.
 
 **Discovered work.** A problem with its own deliverable, or one that must land at a different time,
-is outside this ticket's scope and is never built here. Comment it on this ticket with `wkc-tracker
+is outside this ticket's scope and is never built here. A defect you only read in code this ticket
+does not change is one too, posted with `Verified: no` until checked. Comment it on this ticket with `wkc-tracker
 comment`, also when another ticket may already cover it: `wkc-backlog` decides reuse:
 
 ```
