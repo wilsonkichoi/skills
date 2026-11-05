@@ -83,11 +83,14 @@ its command, and the **Conventions**, never by the verb that names it:
 - **Local:** this machine, or containers and temporary resources the gate creates and destroys,
   with no effect outside them. It runs with no grant.
 - **Shared non-production:** an environment others can see that is not production, such as staging
-  or a sandbox account. It runs only when the config has a `Grant <n>:` entry, counted as above,
-  that names its environment and, under `Operations`, its exact command, with a non-production
-  `Impact` and an `Expires` time still ahead, in a store accepted above. Before every attempt,
+  or a sandbox account. It runs only when the config this call read has a `Grant <n>:` entry
+  whose text equals its Decision copy word for word, compared at this call, that names its
+  environment and, under `Operations`, its exact command, with a non-production `Impact` and an
+  `Expires` time still ahead. Under `run_config: tracker` on Linear or local it never runs, because
+  that store holds no grants. Before every attempt,
   retries included, check the remaining count, cost, duration, retry limits, and expiry against
-  recorded use across the run's tickets. Count only attempt records naming that grant entry.
+  recorded use across the run's tickets. Count only attempt records naming this config's ref and
+  that grant entry.
   Earlier records attributable to it without complete usage make its remaining authority
   unverifiable. Never charge one entry's attempts against another, or infer usage from an
   environment log alone. Keep each attempt within those limits. Include the config ref, the grant
