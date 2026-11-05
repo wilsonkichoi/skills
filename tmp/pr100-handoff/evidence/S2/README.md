@@ -19,3 +19,7 @@ Process evidence: tool-call extracts and MCP scoring reads on the local fixture'
 - 2026-11-05, S2, implement 56, subagent sonnet medium, `wkc-implement verify 12 --run run-2` (two turns), agent a292d3e825e00aa6e, `s2-evidence:raw/impl56-t1t2.calls.jsonl`
 - 2026-11-05, S2, implement 55 rerun (fixed fixture), subagent sonnet medium, `wkc-implement finish 30 --run run-2`, agent a23f0c44482215670, `s2-evidence:raw/impl55-rerun.calls.jsonl`
 - 2026-11-05, S2, implement 53 rerun at effort high, subagent sonnet high, `wkc-implement finish 31 --run run-2`, agent a27c8f29d617b1307, `s2-evidence:raw/impl53-high.calls.jsonl`
+- 2026-11-05, S2, implement 57, subagent sonnet medium, `wkc-implement verify 21 --run run-3` (two turns), agent aa5b0f36c2c60b4b1, `s2-evidence:raw/impl57-t1t2.calls.jsonl`
+- 2026-11-05, S2, implement 57 mismatch arm rerun at effort high, subagent sonnet high, `wkc-implement verify 21 --run run-3`, agent a783d4690f4336f6f, `s2-evidence:raw/impl57-high.calls.jsonl`
+- 2026-11-05, S2, implement 65 arm A, subagent sonnet medium, `wkc-implement finish 25 --run run-4`, agent ae7c7f3c2244aafea, `s2-evidence:raw/impl65-A.calls.jsonl`
+- 2026-11-05, S2, implement 65 arm B, subagent sonnet medium, `finish 26`, `finish 26` again, `verify 26` (`--run run-4`, three turns), agent a5d23afac60bb30c9, `s2-evidence:raw/impl65-B-t1t2t3.calls.jsonl`
