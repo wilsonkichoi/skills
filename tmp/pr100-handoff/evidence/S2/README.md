@@ -28,3 +28,9 @@ Process evidence: tool-call extracts and MCP scoring reads on the local fixture'
 - 2026-11-05, S2, implement 70, subagent sonnet medium, `wkc-implement 001` then `wkc-implement 002` (two turns), agent a8ce5ad03e473fce6, `s2-evidence:raw/impl70-arm1arm2.calls.jsonl`
 - 2026-11-05, S2, implement 64 tracker arm rerun at effort high, subagent sonnet high, `wkc-implement finish 004 --run <tracker path>`, agent abc1906b47aa2aa7f, `s2-evidence:raw/impl64-A-high.calls.jsonl`
 - 2026-11-05, S2, implement 64 command arms (tampered, then restored), subagent sonnet medium, `wkc-implement finish 005 --run run-5` (two turns), agent a5648bc2787e4d835, `s2-evidence:raw/impl64-BC.calls.jsonl`
+- 2026-11-05, S2, code-review 66 arm 1, subagent sonnet medium, `wkc-code-review 42 --run run-1`, agent a0e7a03f5b5869868, `s2-evidence:raw/cr66-arm1.calls.jsonl`
+- 2026-11-05, S2, code-review 66 arm 2 (fixture flaw, not scored), subagent sonnet medium, `wkc-code-review 43 --run run-1`, agent a53a75424957d136a, `s2-evidence:raw/cr66-arm2-flawed.calls.jsonl`
+- 2026-11-05, S2, code-review 62, subagent sonnet medium, routed `Invocation: 7 --run run-1`, then manual `wkc-code-review 7` (two turns), agent a3869c9a6c56a4928, `s2-evidence:raw/cr62-t1t2.calls.jsonl`
+- 2026-11-05, S2, code-review 64 arm 1 (launched before the push-URL setup, stopped by the driver after 4 reads, no writes), subagent sonnet medium, `wkc-code-review 16`, agent a1ee4562e047cf678, `s2-evidence:raw/cr64-aborted.calls.jsonl`
+- 2026-11-05, S2, code-review 64 arm 1, subagent sonnet medium, `wkc-code-review 16` with the push URL broken, agent a588aced041636a4f, `s2-evidence:raw/cr64-arm1.calls.jsonl`
+- 2026-11-05, S2, code-review 66 arm 2 rerun, subagent sonnet medium, `wkc-code-review 45 --run run-1`, agent a9ec01f2cee49bb91, `s2-evidence:raw/cr66-arm2-rerun.calls.jsonl`
