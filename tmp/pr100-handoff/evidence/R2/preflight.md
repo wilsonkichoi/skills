@@ -1,6 +1,6 @@
 # R2 preflight
 
-Driver: Claude cloud session (this session), 2026-11-05. Result: **blocked at P5**. No case ran.
+Driver: Claude cloud session (this session), 2026-11-05. Result: **blocked at P5** (nested coordinator has no GitHub MCP tools). No case ran.
 
 - **P1 Packet: PASS.** Skills checkout on `test/pr100-r2-claude-cloud` at `ca04b9c`. HANDOFF.md read
   whole (606 lines), then R2.md and MCP-TRANSPORT.md.
@@ -15,17 +15,28 @@ Driver: Claude cloud session (this session), 2026-11-05. Result: **blocked at P5
 - **P4 Draft probe: PASS.** Branch `r2-probe` (`4f310e7`, one empty commit) pushed; PR #16 opened
   ready, converted to draft (read back `draft: true`), back to ready (`false`), closed unmerged
   (`state: closed`, `merged: false`). Branch left in place. `r2-evidence:raw/p4-draft-probe.json`.
-- **P5 Nested coordinator probe: BLOCKED.** The launch line in R2.md (`setsid claude -p --model opus
-  --effort high --dangerously-skip-permissions --settings '{"sandbox":{"enabled":false}}' ...`) was
-  refused by the driver session's own Claude Code auto-mode permission classifier
-  (`[Create Unsafe Agents]`) before the process started. No nested session ran, so no GitHub tool
-  names, title, auth output, or `modelUsage` were recorded, and no session is counted.
-  `r2-evidence:raw/p5-probe.denied.txt`. Every R2 case launches its coordinator with that same line,
-  so no case can start until the person allows it.
+- **P5 Nested coordinator probe: BLOCKED, the stop outcome.** First attempt: the driver session's
+  own auto-mode permission classifier refused the R2.md launch line (`[Create Unsafe Agents]`)
+  before any process started; no session. The person then chose to allow the launch (reply `1`),
+  and the same line ran: session `f06fecae-6195-4b94-9eb0-f20aabe86d03`, `claude-opus-5-5`, exit 0.
+  - GitHub MCP tool names: **none**. The nested session's init line lists only plugin MCP servers;
+    `plugin:engineering:github` is `failed` ("Dynamic Client Registration rejected (HTTP 403) ...
+    sessions are bound to their configured repositories"). The `github` server that serves this
+    driver's `mcp__github__*` tools is not passed to a nested `claude -p`.
+  - Issue #1 title: **not read**. The session cited the fixture `AGENTS.md` transport rule and did
+    not fall back to `gh`, `curl`, or WebFetch.
+  - `claude auth status --json`: `loggedIn: true`, `authMethod: oauth_token`, `apiProvider:
+    firstParty`. adapters.md's headless pre-launch check wants `authMethod: claude.ai`.
+  - Agent tool: says it can start an agent with `model: sonnet`; none started.
+  - `modelUsage`: `claude-opus-5-5` only, 777 output tokens, $0.18.
+  - Evidence: `r2-evidence:raw/p5-probe.jsonl`, `p5-probe.stderr`, `p5-probe.denied.txt`.
+
+  R2.md: "No GitHub MCP tools in the nested session, or no title read: stop, blocked. That is the
+  one outcome R2 cannot work around." Both conditions hold, so R2 stops here.
 - **P6 Environment: recorded.** `claude`, `make`, `sh`, `git` present; `gitleaks` installed with
   `go install ...gitleaks/v8@v8.21.2` after `apt-get` failed. `ANTHROPIC_BASE_URL` is set in this
   container (adapters.md's headless pre-launch check needs it unset; that would explain a refused
   headless worker, not change it). No settings file sets `sandbox.enabled`,
   `disableBypassPermissionsMode`, or `apiKeyHelper`. `r2-evidence:raw/p6-environment.txt`.
 
-AI sessions used: 0.
+AI sessions used: 1 (P5 probe).

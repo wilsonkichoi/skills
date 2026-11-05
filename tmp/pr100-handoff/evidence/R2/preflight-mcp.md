@@ -1,7 +1,7 @@
 # R2 preflight: MCP operation map
 
 Driver session, 2026-11-05. Raw reads: `r2-evidence:raw/p3-*.json`, `r2-evidence:raw/p4-draft-probe.json`.
-This map is for the driver's MCP tools. The nested coordinator's tools were not probed (P5 blocked).
+This map is for the driver's MCP tools. The nested coordinator has none of them (P5).
 
 | Operation | MCP tool | Checked |
 |---|---|---|
