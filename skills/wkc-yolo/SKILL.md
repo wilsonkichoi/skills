@@ -63,8 +63,8 @@ read after.md whole and follow it.
 Resume reports the config's settings and continues. It asks first, as one numbered question that
 ends the turn, only when the run cannot move without a person-controlled change, such as a spent
 allowance with admissible work waiting or a needed grant that expired, or when the person named a
-change in the invocation. A confirmed change goes in with `wkc-tracker run edit`, from the text
-`run show` returned, with a `Changes:` line, and a `Decision (wkc-yolo):` comment on the ticket it
+change in the invocation. A named change is not confirmed yet: the question shows it beside the current setting, and only the answer confirms it.
+A confirmed change goes in with `wkc-tracker run edit`, from the text `run show` returned, with a `Changes:` line, and a `Decision (wkc-yolo):` comment on the ticket it
 concerns, or on the run PR. A changed grant is a new `Grant <n>:` entry, never an edit of one, and
 its Decision holds the entry word for word. Nothing here raises a limit above the project config. Otherwise, a ready run PR whose head is not its validated sha, or does not contain `origin/<default>`, goes back to draft first
 (`gh pr ready --undo`) with body `draft: not ready`; then go to section 2.
