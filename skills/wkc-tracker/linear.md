@@ -229,3 +229,6 @@ its description, and read it back.
 run config. A comment whose first line is `Run: <x>` is a `Run:` comment, and every commenter counts
 as able to write, as `show` says. Report each issue one names `<ref>` on, with its `Run:` comments,
 `member` when the latest one names `<ref>`, and `named_by_writer`.
+
+`verdicts <PR>`: pull requests are on GitHub, so run `github.py verdicts <n>` from this directory with
+`--repo` set to the pull request's repository, as [github.md](./github.md) says.

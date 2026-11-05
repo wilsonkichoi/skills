@@ -124,3 +124,7 @@ an edit by anyone goes undetected. `run close` writes nothing: the file stays as
 `## Comments` entry whose first line under its `###` heading is `Run: <x>` is a `Run:` comment, and
 every entry counts as able to write, as `show` says. Report each ticket with an entry that names
 `<ref>`, with its `Run:` entries, `member` when the last one names `<ref>`, and `named_by_writer`.
+
+`verdicts <PR>`: with a GitHub remote, run `github.py verdicts <n>` from this directory with `--repo`
+set to the pull request's repository, as [github.md](./github.md) says. With none there is no pull
+request: verdicts are `## Comments` entries that `show` gives, each counted as from a writer.

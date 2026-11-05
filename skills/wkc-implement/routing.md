@@ -86,8 +86,8 @@ ticket's own pair when its `## Execution` has one, the run's otherwise (section 
 
 **A review** reads the preceding completed step on this pull request: the latest, by time posted, of
 the `wkc-implement: in review` handoff naming this pull request, each `wkc-implement: updated for
-review` comment naming it, and each `wkc-code-review round` verdict on it, from accounts with write
-access. Take that record's `Execution:` harness and model, and its `Observed execution:` model when
+review` comment naming it, and each `wkc-code-review round` verdict on it (`wkc-tracker verdicts
+<PR>`), from accounts with write access. Take that record's `Execution:` harness and model, and its `Observed execution:` model when
 it shows what an alias resolved to. Compare harness and model only, using known alias resolutions.
 That record must name the pull request's current head: its `Head:`, or a verdict's `Fixed in:`,
 else its `Reviewed:`.

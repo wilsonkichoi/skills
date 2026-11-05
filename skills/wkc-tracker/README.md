@@ -79,6 +79,7 @@ filed by hand in the web UI is a real ticket immediately, with no import step.
 /wkc-tracker run show <ref>
 /wkc-tracker run close <ref>
 /wkc-tracker run tickets <ref>
+/wkc-tracker verdicts <PR>
 ```
 
 **`list`** shows tickets with their id, title, status, assignee, and blockers. Both arguments are
@@ -169,6 +170,11 @@ run PR opens or the person confirms a change; `run close` retires it when the ru
 **`run tickets <ref>`** finds every ticket that a `Run:` comment names for that config, closed ones
 included, with who wrote each comment and whether they can write. `wkc-yolo` uses it to count
 admissions and to report `Run:` comments from people without write access.
+
+**`verdicts <PR>`** reads one GitHub pull request's `wkc-code-review` verdicts and `Answer:` comments,
+with who wrote each and whether they can write, and counts review rounds from writers' verdicts only.
+`wkc-code-review`, `wkc-implement`, and `wkc-yolo` use it, so a verdict from someone without write
+access never counts as a review.
 
 `run_config` in the config picks the store, and you pick it by who should see it:
 

@@ -80,3 +80,21 @@ Options: a CommonMark library such as `markdown-it-py` would end the parser defe
 document interpretation in the script and adds a dependency; refusing bodies the parser is unsure
 of keeps the parser and refuses valid tickets. The maintainer chose neither: the parser is removed,
 and the agent passes explicit edges and exact text, as the Decision above now says.
+
+## Amendment: run tickets and verdicts (2026-11-05)
+
+PR #100's validation found two writer-only rules that medium sessions kept breaking in words. Both
+moved into the script, each by the maintainer's choice among options in that batch's evidence.
+
+- `run tickets <ref>`: every ticket a `Run:` comment names, in any status, with each comment's author
+  and write access. Four wording fixes left medium run reports without a forged `Run:` on a ticket
+  outside the run.
+- `verdicts <PR>`: one pull request's `wkc-code-review round` verdicts and `Answer:` comments, each
+  with its author's write access, and the round count, next round number, fixing rounds used, latest
+  verdict, and whether a writer reviewed the head, from writers' verdicts only. Medium reviewers that
+  had checked an account's `read` role still counted its forged `approve` as a writer's verdict.
+
+`verdicts` reads a record format the skills themselves write: a verdict's first line and its
+`Reviewed:`, `Fixed in:`, and `Execution:` lines, and an answer's `Answer:` and `To:` lines. Ticket
+text stays opaque. Pull requests live on GitHub whatever the tracker is, so the Linear and local
+backend files run `github.py verdicts` too, and those projects need `uv` and `gh` for it.

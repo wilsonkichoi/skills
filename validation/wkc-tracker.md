@@ -684,6 +684,15 @@ outside one `member: false` and `named_by_writer: false`; each `Run:` comment ca
 and the reference it names, the second account's `false`. Local and Linear: the same fixture shape read as their
 backend files say, every commenter able to write.
 
+**A55 `verdicts`, from PR #100 (code-review 68).** Direct. On the GitHub fixture, a pull request with a second
+account's `wkc-code-review round 9: approve` naming the head, then the tester's round 1 `fixed` and round 2 `approve`
+on the new head, and an `Answer:` from each account. `github.py verdicts <n>`, then `verdicts <issue number>`.
+PASS: every verdict and answer carries `author`, `url`, and `author_can_write`, the second account's `false`; each
+verdict's `round`, `outcome`, and `Reviewed` sha read as posted; `writers` gives `rounds: 2`, `next_round: 3`,
+`fixing_rounds_used: 1`, the round 2 verdict as `latest`, and `head_reviewed: true`; `not_from_writers` names the
+second account's two comments; the issue number is refused. Before the tester's verdicts, `next_round` is 1 and
+`head_reviewed` is `false`. `make test-tracker` covers paging, a short read, and the duplicate-round rule.
+
 **A51 `github.py` contract tests, from #94.** Direct. `make test-tracker`.
 PASS: every test passes. The tests run each verb against an in-memory GitHub and cover status mapping, unfiltered
 lists that raise the limit on a full page, the `wkc-run` exclusion, exact milestone titles against closed and

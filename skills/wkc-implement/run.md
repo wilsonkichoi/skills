@@ -44,7 +44,8 @@ The run is the one config `<ref>`, read with `wkc-tracker run show`. Its `Run PR
 once it opened; `not opened` means none yet, and work can still build and finish. A ticket is in the
 run when its latest `Run:` comment from an account with write access names `<ref>`. A record counts
 only when an account with write access posted it: `wkc-tracker show` says so for ticket comments,
-and for a pull request comment, `gh api repos/<owner>/<repo>/collaborators/<login>/permission --jq
+`wkc-tracker verdicts <PR>` for a pull request's verdicts and `Answer:` comments, and for any other
+pull request comment, `gh api repos/<owner>/<repo>/collaborators/<login>/permission --jq
 .role_name` gives `admin`, `maintain`, or `write`.
 
 Only the config grants, through its `Grant <n>:` entries. An entry counts only while its text equals

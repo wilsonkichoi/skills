@@ -55,6 +55,7 @@ stops with exit 4 and suggests the `local` backend.
 | `run show <ref>`, `run close <ref>` | `run show <n>`, `run close <n>` |
 | `run edit <ref> <text>` | `run edit <n> --body-file <file> --expected-sha256 <text_sha256 from run show>` |
 | `run tickets <ref>` (any store) | `run tickets <ref>` |
+| `verdicts <PR>` (any backend) | `verdicts <n>`, with `--repo` the pull request's repository |
 
 ## Input
 
@@ -126,6 +127,12 @@ comments: on a public repository anyone can comment.
 fields, its `url`, `member`, `named_by_writer`, and `run_comments`, each with `author`,
 `author_can_write`, `names`, `createdAt`, and `url`. It reads every issue in every state with every
 comment, so it costs a page per 50 issues; use it for an admission count or a report, not per ticket.
+`verdicts` gives the pull request's `number`, `url`, `state`, and `head` (`headRefOid`); `verdicts` and
+`answers`, each with `author`, `createdAt`, `url`, and `author_can_write`, a verdict also with `round`,
+`outcome`, `reviewed`, `fixed_in`, `execution`, and `observed_execution` (null when absent), an answer
+with `answer` and `to`; `writers` with `rounds` (writers' verdicts, one per round number and
+`Reviewed` sha), `next_round`, `fixing_rounds_used`, `latest`, and `head_reviewed`; and
+`not_from_writers`, each other verdict or answer with its `author`, `createdAt`, and `url`.
 
 ## What the script holds to
 
@@ -135,6 +142,8 @@ comment, so it costs a page per 50 issues; use it for an admission count or a re
 - `run tickets` reads every issue, open and closed, and every comment on each, and checks each count
   against its total; a short read exits 4. A `#10`, `10`, or issue URL reference matches as that
   issue; any other reference matches as exact text.
+- `verdicts` reads every comment on the pull request and checks the count against its total; a
+  short read exits 4. An issue number, or none, is refused.
 - Ticket verbs refuse pull request numbers before writing. `gh issue view` can return a pull
   request, so the script checks its URL before treating it as a ticket.
 - A milestone is matched by exact title against every milestone, closed ones included, read in full.

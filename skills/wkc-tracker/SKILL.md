@@ -18,15 +18,16 @@ disable-model-invocation: false
 - **Dependencies:** `docs/dev-agents/config.md` with `issue_tracker` set, written by `wkc-setup`.
   For GitHub, `uv` and an authenticated `gh` against a host with native issue dependencies, to run
   the bundled `github.py`. For Linear, the
-  Linear MCP server. For local, nothing.
+  Linear MCP server. For local, nothing. On every backend, `verdicts` reads a GitHub pull request,
+  so it needs `uv` and an authenticated `gh` to run `github.py`.
 - **Input:** one verb and its arguments, as documented in [section 4](#4-verbs), plus the configured
   backend. The verb table explains ticket ids, text, statuses, milestones, holders, and dependency edges.
   Optional arguments keep their existing behaviour: `list` without filters returns open tickets;
   bare `assign <id>` takes the ticket. `next` needs no arguments. `run create <text>`,
   `run show <ref>`, `run edit <ref> <text>`, and `run close <ref>` take a `wkc-yolo` run config or its reference, and read
-  `run_config` from the config ([section 6](#6-run-configs)). `run tickets <ref>` takes the reference.
+  `run_config` from the config ([section 6](#6-run-configs)). `run tickets <ref>` takes the reference. `verdicts <PR>` takes a pull request number.
 - **Output:** the tickets asked for, or the changed ticket state plus its URL or file path. For
-  `run create`, the new reference; for `run show`, the config text or a refusal; for `run tickets`, the tickets its comments name.
+  `run create`, the new reference; for `run show`, the config text or a refusal; for `run tickets`, the tickets its comments name; for `verdicts`, the pull request's verdicts and answers and the writers' round counts.
 
 ## 1. Resolve the backend
 
@@ -138,6 +139,7 @@ what you did about it. A verb that cannot confirm its own write has failed.
 | `milestone show <name>` | One milestone and its ticket counts by status. Read only |
 | `run create <text>`, `run show <ref>`, `run edit <ref> <text>`, `run close <ref>` | Store, read, replace, or close a `wkc-yolo` run config, never a ticket ([section 6](#6-run-configs)) |
 | `run tickets <ref>` | Every ticket, in any status and for any store, that a `Run:` comment from anyone names, a comment whose first line is `Run: <ref>`: its `Run:` comments with author, write access, and the reference named; `member` when the latest from a writer names `<ref>`; `named_by_writer` when any from a writer does. Read only |
+| `verdicts <PR>` | One GitHub pull request's head and every comment whose first line starts `wkc-code-review round` or `Answer:`, each with author, URL, write access, and the round, outcome, `Reviewed`, `Fixed in`, and `Execution` lines it carries; from writers' verdicts only, the round count, next round number, fixing rounds used, latest verdict, and whether one reviewed the head; and the records from anyone else. With no pull request, verdicts are ticket comments, and `show` gives them. Read only |
 
 **`milestone`** has four forms, chosen by the first word. `list` alone is the listing; `show` or
 `close` followed by a name is the inspection or the close; anything else is a name to ensure, and a

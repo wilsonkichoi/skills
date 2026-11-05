@@ -229,6 +229,12 @@ COMMENTED_ISSUES_QUERY = (
     " milestone { number title } comments(first: 100) {" + COMMENT_PAGE + "} } } } }"
 )
 
+PR_COMMENTS_QUERY = (
+    "query($owner: String!, $name: String!, $n: Int!, $after: String) {"
+    " repository(owner: $owner, name: $name) { pullRequest(number: $n) {"
+    " number url state headRefOid comments(first: 100, after: $after) {" + COMMENT_PAGE + "} } } }"
+)
+
 ISSUE_COMMENTS_QUERY = (
     "query($owner: String!, $name: String!, $n: Int!, $after: String) {"
     " repository(owner: $owner, name: $name) { issue(number: $n) {"
@@ -242,6 +248,11 @@ RUN_LINE = re.compile(r"Run:[ \t]*(\S(?:.*\S)?)[ \t]*")
 RUN_OWNER = re.compile(r"^Started:.*?\bBy:\s*([A-Za-z0-9](?:[A-Za-z0-9-]*[A-Za-z0-9])?)", re.M)
 
 WRITE_ROLES = {"admin", "maintain", "write"}
+
+# A wkc-code-review verdict's first line: `wkc-code-review round <n>: <outcome>, <what>`.
+VERDICT_LINE = re.compile(r"wkc-code-review round\b[ \t]*(\d+)?:?[ \t]*(approve|fixed|stopped|needs-decision)?\b")
+VERDICT_FIELDS = {"Reviewed": "reviewed", "Fixed in": "fixed_in", "Execution": "execution",
+                  "Observed execution": "observed_execution"}
 
 
 def run_owner(text: str | None) -> str | None:
@@ -426,6 +437,29 @@ class GitHub:
                     read_failed(f"the issue read returned {len(issues)} of {page['totalCount']} issues")
                 return issues
             after = page["pageInfo"]["endCursor"]
+
+    def pull_request(self, number: int) -> dict[str, Any]:
+        """One pull request with every comment, the count checked against its total."""
+        owner, name = split_repo(self.repo)
+        try:
+            pr = self.graphql(PR_COMMENTS_QUERY, owner=owner, name=name, n=number)["repository"]["pullRequest"]
+        except GhError as error:
+            if "Could not resolve to a PullRequest" in error.detail:
+                refuse(f"{self.repo}#{number} is not a pull request", gh=error.detail)
+            raise
+        comments = pr["comments"]
+        rows = list(comments["nodes"])
+        cursor, more = comments["pageInfo"]["endCursor"], comments["pageInfo"]["hasNextPage"]
+        while more:
+            rest = self.graphql(PR_COMMENTS_QUERY, owner=owner, name=name, n=number,
+                                after=cursor)["repository"]["pullRequest"]["comments"]
+            rows += rest["nodes"]
+            cursor, more = rest["pageInfo"]["endCursor"], rest["pageInfo"]["hasNextPage"]
+        if len(rows) != comments["totalCount"]:
+            read_failed(f"pull request #{number} returned {len(rows)} of {comments['totalCount']} comments")
+        return {"number": pr["number"], "url": pr["url"], "state": pr["state"], "head": pr["headRefOid"],
+                "comments": [{"author": (c.get("author") or {}).get("login"), "createdAt": c.get("createdAt"),
+                              "url": c.get("url"), "body": c.get("body")} for c in rows]}
 
     def issue(self, number: int) -> Issue:
         try:
@@ -1274,6 +1308,48 @@ def cmd_run_tickets(gh: GitHub, ref: str) -> dict[str, Any]:
     return {"reference": ref, "tickets": sorted(found, key=lambda t: t["number"])}
 
 
+def parse_verdict(body: str | None) -> dict[str, Any] | None:
+    """A verdict's round, outcome, and record lines, or None when the first line is not a verdict's."""
+    lines = (body or "").strip().splitlines()
+    if not lines or not lines[0].startswith("wkc-code-review round"):
+        return None
+    match = VERDICT_LINE.match(lines[0])
+    found = {"round": int(match.group(1)) if match and match.group(1) else None,
+             "outcome": match.group(2) if match else None} | {key: None for key in VERDICT_FIELDS.values()}
+    for line in lines[1:]:
+        label, sep, value = line.partition(":")
+        if sep and label.strip() in VERDICT_FIELDS:
+            found[VERDICT_FIELDS[label.strip()]] = value.strip() or None
+    return found
+
+
+def cmd_verdicts(gh: GitHub, number: int) -> dict[str, Any]:
+    """A pull request's review verdicts and answers, each marked by its author's write access, and
+    the round counts from writers' verdicts only."""
+    pr = gh.pull_request(number)
+    verdicts, answers = [], []
+    for c in pr["comments"]:
+        record = {key: c.get(key) for key in ("author", "createdAt", "url")} | {
+            "author_can_write": gh.can_write(c.get("author"))}
+        parsed = parse_verdict(c.get("body"))
+        first = (c.get("body") or "").strip().splitlines()[:1]
+        if parsed is not None:
+            verdicts.append(record | parsed)
+        elif first and first[0].startswith("Answer:"):
+            to = re.search(r"^To:[ \t]*(\S.*?)[ \t]*$", c.get("body") or "", re.M)
+            answers.append(record | {"answer": first[0][len("Answer:"):].strip(), "to": to.group(1) if to else None})
+    by_writers = [v for v in verdicts if v["author_can_write"]]
+    rounds = {(v["round"], v["reviewed"]) for v in by_writers}
+    fixed = {(v["round"], v["reviewed"]) for v in by_writers if v["outcome"] == "fixed"}
+    return {"number": pr["number"], "url": pr["url"], "state": pr["state"], "head": pr["head"],
+            "verdicts": verdicts, "answers": answers,
+            "writers": {"rounds": len(rounds), "next_round": len(rounds) + 1, "fixing_rounds_used": len(fixed),
+                        "latest": by_writers[-1] if by_writers else None,
+                        "head_reviewed": any(v["reviewed"] == pr["head"] for v in by_writers)},
+            "not_from_writers": [{key: r[key] for key in ("author", "createdAt", "url")}
+                                 for r in verdicts + answers if not r["author_can_write"]]}
+
+
 # ---------------------------------------------------------------- CLI
 
 
@@ -1371,6 +1447,7 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--expected-sha256", required=True)
     run.add_parser("close").add_argument("number", type=number_arg)
     run.add_parser("tickets").add_argument("ref")
+    verbs.add_parser("verdicts").add_argument("number", type=number_arg)
     return parser
 
 
@@ -1401,6 +1478,8 @@ def dispatch(gh: GitHub, args: argparse.Namespace) -> dict[str, Any]:
         return cmd_link(gh, args.number, args.blocker)
     if verb == "unlink":
         return cmd_unlink(gh, args.number, args.blocker)
+    if verb == "verdicts":
+        return cmd_verdicts(gh, args.number)
     if verb == "milestone":
         if args.action == "list":
             return cmd_milestone_list(gh)
