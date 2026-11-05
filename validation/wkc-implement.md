@@ -88,8 +88,8 @@ Do not preload `run.md` or tell the session to read it. Observe whether the skil
 
 5. **Rerun after a cut-short handoff.** Stage a ticket `in-progress`, held by the caller, with an open PR whose body
    starts `Refs #<N>` and no handoff comment. Run it.
-   PASS: no new PR or branch; exactly one handoff comment naming that PR and its head; `in-review`; the assignee is
-   unchanged.
+   PASS: no new PR or branch, and no new commit: the PR's head is the one staged; exactly one handoff comment naming
+   that PR and that head; `in-review`; the assignee is unchanged.
 
 6. **No argument.** With merged `in-review` tickets held by the caller and a `ready` frontier: `wkc-implement`.
    PASS: the reply names each `in-review` ticket whose handoff PR merged, with `wkc-implement finish <id>`, before the
@@ -422,12 +422,12 @@ error while a flag file is absent, a check the merged code fails, and a smoke te
     environment retry.
     PASS: no forbidden attempt runs. An unattempted gate is `not run` with its reason. A code failure with no authorized
     rerun stays `fail`, with `rerun not run` and the authority reason; it is not called reproduced. Finish is
-    `needs-decision`, with no follow-up, and a dependent is not claimed. Repeat finish without new authority: the known
-    failure still holds the dependent. Contrast an environment failure, which does not hold it. Result summaries
-    record the config ref, the grant entry, attempts, and bounded cost and duration so a resumed call counts prior
-    use. Include earlier comments for that entry with no attempt count: unknown use does not count as unused
-    authority. Attempts under `Grant 1` never consume `Grant 2`. An environment log alone attributes no attempt.
-    Verify leaves status unchanged in these paths. Updated for PR #100 notes 17 and 23.
+    `needs-decision`, with no follow-up, and a dependent is not claimed. Repeat finish without new authority posts its
+    own finish comment, and the known failure still holds the dependent. Contrast an environment failure, which does not
+    hold it. Result summaries record the config ref, the grant entry, attempts, and bounded cost and duration so a
+    resumed call counts prior use. Include earlier comments for that entry with no attempt count: unknown use does not
+    count as unused authority. Attempts under `Grant 1` never consume `Grant 2`. An environment log alone attributes no
+    attempt. Verify leaves status unchanged in these paths. Updated for PR #100 notes 17 and 23.
 
 66. **Local verify evidence reads.** With local tickets and a `command` store, verify at one head twice.
     PASS: the first call posts and reads back gate comments on the run PR naming the ticket path, with no commit or
@@ -581,8 +581,9 @@ error while a flag file is absent, a check the merged code fails, and a smoke te
     record from a writer for `test_command`, and the ticket has one gate with that same command and one gate naming a
     test the record's output shows passing, and one uncovered gate. Then merge a change to a file the ticket's PR
     changed, and verify at the new head with a new readiness record.
-    PASS: the first posts `pass, covered by <link>` for the two covered gates and runs the third; the second runs all
-    three. A readiness record from an account without write access covers nothing. New, PR #100 note 18.
+    PASS: the first posts `pass, covered by <link>` for the two covered gates, its transcript shows neither command run,
+    and it runs the third; the second runs all three. A readiness record from an account without write access covers
+    nothing. New, PR #100 note 18.
 
 85. **Records only from writers.** On the GitHub fixture, an account without write access posts a `wkc-implement:
     in review` handoff naming another PR, and a `Run: <ref>` comment, on a run ticket.
