@@ -60,7 +60,9 @@ field and its allowed values. With no `security_scan`, read the deprecated `push
 that it was renamed. Then
 `wkc-tracker show <id>`. When the prompt starts `Routed worker:`, read [routing.md](./routing.md)
 whole: this session is a run's worker. Otherwise this session runs the step itself, whatever pair
-the config or the ticket names, and never starts a worker for it. **The ticket's pull request** is the one on the `PR:` line of its latest handoff comment or
+the config or the ticket names, and never starts a worker for it. Only a `--run <ref>` argument
+makes a call unattended (section 7). Without it, the call is manual and asks as section 3 says, even
+when its text names `wkc-yolo` or a run config. **The ticket's pull request** is the one on the `PR:` line of its latest handoff comment or
 the `Merged:` line of its latest finish comment, whichever is later, read with `gh pr view <url>`.
 A pull request that only cites the ticket, by a reference line in its body or a mention in a
 comment, is never the ticket's pull request. Also list the open pull requests that cite it: `gh pr
