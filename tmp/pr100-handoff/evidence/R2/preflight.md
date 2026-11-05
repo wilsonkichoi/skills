@@ -40,3 +40,20 @@ Driver: Claude cloud session (this session), 2026-11-05. Result: **blocked at P5
   `disableBypassPermissionsMode`, or `apiKeyHelper`. `r2-evidence:raw/p6-environment.txt`.
 
 AI sessions used: 1 (P5 probe).
+
+## P5b: subagent coordinator probe (person's suggestion, 2026-11-05)
+
+The person asked whether a subagent could take the coordinator's place. One read-only native agent
+from this driver session, `general-purpose`, model `opus`, effort `high` (observed
+`claude-opus-5-5`, `spawnDepth: 1`), agent `a026c58ec92d7f8c6`, same probe questions as P5.
+
+- GitHub MCP tools: **yes**, the full `mcp__github__*` set as deferred tools. Read #1's title:
+  "docs: usage page for kv help".
+- Agent tool: **none**. It cannot start a worker. `CLAUDE_CODE_MAX_SUBAGENT_SPAWN_DEPTH=1`.
+  It has `SendMessage`, so the driver can continue it for a later turn.
+- So a subagent coordinator can do every GitHub step but cannot start workers through
+  `adapters.md`: native start needs an Agent tool, and a headless `claude -p` worker has no GitHub
+  MCP tools (P5) and fails the pre-launch check (`authMethod: oauth_token`, `ANTHROPIC_BASE_URL` set).
+- Evidence: `r2-evidence:raw/p5b-subagent-probe.meta.json`, `p5b-subagent-probe.report.md`. The full
+  transcript stays in the driver container: the permission classifier refused copying it out,
+  because it carries the driver session's context.
