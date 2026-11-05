@@ -6,8 +6,8 @@ arms that need no worker (2026-11-05).
 
 - `preflight.md`, `preflight-mcp.md`: preflight, P5 and P5b probes, and the MCP operation map.
 - `Y27.md`: PASS.
-- `Y31.md`: PARTIAL, no FAIL (parked, spent t1, change t1 PASS; ready, spent t2, change t2 SKIP).
-- `Y23.md`: PARTIAL, no FAIL (t1 PASS; t2 to t8 SKIP).
+- `Y31.md`: PARTIAL, no FAIL. Parked, spent t1 and t2, and change t1 and t2 PASS (t2s in the relay retry); unchanged-ready SKIP.
+- `Y23.md`: FAIL. t1 PASS in both attempts; the retry's t2 changed #15's text with a `Changes:` entry for a covered correction; t3 to t8 SKIP.
 - `setup/`: the packet preparer's seeding records (not model evidence).
 - Raw: fixture branch `r2-evidence`, `raw/`. Coordinator turns are kept as `<label>.calls.md`
   (ordered tool calls with time, tool, key inputs, write bodies, plus the final message), not as raw
