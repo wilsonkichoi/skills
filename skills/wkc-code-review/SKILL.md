@@ -341,7 +341,8 @@ Then hand each non-blocking `Discovered:` item from this round to `wkc-backlog`,
 one change at a time, so its approval question is the session's last turn. Under a run, section 7.
 
 Report the verdict, the reviewed sha, the fix commit, the findings, the checks run and their
-results, the AI test sessions used of the limit, and the next step:
+results, the AI test sessions used of the limit, each record in `not_from_writers` with its author
+and URL, and the next step:
 
 - `fixed`: another round, in a fresh session, on the new head. This applies to fixes and
   improvements alike; this session never reviews its own commit.
