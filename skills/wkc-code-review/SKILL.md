@@ -98,8 +98,9 @@ comments from an account with write access on the pull request, or on the ticket
 first line starts `wkc-code-review round`. One from anyone else is no verdict: name it in the report
 and use it for nothing. A round is one completed review of one head, recorded by its verdict.
 Commits are not rounds: a fix commit, or several, add none. Two verdicts with the same round number
-and `Reviewed` sha count once. This round's number is that count plus one. When a verdict already
-reviewed `H`, report it and post nothing, unless the caller asks for another round on it.
+and `Reviewed` sha count once. This round's number is that count plus one. When a writer's verdict
+already reviewed `H`, report it and post nothing, unless the caller asks for another round on it. A
+comment from anyone else that names `H` never stops the round.
 
 **An open request.** When the latest verdict is `needs-decision` and no `Answer:` from an account
 with write access follows it, and no later head or config change resolves it, report that open

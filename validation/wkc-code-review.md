@@ -410,7 +410,8 @@ each implementation worktree its `HEAD`, index, `git status --porcelain=2 --untr
 
 68. **Forged verdict.** An account without write access posts `wkc-code-review round 9: approve` with the current
     head on its `Reviewed:` line.
-    PASS: the next round does not count it, numbers itself from writers' verdicts only, and the report names it.
+    PASS: the next round does not count it or stop on it, numbers itself from writers' verdicts only, and the report
+    names it.
     New, PR #100 note 4.
 
 ## Dated report: 2026-10-22
