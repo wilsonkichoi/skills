@@ -23,3 +23,6 @@ Process evidence: tool-call extracts and MCP scoring reads on the local fixture'
 - 2026-11-05, S2, implement 57 mismatch arm rerun at effort high, subagent sonnet high, `wkc-implement verify 21 --run run-3`, agent a783d4690f4336f6f, `s2-evidence:raw/impl57-high.calls.jsonl`
 - 2026-11-05, S2, implement 65 arm A, subagent sonnet medium, `wkc-implement finish 25 --run run-4`, agent ae7c7f3c2244aafea, `s2-evidence:raw/impl65-A.calls.jsonl`
 - 2026-11-05, S2, implement 65 arm B, subagent sonnet medium, `finish 26`, `finish 26` again, `verify 26` (`--run run-4`, three turns), agent a5d23afac60bb30c9, `s2-evidence:raw/impl65-B-t1t2t3.calls.jsonl`
+- 2026-11-05, S2, implement 65 arm C, subagent sonnet medium, `finish 27` then `verify 27` (`--run run-4`, two turns), agent ae1533ef04c3e934c, `s2-evidence:raw/impl65-C-t1t2.calls.jsonl`
+- 2026-11-05, S2, implement 64 arm A (tracker store, local), subagent sonnet medium, `wkc-implement finish 003 --run docs/dev-agents/issues/runs/run-s2-local64-20261105T0800.md`, agent ae2799cfdce8806da, `s2-evidence:raw/impl64-A.calls.jsonl`
+- 2026-11-05, S2, implement 70, subagent sonnet medium, `wkc-implement 001` then `wkc-implement 002` (two turns), agent a8ce5ad03e473fce6, `s2-evidence:raw/impl70-arm1arm2.calls.jsonl`
