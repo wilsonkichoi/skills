@@ -618,3 +618,7 @@ Run batch <batch> of the PR #100 step 5 validation for wkc-yolo, and only that b
 - 2026-11-05, R2, Y31 named change, coordinator y31-change-t1 `/wkc-yolo resume 12` + named change (subagent coordinator, workers unavailable), native agent opus high (observed claude-opus-5-5), coordinator turn, agent aac2298293683d041; evidence: `r2-evidence:raw/y31-change-t1.calls.md`
 
 - 2026-11-05, R2, Y23, coordinator y23-t1 `/wkc-yolo resume 15` (subagent coordinator, workers unavailable), native agent opus high (observed claude-opus-5-5), coordinator turn, agent a8aa45536c4f71063; evidence: `r2-evidence:raw/y23-t1.calls.md`
+- 2026-11-05, R2 retry, Y31 spent, fresh coordinator y31-spent-r-t1 `/wkc-yolo resume 10` with the relay sentence (subagent coordinator, workers unavailable), native agent opus high (observed claude-opus-5-5), coordinator turn, agent ae01ba83ae5d69812; evidence: `r2-evidence:raw/y31-spent-r-t1.calls.md`
+
+- 2026-11-05, R2 retry, Y31 spent, coordinator y31-spent-r-t2 relayed reply `1` (accepted; stopped at the pre-launch check of the first dispatch), native agent opus high (observed claude-opus-5-5), coordinator turn, agent ae01ba83ae5d69812; evidence: `r2-evidence:raw/y31-spent-r-t2.calls.md`
+
