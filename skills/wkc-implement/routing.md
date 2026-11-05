@@ -128,7 +128,9 @@ fork, a resumed implementation session, or `--last`. Start it in the step's chec
 | `finish` or `verify` | A clean detached worktree at `origin/<run branch>` |
 | Planning call | A fresh worktree on a `docs/<slug>` branch from the run branch |
 
-Every worker counts toward the run's `max_parallel_workers`, every kind the same. Record whether
+Every worker counts toward the run's `max_parallel_workers`, every kind the same. A started worker
+counts as running until its exit status or final result is read. A process list that does not show
+it proves nothing, so never start that step again before then. Record whether
 `CLAUDE_CODE_MAX_SUBAGENT_SPAWN_DEPTH` is `1` in the coordinator's environment: with it, Claude
 Code enforces that a native worker starts no subagent; without it, the prompt alone does.
 
