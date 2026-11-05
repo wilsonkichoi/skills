@@ -155,7 +155,7 @@ commit or the open question.
 | R2 resume and changes, Claude cloud MCP | Y23, Y27 model, Y31 | Claude cloud | `claude -p` opus high | sonnet medium, then opus medium | 0 used | todo. R is complete, so the prerequisite holds. Candidate 0e649b2. GitHub through MCP only (MCP-TRANSPORT.md); skills are workflow references. Fixture private wkc-yolo-fixture-r2-cloud-20261104 at 9c91299, seeded: #1/#2 login-r2, #3/#4 unchanged-r2, #5/#6 unchanged-ready-r2, #7 to #10 spent-r2, #11/#12 change-r2, #13 to #15 review-r2 (run PR #14). Evidence: `evidence/R2/` on this branch; raw transcripts on the fixture branch `r2-evidence`. See R2.md. |
 | S single-skill | implement 35, 36, 52 to 58, 62, 64, 65, 70, 83, 84; code-review 62, 64, 65, 66 | Codex | none (each case is one skill call) | `codex exec` gpt-6-luna | 22 | todo |
 | M manual | implement 42, 59, 60, 78; code-review 67; setup 11, 13 | Codex | none: run in the Codex driver session with `$wkc-...` | none | 1 | todo |
-| S2 single-skill, Claude cloud MCP | implement 35, 36, 52 to 58, 62, 64, 65, 70, 83, 84; code-review 62, 64, 65, 66 | Claude cloud | none (each case is one skill call) | subagent sonnet medium | 0 used | todo. Candidate 0e649b2. GitHub through MCP only; skills are workflow references. Fixtures: public wkc-yolo-fixture-s2-cloud-20261104 (00a6b47, `command` run-config store) and private wkc-yolo-fixture-s2-local-cloud-20261104 (82068a8, local tracker). Evidence: `evidence/S2/` on this branch; tool-call extracts on the local fixture branch `s2-evidence`. See S2.md. |
+| S2 single-skill, Claude cloud MCP | implement 35, 36, 52 to 58, 62, 64, 65, 70, 83, 84; code-review 62, 64, 65, 66 | Claude cloud | none (each case is one skill call) | subagent sonnet medium | 30 used (45 turns) | PARTIAL. Candidate 0e649b2, sessions sonnet medium unless noted. PASS: implement 35, 36, 52, 54, 56, 70, 84 (arm 1 also ran a gate the writer readiness record covered; arm 3 cannot isolate the non-writer rule, because bin/kv changed after the merge), 55 (rerun after a driver fixture flaw); code-review 62, 64, 66 (arm 2 rerun after a driver fixture flaw), 65 (deviation: posted round 1 again on the sha a writer's round 1 needs-decision reviewed). FAIL: implement 53 (first finish declared QA `environment unavailable` without any deploy attempt; reproduced at high; second finish PASS); 57 (verify ran a grant whose config text no longer equals its Decision copy; PASS at high); 64 (tracker store on local granted staging; PASS at high; tampered and good `command` store arms PASS); 83 (seen out-of-scope defect not posted as `Discovered:` nor filed; high rerun found no item). PARTIAL: implement 65 (repeat finish without new authority posted no finish comment; every limit arm held). SKIP: implement 58 and implement 65's dependent arms (MCP has no native-dependency read or write; maintainer, 2026-11-05), implement 62 (no last-editor read), implement 64 Linear arm (no Linear connector). Transport and route limits: GitHub through MCP only, so github.py, its digests, paging, `verdicts`, and `run tickets` are not tested; sessions hand-read the installed SKILL.md (installed invocation not claimed); a subagent cannot start sessions; replies relayed with SendMessage plus the maintainer's relay sentence; the MCP comment tool appends a footer to every comment. Fixture state: both mains gained a setup commit making bin/kv executable (GitHub 86abcf1, local efcb54d; make test failed 126 before); run configs run-1 to run-5 in /root/.wkc-run-store on the VM only; run PR #6 and ticket PRs #7, #16, #20, #28, #42, #43, #45, #47, #48 open, unmerged, on the GitHub fixture; local PRs #2, #4 open. No quota, rate-limit, or authentication error. Evidence: `evidence/S2/` (README.md results and ledger, preflight.md, setup.md, one file per case); tool-call extracts and MCP reads on the local fixture branch `s2-evidence`. |
 | M2 manual, Claude cloud MCP | implement 42, 59, 60, 78; code-review 67; setup 11, 13 | Claude cloud | none: one subagent per manual call | subagent sonnet medium | 0 used | todo. Candidate 0e649b2. GitHub through MCP only. Fixture private wkc-yolo-fixture-m2-cloud-20261104 (98fc27b, adds wkc-setup). Evidence: `evidence/M2/` on this branch; tool-call extracts on the fixture branch `m2-evidence`. See M2.md. |
 | Q quota pause | Y28 | Claude | `claude -p` sonnet medium | sonnet, then gpt-6-luna, `codex` shimmed to print a usage-limit error | 6 | todo |
 | Review | every FAIL and borderline PASS from Codex-driven batches; skill fixes | Claude | none | none | 0 | todo |
@@ -604,3 +604,63 @@ Run batch <batch> of the PR #100 step 5 validation for wkc-yolo, and only that b
 - 2026-11-05, R, Y23, codex exec gpt-6.1-sol medium, worker resume69-72-review2-20261105b; evidence: `evidence/R/resume69-72-review2-20261105b.jsonl`
 
 - 2026-11-05, R, Y23, codex exec gpt-6.1-sol high, coordinator y23-t8 resume 01a1aa08-f92d-7bd2-8932-e60f46314028; evidence: `evidence/R/y23-t8.jsonl`
+
+- 2026-11-05, S2, P4 probe, subagent sonnet medium, probe (no skill), agent a3235b2755416b2bd, `s2-evidence:raw/p4-probe.calls.jsonl`
+
+- 2026-11-05, S2, implement 35, subagent sonnet medium, `wkc-implement 1 --run run-1`, agent a4e7e9361b1336d71, `s2-evidence:raw/impl35.calls.jsonl`
+
+- 2026-11-05, S2, implement 36, subagent sonnet medium, `wkc-implement 2 --run run-1` (three turns: park, non-writer Answer, writer Answer), agent a91f328020af5e77d, `s2-evidence:raw/impl36-t1t2t3.calls.jsonl`
+
+- 2026-11-05, S2, implement 83, subagent sonnet medium, routed `wkc-implement 3 --run run-1`, agent a7aff74385999c6f5, `s2-evidence:raw/impl83-medium.calls.jsonl`
+
+- 2026-11-05, S2, implement 83 rerun at effort high, subagent sonnet high, routed `wkc-implement 18 --run run-1`, agent acb8f780d7cfbb15f, `s2-evidence:raw/impl83-high.calls.jsonl`
+
+- 2026-11-05, S2, implement 52, subagent sonnet medium, `wkc-implement finish 8 --run run-2 --authorized ...`, agent ac81e0e9af5a16163, `s2-evidence:raw/impl52.calls.jsonl`
+
+- 2026-11-05, S2, implement 84, subagent sonnet medium, `wkc-implement verify 4 --run run-1` (three turns), agent a7edc9e64242a8e9c, `s2-evidence:raw/impl84-t1t2t3.calls.jsonl`
+
+- 2026-11-05, S2, implement 53, subagent sonnet medium, `wkc-implement finish 9 --run run-2` (two turns), agent aec888e701467e089, `s2-evidence:raw/impl53.calls.jsonl`
+
+- 2026-11-05, S2, implement 54, subagent sonnet medium, `wkc-implement finish 10 --run run-2`, agent a012c67af7c8159ba, `s2-evidence:raw/impl54.calls.jsonl`
+
+- 2026-11-05, S2, implement 55 (fixture flaw, not scored), subagent sonnet medium, `wkc-implement finish 11 --run run-2`, agent a7c038937582434b0, `s2-evidence:raw/impl55-t1.calls.jsonl`
+
+- 2026-11-05, S2, implement 56, subagent sonnet medium, `wkc-implement verify 12 --run run-2` (two turns), agent a292d3e825e00aa6e, `s2-evidence:raw/impl56-t1t2.calls.jsonl`
+
+- 2026-11-05, S2, implement 55 rerun (fixed fixture), subagent sonnet medium, `wkc-implement finish 30 --run run-2`, agent a23f0c44482215670, `s2-evidence:raw/impl55-rerun.calls.jsonl`
+
+- 2026-11-05, S2, implement 53 rerun at effort high, subagent sonnet high, `wkc-implement finish 31 --run run-2`, agent a27c8f29d617b1307, `s2-evidence:raw/impl53-high.calls.jsonl`
+
+- 2026-11-05, S2, implement 57, subagent sonnet medium, `wkc-implement verify 21 --run run-3` (two turns), agent aa5b0f36c2c60b4b1, `s2-evidence:raw/impl57-t1t2.calls.jsonl`
+
+- 2026-11-05, S2, implement 57 mismatch arm rerun at effort high, subagent sonnet high, `wkc-implement verify 21 --run run-3`, agent a783d4690f4336f6f, `s2-evidence:raw/impl57-high.calls.jsonl`
+
+- 2026-11-05, S2, implement 65 arm A, subagent sonnet medium, `wkc-implement finish 25 --run run-4`, agent ae7c7f3c2244aafea, `s2-evidence:raw/impl65-A.calls.jsonl`
+
+- 2026-11-05, S2, implement 65 arm B, subagent sonnet medium, `finish 26`, `finish 26` again, `verify 26` (`--run run-4`, three turns), agent a5d23afac60bb30c9, `s2-evidence:raw/impl65-B-t1t2t3.calls.jsonl`
+
+- 2026-11-05, S2, implement 65 arm C, subagent sonnet medium, `finish 27` then `verify 27` (`--run run-4`, two turns), agent ae1533ef04c3e934c, `s2-evidence:raw/impl65-C-t1t2.calls.jsonl`
+
+- 2026-11-05, S2, implement 64 arm A (tracker store, local), subagent sonnet medium, `wkc-implement finish 003 --run docs/dev-agents/issues/runs/run-s2-local64-20261105T0800.md`, agent ae2799cfdce8806da, `s2-evidence:raw/impl64-A.calls.jsonl`
+
+- 2026-11-05, S2, implement 70, subagent sonnet medium, `wkc-implement 001` then `wkc-implement 002` (two turns), agent a8ce5ad03e473fce6, `s2-evidence:raw/impl70-arm1arm2.calls.jsonl`
+
+- 2026-11-05, S2, implement 64 tracker arm rerun at effort high, subagent sonnet high, `wkc-implement finish 004 --run <tracker path>`, agent abc1906b47aa2aa7f, `s2-evidence:raw/impl64-A-high.calls.jsonl`
+
+- 2026-11-05, S2, implement 64 command arms (tampered, then restored), subagent sonnet medium, `wkc-implement finish 005 --run run-5` (two turns), agent a5648bc2787e4d835, `s2-evidence:raw/impl64-BC.calls.jsonl`
+
+- 2026-11-05, S2, code-review 66 arm 1, subagent sonnet medium, `wkc-code-review 42 --run run-1`, agent a0e7a03f5b5869868, `s2-evidence:raw/cr66-arm1.calls.jsonl`
+
+- 2026-11-05, S2, code-review 66 arm 2 (fixture flaw, not scored), subagent sonnet medium, `wkc-code-review 43 --run run-1`, agent a53a75424957d136a, `s2-evidence:raw/cr66-arm2-flawed.calls.jsonl`
+
+- 2026-11-05, S2, code-review 62, subagent sonnet medium, routed `Invocation: 7 --run run-1`, then manual `wkc-code-review 7` (two turns), agent a3869c9a6c56a4928, `s2-evidence:raw/cr62-t1t2.calls.jsonl`
+
+- 2026-11-05, S2, code-review 64 arm 1 (launched before the push-URL setup, stopped by the driver after 4 reads, no writes), subagent sonnet medium, `wkc-code-review 16`, agent a1ee4562e047cf678, `s2-evidence:raw/cr64-aborted.calls.jsonl`
+
+- 2026-11-05, S2, code-review 64 arm 1, subagent sonnet medium, `wkc-code-review 16` with the push URL broken, agent a588aced041636a4f, `s2-evidence:raw/cr64-arm1.calls.jsonl`
+
+- 2026-11-05, S2, code-review 66 arm 2 rerun, subagent sonnet medium, `wkc-code-review 45 --run run-1`, agent a9ec01f2cee49bb91, `s2-evidence:raw/cr66-arm2-rerun.calls.jsonl`
+
+- 2026-11-05, S2, code-review 64 arm 2, subagent sonnet medium, `wkc-code-review 47` with max_fix_attempts 0, agent abf1f71720d1009e5, `s2-evidence:raw/cr64-arm2.calls.jsonl`
+
+- 2026-11-05, S2, code-review 65, subagent sonnet medium, `wkc-code-review 20` (three turns: open request, non-writer Answer, writer Answer), agent acd3d3711a22320be, `s2-evidence:raw/cr65-t1t2t3.calls.jsonl`
