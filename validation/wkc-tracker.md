@@ -672,8 +672,8 @@ with a config for run branch `run/m-20261029T1000` whose `Started:` line says `B
 
 **A53 comment authors, from PR #100 (note 4).** Direct. On the GitHub fixture, comment on a ticket as the tester and,
 from a second account without write access, comment again. `github.py show <n>`.
-PASS: each comment carries `author`, and `author_can_write` is `true` for the tester and `false` for the second
-account. `make test-tracker` covers the lookup's role names and failure cases.
+PASS: each comment carries `author` and its own `url` (`#issuecomment-<id>`), and `author_can_write` is `true` for
+the tester and `false` for the second account. `make test-tracker` covers the lookup's role names and failure cases.
 
 **A54 `run tickets`, from PR #100 (Y26).** Direct. On the GitHub fixture, with run config `<ref>`: a run ticket
 with the tester's `Run: <ref>` and a second account's `Run: <other>`; a closed run ticket; a ticket outside the run

@@ -291,7 +291,8 @@ def issue_from_gh(raw: dict[str, Any], repo: str) -> Issue:
         body=raw.get("body"),
         url=raw.get("url", ""),
         comments=[
-            {"author": (c.get("author") or {}).get("login"), "createdAt": c.get("createdAt"), "body": c.get("body")}
+            {"author": (c.get("author") or {}).get("login"), "createdAt": c.get("createdAt"), "url": c.get("url"),
+             "body": c.get("body")}
             for c in raw["comments"]
         ]
         if "comments" in raw

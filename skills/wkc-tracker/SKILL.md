@@ -123,7 +123,7 @@ what you did about it. A verb that cannot confirm its own write has failed.
 | Verb | Semantics |
 |---|---|
 | `list [status] [milestone]` | Tickets with id, title, status, assignee, and blockers. Both filters are optional. An argument that names a milestone is that milestone; otherwise it is a status. With no status, open tickets only |
-| `show <id>` | One ticket in full: body, comments with each author and whether that author has write access to the repository, labels, blockers, assignee, milestone, and a duplicate's original |
+| `show <id>` | One ticket in full: body, comments with each author, the comment's URL where the backend has one, and whether that author has write access to the repository, labels, blockers, assignee, milestone, and a duplicate's original |
 | `next` | The frontier |
 | `create <ticket>` | One ticket at `backlog`, in the shape from section 5, plus its dependency edges. Everything given to `create` is the ticket. A word in it that names a status or another verb is ticket text, not a request |
 | `edit <id> <changes>` | Change the title, named body sections, `## Blocked by`, or milestone. Only what is given changes |

@@ -741,6 +741,20 @@ class CommentAuthors(unittest.TestCase):
         shown = g.cmd_show(f, 1)
         self.assertEqual([c["author_can_write"] for c in shown["comments"]], [True, False, False])
 
+    def test_show_gives_each_comment_its_own_url(self):
+        raw = {"number": 1, "title": "t", "state": "OPEN", "stateReason": "", "labels": [], "assignees": [],
+               "milestone": None, "body": "b", "blockedBy": {"nodes": [], "totalCount": 0},
+               "url": "https://github.com/o/r/issues/1",
+               "comments": [{"author": {"login": "me"}, "createdAt": "2026-11-05T00:00:00Z", "body": "Decision (x): q",
+                             "url": "https://github.com/o/r/issues/1#issuecomment-7"}]}
+        f = FakeGitHub()
+        f.add(1)
+        reader = g.GitHub(REPO)
+        with mock.patch.object(reader, "gh_json", return_value=raw), \
+             mock.patch.object(f, "issue", side_effect=reader.issue):
+            shown = g.cmd_show(f, 1)
+        self.assertEqual(shown["comments"][0]["url"], "https://github.com/o/r/issues/1#issuecomment-7")
+
     def test_real_lookup_reads_role_name_and_treats_a_failure_as_no(self):
         gh = g.GitHub(REPO)
         answers = {"api repos/o/r/collaborators/w/permission": '{"permission": "write", "role_name": "maintain"}',
