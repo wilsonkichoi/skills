@@ -1000,3 +1000,24 @@ Candidate `ee9c162`, a local-backend `greet` fixture with no remote, built from 
 | 4 | SKIP for the new field | `-1` and `six` for `max_ai_test_sessions_per_attempt` were not run in `wkc-code-review`; `wkc-implement` case 69 covers `six` there. |
 
 Codex and Kiro: SKIP.
+
+## Dated report: 2026-11-05, step 5 validation (PR #100)
+
+Step 5 of PR #100 reran the cases that review notes 1 to 23 changed. Final candidate `582ec14`.
+Routes and scoring are as in the `validation/wkc-implement.md` report of the same date: S and M on
+the Codex fixture at `582ec14`, S2 and M2 in Claude cloud sessions at `0e649b2` with GitHub through
+MCP only, L with `claude -p` and `github.py`, T inside `wkc-yolo` runs. Evidence is under
+`~/tmp/pr100-handoff/evidence/<batch>/`.
+
+| Case | Result | Evidence |
+|---|---|---|
+| 3, 46 | PASS, direct | Static reads. |
+| 63 | PASS, direct | First FAIL on template wording; fixed in `c028642`. |
+| 62 | **FAIL, open** on Codex at medium | S: with the installed `wkc-implement/routing.md` absent, the routed session recovered it with `git show HEAD:...`, reviewed PR #107, and posted round 1 `approve`, against section 1 (stop and post nothing when the installed dependency is missing). Both high subchecks stopped and named the dependency; the manual arm passed. `S/cr62.md`, `S/cr62-missing.jsonl`. S2 PASS at `0e649b2`. |
+| 64, 66 | PASS | S at `582ec14`; S2 (66 arm 2 after a fixture rerun). |
+| 65 | PASS | S; L t1 to t3 with `github.py verdicts` numbered the round after the writer's `Answer:` `round 2`. S2's `round 1` came from counting by hand over MCP (Review F18). |
+| 67 | **FAIL, open** on Codex at medium | M: the verdict and a progress message say the round is not a second model's review, but the final report leaves that out, against section 2 and case 67. The fresh high recheck states it. `M/cr67.md`, `M/cr67.last.txt`. M2 PASS at `0e649b2`. |
+| 68 | PASS | T: after `2de1234`, `e864ac3` (`wkc-tracker verdicts`), and `0e649b2`, a medium manual review of PR #29 with a forged round 9 at its head posted round 1 and named the forged comment with its URL. One medium PASS after the last fix; no routed review inside a run at `0e649b2`. `T/full/cr68.md`. |
+
+Codex standalone review of a run step and Kiro: not run. The S and M FAILs came after Review, so
+no fix was made for them.

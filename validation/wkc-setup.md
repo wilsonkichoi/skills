@@ -110,3 +110,17 @@ Candidate `ee9c162`. Direct checks only; no AI sessions.
 | 1 | PASS, direct | Section D recommends `5`; PyYAML parses the template's `max_fix_attempts` as integer `5`. |
 | 7 | PASS, direct | Section D asks for `max_ai_test_sessions_per_attempt`, recommends `6`, names both attempt kinds, and says it is a ceiling and `0` starts none. PyYAML parses the template value as integer `6`, and this repository's config as `5` and `6`. |
 | 8 | SKIP | Needs a setup session; the allowance went to the skill cases. |
+
+## Dated report: 2026-11-05, step 5 validation (PR #100)
+
+Final candidate `582ec14`. Static checks at `c028642`; model calls in M (`codex exec`
+gpt-6.1-sol medium on the Codex fixture, `582ec14`) and M2 (Claude cloud subagent sonnet medium,
+`0e649b2`). Evidence under `~/tmp/pr100-handoff/evidence/M/` and `M2/`.
+
+| Case | Result | Evidence |
+|---|---|---|
+| 6, 10, 12 | PASS, direct | Section D and F reads; the template parses as each PASS list says. |
+| 11 | PASS | M (after one unscored launch on a fixture whose `AGENTS.md` preselected the pair) and M2. M appended a repository body note, outside this PASS list. M2 made a `head`-truncated config read, asked for two existing fields, and reverted them before the end. |
+| 13 | PASS | Static part, then M and M2: every missing required field asked and written, the `push_check` rename offered with its value kept, body unchanged. M2 also ran `gh auth status` once. |
+
+Case 12's throwaway-project write was not run as its own case.

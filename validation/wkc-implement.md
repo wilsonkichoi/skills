@@ -33,6 +33,7 @@ Keep raw logs and fixtures outside tracked files.
 - Review round 2: 2026-10-29, PR #99
 - Review round 3: 2026-10-29, PR #99
 - Review round 4: 2026-10-29, PR #99
+- Dated report: 2026-11-05, step 5 validation (PR #100)
 - No-pair routing subchecks, from #74
 
 ## Preparation
@@ -1553,6 +1554,55 @@ that read `routing.md` with this round's fix and started nothing. Direct: five-f
 Still not run: case 78, and case 80's live question relay and `--run` handoff, which need the
 person's approval.
 
+
+## Dated report: 2026-11-05, step 5 validation (PR #100)
+
+Step 5 of PR #100 reran the cases that review notes 1 to 23 changed. Branch `feat/74-wkc-yolo`;
+the final candidate is `582ec14`. Scored from `github.py show`, `gh pr view`, ticket files, the
+Linear MCP server, and transcripts, never from a session's report. Evidence is on the
+maintainer's machine under `~/tmp/pr100-handoff/evidence/<batch>/`; the session total is in the
+`validation/wkc-yolo.md` report of the same date.
+
+Batches and routes:
+
+- Direct and dry runs: static checks at `c028642`; dry runs `claude -p` sonnet medium (4 sessions).
+- S: candidate `582ec14` on the Codex fixture, `codex exec` gpt-6-luna medium, high rechecks.
+- S2 and M2: candidate `0e649b2`, Claude cloud subagents sonnet medium, GitHub through MCP only,
+  so `github.py`, its digests, `verdicts`, and `run tickets` were not exercised there.
+- M: candidate `582ec14` on the Codex fixture, `codex exec` gpt-6.1-sol medium, high rechecks.
+- L: candidate `582ec14`, `claude -p` sonnet medium, high reruns, GitHub through `github.py` and
+  `gh`, plus the local fixture and the Linear sandbox.
+- T: case 85 inside `wkc-yolo` runs at `0cd3435` to `d8093ed`.
+
+| Case | Result | Evidence |
+|---|---|---|
+| 5 | PASS | L, with case 78 arm 2 after `945a5d9`. `L/impl-single-1.md`. |
+| 34 | PASS, direct | First FAIL on template wording; fixed in `c028642`. |
+| 35, 36 | PASS | S (Codex, `582ec14`) and S2 (`0e649b2`). `S/impl35.md`, `S/impl36.md`, `S2/`. |
+| 37, 41 | Not rerun | Marked todo again by `e2dcca7` (a defect read in code the ticket does not change is discovered work). |
+| 42 | **FAIL, open** on Codex at medium | M arm A: the reply asks the question, then adds a paragraph that quotes the manual decision rule, against "the reply ends on the question". The high recheck ends on the question. `M/impl42.md`, `M/impl42-gap.jsonl`. L arm A (Claude, `582ec14`) PASS; M2 arm A FAIL at `0e649b2` was fixed by `4f3e5f9`. Arm B PASS in M and M2. |
+| 50, 61, 68, 76, 79 | PASS, direct | Static reads. Case 68 also ran as M's and M2's case 78 subcheck. |
+| 52 | PASS | S at `582ec14`; S2. |
+| 53 | PASS | S at `582ec14`; L at `582ec14`. S2's FAIL was a fixture flaw: its grant `Target:` named an up condition (Review F10). |
+| 54, 55, 56 | PASS | S at `582ec14`; S2 (55 after a fixture rerun). |
+| 57 | PASS | S; L, both arms in fresh sessions. S2's arm 2 FAIL was fixed by `9b37e5b`. L note: arm 2's qa comment wrongly calls arm 1's pass invalid. |
+| 58, 62 | PASS | S; L. S2 SKIP (no MCP read of native blockers or last editor). |
+| 59 | PASS | M; L. M2 SKIP (no MCP blocker edge). |
+| 60 | PASS | M first arm; M2 both arms. M's production arm was not run. |
+| 64 | **FAIL, open** on Codex at medium | S local tracker arm: the session ran `wkc-tracker run show` as a shell command (exit 127), called the dependency missing, and ran no gate, against local.md Run configs and case 64. The corrected-boundary high recheck ran the gate, first in the original checkout. `S/impl64.md`, `S/impl64-local.jsonl`. L PASS on Claude: tracker local, the command count, and Linear. S's Linear and command arms PASS. |
+| 65 | **FAIL, open** on Codex at medium | S: the repeat finish posted no finish comment and asked for dispatch to the first model, against section 1 and section 6; the zero-operation and verify calls refused GitHub tracker grants as an unsupported store, also at high, against run.md Gate classes. `S/impl65.md`, `S/impl65-code-repeat.jsonl`, `S/impl65-zero.jsonl`. L PASS on Claude: arm B's repeat finish and both dependent arms. |
+| 70 | PASS | S, including the remote handoff arms; S2. |
+| 74, 75, 77 | PASS, dry run | `claude -p` sonnet medium at `c028642`. Case 74's first session was spoiled by the fixture's own authorization record. Case 75's Decision text was not in template form, because the dry run read only `routing.md`. |
+| 78 | PASS | M; M2 (borderline: arm 2 built on an open PR, fixed by `945a5d9`); L arms 1 and 2. |
+| 80 | Deferred | Waits on the Codex coordinator case Y33 (maintainer, 2026-11-03). |
+| 82 | PASS, static part | The model part is todo again after `6e84ed8` (every finish posts its comment). |
+| 83 | **FAIL, open** | S at medium and high (Codex): the routed build read the `cmd_del` defect and posted no `Discovered:` comment; the planning variant returned no item. S2 FAIL at `0e649b2`. L PARTIAL on Claude at `582ec14`: it filed #86 through `wkc-backlog --run` for the item it found, but never noticed the planted `cmd_del` defect, so the `e2dcca7` arm is not exercised. Rule: section 3, and run.md Decide or park. `S/impl83.md`, `L/impl83.md`. |
+| 84 | **FAIL, open** on Claude, medium and high | L arm 1: `make test` posted `pass, covered by`, but `sh tests/test_del.sh`, which the writer record's output shows passing, was run and posted plain `pass`, against run.md Verify ("do not run it to confirm") and case 84 ("its transcript shows neither command run"). `L/raw/impl84-arm1.jsonl`, `L/raw/impl84-arm1-high.jsonl`. L arms 2 and 3 PASS; S PASS on Codex. |
+| 85 | PASS | T: the forged handoff and `Run: 99` are `author_can_write: false`, and finish used the writer's PR. `T/impl85.md`, `T/full/impl85.md`. |
+
+Not claimed: installed invocation in the cloud batches (they read SKILL.md by path), and Kiro (SKIP).
+The FAILs above in S and M came after Review, which read only the batches before them, so no fix
+was made for them.
 
 ## No-pair routing subchecks, from #74
 

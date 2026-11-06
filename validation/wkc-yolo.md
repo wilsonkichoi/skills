@@ -342,3 +342,105 @@ tracker unit regressions; security scan.
   `git diff --check`; gitleaks over PR history. Diagram files unchanged since round 2's check.
 - SKIP every model-run case; this round changed no behaviour a direct read cannot check. The
   build's and round 2's integration SKIPs remain. No configured `test_command` or GitHub CI.
+
+## Dated report: 2026-11-05, step 5 validation (PR #100)
+
+Step 5 of PR #100 reran the cases that review notes 1 to 23 changed, in batches, on branch
+`feat/74-wkc-yolo`. The final candidate is `582ec14`. Approved scope (maintainer, 2026-11-03 and
+2026-11-04): direct checks, single-skill cases, and yolo tier 1, with no session cap, at most 3
+workers at once; Y33 and implement case 80 deferred until tier 1 passed; Kiro SKIP; tier 2 needs a
+new approval. Scored from `github.py show`, `gh pr view`, and transcripts, never from a
+coordinator's report. Evidence is on the maintainer's machine under
+`~/tmp/pr100-handoff/evidence/<batch>/`; raw logs stay outside tracked files.
+
+Fixtures: private `wilsonkichoi/wkc-yolo-fixture-20261103` (A, A2, Q), public
+`wilsonkichoi/wkc-trust-fixture-20261103` with a second account that can only read (T), private
+`wilsonkichoi/wkc-yolo-fixture-codex-20261103` (V, V2, P, R, S, M), and the cloud fixtures of R2,
+S2, and M2, reused by L. Coordinators: `claude -p` sonnet medium (A, A2, T, Q), `codex exec`
+gpt-6.1-sol medium (V, V2, L's F3 arm) or high (P, R, L's Y31 arm), `claude -p` opus high (L's
+Y23 and Y31 arms), and a native Claude subagent, opus high, in R2. Workers ran at the pair's
+medium effort. R2, S2, and M2 reached GitHub through MCP only, so they test the skills' workflow
+and judgment, not `github.py`.
+
+| Case | Result | Batch and evidence |
+|---|---|---|
+| Y1 | PASS, direct | `582ec14`: YAML parses, both invocation settings off, the five fields in order, callers people only, 295 lines named in the PR body. |
+| Y2 | PASS, direct | `582ec14`: the seven blocks match the SPEC's; the `Run:` block is present; no phase, `Continues:`, or `Parked (` block. It first FAILed on template wording; fixed in `c028642`. |
+| Y3 | Subcheck only | Not rerun. Every Q kickoff read `unverifiable` on the private fixture, with the field absent. |
+| Y4 | PARTIAL | Tracker A53 PASS (T). A52 was not run as its own case; `run edit` ran in Y23 and Y31. |
+| Y5 | PASS, direct | `wkc-setup` case 12, static part. |
+| Y6 | PASS, direct | Read of `adapters.md` and `routing.md`. |
+| Y7 | PASS | A, after `d5a9352`, `e66f707`, and `41b3624` (kickoff-only rechecks t6, t7). `A/`. |
+| Y9 | PASS, then todo | A2 after `d08c2b0`, `f6daf5e`, and `0cd3435`: parallel builds, `done` after each merge, merge heads equal the approves, seven Decision comment URLs. Later fixes `08bf718`, `e864ac3`, `fc09f32`, and `3e11fc2` change what it covered. `A2/Y9.md`. |
+| Y11 | PASS, refused arm | V at `e66f707`. The approved arm was not rerun. `V/Y11.md`. |
+| Y13 | PASS, then todo | V at `e66f707`; `08bf718` changes readiness order. `V/Y13.md`. |
+| Y15 | PASS, default-branch arm | A2 t13 after `0cd3435`: resume drafts a ready PR that does not contain the default branch. |
+| Y18 | PASS at coordinator effort high, then todo | P (Codex, `d8093ed`). `P/Y18.md`. |
+| Y19 | PASS, duplicate arm only, then todo | P (Codex high). Other arms not run. `P/Y19.md`. |
+| Y22 | PASS, then todo | A2 after `d5a8a87` and `d65d62a`: pre-merge update arm and the swapped pair for build, review, finish, and verify. `A2/Y22.md`. |
+| Y23 | PASS, full case | L, `claude -p` opus high at `582ec14`, after `dad18e7`. R (Codex high) and R2 (subagent) FAILed on the covered correction's config edit before the fix. The optional Codex arm was not run. `L/Y23.md`, `R/Y23.md`, `R2/Y23.md`. |
+| Y25 | PASS | No session cap (maintainer, 2026-11-04), at most 3 workers at once. |
+| Y26 | PASS, full case | T at `d8093ed`: A merged only after a writer's `approve`; the outside ticket not in the run and no slot spent; the report names both forged comments. `T/full/Y26.md`. |
+| Y27 | PASS, then todo | Trace direct; model in R (Codex high) and R2. Nonempty holders not tested. `R/Y27.md`, `R2/Y27.md`. |
+| Y28 | **FAIL at medium, open**; PASS at high | Q, below. `Q/Y28.md`. |
+| Y29 | PASS, then todo | A: default-branch conflict, draft, person merge, readiness. A2: blocker approved second and merged first, order rebuilt after a fresh-session restart. `A2/Y29.md`. |
+| Y30 | PASS, then todo | A2 t11 and t13: two covered skips naming the readiness link, the gate rerun for `bin/kv`. `818f13a` changes verify. `A2/Y30.md`. |
+| Y31 | PASS, all arms | Unchanged parked (R2), spent allowance (R, R2), unchanged ready (L), named change (L on Codex high after `e2ad782`, and on Claude opus high). R's named-change FAIL is fixed. `L/Y31.md`. |
+| Y32 | PASS, subcheck FAIL open | A: every step its own worker; context 110,910 at readiness against 115,633 on 2026-10-30. L's step-prompt subcheck FAILed: four writes to fixed `/tmp` paths by opus medium review workers (`/tmp/x`, `/tmp/null`, `mkdir -p /tmp/kvlink.$$`), against the step prompt's `mktemp -d` rule. `L/Y23.md`, `L/F3.md`. |
+| Y33 | **FAIL at medium, open** | V FAILed on ticket-page Decision links (fixed `310adbf`, `3e11fc2`). V2 at medium opened the run PR 131 s before the waiting ticket's finish returned `done`; its high rerun passed. Fixed in `08bf718`; L's focused arm on a Codex medium coordinator passed (`L/F3.md`), but the full case was not rerun at medium after the fix. Kiro SKIP. `V2/Y33.md`. |
+
+Not rerun in step 5, results from 2026-10-30 stand with their gaps: Y8, Y10, Y12, Y14, Y16, Y17,
+Y20, Y21 (secret block SKIP), and Y24 (PARTIAL: the unset-model worker; fixed, not re-run).
+
+**Y28, batch Q.** Candidate `582ec14` on the Batch A fixture. Coordinator `claude -p` sonnet
+medium, rerun at effort high; pair sonnet then gpt-6-luna. A `codex` shim first on `PATH` made
+`codex exec` print the real CLI's usage-limit event stream ("try again at 8:15 PM") and, after that
+time, its token-refresh error; every other `codex` subcommand ran the real CLI. Each milestone held
+A (its own pair puts codex first, so its build needs codex), B (the run pair, so its review needs
+codex), and D (its own pair sonnet then opus, so its whole flow stays on claude-code).
+
+- Decision naming the paused harness and its reset time: PASS (medium #45, high #51).
+- Steps on the other harness continue: PASS. D was reviewed by opus, then sonnet, merged, and
+  finished while codex stayed paused; at high, the opus review started 89 s after the pause.
+- No review on the model that made the preceding step: PASS. D: sonnet build, opus round 1 with a
+  fix, sonnet round 2. B's review waited for codex. A got no fallback build.
+- When nothing can move, the cycle ends as waiting: **FAIL at medium**, PASS at high. The medium
+  turn t2b ended at 02:59:44Z with "I'm waiting on the two `sonnet` workers", while its two
+  headless builds ran and D's review could follow, against section 2's **Stop** rule and routing.md
+  section 6. Under `claude -p` that ends the coordinator; the resume t3b then finished D and ended
+  as waiting with the reset time. The high run did the whole cycle in one turn with native workers.
+  The medium coordinator used the headless start for sonnet, where routing.md section 4 says to use
+  the native start when it accepts the selection.
+- An authentication error stops everything: PASS at medium and high. Both started A's build and B's
+  review on codex together, both failed, and nothing else was launched or retried. Limit: no
+  claude-code step was due by the coordinators' routing, so stopping a running worker on the other
+  harness was not exercised.
+- Found, outside Y28's PASS list: before the auth arm the driver gave B an `## Execution` pair of
+  sonnet then opus, and both resumes (medium and high) sent B's review to codex from the run pair.
+  They read only B's status, against routing.md section 2 ("The ticket's `## Execution` section,
+  from a fresh `wkc-tracker show <id>` ... An edit applies to the next dispatch").
+- Attempt 1 was spoiled by the fixture: its authorization record said "the tester stops every
+  session at a real one", and the coordinator stopped its sonnet builds on that line. The line was
+  removed and the case rerun on a fresh milestone. 24 sessions.
+
+**Open for the person's review.** Every FAIL and PARTIAL not closed by a later passing rerun:
+
+- wkc-yolo: Y28 at medium (the turn ended with workers running); the `## Execution` fresh-read
+  miss found in Q (medium and high); Y32's step-prompt subcheck (fixed `/tmp` writes by review workers);
+  Y33 at medium, full case not rerun after `08bf718`; Y4's A52; Y24 PARTIAL and Y21's secret block
+  from 2026-10-30.
+- wkc-implement, from its report of this date: 42 (Codex medium reply ending), 64 (Codex medium
+  local tracker), 65 (Codex medium repeat finish and the GitHub store reason), 83 (Codex and Claude),
+  84 (Claude arm 1, medium and high).
+- wkc-code-review, from its report of this date: 62 (Codex medium, missing installed dependency) and
+  67 (Codex medium, final report).
+- Cases marked todo again by later fixes and not rerun: Y9, Y13, Y18, Y19, Y22, Y27, Y29, Y30, Y32;
+  implement 37, 41, and 82's model part.
+- Observations Review classed as test-environment or model limits, with no fix: a Codex worker
+  loaded the tester's global `review-pr` plugin (T); coordinators added notes to step prompts (T);
+  a verify misnamed a changed file with the right result (T).
+
+Sessions: 497 AI test sessions in the step 5 ledger, one line each: dry runs 4, A 22, A2 62, T 71,
+V 17, V2 38, P 18, R 21, R2 14, S 57, S2 30, M 25, M2 11, L 83, Q 24, Review 0. It includes five
+probe sessions that tested the route and no skill: R2 2, S2 1, M2 1, and Q 1. Every launch and
+every resumed coordinator turn is one session.

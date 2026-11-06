@@ -1610,6 +1610,38 @@ Versions 0.0.9 to 0.0.41 below were development steps on the `feat/tracker` bran
 together as 0.0.8, so an entry's version names a branch state, and its skill ref names the exact
 commit it tested.
 
+### 2026-11-05T22:55:50-08:00 PR #100 step 5 validation
+
+Candidate `582ec14` on `feat/74-wkc-yolo`, backend GitHub; the step 5 batches and their evidence
+are in the `validation/wkc-yolo.md` report of 2026-11-05.
+
+```
+TRACKER VALIDATION
+backend: github                  harness: claude-code
+date: 2026-11-05                 skill ref: 582ec14 (A51); e864ac3, d8093ed, fc09f32 (A53 to A55)
+scope: A51, A53, A54, A55; cases PR #100 added or changed
+
+PASS  4
+FAIL  0
+SKIP  2
+
+skipped:
+  A52  not run as its own case; run edit ran inside wkc-yolo cases Y23 and Y31
+  A54  local and Linear arms; no session was spent on them
+
+VERDICT: RED for the selected scope: A54's local and Linear arms were skipped
+```
+
+- A51: `make test-tracker`, 116 tests OK at `582ec14` (batch Q driver). 105 at `c028642`, 110 at
+  `d8093ed`, 111 at `fc09f32`, 116 at `e864ac3`.
+- A53: on the public trust fixture, the tester's comment `author_can_write: true` and the second
+  account's `false`; `fc09f32` added each comment's `url` and the PASS list now checks it.
+- A54: `github.py run tickets 10`, `#10`, `4`, and `99` on the trust fixture listed the run's
+  tickets and the outside one with `member: false` and `named_by_writer: false`.
+- A55: `github.py verdicts` on trust fixture PR #31: authors, URLs, `author_can_write`, writer
+  rounds, `next_round`, `fixing_rounds_used`, `latest`, `head_reviewed`, `not_from_writers`; the
+  issue number refused.
+
 ### 2026-10-29T12:23:31-07:00 PR #95 review round 13
 
 Attempt: `review round 13 on https://github.com/wilsonkichoi/skills/pull/95`.
