@@ -80,7 +80,7 @@ latest record is a `wkc-yolo cleanup:` comment, as section 4 step 4 says. Then f
 tickets again. Continue a planning PR that a Decision comment names. Skip a ticket held by an
 unrelated config. A restart keeps the config, admissions, round counts, and remaining allowance.
 
-**Each cycle**, reread each required ticket with `wkc-tracker show` and its PR with `gh pr view`.
+**Each cycle**, reread each required ticket with `wkc-tracker show`, its `## Execution` pair included, and its PR with `gh pr view`.
 A ticket parked since its last step, or with an unmet blocker, waits. Otherwise take its next step:
 
 | State | Next step |
