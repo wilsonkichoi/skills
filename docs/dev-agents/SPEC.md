@@ -370,8 +370,8 @@ is not a second model's review. Choices follow Decisions and open requests.
 marks only that harness paused. A Decision records the harness and its reset time when the error
 gives one. Running workers on other harnesses finish. A step whose turn needs the paused harness
 waits, so a pair never reviews its own work, and steps on other harnesses continue. The paused
-harness's steps resume after the reset, at the next cycle or resume. When nothing can move, the run
-ends the cycle as waiting and reports the reset time. An authentication error stops all workers and
+harness's steps resume after the reset, at the next cycle or resume. When nothing can move and no
+worker is running, the run ends the cycle as waiting and reports the reset time. An authentication error stops all workers and
 dispatch without retry, because it may mean a changed or wrong login. A quota error on the
 coordinator's own harness stops the run, because the coordinator cannot continue. There is never a
 provider or billing fallback.

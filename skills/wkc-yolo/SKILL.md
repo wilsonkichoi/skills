@@ -125,8 +125,8 @@ blocks; those go to section 3. A ticket waiting on a prerequisite is not parked.
 incident: park the ticket with `Needs: a person to revoke <kind of credential>`, push nothing more
 from that branch, never write the value, and continue unrelated tickets.
 
-**Stop** when every required ticket is done, parked, or waiting on what no further work in this
-run can change, then go to section 4. A spent allowance stops only new admissions.
+**Stop** when no worker runs and every required ticket is done, parked, or waiting on what no
+further work in this run can change, then go to section 4. A spent allowance stops only new admissions.
 
 ## 3. Admissions and planning changes
 
