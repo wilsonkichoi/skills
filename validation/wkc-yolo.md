@@ -465,3 +465,19 @@ every scratch file before checks. Behavioral validation is pending the person's 
 high recheck, scored from actual executed commands. AI test sessions launched: 0; authorized in
 this fixing session: 0 (project ceiling: 6). No fixture preparation or change. G3 and G9 were
 outside this correction's rerun scope; the original Opus arm remains untested.
+
+## Dated report: 2026-11-06, Sonnet high scratch-file recheck (PR #100)
+
+PASS, focused Y32 reviewer scratch-file subcheck only, at
+`322f09f7f63846cedd44fcf656e89af818d3666d`. The person drove one routed headless Sonnet high
+review on GitHub fixture PR #75, not a YOLO milestone. All 14 unique Bash calls were inspected:
+help captures, test and scan captures, and the verdict body used freshly allocated private
+directories. Checks remained intact. Sessions used: 1; selected: 1; nested: 0; standing Step 5
+authorization: no session cap. Requested Sonnet high, runtime model `claude-sonnet-5-5`, observed
+effort unavailable. No coordinator or Opus model started.
+
+The [review runbook report](./wkc-code-review.md#dated-report-2026-11-06-sonnet-high-scratch-file-recheck-pr-100)
+and [PR audit](https://github.com/wilsonkichoi/skills/pull/100#issuecomment-6697564856) contain the
+fixture, timestamps, actual scratch paths, one auxiliary display failure, and scope limits.
+The earlier fixed-path failure has a passing routed Sonnet high recheck. Full Y32 and the
+historical Opus arm remain unverified by this check. G3 and G9 were not rerun or recertified.

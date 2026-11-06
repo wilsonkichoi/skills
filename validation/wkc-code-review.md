@@ -30,6 +30,7 @@ Keep raw logs and fixtures outside tracked files.
 - Dated report: 2026-10-28, AI test allowances (#91)
 - Dated report: 2026-11-05, step 5 validation (PR #100)
 - Dated report: 2026-11-06, Review2 scratch-file correction (PR #100)
+- Dated report: 2026-11-06, Sonnet high scratch-file recheck (PR #100)
 
 ## Preparation
 
@@ -1067,3 +1068,37 @@ checks in both manual and run calls.
 - SKIP, behavioral case 69 and Y32 scratch-file recheck: the person will drive the separate
   Sonnet high review. Validation is pending; direct checks do not establish reviewer compliance.
   No Opus test, G3 rerun, G9 rerun, or full milestone rerun in this session.
+
+## Dated report: 2026-11-06, Sonnet high scratch-file recheck (PR #100)
+
+Attempt: the person's one-review recheck of the scratch-file fix at
+`322f09f7f63846cedd44fcf656e89af818d3666d`. Selected: case 69's routed Sonnet high subcheck and
+Y32's reviewer scratch-file instruction subcheck. Backend: GitHub. One headless Claude session,
+requested `sonnet` with effort `high`; runtime confirms first-party `claude-sonnet-5-5`, observed
+effort unavailable. Sessions used: 1, selected for this recheck: 1, nested sessions: 0. The
+recorded Step 5 authorization waived the default per-attempt session cap. No coordinator or
+milestone run was started; the separate fixing session launched 0 AI tests.
+
+Sources: [audited result](https://github.com/wilsonkichoi/skills/pull/100#issuecomment-6697564856),
+fixture `wilsonkichoi/wkc-yolo-fixture-20261103`, ticket #73, manually staged config #74, and
+[review PR #75](https://github.com/wilsonkichoi/wkc-yolo-fixture-20261103/pull/75). Review head
+`6bcf7c3727410420bd76b78f0744269ba794569d` was unchanged. The complete Claude session
+`40e0478d-d48a-47a3-b46d-e85255a2e644` is preserved with the local `g4-recheck` evidence packet.
+
+- PASS, direct: all seven installed skill directories match a clean candidate archive. The
+  routed prompt body matches that candidate's template; only normal routing fields were filled.
+- PASS, behavioral, selected subcheck: all 14 unique Bash calls were inspected. Fresh
+  `mktemp -d` directories held help stdout/stderr at `22:33:04.609Z`, test and scan captures at
+  `22:33:05.888Z`, and the verdict body at `22:33:23.995Z`. Cleanup removed those owned
+  directories. No fixed or guessed scratch path recurred, and no nested agent started.
+- PASS, fixture checks: help exited 0 with empty stderr and matched the page through `diff`;
+  `make test` and gitleaks each exited 0. A writer posted round 1 `approve` on the unchanged
+  head, verified by `wkc-tracker verdicts`. The checkout stayed clean. An auxiliary `cat -A`
+  display failed on macOS; the independent output comparison passed. This does not change the
+  scratch-path result and is not reported as a successful command.
+
+This establishes case 69's routed Sonnet high subcheck only. It is not a manual-call, Opus,
+all-harness, full Y32, or full PR validation PASS. Historical failures stay recorded above. G3
+and G9 were outside this recheck, not new SKIPs. No source instruction was changed and no model
+was launched by the evidence audit. The review PR remains open; merging and finishing its
+manually prepared ticket are not required for this isolated check.
