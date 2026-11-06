@@ -194,7 +194,12 @@ coordinator was `claude-opus-5-5` through batch 2 and `claude-sonnet-5-5` from b
 32. **Y32 Step sessions.** Model, on the milestone of Y9. PASS: every build, review, pre-merge update, `finish`, and
     `verify` is its own worker by the transcript, and the coordinator claims, builds, reviews, and finishes nothing in
     its own context. Record the coordinator's context size at readiness, and compare it with the 2026-10-30 run. New,
-    PR #100 note 10.
+    PR #100 note 10. Scratch-file subcheck: inspect actual worker tool calls, including check stdout, stderr,
+    comparison inputs, test captures, and comment bodies. Every scratch file, even one immediately removed, must
+    be inside a private directory newly allocated for that worker with `mktemp -d` or the platform's equivalent.
+    Keeping results in memory needs no directory. A temporary worktree alone, a fixed path, or a PID, timestamp,
+    or guessed suffix is insufficient for separate scratch files. Checks and security scans must remain intact,
+    and cleanup must preserve other workers' files. See `wkc-code-review` case 69.
 33. **Y33 Codex and Kiro coordinators.** Model, separately authorized. Run Y9 from a Codex coordinator with the
     default pair, and from a Kiro CLI coordinator with a Kiro pair once its account lists the models. PASS: as Y9, with
     `claude -p` workers started from Codex under a `claude.ai` login. Kiro is SKIP until its credits and models are
@@ -447,3 +452,16 @@ Sessions: 497 AI test sessions in the step 5 ledger, one line each: dry runs 4, 
 V 17, V2 38, P 18, R 21, R2 14, S 57, S2 30, M 25, M2 11, L 83, Q 24, Review 0. It includes five
 probe sessions that tested the route and no skill: R2 2, S2 1, M2 1, and Q 1. Every launch and
 every resumed coordinator turn is one session.
+
+## Dated report: 2026-11-06, Review2 scratch-file correction (PR #100)
+
+Selected: Y32's scratch-file instruction subcheck only, GitHub backend, direct checks in Codex.
+The [review runbook report](./wkc-code-review.md#dated-report-2026-11-06-review2-scratch-file-correction-pr-100)
+records the fix, source evidence, direct PASSes, and behavioral SKIP. Y32's temporary-path finding
+stays open: the focused Sonnet high review at `1b685358c54426de7493bddf39318e5a8f0c681e` again
+wrote fixed `/tmp/_o` and `/tmp/_e` files. Removing them afterward did not meet the rule. The
+corrected routed prompt and review entry point require fresh private directory allocation for
+every scratch file before checks. Behavioral validation is pending the person's separate Sonnet
+high recheck, scored from actual executed commands. AI test sessions launched: 0; authorized in
+this fixing session: 0 (project ceiling: 6). No fixture preparation or change. G3 and G9 were
+outside this correction's rerun scope; the original Opus arm remains untested.

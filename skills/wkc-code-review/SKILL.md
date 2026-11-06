@@ -49,6 +49,15 @@ or `write`.
 
 ## 1. Read the config and the target
 
+**Scratch files, before any check.** Keep results in memory when no file is needed. Every scratch
+file this round creates must be inside a private directory newly allocated for this session with
+`mktemp -d` or the platform's equivalent. This includes command stdout, stderr, comparison inputs,
+test captures, and comment bodies, even when written once and immediately removed. A temporary
+worktree does not isolate separate scratch files. Fixed paths and names with a PID, timestamp, or
+guessed suffix do not replace fresh directory allocation. Remove only this session's scratch
+directory when finished; worktree cleanup still follows section 3. Run the actual acceptance checks
+and security scan under these rules.
+
 Read the config, the `context_file`, and the rule files in `rules_dir`. `max_fix_attempts` and
 `max_ai_test_sessions_per_attempt` are required, each an integer, 0 or more. A missing one stops the
 review before any test and posts nothing, naming it and saying `wkc-setup` adds it; any other value

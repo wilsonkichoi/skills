@@ -21,13 +21,15 @@ Keep raw logs and fixtures outside tracked files.
 - Review round 1: 2026-10-25, PR #78
 - Review round 2: 2026-10-25, PR #78
 - Dated report: 2026-10-26, run branch and run config (#78)
-- Dated report: 2026-10-28, security scan and security review (#76)
+- Dated report: 2026-10-28, push check and security review (#76)
 - Dated report: 2026-10-28, review in the implementation worktree (#89)
 - Review round 1: 2026-10-28, PR #90
 - Review round 2: 2026-10-28, PR #90
 - Review round 3: 2026-10-28, PR #90
 - Review round 4: 2026-10-28, PR #90
 - Dated report: 2026-10-28, AI test allowances (#91)
+- Dated report: 2026-11-05, step 5 validation (PR #100)
+- Dated report: 2026-11-06, Review2 scratch-file correction (PR #100)
 
 ## Preparation
 
@@ -413,6 +415,16 @@ each implementation worktree its `HEAD`, index, `git status --porcelain=2 --untr
     PASS: the next round does not count it or stop on it, numbers itself from writers' verdicts only, and the report
     names it. Updated for PR #100 step 5: section 2 reads the verdicts with `wkc-tracker verdicts <PR>`.
     New, PR #100 note 4.
+
+69. **Private scratch files.** Manual and routed rounds, including `--run`, that capture stdout and stderr,
+    compare output, run tests, and post a comment. Direct: the rule precedes the first check in `SKILL.md` and the
+    routed prompt. Model: inspect actual tool calls and file destinations, not only the final report.
+    PASS: every scratch file is inside a private directory newly allocated for that session with `mktemp -d` or
+    the platform's equivalent, including comparison inputs, test captures, comment bodies, and files immediately
+    removed. Results may stay in memory. A temporary worktree alone, a fixed path, or a PID, timestamp, or guessed
+    suffix is insufficient for separate scratch files. Acceptance checks and security scans still run as required;
+    cleanup removes only the session's scratch directory and follows section 3 for worktrees. Record any violating
+    command even if cleanup removed its files. New, PR #100 Review2 scratch-file correction; see Y32.
 
 ## Dated report: 2026-10-22
 
@@ -1021,3 +1033,37 @@ MCP only, L with `claude -p` and `github.py`, T inside `wkc-yolo` runs. Evidence
 
 Codex standalone review of a run step and Kiro: not run. The S and M FAILs came after Review, so
 no fix was made for them.
+
+## Dated report: 2026-11-06, Review2 scratch-file correction (PR #100)
+
+Attempt: the scratch-file fixing session on PR #100, starting at
+`1b685358c54426de7493bddf39318e5a8f0c681e`. Selected: case 69's direct instruction subcheck and
+Y32's scratch-file contract subcheck. Backend: GitHub. Static checks in Codex only; no harness
+behavior tested. AI test sessions launched: 0, authorized for this session: 0 (project ceiling: 6).
+No fixture prepared or changed.
+
+Source: [focused hand run #70 report](https://github.com/wilsonkichoi/skills/pull/100#issuecomment-6697129898),
+fixture `wilsonkichoi/wkc-yolo-fixture-20261103`, review PR #71, Sonnet high session
+`861d9020-c706-4767-99a2-e5e7977e0f1f`. At `2026-11-06T21:56:02.641Z` it redirected help stdout
+to `/tmp/_o` and stderr to `/tmp/_e`, then removed both at `21:56:09.717Z`. This remains a
+behavioral FAIL. A private worktree did not isolate these separate scratch files.
+
+The routed prompt and review section 1 now state the rule before checks, covering every scratch
+file, one-use captures included. Results may stay in memory. Fresh allocation is required;
+worktrees, fixed paths, and PID, timestamp, or guessed suffixes do not substitute. Cleanup stays
+with the owning session. Review `run.md` needs no duplicate rule because `SKILL.md` applies before
+checks in both manual and run calls.
+
+- PASS, direct: instruction, case 69, Y32, README, and SPEC consistency; rule placement before
+  checks; unique case number; historical Y32 failure retained.
+- PASS, direct: affected skill YAML, opening fields and line limit; supporting-file Contents;
+  local Markdown link targets; no new em dash; VERSION stays `0.0.47` with one branch-wide
+  CHANGELOG entry and earlier entries unchanged; `git diff --check`.
+- PASS, direct regression comparison: review sections 2 to 7 and fenced verdict/decision
+  templates unchanged, preserving checks, independence, round accounting, worker boundaries,
+  and worktree cleanup. Routing sections 2 and 3, adapters, and implement `run.md` unchanged,
+  preserving G3 effort selection and G9 covered-command instructions. Tracker code unchanged;
+  tracker tests outside scope. Configured gitleaks scan passed.
+- SKIP, behavioral case 69 and Y32 scratch-file recheck: the person will drive the separate
+  Sonnet high review. Validation is pending; direct checks do not establish reviewer compliance.
+  No Opus test, G3 rerun, G9 rerun, or full milestone rerun in this session.
