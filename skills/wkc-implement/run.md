@@ -134,8 +134,10 @@ It never changes status, posts no finish comment, and opens no follow-up.
 Before running any gate, read the ticket's gate comments and the run PR's comments at that head.
 A gate with a passing gate comment at that head, from any finish or verify, is not run again. A gate
 covered by a `wkc-yolo readiness:` record on the run PR at that head, from an account with write
-access, is not run either: its command is that record's command, or it names a test the record's
-output shows passing. The record is its evidence, so do not run it to confirm. Post its gate
+access, is not run either. A record covers a gate in two ways, so check each gate against both:
+the gate's command is the record's command, or the gate runs a test that the record's `Result:`
+line lists as passing, such as `sh tests/<name>.sh` when that line shows `<name>` passed. The record
+is its evidence, so do not run it to confirm. Post its gate
 comment as `Result: pass, covered by <the record's link>`. A
 covered gate still runs when the run branch changed one of the pull request's own files again after
 it merged: a path in both `git diff --name-only <merge commit>^1 <merge commit>` and `git diff
