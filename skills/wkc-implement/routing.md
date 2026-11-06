@@ -118,7 +118,9 @@ change, and no other effort.
 
 Start one fresh worker, through the adapter's native start when it accepts the selection, otherwise
 its headless start when the headless workers list it; never another harness's start. It is never a
-fork, a resumed implementation session, or `--last`. Start it in the step's checkout:
+fork, a resumed implementation session, or `--last`. Start it in the step's checkout. A native
+worker starts in the coordinator's directory and works in the checkout its prompt's `Checkout:` line
+names, so the checkout is never a reason for a headless start:
 
 | Step | Checkout |
 |---|---|
