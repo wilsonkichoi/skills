@@ -132,11 +132,12 @@ names, so the checkout is never a reason for a headless start:
 
 Every worker counts toward the run's `max_parallel_workers`, every kind the same. A started worker
 counts as running until its exit status or final result is read. A process list that does not show
-it proves nothing, so never start that step again before then. Start each worker so this session
-hears when it ends: a native agent, or a headless command the harness runs and reports on, in the
-foreground or as its own background task. A process detached inside a command, with `&`, `nohup`,
-or `disown`, ends that command at once and sends no notice, so its result stays unread until the
-run resumes. Never start a worker that way. Record whether
+it proves nothing, so never start that step again before then. Know how this session learns
+that each worker ended: a native agent's notice, the end of a command the harness runs in the
+foreground or tracks in the background, or, for a process detached inside a command with `&` or
+`nohup`, its output files, which this session checks again itself. A detached process sends no
+notice, so never end the turn waiting for one: its result stays unread until the run resumes.
+Record whether
 `CLAUDE_CODE_MAX_SUBAGENT_SPAWN_DEPTH` is `1` in the coordinator's environment: with it, Claude
 Code enforces that a native worker starts no subagent; without it, the prompt alone does.
 
