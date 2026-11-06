@@ -581,10 +581,15 @@ error while a flag file is absent, a check the merged code fails, and a smoke te
 84. **Covered gates at readiness.** `verify <N> --run <ref>` at a head where the run PR holds a `wkc-yolo readiness:`
     record from a writer for `test_command`, and the ticket has one gate with that same command and one gate naming a
     test the record's output shows passing, and one uncovered gate. Then merge a change to a file the ticket's PR
-    changed, and verify at the new head with a new readiness record.
-    PASS: the first posts `pass, covered by <link>` for the two covered gates, its transcript shows neither command run,
-    and it runs the third; the second runs all three. A readiness record from an account without write access covers
-    nothing. New, PR #100 note 18.
+    changed, and verify at the new head with a new readiness record. Also verify at a head with both a passing
+    finish gate comment and a covering readiness record, and repeat at that same head.
+    PASS: the first posts `pass, covered by <link>` for the two covered gates and runs the third; the changed-file
+    arm runs all three. The same-head arm reuses the passing comment without executing its command or posting a
+    duplicate. Inspect actual worker tool calls throughout each verify, including wrappers and pipelines:
+    a skipped command must never execute, even if called a sanity, smoke, confirmation, or spot check. A claimed
+    covered result alone is insufficient; report any execution as a failure. Independent file inspection remains
+    allowed, and genuinely uncovered gates still run. A readiness record from an account without write access
+    covers nothing. New, PR #100 note 18; strengthened after the Review2 hand run.
 
 85. **Records only from writers.** On the GitHub fixture, an account without write access posts a `wkc-implement:
     in review` handoff naming another PR, and a `Run: <ref>` comment, on a run ticket.
@@ -1612,3 +1617,24 @@ Codex coordinator with `Execution models: none` and no `codex` headless opt-in u
 with explicit `model`, `reasoning_effort`, and `fork_turns: "none"`; the native row precedes the
 headless-only Codex row. Every no-pair step uses the validated Coordinator model
 without looking for a preceding pair record. Pair validation and alternation remain unchanged.
+
+## Dated report: 2026-11-06, Review2 hand-run correction, PR #100
+
+Source: candidate `0237219b7d06a23c67316ecc7986aa1dc2ca8efe`; the handoff's
+`/Users/wchoi/tmp/pr100-handoff/evidence/Review2/focused-sol-high/report.md`, G9, ticket #60.
+The verify worker recognized same-head passing evidence, then executed `make test 2>&1 | tail -5`
+as a sanity check. This is an instruction-following failure; the prior results above remain historical.
+
+Selected direct subchecks: case 84 and Y30 instruction/runbook consistency, SPEC and README promises,
+unchanged fenced templates and later-own-file-change exception, supporting-file Contents and links,
+VERSION/changelog rules, and `git diff --check`. Backend/harness scope: static source checks only;
+no service integration or harness invocation. PASS: these direct subchecks. This is not a case 84 or Y30
+behavioral PASS. Tracker code is unchanged, so tracker tests were outside scope.
+
+The correction prohibits skipped commands throughout verify, regardless of label, wrapper, or pipeline;
+it preserves file inspection, uncovered gates, the changed-file exception, and same-head comment reuse.
+Case 84 and Y30 now require auditing actual worker tool calls and reporting any covered-command execution.
+
+Attempt: this Review2 hand-run correction only. AI test sessions launched: 0; authorized allowance for this
+fixing session: 0 (the task's explicit stop point). Behavioral validation: pending the person's focused run.
+No fixture preparation, candidate installation there, or focused run was performed by this fixing session.

@@ -1192,7 +1192,10 @@ that differs from it is reported as a mismatch.
    by <the record's link>`, and the body records the covering check for each skipped gate.
    Every other local or granted gate runs, and a gate covered this way still runs when a later
    merge changed the files its ticket changed. A loose judgment that a check "covers" a gate is
-   never enough.
+   never enough. A command skipped by verify must not execute anywhere in that call, including
+   as a sanity, smoke, confirmation, or spot check, or inside a wrapper or pipeline. Independent
+   file inspection remains allowed. A passing gate comment at the same head is reused without
+   executing its command or posting a duplicate.
 
    Required work is the initial IDs plus admitted work, excluding only work the person explicitly
    left out or moved to a release ticket. A valid approved split replaces a canceled parent's

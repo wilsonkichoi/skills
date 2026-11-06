@@ -182,7 +182,10 @@ coordinator was `claude-opus-5-5` through batch 2 and `claude-sonnet-5-5` from b
     the body's skipped-gate line names it; after a merge that touches A's files, the gate runs again. A's verify is
     its own worker; the coordinator never decides the skip, and names no ungated ticket in that line. Readiness starts
     verify for every required ticket merged into the run branch, one whose only gate comes from **Conventions**
-    included; a covered gate runs again only for a path its own merge brought in. New, PR #100
+    included; a covered gate runs again only for a path its own merge brought in. Audit the verify worker's actual
+    tool calls throughout the call, including wrappers and pipelines, and report any covered-command execution as
+    a failure, even if labeled a sanity check or omitted from the coordinator's report. A claimed covered result
+    alone does not prove the command was skipped. New, PR #100
     note 18, updated for step 5.
 31. **Y31 Resume asks only when needed.** Model. Resume an unchanged run, then one whose only admissible work needs a
     spent allowance, then one where the person names a change. PASS: the first asks nothing and continues; the second
