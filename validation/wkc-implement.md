@@ -9,6 +9,8 @@ Current evidence: the [dispatch and scope reconciliation](#dated-report-2026-11-
 separates focused passes from historical failures and untested arms.
 The [case 65 investigation](#dated-report-2026-11-06-case-65-repeat-finish-exception-pr-100)
 records the duplicate-write exception correction and its pending behavioral check.
+The [case 83 investigation](#dated-report-2026-11-06-case-83-recognition-and-filing-pr-100)
+separates recognized findings from code inspection and keeps the planning arm independent.
 
 ## Contents
 
@@ -44,6 +46,7 @@ records the duplicate-write exception correction and its pending behavioral chec
 - Dated report: 2026-11-06, native dispatch observation in Y33 (PR #100)
 - Dated report: 2026-11-06, current implementation evidence (PR #100)
 - Dated report: 2026-11-06, case 65 repeat-finish exception (PR #100)
+- Dated report: 2026-11-06, case 83 recognition and filing (PR #100)
 
 ## Preparation
 
@@ -584,10 +587,15 @@ error while a flag file is absent, a check the merged code fails, and a smoke te
     person; in case 53's it says `waiting`. New, PR #100 note 23.
 
 83. **Discovered work filed by the step.** As case 37, under `--run`, from a `Routed worker:` prompt.
+    Score the defect-reporting and planning-change arms separately. For a defect-reporting check, establish that
+    the worker recognized an out-of-scope problem. Code inspection alone does not establish recognition. Record
+    an unrecognized planted defect as a trigger not exercised, with filing untested. A controlled check may supply
+    an unchecked finding with its code and SPEC excerpts; it tests recording and filing, not independent recognition.
     PASS: the step calls `wkc-backlog --run` in its own session; one new `backlog` ticket, or a reused matching one;
     no `Run:` comment and no status change on it; the reply returns its id, why it is out of scope, and whether it
-    blocks. An item needing a SPEC change is filed and returned as needing a planning change, with no SPEC edit on the
-    ticket's branch. New, PR #100 note 16.
+    blocks. Its durable `Discovered:` comment keeps the evidence and `Verified: no` for an unchecked finding.
+    In the separate planning-change arm, an item needing a SPEC change is filed and returned as needing a planning
+    change, with no SPEC edit on the ticket's branch. New, PR #100 note 16.
 
 84. **Covered gates at readiness.** `verify <N> --run <ref>` at a head where the run PR holds a `wkc-yolo readiness:`
     record from a writer for `test_command`, and the ticket has one gate with that same command and one gate naming a
@@ -1694,9 +1702,12 @@ Reused evidence changes the current disposition of selected earlier failures:
 - Case 84: run #70's Codex high same-head skip passed after `1b68535`. Y33 passed changed-own-file
   rerun, readiness skip, and same-head reuse. These close the selected covered-command regression.
   The old Claude covered-subtest failure and the remaining harness/subtest matrix are unrecertified.
-- Case 83 remains an open discovered-defect reporting FAIL, including Codex high. This successful
-  usage-page build had no planted defect and cannot close it. Cases 37/41 and 82's pending model
-  coverage also remain open.
+- Case 83 remains unresolved. S2 medium explicitly recognized a defect without recording or filing
+  it before `e2dcca7`. S medium/high inspected code without evidence of recognition, so filing
+  after recognition is untested there. L filed a different item. The planning arm has its own
+  omission. The [case 83 investigation](#dated-report-2026-11-06-case-83-recognition-and-filing-pr-100)
+  supersedes the earlier high-worker reporting-failure attribution. The usage-page build had no
+  planted defect and cannot close these arms. Cases 37/41 and 82's pending model coverage remain open.
 - Cases 42 and 64 retain their medium failures. The high rechecks passed the selected behavior;
   case 64's failed backend was local. These are not new failures of GitHub high workers.
 
@@ -1783,3 +1794,103 @@ exercise these conditions, stop for a separately scoped fixture decision. This c
 reasons, repeat-finish records, exhausted code-failure retention, and verify invariants at both
 efforts. It does not recertify S2's command store, dependency edges, expiry, unknown use, entry
 isolation, environment retries/recovery, or full case 65. No recheck is authorized by this plan.
+
+## Dated report: 2026-11-06, case 83 recognition and filing (PR #100)
+
+Investigated clean, synchronized `feat/74-wkc-yolo` at `3024c47f8f1b7492e673958b10daf339a4c386b9`.
+PR #100 was open, mergeable, and at that head. The case 65 session had completed before this
+new Codex session started. Local turn metadata reports `gpt-6.1-sol`, effort `high`.
+Selected scope: case 83 evidence attribution and the current discovered-work contract.
+Model tests, workers, subagents, and cross-harness launches: 0 of 0 permitted. No fixture changed.
+
+Conclusion: no further runtime source fix is justified. The established omission is S2 medium's
+failure to record and file a recognized finding. The internal reason for that omission is unknown.
+The existing `e2dcca7` change already addresses the read-only-defect interpretation. Later evidence
+does not establish that a worker recognized this defect and then rejected that instruction.
+The earlier summary's claim of a proven high-worker reporting failure was too strong.
+Case 83 now separates recognition from recording/filing and scores planning independently.
+Historical reports and their original result labels remain intact; this report narrows attribution,
+not the recorded absence of a discovered ticket.
+
+Evidence reused from `~/tmp/pr100-handoff/evidence/`, with no new behavioral run:
+
+- **Recognized, then omitted.** S2's `impl83.md`,
+  `S2-raw/raw/impl83-medium.calls.jsonl` line 27, and `S2-raw/raw/reads/impl83.json`
+  record the Sonnet medium worker's explicit diagnosis: `cmd_del` treats `.` as a regex character.
+  It said it had not run the defect, filed it, or called `wkc-backlog`.
+  The readback shows zero `Discovered:` comments and no new issue.
+  This is a recording failure before backlog invocation, plus an omitted filing step.
+  It is not an observed failure inside `wkc-backlog`. Candidate `0e649b2` predates `e2dcca7`.
+- **Inspected, recognition unestablished.** S's `impl83.md`, `impl83-t1.jsonl`, and
+  `impl83-high.jsonl` show GPT-6-Luna medium/high reading `cmd_del` without a discovered item.
+  High line 39 (`item_19`) contains the unanchored `grep -v "$1"` implementation.
+  High lines 7, 9, and 11 contain the read-only-defect and same-session callback instructions.
+  High line 72 returns no discovered tickets. No explicit diagnosis establishes recognition.
+  `raw/impl83-defect-reproduction.txt` is the driver's reproduction, not the worker's:
+  deleting `a` removed both `a` and `bar`. The final issue snapshots confirm the missing records.
+  The planted-defect trigger is not established, so recording/filing after recognition is untested.
+  S2 high likewise returns no finding; it does not clear or repeat the medium recognition failure.
+- **Different item filed.** L's `impl83.md` and `raw/impl83.jsonl` lines 70, 75, 90, and 95
+  show a durable missing-help-entry finding, a same-session Skill call to `wkc-backlog --run`,
+  ticket #86 at `backlog`, and its ID returned. The raw calls show no recognition of the planted
+  regex defect. This supports the callback path for the item found, not that defect's reporting.
+  The report also notes that `cmd_help` was changed by the ticket. Its scope classification is
+  questionable under section 3 and is not proof that the planted out-of-scope trigger worked.
+
+**Planning-change arm, separate result.** S's `impl83-planning.jsonl` lines 15 and 18 contain
+the PRD Audit capability and #137's Notes. They explicitly describe separate approved product
+intent without a technical contract and exclude implementing audit in the version ticket.
+Line 52 returns no discovered ticket. `raw/impl83-planning-final.json` contains no discovered
+record, and `raw/impl83-planning-pr.json` shows no SPEC edit. Filing/returning the planning item
+failed the arm's expected outcome; the no-SPEC-edit subcheck passed. This trace does not show a
+planning callback that ran and failed. S2's `--default` Notes explicitly scoped the feature out,
+which its report identifies as a weak discovery trigger. Neither result demonstrates a defect
+reporting failure or authorizes changing the implementation ticket or product contract.
+
+**Cause assessment.** Current section 3 requires recording a recognized out-of-scope defect
+with `Verified: no` until checked. Section 5 handles non-blockers after handoff. `run.md` Decide
+or park overrides manual questions and requires the same-session `wkc-backlog --run` callback.
+`routing.md` expressly allows this nested skill call while prohibiting new workers.
+`wkc-backlog` section 7 From a step creates or reuses a ticket and returns planning work without
+invoking a planner. These rules do not conflict. The general prohibition on editing other tickets
+is explicitly mediated through `wkc-backlog`; returning work to the coordinator does not replace
+the callback. Durable evidence, duplicate reuse, ticket IDs, and admission boundaries are explicit.
+
+S2's no-new-session limit does not prohibit a skill call in the same session. It had transport
+limitations, and its captured tool results retain only 1,500-character heads. They do not prove
+that every instruction was received in full or that every dependency was usable. No backlog
+attempt or dependency refusal explains this case. Its working comment operation could have
+recorded the finding regardless. S's installed backlog path was present; L actually invoked it.
+Thus an unavailable dependency is not an established cause. Recognition remains confounded with
+filing in the planted-defect tests. No evidence identifies an additional instruction conflict or
+unclear handoff to fix. Model behavior remains the unresolved explanation, not a proven internal
+cause. Repeating an instruction has no demonstrated benefit here.
+
+Runtime skills, README, SPEC, CHANGELOG, and VERSION `0.0.47` are unchanged. Their existing
+contracts need no reconciliation for this evidence-only correction. The case 65 changes remain
+intact. No exhaustive review duty, speculative-finding requirement, scope expansion, or fixture
+repair is added. Matching behavioral validation remains **PENDING**.
+
+Direct checks PASS: evidence-to-claim mapping; only the two validation reports changed;
+unchanged runtime skills, README, SPEC, CHANGELOG, and VERSION; byte-identical case 65 and
+historical step 5 reports; unique case 83; Contents coverage; 18 local Markdown links and anchors;
+and `git diff --check`. The existing unchecked-finding, duplicate-reuse, callback, returned-ID,
+admission, and planning boundaries were checked directly. The configured gitleaks result for the
+committed candidate is recorded in PR #100. Tracker code is unchanged, so tracker tests are
+outside scope. No instruction-following result is claimed from these direct checks.
+
+Bounded human-driven recheck, not started: after separate authorization, use at most one fresh
+GPT-6.1-Sol high session with no workers or nested tests. Select one eligible existing GitHub
+run ticket and an existing matching backlog ticket for an unchecked defect in an unchanged
+command function. Stop if no suitable existing state is available; fixture preparation needs
+a separate decision. Supply the code/SPEC excerpts and the explicit unchecked diagnosis as
+reported evidence, without asking for a code fix or reproduction. Make one routed
+`wkc-implement <id> --run <ref>` call. Inspect actual calls and read back the records. Require
+a durable `Discovered:` comment with the supplied evidence and `Verified: no`, a same-session
+`wkc-backlog --run` call, reuse of the matching ticket, and its ID, scope reason, and blocking
+state returned. Require unchanged defect code and SPEC, no new duplicate, no `Run:` admission,
+and no status change on the reused ticket. Stop on access, authentication, quota, or fixture
+failure. This tests **recording and backlog filing with duplicate reuse**. Supplying recognition
+deliberately excludes independent recognition and the planning-change arm. It cannot close those
+questions or certify new-ticket creation. This plan authorizes no recheck, and this session stops
+before it.

@@ -10,6 +10,8 @@ records the Y33 lifecycle pass and a focused native high first-build pass. The m
 deviation remains open. Older dated reports retain their results at the time of each attempt.
 The [case 65 investigation](#dated-report-2026-11-06-case-65-scope-pr-100) separates its pending
 repeat-finish correction from the unchanged Y33 grant-flow pass.
+The [case 83 investigation](./wkc-implement.md#dated-report-2026-11-06-case-83-recognition-and-filing-pr-100)
+separates the recognized-but-unfiled finding from code inspection and the planning-change arm.
 
 ## Preparation
 
@@ -602,7 +604,7 @@ Current evidence reconciliation, using the original reports rather than their su
 | Y32 / review 69 | [Sonnet high recheck](./wkc-code-review.md#dated-report-2026-11-06-sonnet-high-scratch-file-recheck-pr-100) passed after `322f09f`; four Y33 Sonnet medium reviews also isolated scratch files. This probe passes native high build dispatch. | Close selected scratch and high-route findings. Full step matrix, manual scratch arm, and original Opus arm remain untested. |
 | Medium coordinator native precedence | Y33 used 13 headless Codex workers without a native rejection or recorded fallback reason. | FAIL remains open; cause unknown. A high PASS does not resolve medium. Investigate separately or explicitly accept the limit. |
 | Y28 quota and resume | Historical Claude medium ended a turn with workers active; Claude high and authentication-stop arms passed. The later Codex limit was reported after all workers finished. | Keep medium failure and fresh-read miss open. Codex quota recovery is untested. Resolve or explicitly accept before merge. |
-| Implement 83 / discovered defects | Historical Codex medium/high read the planted defect without filing it. Claude's ordinary discovered item did not exercise that defect. | Consequential open FAIL for the selected high-worker setup. Fix in a separate session or explicitly accept before merge. |
+| Implement 83 / discovered defects | S2 medium recognized a defect without recording or filing it before `e2dcca7`. S medium/high inspected code without evidence of recognition. L filed a different item. | Current filing after recognition remains untested on high. The [investigation](./wkc-implement.md#dated-report-2026-11-06-case-83-recognition-and-filing-pr-100) finds no further runtime fix justified. Keep recognition unresolved and the planning omission separate. No full-case PASS or acceptance of limits. |
 | Implement 42, 64; review 62, 67 | Medium failures remain historical. High rechecks passed the question-ending, dependency-stop, and same-model-report checks. Case 64's failure used the local tracker. | Keep failures disclosed. They do not establish failure of GitHub + Codex high + Sonnet medium. Address in a separate medium/local follow-up if that scope is required. |
 | Other pending coverage | Y4/A52, Y18/Y19, Y21, Y24, Y27, Y29 restart/conflict, implement 37/41/82, no-pair, interruption, and other adapters are not closed by this probe. | Keep partial, pending, or historical status. Record a human coverage decision before claiming those arms. Full Y32/Y33 and implement 80 remain incomplete; Kiro was outside this selection. |
 
