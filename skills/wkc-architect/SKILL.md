@@ -165,11 +165,11 @@ never ends a turn on a question:
   obsolete, too restrictive, or in the way of a better design. An earlier approval is never by
   itself a reason to keep one.
 - Never delegated: a PRD change; removing or weakening an entry in **Security**, the project's
-  `push_check`, or a review's security checks; an authorization limit, such as the run branch
+  `security_scan`, or a review's security checks; an authorization limit, such as the run branch
   boundary, a run config and its grants, or a `(needs authorization)` step; a stop in **Failure
   handling**, a **Boundaries** entry from a PRD non-goal, or a requirement the PRD sets; and what
   a run's person controls: initial ticket IDs, admission ceilings, model selections, headless
-  workers, grants, and phase renewal. A change that needs one writes nothing and returns `parked`
+  workers, grants, and config changes. A change that needs one writes nothing and returns `parked`
   with `Needs: a person`.
 - Write the line under the title as `Status: approved (YYYY-MM-DD, delegated: <ref>)` with today's
   date, and a **Changes** entry that says run `<ref>` made it and gives the evidence and the reason.

@@ -8,6 +8,8 @@ gate. The run branch, the run config, its stores, `--run`, and the person's merg
 
 Proposed amendment: [ADR-009](./ADR-009-run-budgets-continuations-and-model-routing.md) (immutable phases and same-PR continuations).
 
+Amended by [ADR-013](./ADR-013-one-run-config-per-run.md): one config per run, edited only through `wkc-tracker run edit`, with grant entries that never change once confirmed.
+
 ## Context
 
 The maintainer's review of PR #78 (2026-10-26) found three gaps in the approved `wkc-yolo` design.

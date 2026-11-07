@@ -9,23 +9,26 @@ prd_file: docs/dev-agents/PRD.md
 spec_file: docs/dev-agents/SPEC.md
 roadmap_file: docs/dev-agents/ROADMAP.md
 test_command: "npm test"                    # run before handing work back
-max_fix_attempts: 5                         # integer, 0 or more; default 5. Review rounds that may change code on one PR
-max_ai_test_sessions_per_attempt: 6         # integer, 0 or more; default 6. AI test sessions one build or one review round may launch
-run_config: tracker                         # tracker / github-variable / command <cmd>; default tracker. Where wkc-yolo stores run configs
-push_check: 'gitleaks git --redact --log-opts="origin/main..HEAD"'  # shell command; default none. Scans the commits about to be pushed for secrets; exit 0 passes, anything else blocks the push
-execution_models:                           # ordered pair; default none. The first builds; each review uses the other model from the step before. effort defaults to medium
-  - harness: claude-code                    # claude-code / codex
-    model: opus                             # claude-code: opus / sonnet / haiku / fable; codex: the exact ID codex exec -m takes
+max_fix_attempts: 5                         # required; integer, 0 or more. Review rounds that may change code on one PR
+max_ai_test_sessions_per_attempt: 6         # required; integer, 0 or more. AI test sessions one build or one review round may launch
+max_additional_tickets: 5                   # required; integer, 0 or more. Tickets a wkc-yolo run may admit beyond its approved initial tickets
+max_parallel_workers: 5                     # required; integer, 1 or more. Fresh sessions a wkc-yolo run keeps running at once
+run_config: tracker                         # required; tracker / github-variable / command <cmd>. Where wkc-yolo stores run configs
+security_scan: 'gitleaks git --redact --log-opts="origin/main..HEAD"'  # optional; absent means no scan. Scans the commits about to be pushed for secrets; exit 0 passes, anything else blocks the push
+execution_models:                           # optional; absent means no pair. Used by wkc-yolo runs: the first builds; each review uses the other model from the step before. effort defaults to medium
+  - harness: claude-code                    # claude-code / codex / kiro-cli
+    model: opus                             # claude-code: opus / sonnet / haiku / fable, or a pinned ID; codex: the exact ID codex exec -m takes; kiro-cli: an ID kiro-cli chat --list-models lists
     effort: medium
   - harness: codex
     model: gpt-6.1-sol
     effort: medium
-headless_workers: [codex, kiro-cli]         # claude-code / codex / kiro-cli; default [codex, kiro-cli]. Listing claude-code lets claude -p run with its login, API billing included
+headless_workers: [claude-code, codex, kiro-cli]  # required; claude-code / codex / kiro-cli. Headless CLIs a wkc-yolo run may start, each only after its subscription-login check passes
 ---
 
 # Project development conventions
 
-Drop any field above that does not apply to this project. The `prd_file`, `spec_file`, and
+Drop an optional field above that does not apply to this project. Keep every required field: a
+skill that reads one and finds it missing stops and asks for `wkc-setup`. The `prd_file`, `spec_file`, and
 `roadmap_file` paths are where those documents belong; the `wkc-research`, `wkc-architect`, and `wkc-plan` skills create
 them later, so they can point at files that do not exist yet.
 
