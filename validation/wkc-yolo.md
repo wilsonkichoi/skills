@@ -5,6 +5,9 @@ This is a case catalog, not a full test sequence for each change.
 Record PASS, FAIL, or SKIP for selected cases. Keep direct checks separate from harness behavior.
 Keep raw logs and fixtures outside tracked files.
 
+Latest Codex medium result: the [Y33 pilot report](#dated-report-2026-11-06-codex-medium-y33-pilot-pr-100)
+records passing milestone and waiting-finish behavior, with an open native-dispatch deviation.
+
 ## Preparation
 
 Install a clean candidate tree into a throwaway Git project, as the other runbooks do, with `wkc-yolo`,
@@ -481,3 +484,54 @@ and [PR audit](https://github.com/wilsonkichoi/skills/pull/100#issuecomment-6697
 fixture, timestamps, actual scratch paths, one auxiliary display failure, and scope limits.
 The earlier fixed-path failure has a passing routed Sonnet high recheck. Full Y32 and the
 historical Opus arm remain unverified by this check. G3 and G9 were not rerun or recertified.
+
+## Dated report: 2026-11-06, Codex medium Y33 pilot (PR #100)
+
+Attempt: the person's one-pilot Codex Y33 arm at source
+`192c9eca710cb61dab35496e838863a56f2f2f7d`. Selected: the complete Y9 milestone lifecycle and
+the historical waiting-finish order. GitHub fixture `wilsonkichoi/wkc-yolo-fixture-20261103`,
+tickets #76 to #78, config #80, [run PR #84](https://github.com/wilsonkichoi/wkc-yolo-fixture-20261103/pull/84).
+Coordinator requested GPT-6.1-Sol medium; worker default pair Codex high / Sonnet medium.
+
+Overall: PARTIAL. The listed lifecycle and waiting-order checks PASS. Native-precedence behavior
+FAILs: all 13 Codex workers used `codex exec`, despite the exposed `collaboration.spawn_agent`
+API declaring the requested model/effort fields and support. No native call or unsupported
+native-selection result was recorded. Sonnet's four headless starts are expected from Codex.
+The finding concerns routing.md section 4 and adapters.md's Codex native start; it does not undo
+the observed lifecycle result or establish why the coordinator chose headless execution.
+
+Source: [independent audit](https://github.com/wilsonkichoi/skills/pull/100#issuecomment-6702164822),
+coordinator `01a1b3cd-1d6e-7cb0-9544-f4c534166125`, `sessions.jsonl`, all worker command/output
+artifacts, and the person's `Y33-medium` controller and ticket snapshots. Complete copies are
+preserved under `~/tmp/pr100-handoff/evidence/Y33-medium/raw/run-80/`. The original coordinator
+report and counts remain intact; their success summary is not the score.
+
+- PASS: A/B build intervals overlap and claim outputs show both in-progress before their
+  handoffs. C starts after both successful finishes. Peak workers: 2. All 17 workers exited 0;
+  all headless turns/results completed, with no nested model launch.
+- PASS: merged PR #81/#82/#83 heads equal writer-approved shas. The second approved head contains
+  the first merge. All tickets are done before the run PR opens, and all four actual Decisions
+  have individual comment links. Main's SHA and merged-PR snapshot are unchanged.
+- PASS: waiting at `2026-11-07T02:40:01Z`, controller flag up at `02:40:09Z`, fresh finish starts
+  `02:40:43.670Z`, and deploy/smoke/cleanup pass at `02:41:51Z`. C is done at `02:42:20Z`;
+  its worker exits `02:42:35.511Z`; the coordinator reads it `02:42:37.614Z`; GitHub creates the
+  run PR `02:42:57Z`. The earlier premature-publication failure does not recur.
+- PASS: grant text equals its writer Decision. Usage is deploy 2/12, smoke 2/12, cleanup 3/12,
+  within expiry and duration limits; the initial unavailable smoke is followed by a successful
+  fresh finish. No immediate retry or worker-created availability flag. No deployment remains.
+- PASS: all verifies complete. #76 reruns tests for a later change to its own file; #77 uses
+  readiness evidence; #78 reuses same-head local/shared passes. The ready run PR remains open
+  at `de04487e57f496e8ff443eea08ccb5f8cadd6bf1`, containing the fixture default branch.
+
+Usage: 18 fresh model contexts (1 coordinator, 17 workers: 13 Codex, 4 Sonnet). The coordinator
+had 3 turns including kickoff approval and a later status check; the earlier per-turn ledger
+convention gives 20 entries. Zero nested tests does not mean zero pilot usage. Standing Step 5
+authorization: no session cap; selected concurrency: 2, observed: 2; failed starts: 0. Requested
+efforts are recorded separately; runtime confirms Claude Sonnet 5.5 but not effort, and Codex
+resolved model/effort remains unavailable.
+
+The person reported a five-hour usage limit after worker completion. The saved worker results
+show no failed turn or service-limit error. The later status check started no workers; this is
+not a quota-recovery PASS. Kiro and another coordinator effort were outside scope, not new SKIPs.
+No extra pilot or source instruction fix was launched by this audit. Keep the native-dispatch
+finding open; a focused route check can isolate it without repeating the unchanged lifecycle.

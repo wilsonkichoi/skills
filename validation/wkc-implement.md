@@ -35,6 +35,7 @@ Keep raw logs and fixtures outside tracked files.
 - Review round 4: 2026-10-29, PR #99
 - Dated report: 2026-11-05, step 5 validation (PR #100)
 - No-pair routing subchecks, from #74
+- Dated report: 2026-11-06, native dispatch observation in Y33 (PR #100)
 
 ## Preparation
 
@@ -1638,3 +1639,28 @@ Case 84 and Y30 now require auditing actual worker tool calls and reporting any 
 Attempt: this Review2 hand-run correction only. AI test sessions launched: 0; authorized allowance for this
 fixing session: 0 (the task's explicit stop point). Behavioral validation: pending the person's focused run.
 No fixture preparation, candidate installation there, or focused run was performed by this fixing session.
+
+## Dated report: 2026-11-06, native dispatch observation in Y33 (PR #100)
+
+Selected actual model evidence: Codex medium Y33 coordinator, source
+`192c9eca710cb61dab35496e838863a56f2f2f7d`, GitHub run #80. The
+[Y33 report](./wkc-yolo.md#dated-report-2026-11-06-codex-medium-y33-pilot-pr-100) and
+[independent audit](https://github.com/wilsonkichoi/skills/pull/100#issuecomment-6702164822)
+record the 18 fresh contexts, 17 successful workers, and exact lifecycle scope. No model was
+started by this evidence audit. Standing authorization: no session cap, at most 2 workers.
+
+FAIL, native-precedence behavior: the coordinator's `02:18:58.081Z` tool definitions expose
+`collaboration.spawn_agent` with `fork_turns`, `model`, and `reasoning_effort`, and list the
+requested gpt-6.1-sol/high selection. Actual spawn calls: 0. All 13 Codex command artifacts use
+`codex exec` through the generated worker launcher. No unsupported native-selection result or
+fallback justification was recorded. The installed routing.md section 4 requires native when
+it accepts the selection; adapters.md defines native Codex dispatch from a Codex coordinator.
+This is runtime evidence about the route selected, not a failure of the static CLI-argument
+case 76 or a new PASS for the selection dry-run matrix. Why headless was chosen is not established.
+
+PASS, separate lifecycle/grant observations: merge approvals, dependent start, waiting recovery,
+readiness, and same-head reuse meet the selected Y9/Y33 clauses. The shared GitHub-stored grant
+was honored by Codex high finishes, including the unavailable environment and later success.
+Do not generalize this to the medium-worker, local, or Linear grant cases. Native worker behavior
+was not exercised, so full dispatch validation remains partial. No instruction, adapter, helper,
+version, or historical result was changed by this evidence-only update.
