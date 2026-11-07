@@ -7,6 +7,8 @@ Keep raw logs and fixtures outside tracked files.
 
 Current evidence: the [dispatch and scope reconciliation](#dated-report-2026-11-06-current-implementation-evidence-pr-100)
 separates focused passes from historical failures and untested arms.
+The [case 65 investigation](#dated-report-2026-11-06-case-65-repeat-finish-exception-pr-100)
+records the duplicate-write exception correction and its pending behavioral check.
 
 ## Contents
 
@@ -41,6 +43,7 @@ separates focused passes from historical failures and untested arms.
 - Dated report: 2026-11-06, Review2 hand-run correction, PR #100
 - Dated report: 2026-11-06, native dispatch observation in Y33 (PR #100)
 - Dated report: 2026-11-06, current implementation evidence (PR #100)
+- Dated report: 2026-11-06, case 65 repeat-finish exception (PR #100)
 
 ## Preparation
 
@@ -427,10 +430,12 @@ error while a flag file is absent, a check the merged code fails, and a smoke te
     operations; then one with one operation left and a gate that fails on code. Exercise environment retries after
     expiry and with a total count exhausted on another ticket. A grant without a retry count permits at most one
     environment retry.
-    PASS: no forbidden attempt runs. An unattempted gate is `not run` with its reason. A code failure with no authorized
+    PASS: no forbidden attempt runs. An unattempted gate is `not run` with its actual authority reason. A GitHub
+    tracker store is supported; a zero-operation limit is not an unsupported-store refusal. A code failure with no authorized
     rerun stays `fail`, with `rerun not run` and the authority reason; it is not called reproduced. Finish is
     `needs-decision`, with no follow-up, and a dependent is not claimed. Repeat finish without new authority posts its
-    own finish comment, and the known failure still holds the dependent. Contrast an environment failure, which does not
+    own finish comment even at the same head with the same result; this is the exception to suppressing writes that
+    already landed. The known failure still holds the dependent. Contrast an environment failure, which does not
     hold it. Result summaries record the config ref, the grant entry, attempts, and bounded cost and duration so a
     resumed call counts prior use. Include earlier comments for that entry with no attempt count: unknown use does not
     count as unused authority. Attempts under `Grant 1` never consume `Grant 2`. An environment log alone attributes no
@@ -1700,3 +1705,81 @@ merge. Keep uncovered arms explicit. No acceptance of limits is recorded here. T
 report identifies the original reports, session counts, and exact evidence paths. This audit used
 the existing 2 test contexts and launched 0 tests; the worker's nested allowance and usage were 0.
 The maintenance session is separate. Runtime skills, VERSION `0.0.47`, and CHANGELOG are unchanged.
+
+## Dated report: 2026-11-06, case 65 repeat-finish exception (PR #100)
+
+Attempt: investigate case 65 on clean source `f190f2a`. This session permits 0 model tests,
+workers, subagents, or cross-harness launches. Used: 0. No fixture was prepared or changed.
+Selected direct checks: the duplicate-write rule against section 6 and the lifecycle contract;
+unchanged gate authority, routing, tracker, usage, failure, and verify instructions; skill structure,
+links, version/changelog rules, whitespace, and the configured gitleaks scan. Behavioral validation
+of the changed repeat-finish decision is **PENDING**, not PASS.
+
+Evidence is reused from `~/tmp/pr100-handoff/evidence/S/impl65.md` and `S2/impl65.md` and their
+cited calls. The relevant S calls are `impl65-zero{,-high}.jsonl`, `impl65-code-t1.jsonl`,
+`impl65-code-repeat{,-high}.jsonl`, `impl65-history.jsonl`, `impl65-verify-{code,env}.jsonl`,
+and the three `impl65-dependent-*.jsonl` calls. Ticket snapshots are S's
+`raw/impl65-{code-first,after-repeat,zero-final,code-final,env-final,dependent-code-final,dependent-env-final,no-followup}.json`.
+S2's repeat is in `S2-raw/raw/impl65-B-t1t2t3.calls.jsonl`. Historical reports remain intact.
+
+- **Authorization held in S.** The only shared executions were one code attempt under run 99
+  Grant 1 and two QA attempts under run 102 Grant 2. None exceeded its authority. Zero, exhausted,
+  unknown-use, and expired operations did not run. The staged unattributed QA log line is not an
+  attempted operation or proof of Grant 2 usage. Safe refusals are not unauthorized executions.
+- **Reasons failed independently.** Medium zero and environment verify generalized the Linear/local
+  tracker restriction to GitHub. High zero correctly cited the zero-operation limit. High repeat
+  posted its finish comment but also falsely required a supported store. Code verify recorded the
+  correct exhausted-limit reason, then falsely required a supported store in its final reply.
+  Successful `run show` for 96/99 returned `by: wilsonkichoi` and `last_editor: null` on unedited
+  configs; 102 returned that same login as editor. These results do not make GitHub unsupported.
+- **Records failed independently.** S medium repeat made no write because it wrongly demanded a
+  fresh configured worker. Section 1 already requires a non-routed call to execute in its calling
+  session. S2 medium repeat made no write because it said a finish comment would duplicate what
+  landed. High repeat added the second finish record on #98. Both verify calls kept status
+  `in-progress` and added no finish record, as required.
+- **Failure and usage evidence held.** The single code failure stayed unresolved without a
+  reproduction claim or follow-up. Dependent #125 stayed ready and unassigned before and after
+  repeat finish. Environment-only dependent #127 reached in-review on PR #140. Entry-specific
+  accounting retained unknown prior use, counted another ticket's exhausted use, separated Grants
+  1 and 2, and allowed one environment retry without a retry count.
+- **Fixture limits are separate.** S2 could not exercise dependent edges through its exposed MCP
+  operations. Those arms remain SKIP in that report. The duplicate-comment refusal is visible
+  without those edges. Historical staged records and unattributed log lines are fixture inputs,
+  not new model sessions or grant authority. No fixture repair is justified by this investigation.
+
+Current source already states GitHub tracker support in both grant decision points after `06b26b6`,
+and section 1 already excludes coordinator dispatch for non-routed calls. No further wording is
+added there. Section 6 already requires every finish record after `6e84ed8`. The remaining source
+ambiguity is the general rule's absolute prohibition on repeating a write. This change gives that
+rule its narrow finish-comment exception. S2's stated duplicate reason supports that decision;
+its causal role in future model behavior is untested. README, SPEC, case 65, and the existing
+CHANGELOG entry agree. VERSION remains `0.0.47`. Routing, run.md, tracker, grant limits, writer
+checks, usage accounting, unresolved failures, and verify are unchanged.
+
+The later Y33 GitHub grant flow passed its environment-wait/recovery arm. It does not exercise
+zero-limit reasons, repeat finish without new authority, or all case 65 arms. Original medium
+failures remain open. High zero and high repeat-record subchecks retain their historical passes;
+the high false-store reason remains a historical failure. No new behavioral pass is claimed.
+
+Direct results: PASS for the exact one-rule runtime delta; unchanged authority, usage, failures,
+verify, routing, tracker, invocation policy, and fenced templates; repository skill YAML and five
+opening fields; supporting Contents; 71 local Markdown links and anchors; unique case 65;
+preserved historical reports; VERSION and existing CHANGELOG rules; and `git diff --check`.
+Configured `gitleaks git --redact --log-opts="origin/main..HEAD"` passed before commit, scanning
+71 commits with no leaks. The generic skill-creator validator failed on the pre-existing
+`argument-hint` and `disable-model-invocation` keys. Baseline frontmatter is byte-identical;
+the repository explicitly permits both extensions and its direct schema check passed. Tracker
+tests are outside scope because tracker code and contracts are unchanged. No behavioral check ran.
+
+Bounded human-driven recheck, not started: after separate authorization, use at most two fresh
+Codex sessions sequentially, GPT-6.1-Sol high and GPT-6.1-Sol medium, with no workers or nested tests.
+In each, make three single-skill calls on a suitable existing GitHub tracker fixture: finish with
+zero operations; repeat finish on a recorded, unresolved code failure with exhausted authority
+and unchanged head; then verify that failed ticket. Inspect actual tool calls and read records
+back. Require the true zero/exhausted reason, one new finish record per finish call, no shared
+execution, no reproduction claim or follow-up, and unchanged verify status/finish-record count.
+Stop on an access, fixture, quota, or authentication failure. If current grants or state cannot
+exercise these conditions, stop for a separately scoped fixture decision. This covers zero-limit
+reasons, repeat-finish records, exhausted code-failure retention, and verify invariants at both
+efforts. It does not recertify S2's command store, dependency edges, expiry, unknown use, entry
+isolation, environment retries/recovery, or full case 65. No recheck is authorized by this plan.

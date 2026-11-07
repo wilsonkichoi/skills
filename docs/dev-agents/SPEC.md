@@ -552,6 +552,10 @@ at a different time, is discovered work. The rule holds in every mode; only appr
 | Step needs authority or cannot run | `wkc-implement` | `in-progress` | ticket comment naming what is left and who must act; in a run, finished again when that changes |
 | Verify, in a run | `wkc-implement verify --run` | unchanged | gate comment per gate |
 
+Each finish call posts its own finish comment, even when no gate ran and the result is unchanged.
+This is the exception to suppressing writes that already landed. Verify posts no finish comment
+and never changes status.
+
 **Follow-up PR.** A merged PR cannot be reopened, so a defect a post-merge gate finds is fixed in a
 new PR on the same ticket. `wkc-implement` branches from the current `main`, fixes or reverts the
 change, opens a PR with the follow-up line in its body, and moves the ticket to `in-review`.

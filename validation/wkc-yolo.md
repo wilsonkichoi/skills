@@ -8,6 +8,8 @@ Keep raw logs and fixtures outside tracked files.
 Current scope and open items: the [reconciled audit](#dated-report-2026-11-06-current-evidence-and-native-high-dispatch-pr-100)
 records the Y33 lifecycle pass and a focused native high first-build pass. The medium dispatch
 deviation remains open. Older dated reports retain their results at the time of each attempt.
+The [case 65 investigation](#dated-report-2026-11-06-case-65-scope-pr-100) separates its pending
+repeat-finish correction from the unchanged Y33 grant-flow pass.
 
 ## Preparation
 
@@ -622,3 +624,19 @@ candidate identity, 15 relative links and anchors, affected Contents lists, inta
 unchanged runtime skills and VERSION `0.0.47`, and `git diff --check` passed. The configured pre-push
 gitleaks result is retained with the external audit evidence. Tracker code is unchanged; tracker
 tests are outside scope. No model test was launched.
+
+## Dated report: 2026-11-06, case 65 scope (PR #100)
+
+The [case 65 investigation](./wkc-implement.md#dated-report-2026-11-06-case-65-repeat-finish-exception-pr-100)
+separates false refusal reasons, omitted finish records, held authorization, and S2's missing
+dependency operations. Original S evidence contains no forbidden shared execution. High zero
+used the correct zero-limit reason. High repeat posted its record but gave a false GitHub-store
+reason. Medium repeat calls omitted the record for different stated reasons.
+
+The implementation skill's general duplicate-write rule now explicitly exempts each new finish
+call's required finish comment. Matching behavior is **PENDING**. Its gate rules, routing, tracker,
+and verify behavior are unchanged. The historical Y33 GitHub environment-wait/recovery pass still
+holds for that arm; it does not close zero-limit or exhausted repeat-finish coverage. Historical
+reports and open failures remain intact. VERSION stays `0.0.47`. This session used 0 of 0 allowed
+model tests and launched no worker, subagent, pilot, or other harness. No fixture changed.
+The linked report defines one bounded human-driven plan and stops before that recheck.
