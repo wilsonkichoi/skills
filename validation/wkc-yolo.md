@@ -5,8 +5,9 @@ This is a case catalog, not a full test sequence for each change.
 Record PASS, FAIL, or SKIP for selected cases. Keep direct checks separate from harness behavior.
 Keep raw logs and fixtures outside tracked files.
 
-Latest Codex medium result: the [Y33 pilot report](#dated-report-2026-11-06-codex-medium-y33-pilot-pr-100)
-records passing milestone and waiting-finish behavior, with an open native-dispatch deviation.
+Current scope and open items: the [reconciled audit](#dated-report-2026-11-06-current-evidence-and-native-high-dispatch-pr-100)
+records the Y33 lifecycle pass and a focused native high first-build pass. The medium dispatch
+deviation remains open. Older dated reports retain their results at the time of each attempt.
 
 ## Preparation
 
@@ -535,3 +536,89 @@ show no failed turn or service-limit error. The later status check started no wo
 not a quota-recovery PASS. Kiro and another coordinator effort were outside scope, not new SKIPs.
 No extra pilot or source instruction fix was launched by this audit. Keep the native-dispatch
 finding open; a focused route check can isolate it without repeating the unchanged lifecycle.
+
+## Dated report: 2026-11-06, current evidence and native high dispatch (PR #100)
+
+Attempt: the person's bounded first-build probe at source
+`4c6ecc7ab4d69172deca2aeed3a77de57c5a08dc`. GitHub fixture
+`wilsonkichoi/wkc-yolo-fixture-20261103`, ticket #85, config #86, [ticket PR #87](https://github.com/wilsonkichoi/wkc-yolo-fixture-20261103/pull/87).
+Selected: native precedence, explicit selection, fresh first-build worker, completion and durable
+handoff, and the one-worker stop boundary. This is a focused Y6/Y32/Y33 dispatch subcheck.
+
+PASS, native high first-build dispatch. At `2026-11-07T05:12:40.754Z`, the coordinator called
+`collaboration.spawn_agent` with `task_name: "ticket85_build"`, `fork_turns: "none"`,
+`model: "gpt-6.1-sol"`, and `reasoning_effort: "high"`. The tool returned
+`/root/ticket85_build` at `05:12:40.808Z`. The native completion was read by `05:15:17.395Z`.
+There is no native process exit code to report. The child's parent id and fresh history agree
+with this launch. Its applied thread settings and turn context name GPT-6.1-Sol/high.
+Those settings do not independently expose a resolved serving model. The worker's own
+`Observed execution: unavailable` handoff is preserved.
+
+The coordinator's `05:09:06.880Z` tool declaration exposes these fields and lists GPT-6.1-Sol
+with high effort. A developer instruction permits delegation only when the user or applicable
+skill explicitly requests it. The invoked `wkc-yolo` routing contract explicitly requires a
+fresh worker, and the person's approval permits one start. No prohibition applied to this
+launch. Exposure alone was not scored as execution evidence.
+
+- PASS, direct installation check: all seven installed skill directories in both coordinator
+  and worker checkouts match the recorded candidate archive and current runtime source.
+- PASS, execution evidence: first-party ChatGPT login and effective configuration checks passed
+  before dispatch. The worker read the installed skills and source itself. Its commands checked
+  exact help stdout, exit 0, empty stderr, described commands, the single-file diff, `make test`,
+  whitespace, and gitleaks. All six ticket criteria passed. Only `docs/usage/help-pilot.md` changed.
+- PASS, durable result: the [writer handoff](https://github.com/wilsonkichoi/wkc-yolo-fixture-20261103/issues/85#issuecomment-6702689701)
+  and open PR agree on head `2dd0713699f6555b17d56f6ebb55fa5f4bb1d566`. Ticket #85 is
+  `in-review`. The coordinator read the result and records before stopping.
+- PASS, bounded stop: one worker, no nested start, review, later step, merge, run PR, or done
+  transition. Fixture main stayed `df2c3519d662ecf91c615cfa6bc2876d9758ccf2`.
+  This deliberately unfinished run does not test normal stop policy or full readiness.
+- SKIP, exact worker-prompt comparison: the launch message and child's `NEW_TASK` payload are
+  encrypted in the saved logs. The template is readable, but exact prompt conformance cannot be
+  established from it. Freshness and actual worker actions are independently inspectable.
+
+Raw originals, hashes, inspected calls, and `result.md` are preserved outside the repository at
+`/private/tmp/pr100-native-audit-wp9620b2/`. Source collection:
+`/Users/wchoi/tmp/native-sol-high-evidence.sqNKi2/`. Coordinator
+`01a1b468-d95a-7231-89d8-48ed1dca9e95`; native child
+`01a1b46c-5437-75f3-8a04-c47b87ff04ce`. No auth files were copied.
+
+Usage: 2 fresh validation contexts, 1 coordinator with 2 turns and 1 worker; failed starts 0;
+selected maximum worker starts 1, observed peak 1. Standing Step 5 authorization has no session
+cap. The fixture's nested-test allowance is 0 and nested usage is 0. This separate maintenance
+session launched 0 tests or workers; this task permits 0 launches (project default ceiling 6).
+Recorded cumulative token totals are 1,969,008 coordinator
+and 866,288 worker tokens, including repeated cached input; these are not dollar charges.
+
+Current evidence reconciliation, using the original reports rather than their summary labels:
+
+| Claim | Supported current result | Remaining scope and recommended disposition |
+|---|---|---|
+| Y9, waiting-finish order, approved merge heads, Decision links | [Y33 medium pilot](#dated-report-2026-11-06-codex-medium-y33-pilot-pr-100) PASS at `192c9ec`; premature publication and ticket-page Decision links did not recur. | Close these selected historical failures. Keep Y29 restart, conflict, and recovery arms separate. |
+| Y13 | The Y33 unavailable-environment finish waited, then a fresh finish succeeded before publication. | Close that arm. Keep repeat-finish and zero-operation arms in implement 65 open. |
+| Y22 fresh selection | [Run #70](https://github.com/wilsonkichoi/skills/pull/100#issuecomment-6697129898) freshly applied an active-run effort edit. Y33 used the configured pair. | Partial. Quota/resume model-pair edits remain unresolved. Fix or explicitly accept that failure before merge. |
+| Y30 / implement 84 | Run #70 Codex high same-head skip passed after `1b68535`; Y33 shows changed-own-file rerun, readiness skip, and same-head reuse. | Close those selected regressions. The historical Claude covered-subtest failure and full harness matrix remain unrecertified. Require disposition of that arm, not a full rerun by default. |
+| Y32 / review 69 | [Sonnet high recheck](./wkc-code-review.md#dated-report-2026-11-06-sonnet-high-scratch-file-recheck-pr-100) passed after `322f09f`; four Y33 Sonnet medium reviews also isolated scratch files. This probe passes native high build dispatch. | Close selected scratch and high-route findings. Full step matrix, manual scratch arm, and original Opus arm remain untested. |
+| Medium coordinator native precedence | Y33 used 13 headless Codex workers without a native rejection or recorded fallback reason. | FAIL remains open; cause unknown. A high PASS does not resolve medium. Investigate separately or explicitly accept the limit. |
+| Y28 quota and resume | Historical Claude medium ended a turn with workers active; Claude high and authentication-stop arms passed. The later Codex limit was reported after all workers finished. | Keep medium failure and fresh-read miss open. Codex quota recovery is untested. Resolve or explicitly accept before merge. |
+| Implement 83 / discovered defects | Historical Codex medium/high read the planted defect without filing it. Claude's ordinary discovered item did not exercise that defect. | Consequential open FAIL for the selected high-worker setup. Fix in a separate session or explicitly accept before merge. |
+| Implement 42, 64; review 62, 67 | Medium failures remain historical. High rechecks passed the question-ending, dependency-stop, and same-model-report checks. Case 64's failure used the local tracker. | Keep failures disclosed. They do not establish failure of GitHub + Codex high + Sonnet medium. Address in a separate medium/local follow-up if that scope is required. |
+| Other pending coverage | Y4/A52, Y18/Y19, Y21, Y24, Y27, Y29 restart/conflict, implement 37/41/82, no-pair, interruption, and other adapters are not closed by this probe. | Keep partial, pending, or historical status. Record a human coverage decision before claiming those arms. Full Y32/Y33 and implement 80 remain incomplete; Kiro was outside this selection. |
+
+The supporting reused reports are `Y33-medium/result.md`,
+`Review2/focused-sol-high/focused-result.md`, and `Review2/focused-sol-high/g4-recheck/result.md`
+under `~/tmp/pr100-handoff/evidence/`. The covered-command rule is unchanged since `1b68535`;
+the scratch rule is unchanged since `322f09f`; runtime skills are unchanged since the Y33 candidate
+`192c9ec`. Reuse is limited to those matching instructions and original fixtures. Historical
+reports above are intact.
+
+The recent bounded human-driven checks passed selected behavior. Smaller context and clearer
+separation might help. Candidate, fixture, model effort, and task shape also changed. No giant-batch
+versus small-run A/B test was performed. This remains a hypothesis, not a source fix or compatibility
+claim. No known limit is accepted on the person's behalf. Recommend keeping PR #100 and fixture
+PRs unmerged until the material open failures receive an explicit disposition.
+
+Maintenance direct checks: evidence-to-claim mapping, case identifiers, raw-copy hashes, installed
+candidate identity, 15 relative links and anchors, affected Contents lists, intact historical reports,
+unchanged runtime skills and VERSION `0.0.47`, and `git diff --check` passed. The configured pre-push
+gitleaks result is retained with the external audit evidence. Tracker code is unchanged; tracker
+tests are outside scope. No model test was launched.

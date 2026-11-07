@@ -5,6 +5,9 @@ This is a case catalog, not a full test sequence for each change.
 Record PASS, FAIL, or SKIP for selected cases. Keep direct checks separate from harness behavior.
 Keep raw logs and fixtures outside tracked files.
 
+Current evidence: the [scope reconciliation](#dated-report-2026-11-06-current-review-evidence-pr-100)
+records selected scratch-file passes and preserves medium failures and untested arms.
+
 ## Contents
 
 - Preparation
@@ -31,6 +34,7 @@ Keep raw logs and fixtures outside tracked files.
 - Dated report: 2026-11-05, step 5 validation (PR #100)
 - Dated report: 2026-11-06, Review2 scratch-file correction (PR #100)
 - Dated report: 2026-11-06, Sonnet high scratch-file recheck (PR #100)
+- Dated report: 2026-11-06, current review evidence (PR #100)
 
 ## Preparation
 
@@ -1102,3 +1106,19 @@ all-harness, full Y32, or full PR validation PASS. Historical failures stay reco
 and G9 were outside this recheck, not new SKIPs. No source instruction was changed and no model
 was launched by the evidence audit. The review PR remains open; merging and finishing its
 manually prepared ticket are not required for this isolated check.
+
+## Dated report: 2026-11-06, current review evidence (PR #100)
+
+Reused case 69 / Y32 scratch evidence: the routed Sonnet high recheck at `322f09f` passed after
+all 14 actual Bash calls were inspected. The later Y33 pilot at `192c9ec` also used private
+scratch files or memory in four Sonnet medium reviews. The selected routed scratch regressions
+are closed by those matching results. The manual-call arm, original Opus arm, and full harness
+matrix remain untested. The [current YOLO audit](./wkc-yolo.md#dated-report-2026-11-06-current-evidence-and-native-high-dispatch-pr-100)
+links the source reports and records the separate native high build result. No review was launched
+in that build-only probe, so it adds no review-independence or alternation evidence.
+
+Cases 62 and 67 remain historical Codex medium FAILs. Case 62's high subchecks stopped at the
+missing installed dependency. Case 67's high recheck included the same-model warning. These failures
+do not establish failure of the selected Sonnet medium review configuration. Keep the medium
+failures disclosed and decide their disposition separately. No model or source fix was launched
+by this maintenance session; no limit was accepted for the person.

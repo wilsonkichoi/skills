@@ -5,6 +5,9 @@ This is a case catalog, not a full test sequence for each change.
 Record PASS, FAIL, or SKIP for selected cases. Keep direct checks separate from harness behavior.
 Keep raw logs and fixtures outside tracked files.
 
+Current evidence: the [dispatch and scope reconciliation](#dated-report-2026-11-06-current-implementation-evidence-pr-100)
+separates focused passes from historical failures and untested arms.
+
 ## Contents
 
 - Preparation
@@ -17,7 +20,7 @@ Keep raw logs and fixtures outside tracked files.
 - Dated report: 2026-10-25, unattended calls (#73)
 - Dated report: 2026-10-26, run branch and run config (#78)
 - Review round 4: 2026-10-26, PR #78
-- Dated report: 2026-10-28, security scan (#76)
+- Dated report: 2026-10-28, push check (#76)
 - Dated report: 2026-10-28, run completion (#80)
 - Review round 1: 2026-10-28, PR #87
 - Review round 2: 2026-10-28, PR #87
@@ -35,7 +38,9 @@ Keep raw logs and fixtures outside tracked files.
 - Review round 4: 2026-10-29, PR #99
 - Dated report: 2026-11-05, step 5 validation (PR #100)
 - No-pair routing subchecks, from #74
+- Dated report: 2026-11-06, Review2 hand-run correction, PR #100
 - Dated report: 2026-11-06, native dispatch observation in Y33 (PR #100)
+- Dated report: 2026-11-06, current implementation evidence (PR #100)
 
 ## Preparation
 
@@ -1664,3 +1669,34 @@ was honored by Codex high finishes, including the unavailable environment and la
 Do not generalize this to the medium-worker, local, or Linear grant cases. Native worker behavior
 was not exercised, so full dispatch validation remains partial. No instruction, adapter, helper,
 version, or historical result was changed by this evidence-only update.
+
+## Dated report: 2026-11-06, current implementation evidence (PR #100)
+
+The [current YOLO audit](./wkc-yolo.md#dated-report-2026-11-06-current-evidence-and-native-high-dispatch-pr-100)
+records a focused native high first-build PASS at `4c6ecc7`. One fresh worker completed ticket #85
+and handed off open PR #87 at `2dd0713699f6555b17d56f6ebb55fa5f4bb1d566`.
+Its six acceptance checks passed and only the requested usage page changed. The actual native
+launch specified GPT-6.1-Sol/high and `fork_turns: "none"`; applied runtime settings agree.
+Exact worker-prompt comparison is SKIP because the saved message is encrypted. This does not
+complete static case 79, case 80's mixed-provider matrix, or full Y32/Y33. The older medium
+native-precedence deviation and its unknown cause remain open.
+
+Reused evidence changes the current disposition of selected earlier failures:
+
+- Case 65: Y33 Codex high honored the GitHub grant, waited on an unavailable environment, and
+  completed a fresh finish successfully. The medium repeat-finish and zero-operation arms remain
+  open. The successful grant flow does not close those arms or certify other trackers.
+- Case 84: run #70's Codex high same-head skip passed after `1b68535`. Y33 passed changed-own-file
+  rerun, readiness skip, and same-head reuse. These close the selected covered-command regression.
+  The old Claude covered-subtest failure and the remaining harness/subtest matrix are unrecertified.
+- Case 83 remains an open discovered-defect reporting FAIL, including Codex high. This successful
+  usage-page build had no planted defect and cannot close it. Cases 37/41 and 82's pending model
+  coverage also remain open.
+- Cases 42 and 64 retain their medium failures. The high rechecks passed the selected behavior;
+  case 64's failed backend was local. These are not new failures of GitHub high workers.
+
+Recommend fixing or explicitly dispositioning case 83 and the remaining case 65/84 failures before
+merge. Keep uncovered arms explicit. No acceptance of limits is recorded here. The linked YOLO
+report identifies the original reports, session counts, and exact evidence paths. This audit used
+the existing 2 test contexts and launched 0 tests; the worker's nested allowance and usage were 0.
+The maintenance session is separate. Runtime skills, VERSION `0.0.47`, and CHANGELOG are unchanged.
