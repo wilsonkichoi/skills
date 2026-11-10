@@ -8,7 +8,8 @@ Keep raw logs and fixtures outside tracked files.
 Current evidence: the [dispatch and scope reconciliation](#dated-report-2026-11-06-current-implementation-evidence-pr-100)
 separates focused passes from historical failures and untested arms.
 The [case 65 investigation](#dated-report-2026-11-06-case-65-repeat-finish-exception-pr-100)
-records the duplicate-write exception correction and its pending behavioral check.
+records the duplicate-write exception correction. Its [high and medium recheck](#dated-report-2026-11-10-case-65-high-and-medium-recheck-pr-100)
+passes the selected manual subchecks; other arms remain outside scope.
 The [case 83 investigation](#dated-report-2026-11-06-case-83-recognition-and-filing-pr-100)
 separates recognized findings from code inspection and keeps the planning arm independent.
 
@@ -47,6 +48,7 @@ separates recognized findings from code inspection and keeps the planning arm in
 - Dated report: 2026-11-06, current implementation evidence (PR #100)
 - Dated report: 2026-11-06, case 65 repeat-finish exception (PR #100)
 - Dated report: 2026-11-06, case 83 recognition and filing (PR #100)
+- Dated report: 2026-11-10, case 65 high and medium recheck (PR #100)
 
 ## Preparation
 
@@ -1894,3 +1896,57 @@ failure. This tests **recording and backlog filing with duplicate reuse**. Suppl
 deliberately excludes independent recognition and the planning-change arm. It cannot close those
 questions or certify new-ticket creation. This plan authorizes no recheck, and this session stops
 before it.
+
+## Dated report: 2026-11-10, case 65 high and medium recheck (PR #100)
+
+PASS, selected manual GitHub subchecks at `b15d608cd23cdf42f9c030ac882f1c69e19648c1`:
+zero-limit finish, exhausted repeat finish, and verify. The person drove two separate
+GPT-6.1-Sol sessions, high then medium. High was audited before medium's fresh baseline and
+launch. The duplicate-write clarification in `3024c47` is present; runtime instructions were
+unchanged between efforts. This closes these selected Sol regression checks, not full case 65
+or the original model matrix. Historical reports remain intact.
+
+Fixture: `wilsonkichoi/wkc-yolo-fixture-codex-20261103`, tickets #162/#163, configs #164/#165.
+Approved delivery PRs #167/#166 merged only into isolated run branches. Heads stay
+`9f723dabdcd8fbfcdd6f6edc35eacaf894e44d55` and `0793a206d8c17854a350ccecbdfa6828ac662d24`.
+The zero grant allows no operations. The code grant's one operation is consumed by approved,
+explicitly synthetic history with complete attribution. It is not a newly executed operation.
+
+- PASS at both efforts: correct zero/exhausted reasons; no false unsupported-GitHub-store
+  explanation; no worker dispatch for a manual call; exactly one finish record per finish.
+- PASS: retained unresolved code failure without reproduction or a follow-up. Verify preserves
+  in-progress status and finish count. Same-head local passes are reused without execution.
+- Finish counts for #162/#163: high 1/1 to 2/1 to 2/2 to 2/2; medium 2/2 to 3/2 to 3/3 to 3/3.
+  The initial records are approved synthetic seeds. Gate records are counted separately.
+- PASS from all 28 high and 16 medium exec calls and returned outputs: no shared gate, cleanup,
+  nested model, or worker execution. High runs local make test twice with exit 0. Medium runs
+  no gate command. Its auxiliary rg file listing exits 1 for an empty rule directory; no gate
+  or setup failure occurred. Three task-complete events exist for each effort.
+- PASS: configs, grant copies, memberships, both statuses, all compared remote heads including
+  main, and full open-PR snapshots stay unchanged. New fixture state stays empty and all 24
+  old state-file hashes stay unchanged. No admission, follow-up, run PR, or merge is added.
+- Installation evidence: permanent checkout snapshots match all 48 candidate files and remain
+  clean without suppressed index flags. High removes its short-lived code checkout before
+  collection. Its committed tree independently matches all 48 files and its visible status is
+  clean before and after the test. A direct post-call hash of that removed directory is unavailable.
+
+High session: `01a1c742-938c-7753-8648-9f0bffe8370e`, three completed turns between
+21:00:36Z and 21:02:27Z, 21:07:11Z and 21:08:40Z, and 21:11:20Z and 21:12:15Z UTC.
+Medium: `01a1c757-4642-74d0-ae5a-cada4f7de84c`, three turns between 21:22:36Z and 21:23:39Z,
+21:24:10Z and 21:25:01Z, and 21:25:40Z and 21:26:15Z UTC, all on 2026-11-10.
+Requested and applied turn settings agree. Independently resolved backend identity is unavailable.
+
+Raw collections and independent audits are under
+`~/tmp/pr100-handoff/evidence/cases65-83-focused/case65/{high,medium}/`.
+The high final rollout SHA-256 is `f7cd612b72de4ad978c06b76f29f3dd7f3a24101754aee170ba1f571182f48a0`;
+medium is `575bc463abac306aef1aacf562ee4180eaf7a013e1c74a92329fa30ca8d25c90`.
+The accidental early after-01 collection is preserved separately; no model call was retried.
+
+Usage: two fresh behavioral contexts, six turns, zero nested workers/tests. The older per-turn
+ledger convention gives six entries. Standing Step 5 session cap remains waived; the selected
+scope was two sequential sessions. These audits launched zero tests or workers.
+
+Limits: this tests interpreting synthetic recorded use, not real instrumentation. Dependency
+edges, command-store handling, expiry, unknown use, grant isolation, environment retry/recovery,
+and other models remain outside scope. Case 83 remains pending. No broader compatibility,
+acceptance of remaining limits, or merge is implied.

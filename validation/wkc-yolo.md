@@ -8,8 +8,8 @@ Keep raw logs and fixtures outside tracked files.
 Current scope and open items: the [reconciled audit](#dated-report-2026-11-06-current-evidence-and-native-high-dispatch-pr-100)
 records the Y33 lifecycle pass and a focused native high first-build pass. The medium dispatch
 deviation remains open. Older dated reports retain their results at the time of each attempt.
-The [case 65 investigation](#dated-report-2026-11-06-case-65-scope-pr-100) separates its pending
-repeat-finish correction from the unchanged Y33 grant-flow pass.
+The [case 65 high and medium recheck](#dated-report-2026-11-10-case-65-focused-recheck-pr-100)
+passes selected manual zero/exhausted finish and verify checks. Other arms remain outside scope.
 The [case 83 investigation](./wkc-implement.md#dated-report-2026-11-06-case-83-recognition-and-filing-pr-100)
 separates the recognized-but-unfiled finding from code inspection and the planning-change arm.
 
@@ -642,3 +642,20 @@ holds for that arm; it does not close zero-limit or exhausted repeat-finish cove
 reports and open failures remain intact. VERSION stays `0.0.47`. This session used 0 of 0 allowed
 model tests and launched no worker, subagent, pilot, or other harness. No fixture changed.
 The linked report defines one bounded human-driven plan and stops before that recheck.
+
+## Dated report: 2026-11-10, case 65 focused recheck (PR #100)
+
+The [implementation report](./wkc-implement.md#dated-report-2026-11-10-case-65-high-and-medium-recheck-pr-100)
+records PASS at `b15d608` for manual GitHub zero-limit finish, exhausted repeat finish, and verify
+on separate GPT-6.1-Sol high and medium sessions. Each finish adds its required record, refusal
+reasons are correct, the synthetic code failure remains unresolved, and verify preserves status
+and finish count. Actual tool calls show no shared execution or nested worker. Main, run heads,
+authority, membership, and state hashes are unchanged. The duplicate-write clarification's
+selected regression checks now pass; earlier pending reports remain historical.
+
+Two fresh test contexts, six turns; high was audited before medium launched. Audit starts: 0.
+The synthetic fixture limits the claim to interpretation of recorded use. This is not a new Y13,
+Y28, Y32, Y33, dependency, expiry, or full case 65 PASS. It does not resolve the medium native
+precedence finding, quota/resume behavior, case 83, or other unselected arms. No source instruction,
+fixture authority, or merge was changed by the audits. See the linked report for raw evidence,
+installation limitations, session identities, and exact scope.
