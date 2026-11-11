@@ -12,6 +12,8 @@ The [case 65 high and medium recheck](#dated-report-2026-11-10-case-65-focused-r
 passes selected manual zero/exhausted finish and verify checks. Other arms remain outside scope.
 The [case 83 investigation](./wkc-implement.md#dated-report-2026-11-06-case-83-recognition-and-filing-pr-100)
 separates the recognized-but-unfiled finding from code inspection and the planning-change arm.
+The [focused case 83 recheck](./wkc-implement.md#dated-report-2026-11-10-case-83-recording-and-duplicate-reuse-pr-100)
+passes recording and duplicate reuse after a supplied unchecked finding. Recognition and planning remain open.
 
 ## Preparation
 

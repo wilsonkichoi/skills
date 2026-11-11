@@ -12,6 +12,8 @@ records the duplicate-write exception correction. Its [high and medium recheck](
 passes the selected manual subchecks; other arms remain outside scope.
 The [case 83 investigation](#dated-report-2026-11-06-case-83-recognition-and-filing-pr-100)
 separates recognized findings from code inspection and keeps the planning arm independent.
+Its [focused high recheck](#dated-report-2026-11-10-case-83-recording-and-duplicate-reuse-pr-100)
+passes recording and same-session backlog reuse for a supplied unchecked finding. Recognition and planning remain open.
 
 ## Contents
 
@@ -49,6 +51,7 @@ separates recognized findings from code inspection and keeps the planning arm in
 - Dated report: 2026-11-06, case 65 repeat-finish exception (PR #100)
 - Dated report: 2026-11-06, case 83 recognition and filing (PR #100)
 - Dated report: 2026-11-10, case 65 high and medium recheck (PR #100)
+- Dated report: 2026-11-10, case 83 recording and duplicate reuse (PR #100)
 
 ## Preparation
 
@@ -1950,3 +1953,53 @@ Limits: this tests interpreting synthetic recorded use, not real instrumentation
 edges, command-store handling, expiry, unknown use, grant isolation, environment retry/recovery,
 and other models remain outside scope. Case 83 remains pending. No broader compatibility,
 acceptance of remaining limits, or merge is implied.
+
+## Dated report: 2026-11-10, case 83 recording and duplicate reuse (PR #100)
+
+**PASS, selected defect-reporting subchecks** on candidate `c2ebf72e4b16344b7de30f5272ce81bc01668590`.
+Attempt: `case83-record-file-high-20261110`. Harness: native Codex CLI 0.167.1, requested and
+applied `gpt-6.1-sol` at `high`. Backend: GitHub. One fresh behavioral context used 1 of the
+upstream 6-session attempt allowance; nested AI tests used 0 of 0. This report adds no model
+context. The backend's executed model identity is not exposed.
+
+The person approved a help-only isolated fixture: documentation ticket #168, pre-existing
+matching defect ticket #169, run config #170, and run branch at installation head
+`38c3e7c289efc35cca20dda67e52517c6b4e92fe`. The ticket Notes supplied an explicitly
+unchecked `cmd_del` diagnosis with code and SPEC excerpts. The person later requested a fresh
+config baseline after the global Codex config changed. The incomplete first collection and
+original construction fingerprint were preserved. The new before collector passed, with 86
+ticket readbacks, clean installed checkouts, and no earlier session in the launch directory.
+
+- PASS: #168's writer-authored `Discovered:` comment preserves the `grep -v` code line,
+  SPEC 2.1, 2.2, and 3.5 evidence, and the regex/whole-record diagnosis. It says `Verified: no`
+  and leaves runtime reproduction and repair unchecked. All 24 native tool calls were inspected.
+  None executed `kv del` or a deletion reproduction. `make test` ran only `tests/test_help.sh`,
+  which checks help and invalid commands.
+- PASS: the same session announced `wkc-backlog`, read its installed `SKILL.md`, used tracker
+  `show` and `list` for the matching item, and read run #170 and #169 after recording the finding.
+  The routed prompt carried `168 --run 170`. This is an instruction-based Codex skill call:
+  the announcement, installed skill read, run binding, and ensuing tracker actions meet the
+  collection guide's callback evidence rule. A dedicated Skill tool is not available here.
+- PASS: #169 remained `backlog`, unassigned, without blockers, comments, or `Run:` admission.
+  Run #170 retained only #168. The before/after 86-ticket inventory and full readbacks show no
+  second defect ticket and no change outside #168. The final reply returned #169, the separate
+  repair outcome, and its non-blocking status.
+- PASS: [fixture PR #171](https://github.com/wilsonkichoi/wkc-yolo-fixture-codex-20261103/pull/171)
+  is open at `2ce19e3c42577ef12fe6f53d5f566ce6395cbe76`, based on the isolated run branch.
+  Its full diff adds only `docs/usage/help-c83.md`. `bin/kv` and `docs/dev-agents/SPEC.md`
+  match the pinned seed in both collected worktrees. #168 is `in-review` with the exact handoff.
+
+Evidence: `~/tmp/pr100-handoff/evidence/cases65-83-focused/case83/` holds `guide.md`,
+`config-rebaseline-20261110.json`, `before/`, `after/`, and `audit-20261110.md`. Native session
+`01a1c7ac-088c-7593-91e8-01ed597c804e` has one completed turn, turn model/effort settings,
+25 token-count events, and actual calls/results. Its rollout SHA-256 is
+`cab8f85567083af8162ecca9c511b2cd4bf883a7b01538d5d42846f8fc748413`. The final
+usage event reports 1,610,137 total tokens, including 1,522,688 cached input tokens, and an
+828,400-token context window. The model's first scratch cleanup command was rejected by tool
+policy; its later `unlink` and `rmdir` cleanup exited 0. No setup or behavioral gate failed.
+
+This focused result tests recording and duplicate reuse after a supplied unchecked finding. It
+does not test independent recognition, the planning-change arm, or new-ticket creation by the
+behavioral context. Full case 83 remains incomplete. No review, merge, finish, verify, shared
+gate, or additional implementation call was part of this check. Historical failures and their
+original labels remain intact.
