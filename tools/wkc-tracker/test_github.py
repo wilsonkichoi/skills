@@ -755,20 +755,56 @@ class CommentAuthors(unittest.TestCase):
             shown = g.cmd_show(f, 1)
         self.assertEqual(shown["comments"][0]["url"], "https://github.com/o/r/issues/1#issuecomment-7")
 
-    def test_real_lookup_reads_role_name_and_treats_a_failure_as_no(self):
+    def test_real_lookup_uses_base_permission_for_custom_roles_and_caches_results(self):
         gh = g.GitHub(REPO)
-        answers = {"api repos/o/r/collaborators/w/permission": '{"permission": "write", "role_name": "maintain"}',
-                   "api repos/o/r/collaborators/t/permission": '{"permission": "read", "role_name": "triage"}'}
+        permissions = {"maintainer": ("write", "maintain"), "custom-writer": ("write", "release-manager"),
+                       "custom-reader": ("read", "auditor"), "admin": ("admin", "admin"),
+                       "reader": ("read", "triage"), "outsider": ("none", "none")}
         calls = []
 
         def fake(args, stdin=None):
-            calls.append(" ".join(args))
-            if " ".join(args) in answers:
-                return answers[" ".join(args)]
-            raise g.GhError(args, "Not Found")
+            calls.append(args)
+            login = args[-1].split("/")[-2]
+            if login not in permissions:
+                raise g.GhError(args, "gh: Not Found (HTTP 404)")
+            permission, role = permissions[login]
+            return json.dumps({"permission": permission, "role_name": role})
+
         with mock.patch.object(gh, "gh", side_effect=fake):
-            self.assertEqual([gh.can_write(x) for x in ("w", "t", "nobody", "w", None)], [True, False, False, True, False])
-        self.assertEqual(len(calls), 3)
+            logins = ("maintainer", "custom-writer", "custom-reader", "admin", "reader", "outsider",
+                      "missing", "custom-writer", None)
+            self.assertEqual([gh.can_write(x) for x in logins],
+                             [True, True, False, True, False, False, False, True, False])
+        self.assertEqual(len(calls), 7)
+
+    def test_permission_lookup_errors_stop_record_reads_without_writes(self):
+        errors = ("gh: Bad credentials (HTTP 401)", "gh: API rate limit exceeded (HTTP 403)",
+                  "gh: Too Many Requests (HTTP 429)", "gh: Internal Server Error (HTTP 500)",
+                  "error connecting to api.github.com")
+        for detail in errors:
+            for argv in (["show", "1"], ["run", "tickets", "9"], ["verdicts", "7"]):
+                with self.subTest(detail=detail, argv=argv):
+                    f = FakeGitHub()
+                    f.add(1)
+                    f.issues[ref(1)]["comments"] = [{"author": "me", "body": "Run: 9"}]
+                    pr = {"number": 7, "url": "u", "state": "OPEN", "head": "a" * 40,
+                          "comments": [{"author": "me", "body": "wkc-code-review round 1: approve, ok"}]}
+                    output = io.StringIO()
+                    with mock.patch.object(f, "can_write", side_effect=lambda login: g.GitHub.can_write(f, login)), \
+                         mock.patch.object(f, "gh", side_effect=g.GhError(["api"], detail)), \
+                         mock.patch.object(f, "pull_request", return_value=pr), redirect_stdout(output):
+                        code = g.main(argv, gh=f)
+                    result = json.loads(output.getvalue())
+                    self.assertEqual((code, result["ok"], result.get("error")), (4, False, "read_failed"))
+                    self.assertIn(detail, result["message"])
+                    self.assertEqual(f.writes, [])
+
+    def test_missing_or_unknown_base_permission_is_a_failed_read(self):
+        for payload in (None, [], {}, {"permission": []}, {"permission": "unknown", "role_name": "write"}):
+            with self.subTest(payload=payload):
+                gh = g.GitHub(REPO)
+                with mock.patch.object(gh, "gh_json", return_value=payload):
+                    self.assertEqual(code_of(lambda: gh.can_write("me")), g.EXIT_READ_FAILED)
 
 
 class Links(unittest.TestCase):

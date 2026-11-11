@@ -247,8 +247,6 @@ RUN_LINE = re.compile(r"Run:[ \t]*(\S(?:.*\S)?)[ \t]*")
 # The kickoff login on a run config's first line: `Started: <time>. By: <login>.`
 RUN_OWNER = re.compile(r"^Started:.*?\bBy:\s*([A-Za-z0-9](?:[A-Za-z0-9-]*[A-Za-z0-9])?)", re.M)
 
-WRITE_ROLES = {"admin", "maintain", "write"}
-
 # A wkc-code-review verdict's first line: `wkc-code-review round <n>: <outcome>, <what>`.
 VERDICT_LINE = re.compile(r"wkc-code-review round\b[ \t]*(\d+)?:?[ \t]*(approve|fixed|stopped|needs-decision)?\b")
 VERDICT_FIELDS = {"Reviewed": "reviewed", "Fixed in": "fixed_in", "Execution": "execution",
@@ -531,18 +529,23 @@ class GitHub:
         return self.gh_json(["api", f"repos/{ref.repo}/issues/{ref.number}"])["id"]
 
     def can_write(self, login: str | None) -> bool:
-        """Whether `login` has write access to the repository: admin, maintain, or write.
-        A failed lookup, a deleted account, or a bot without a collaborator record is no."""
+        """Whether `login` has base write access, including through a custom role.
+        A missing author or HTTP 404 is no; other lookup failures stop the read."""
         if not login:
             return False
         cache = self._writers
         if login not in cache:
             try:
                 data = self.gh_json(["api", f"repos/{self.repo}/collaborators/{login}/permission"])
-            except GhError:
+            except GhError as error:
+                if "(HTTP 404)" not in error.detail:
+                    raise
                 cache[login] = False
             else:
-                cache[login] = (data.get("role_name") or data.get("permission")) in WRITE_ROLES
+                permission = data.get("permission") if isinstance(data, dict) else None
+                if permission not in ("admin", "write", "read", "none"):
+                    read_failed(f"permission lookup for {login} returned an invalid base permission")
+                cache[login] = permission in ("admin", "write")
         return cache[login]
 
     # -- writes

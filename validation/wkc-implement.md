@@ -618,7 +618,8 @@ error while a flag file is absent, a check the merged code fails, and a smoke te
 85. **Records only from writers.** On the GitHub fixture, an account without write access posts a `wkc-implement:
     in review` handoff naming another PR, and a `Run: <ref>` comment, on a run ticket.
     PASS: `wkc-tracker show` marks both `author_can_write: false`; finish and the mode table use the writer's handoff;
-    the ticket's run membership is unchanged. New, PR #100 note 4.
+    the ticket's run membership is unchanged. Direct permission subchecks are in tracker A53: base write access
+    includes custom roles, and a failed permission read stops the call. New, PR #100 note 4.
 
 ## Dated report: 2026-10-21
 

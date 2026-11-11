@@ -68,8 +68,9 @@ recommended one first, a digit accepted:
    as read; a run never freezes it. Headless workers: the project's list or fewer, each with the
    login its pre-launch check showed, so quota and billing are a choice. With no pair,
    confirm the coordinator's harness, model, and effort; a session cannot read its own. When native
-   workers will run, record the model as an alias, such as `sonnet`. Confirm the
-   coordinator runs with full permissions and no sandbox: `claude --dangerously-skip-permissions`,
+   Claude workers will run, record their model as an alias, such as `sonnet`. Codex keeps its exact
+   model ID. Confirm the coordinator runs with full permissions and no sandbox:
+   `claude --dangerously-skip-permissions`,
    `codex --dangerously-bypass-approvals-and-sandbox`, or `kiro-cli chat --trust-all-tools`.
 8. **Security.** The push protection status and its reason; accept a `disabled` or `unverifiable`
    status, or stop. The acceptance goes in the session report, never the config or the run PR. The

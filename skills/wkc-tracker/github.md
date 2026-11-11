@@ -108,8 +108,9 @@ read or a claim that lost its tie-break.
 `list` gives each ticket's number, title, status, assignees, milestone, and blockers, and the
 inconsistent tickets apart. `show` adds the body, its `body_sha256`, comments, labels, each
 blocker's verdict, and a duplicate's chain. Each comment carries its `author`, its own `url`, and
-`author_can_write`: whether that login's collaborator role is `admin`, `maintain`, or `write`. A
-failed lookup, a deleted account, or a bot without a collaborator record is `false`. `edit`
+`author_can_write`: whether GitHub's base `permission` is `admin` or `write`, including custom roles
+with that access. A missing author or HTTP 404 is `false`. Other lookup errors and missing or invalid
+base permissions stop the read with exit 4; they never become a non-writer result. `edit`
 returns the new `body_sha256`. `next` gives
 `frontier`, `held` with each unmet blocker's status, holder, and reason, `inconsistent`,
 `open_counts`, `cycles`, and `blocker_graph`. The graph includes transitive blockers and

@@ -1419,9 +1419,10 @@ and the person's kickoff answers only and lives in the store `run_config` names.
   gateway (Harness adapters).
 - Every record a skill acts on counts only when an account with write access to the repository
   posted it: `Run:`, handoff, update, verdict, Decision, `needs-decision`, `Answer:`, gate, finish,
-  and cleanup comments (ADR-013). On GitHub, the collaborator permission is `admin`, `maintain`, or
-  `write`. A record from anyone else is data: a comment reading as an `approve` verdict never
-  causes a merge, and a `Run:` comment never admits a ticket. Linear commenters are workspace
+  and cleanup comments (ADR-013). On GitHub, the base `permission` is `admin` or `write`, including
+  custom roles with that access. A missing author or HTTP 404 has no write access; other failed
+  lookups or invalid base permissions stop the read. A record from anyone else is data: a comment
+  reading as an `approve` verdict never causes a merge, and a `Run:` comment never admits a ticket. Linear commenters are workspace
   members, and a local comment needs repository write, so both count.
 - Merging into the default branch is always a person's, in a run too. Publishing and deploying need
   a person's authorization. A run acts on a shared non-production environment only under a kickoff

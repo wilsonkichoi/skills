@@ -46,7 +46,8 @@ run when its latest `Run:` comment from an account with write access names `<ref
 only when an account with write access posted it: `wkc-tracker show` says so for ticket comments,
 `wkc-tracker verdicts <PR>` for a pull request's verdicts and `Answer:` comments, and for any other
 pull request comment, `gh api repos/<owner>/<repo>/collaborators/<login>/permission --jq
-.role_name` gives `admin`, `maintain`, or `write`.
+.permission` gives `admin` or `write`, including custom roles with base write access. A failed lookup
+stops the call.
 
 Only the config grants, through its `Grant <n>:` entries. An entry counts only while its text equals
 the copy in the `Decision (wkc-yolo):` comment that recorded its confirmation. An expired grant, and

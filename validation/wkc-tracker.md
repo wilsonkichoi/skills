@@ -673,7 +673,9 @@ with a config for run branch `run/m-20261029T1000` whose `Started:` line says `B
 **A53 comment authors, from PR #100 (note 4).** Direct. On the GitHub fixture, comment on a ticket as the tester and,
 from a second account without write access, comment again. `github.py show <n>`.
 PASS: each comment carries `author` and its own `url` (`#issuecomment-<id>`), and `author_can_write` is `true` for
-the tester and `false` for the second account. `make test-tracker` covers the lookup's role names and failure cases.
+the tester and `false` for the second account. Direct stubs also check custom roles with base `permission: write`,
+HTTP 404 and missing authors as `false`, and authentication, rate-limit, server, network, or malformed permission
+responses as exit 4 `read_failed` with no writes. `make test-tracker` covers these lookup subchecks.
 
 **A54 `run tickets`, from PR #100 (Y26).** Direct. On the GitHub fixture, with run config `<ref>`: a run ticket
 with the tester's `Run: <ref>` and a second account's `Run: <other>`; a closed run ticket; a ticket outside the run
@@ -5225,3 +5227,41 @@ through to `.body`, and indexing a string errors with `Cannot index string with 
 `github.md` prescribes no such construct. Its only mention of either operator instructs the reader
 not to use them, in the note that the frontier's `error()` must never be patched with `?` or
 `// []`. The shared status prelude uses neither. No fix needed.
+
+## Dated report: 2026-11-10, PR #100 writer-permission source review
+
+Attempt: focused source review of PR #100 at `ca7484d`. Selected: GitHub A53 permission
+lookup subchecks and propagation through A54 `run tickets` and A55 `verdicts`, plus static
+checks of implement 85, code-review 68, and YOLO Y26's manual permission commands. Harness:
+this Codex session. Additional AI test sessions: 0 of 6. No service fixture or model run was needed.
+
+Two verified defects were fixed. A custom role with base `permission: write` had been rejected
+because its `role_name` was not one of the built-in names. A permission API authentication,
+rate-limit, server, or network failure had returned success with `author_can_write: false`,
+which could hide a valid handoff, membership, or verdict. The lookup now uses base permission
+and propagates those failures as exit 4 `read_failed`, with no writes. Missing authors and
+HTTP 404 retain the no-writer result. Malformed base permissions also stop the read.
+
+The [GitHub collaborator API contract](https://docs.github.com/en/rest/collaborators/collaborators#get-repository-permissions-for-a-user)
+defines `permission` as the base access and `role_name` as the assigned role, including custom
+names. Manual PR-comment checks, the SPEC, README, and existing 0.0.47 changelog entry agree
+with the fix. No version increment is needed inside the existing PR.
+
+Before the fix, the existing 116 tests passed. The initial regression run produced 18 failing
+subchecks across the custom writer, invalid permission, and five failure modes through all
+three record readers. After the fix, `make test-tracker` passes all 118 tests. A53's focused
+lookup subchecks pass directly. These are controlled API stubs, not a live multi-account
+service check or full A53/A54/A55 model coverage.
+
+The source review also found kickoff's alias instruction applied to all native harnesses.
+The SPEC and Codex adapter require an exact Codex model ID. Kickoff and YOLO Y24 now scope
+aliases to native Claude workers. Static consistency passes. The existing native-first,
+fresh-ticket-read, and worker-completion instructions are explicit; no further conflict was
+established there. The alias correction is not proven to explain the older medium dispatch
+failure. Medium dispatch, quota/resume behavior, and other unselected model arms remain open.
+
+Native-first precedence, fresh ticket reads, worker completion tracking, grants, fixtures, and
+historical results remain unchanged. The checked changes are permission handling and the native
+Claude alias scope. Direct checks pass for metadata and opening fields, supporting Contents,
+unchanged fenced templates, the four manual permission commands, and `git diff --check`.
+VERSION remains 0.0.47, with the existing changelog entry updated for the whole PR.

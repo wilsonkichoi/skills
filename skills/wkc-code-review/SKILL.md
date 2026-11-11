@@ -44,8 +44,8 @@ request body is the implementer's claim, not evidence. A record this skill acts 
 finish, gate, verdict, or Decision comment, counts only when an account with write access posted
 it: `wkc-tracker show` says so for ticket comments, `wkc-tracker verdicts <PR>` for a pull request's
 verdicts and `Answer:` comments, and for any other pull request comment, `gh api
-repos/<owner>/<repo>/collaborators/<login>/permission --jq .role_name` gives `admin`, `maintain`,
-or `write`.
+repos/<owner>/<repo>/collaborators/<login>/permission --jq .permission` gives `admin` or `write`,
+including custom roles with base write access. A failed lookup stops the call.
 
 ## 1. Read the config and the target
 

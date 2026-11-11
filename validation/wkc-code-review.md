@@ -419,7 +419,8 @@ each implementation worktree its `HEAD`, index, `git status --porcelain=2 --untr
     head on its `Reviewed:` line.
     PASS: the next round does not count it or stop on it, numbers itself from writers' verdicts only, and the report
     names it. Updated for PR #100 step 5: section 2 reads the verdicts with `wkc-tracker verdicts <PR>`.
-    New, PR #100 note 4.
+    Direct permission subchecks are in tracker A53: custom roles with base write access count, and permission
+    lookup errors stop the call before a verdict or fix. New, PR #100 note 4.
 
 69. **Private scratch files.** Manual and routed rounds, including `--run`, that capture stdout and stderr,
     compare output, run tests, and post a comment. Direct: the rule precedes the first check in `SKILL.md` and the

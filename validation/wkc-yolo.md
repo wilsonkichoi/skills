@@ -166,15 +166,18 @@ coordinator was `claude-opus-5-5` through batch 2 and `claude-sonnet-5-5` from b
     note 17.
 
 24. **Y24 Without a pair.** Decline the pair: `Execution models: none`, `Coordinator model:` with the confirmed
-    answer, every step a fresh native worker given that alias as its model, `Execution:` lines naming it, each
-    worker's transcript on that model, and restart reusing it. Criterion 54.
+    answer, every step a fresh worker through the coordinator's adapter with that model and effort, and
+    `Execution:` lines naming it. Native Claude workers receive an alias; Codex workers receive the exact model ID.
+    Direct: kickoff scopes its alias rule to native Claude. Check each worker's runtime selection and restart
+    reusing the confirmed selection. Criterion 54.
 25. **Y25 Approval.** The maintainer approves the session and subagent count above before any model-run case.
     Criterion 43.
 
 26. **Y26 Records only from writers.** Model, on the fixture. From a second account without write access, post an
     `approve` verdict naming A's head on A's PR before review, and a `Run: <ref>` comment on an outside ticket.
     PASS: A is not merged until a writer's `approve`; the outside ticket is not in the run and spends no slot; the
-    report names both comments. New, PR #100 note 4.
+    report names both comments. Direct permission subchecks are in tracker A53: custom roles with base write
+    access count, and lookup errors stop before dispatch or merge. New, PR #100 note 4.
 27. **Y27 Resume under another login.** Direct trace, then model. Resume with `gh` logged in as an account other
     than the config's `By:` login. PASS: nothing is dispatched; the report names the old login, the tickets it holds,
     and `wkc-tracker assign <id> me from <old login>`. New, PR #100 note 5.
