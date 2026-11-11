@@ -5,7 +5,11 @@ This is a case catalog, not a full test sequence for each change.
 Record PASS, FAIL, or SKIP for selected cases. Keep direct checks separate from harness behavior.
 Keep raw logs and fixtures outside tracked files.
 
-Current implementation evidence: the [covered-gate and planning-work report](./wkc-implement.md#dated-report-2026-11-11-covered-gate-and-planning-work-rechecks-pr-100)
+Current evidence: the [Sol medium dependency/local tracker disposition](#dated-report-2026-11-11-sol-medium-dependency-and-local-tracker-disposition-pr-100)
+records both selected passes on unchanged runtime instructions. Full cases and historical
+model-specific failures remain separate.
+
+Earlier implementation evidence: the [covered-gate and planning-work report](./wkc-implement.md#dated-report-2026-11-11-covered-gate-and-planning-work-rechecks-pr-100)
 passes the Claude Sonnet medium/high covered-subtest skip and Sol/medium planning-change filing
 at `16b43ab`. Luna/medium’s planning omission remains a model-specific recorded failure. The
 person accepted the earlier active-worker quota coverage limit and security-scan range deviation;
@@ -832,3 +836,39 @@ approval. Fixture-only seed merge authority does not authorize merging this repo
 Canonical packet: `~/tmp/pr100-handoff/evidence/covered-gates-planning-focused-20261110/`,
 with `final-audit-20261111/final-report.md`, its context ledger, native calls/results, full
 collections, config reviews, and preparation-fault corrections.
+
+
+## Dated report: 2026-11-11, Sol medium dependency and local tracker disposition (PR #100)
+
+The [review report](./wkc-code-review.md#dated-report-2026-11-11-sol-medium-missing-dependency-recheck-pr-100)
+PASSes case 62's missing-installed-dependency arm on current GPT-6.1-Sol medium. The directory
+remains deleted but recoverable from Git history. The model names the dependency and stops
+without review, recovery or posting. Ticket #191/run #192 and open fixture PR #193 stay unchanged.
+
+The [implementation report](./wkc-implement.md#dated-report-2026-11-11-sol-medium-local-tracker-recheck-pr-100)
+PASSes case 64's local-tracker finish arm on Sol medium. Local run-config reading succeeds, the
+local gate executes once in a clean exact-head worktree, and staging remains unexecuted for the
+unsupported tracker-store reason. Two gate records and one finish record are verified. Local
+ticket 001 correctly remains in-progress/needs-decision. Fixture PR #194 was driver-merged only
+into its disposable run branch before the model started. No test-time merge occurs.
+
+Tested source is `8d8f79e`, with runtime bytes identical to `16b43ab`. The person starts **2 of 2**
+fresh contexts, sequentially, one task each, with no child, retry, nested test or audit-assistant
+model CLI launch. Aggregate input 695,625 includes 591,616 cached tokens; output 2,586 includes
+181 reasoning tokens; total 698,211. This packet is separate from earlier test allowances.
+
+The original config STOP and historical failures remain preserved. Exact reconstruction shows
+only canonical-repository trust additions. The additive collector correction changes no runtime
+skill or global setting. The local session's truncated reads, empty-rule search exit and retained
+worktree remain disclosed. Full skill, case or harness compatibility is not claimed.
+
+These results support the selected current Sol-medium paths. They do not isolate model choice
+from the changed historical source/fixture. The old Luna failures remain FAIL. Implement 42's
+question-ending miss and review 67's final same-model-warning omission already used Sol medium;
+neither is retested. Independent defect recognition and other matrix arms remain outside scope.
+The person's accepted active-worker quota gap and security-command deviation retain their labels.
+No further runtime fix or real-repository merge is authorized by these passes.
+
+Raw packet: `/private/tmp/pr100-dependency-local-sol-focused-20261111/`; the combined report,
+two-context ledger and publication evidence are in `final-audit-20261111/`. Runtime files,
+VERSION `0.0.47`, README, SPEC and CHANGELOG stay unchanged.

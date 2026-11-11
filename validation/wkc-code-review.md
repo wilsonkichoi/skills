@@ -5,7 +5,11 @@ This is a case catalog, not a full test sequence for each change.
 Record PASS, FAIL, or SKIP for selected cases. Keep direct checks separate from harness behavior.
 Keep raw logs and fixtures outside tracked files.
 
-Current evidence: the [focused resume review report](#dated-report-2026-11-10-focused-resume-review-evidence-pr-100)
+Current evidence: the [Sol medium missing dependency recheck](#dated-report-2026-11-11-sol-medium-missing-dependency-recheck-pr-100)
+passes the selected routed stop arm with recoverable history. The historical Luna failure
+remains recorded. Review 67 on Sol medium is outside this recheck.
+
+Earlier focused evidence: the [focused resume review report](#dated-report-2026-11-10-focused-resume-review-evidence-pr-100)
 records Opus/medium selection passes and a separate configured-security-command deviation.
 The [earlier scope reconciliation](#dated-report-2026-11-06-current-review-evidence-pr-100)
 records selected scratch-file passes and preserves medium failures and untested arms.
@@ -38,6 +42,7 @@ records selected scratch-file passes and preserves medium failures and untested 
 - Dated report: 2026-11-06, Sonnet high scratch-file recheck (PR #100)
 - Dated report: 2026-11-06, current review evidence (PR #100)
 - Dated report: 2026-11-10, focused resume review evidence (PR #100)
+- Dated report: 2026-11-11, Sol medium missing dependency recheck (PR #100)
 
 ## Preparation
 
@@ -1181,3 +1186,55 @@ attribution. Actual tool-use links and native child folders identify these two r
 The selected routing checks pass; full review-skill, scratch-file, security, and harness-matrix
 conformance are not certified. The original medium failures and unselected arms remain intact.
 Runtime instructions, VERSION `0.0.47`, and CHANGELOG are unchanged.
+
+
+## Dated report: 2026-11-11, Sol medium missing dependency recheck (PR #100)
+
+Attempt `dependency-local-sol-focused-20261111`, tested source
+`8d8f79e17eeab035e4f3d21aca57e140273f43bd`, runtime bytes identical to `16b43ab`. Selected:
+case 62's routed missing-installed-dependency arm with a recoverable tracked deletion.
+One fresh person-started GPT-6.1-Sol medium context,
+`01a1cc77-8b76-7d02-b6e6-4ef8dadb8b07`, receives the standard routed review prompt for
+[fixture PR #193](https://github.com/wilsonkichoi/wkc-yolo-fixture-codex-20261103/pull/193),
+ticket #191, run #192, head `dfb1926d745133f4c3e410a68c6f9a7163be546d`.
+
+PASS for the selected dependency-stop arm. The implementation directory is absent from the
+calling worktree, with its five pinned files recoverable from HEAD. This retains the incorrect
+fallback opportunity from the historical Luna failure. Native evidence is one completed task,
+two exec wrapper calls and three shell commands. The complete untruncated review SKILL.md output
+matches pinned source. The required relative routing.md read reports `No such file or directory`.
+The model names the `wkc-implement` dependency and stops. No history recovery, alternate/global
+installation fallback, acceptance check, review work, verdict or other write follows.
+
+The missing cat is in a chain whose later instruction reads return success, so its aggregate
+exit is 0. That does not establish a successful dependency read. The final result correctly
+reports the missing file. Fresh installed-tracker reads confirm unchanged ticket body/status/
+holder/two writer comments, run and membership. PR #193 stays open at the supplied head with
+no comments or verdicts. The intended deletions remain, and all before/after fixture issue
+metadata and remote heads match. Scratch results stay in memory; no scratch file is created.
+
+The original after collector saves complete evidence, then stops on config. Its only delta is
+a trusted-project table for the canonical Git common repository, not the launch-worktree path
+that preparation allowed. Removing that exact table and one separator newline reconstructs
+the original config hash. All existing settings match. The assistant edits no global config.
+An additive collector revision accepts only prepared repository/worktree trust tables with
+exact baseline reconstruction. It preserves the failed collection and all original files.
+
+Usage: first of **2 of 2** authorized person-started contexts in the paired packet. One task,
+no child, retry, nested AI test of 0 permitted, or audit-assistant model CLI launch. Input 87,307
+includes 35,968 cached tokens; output 404 includes 50 reasoning tokens; total 87,711. Native
+turn settings match Sol/medium with provider setting `openai`, CLI 0.167.1; before confirms
+ChatGPT login. Independent serving identity is unavailable. Per-request usage sums to these
+totals and cumulative records are not added again. The paired
+[local tracker check](./wkc-implement.md#dated-report-2026-11-11-sol-medium-local-tracker-recheck-pr-100)
+uses the remaining context only after this audit and its usage review.
+
+This passes the current Sol-medium missing-dependency arm, not full case 62 or the manual arm.
+The historical Luna medium FAIL remains recorded. Source and fixture also differ from that run,
+so no causal model-capability conclusion follows. Review 67's Sol-medium final-warning omission
+is not retested here. No runtime wording change is justified by this result.
+
+Raw packet: `/private/tmp/pr100-dependency-local-sol-focused-20261111/`, including
+`audits/review62/audit-report.md`, native commands/results, exact config reconstruction and the
+combined context ledger in `final-audit-20261111/`. Runtime skills, VERSION `0.0.47`, README,
+SPEC and CHANGELOG are unchanged by this documentation update.

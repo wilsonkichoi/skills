@@ -5,7 +5,11 @@ This is a case catalog, not a full test sequence for each change.
 Record PASS, FAIL, or SKIP for selected cases. Keep direct checks separate from harness behavior.
 Keep raw logs and fixtures outside tracked files.
 
-Current evidence: the [covered-gate and planning-work rechecks](#dated-report-2026-11-11-covered-gate-and-planning-work-rechecks-pr-100)
+Current evidence: the [Sol medium local tracker recheck](#dated-report-2026-11-11-sol-medium-local-tracker-recheck-pr-100)
+passes the selected local-tracker finish arm. Historical Luna failures and other arms remain
+recorded. Runtime instructions are unchanged.
+
+Earlier focused evidence: the [covered-gate and planning-work rechecks](#dated-report-2026-11-11-covered-gate-and-planning-work-rechecks-pr-100)
 pass the Claude Sonnet medium/high covered-subtest skip and Sol/medium planning-change filing
 at `16b43ab`. Luna/medium still misses the planning item on a corrected fixture. No runtime
 instruction was changed for these results. The [earlier reconciliation](#dated-report-2026-11-06-current-implementation-evidence-pr-100)
@@ -57,6 +61,7 @@ defect recognition remains open. The latest report separates the Sol planning PA
 - Dated report: 2026-11-10, case 65 high and medium recheck (PR #100)
 - Dated report: 2026-11-10, case 83 recording and duplicate reuse (PR #100)
 - Dated report: 2026-11-11, covered-gate and planning-work rechecks (PR #100)
+- Dated report: 2026-11-11, Sol medium local tracker recheck (PR #100)
 
 ## Preparation
 
@@ -2129,3 +2134,61 @@ Documentation checks pass: 28 local links/anchors, Contents, five-context ledger
 heads, unchanged historical reports/case catalogs, all 48 runtime files, contracts and version,
 and `git diff --check`. Tracker tests are outside this documentation-only update. The configured
 pre-push security scan result is recorded with the PR update.
+
+
+## Dated report: 2026-11-11, Sol medium local tracker recheck (PR #100)
+
+Attempt `dependency-local-sol-focused-20261111`, tested source
+`8d8f79e17eeab035e4f3d21aca57e140273f43bd`, runtime bytes identical to `16b43ab`. Selected:
+case 64's local-tracker finish arm on GPT-6.1-Sol medium. The person starts one fresh context,
+`01a1cc86-7680-7933-ae90-6cd91e778664`, after the paired
+[review dependency-stop audit](./wkc-code-review.md#dated-report-2026-11-11-sol-medium-missing-dependency-recheck-pr-100).
+This report reuses completed native evidence and starts no model or worker.
+
+PASS for the selected arm. The driver-built [fixture PR #194](https://github.com/wilsonkichoi/wkc-yolo-fixture-codex-20261103/pull/194)
+merged only into `run/local64-sol-medium-20261111` at
+`482c15bb0cf460aead092bccafca39d8268ee7c5`. Ticket `001` and its run config are local files.
+The prompt is a manual `finish 001 --run <local file>`, matching the historical failed mode.
+Installed `local.md` is read completely, and the run config is read as a file. No shell command
+named `wkc-tracker` is attempted and no installed dependency is falsely declared missing.
+
+Actual native calls show one `sh scripts/local-store-gate.sh local`, exit 0, `local gate ok`,
+in a clean detached worktree at the exact merged run head. The independent attempt log records
+that head, its physical cwd and empty git status. No local gate runs from the starting checkout.
+The staging command never executes; its attempt log and marker stay absent. Its result says
+`not run, unsupported grant store`, because `issue_tracker: local` with `run_config: tracker`
+cannot report an editor. The complete Grant 1 text and matching Decision copy are present.
+
+Only status changes in the original ticket fields. Exactly two gate records and one finish
+record are appended and read back with Ruby YAML status verification. The ticket ends
+`in-progress` with `needs-decision`, the same holder and blockers, the correct merged PR/run/head,
+and the supported-store action required for staging. The run config stays unchanged. No
+follow-up, discovered ticket, Run PR, review, merge or additional invocation occurs.
+
+Limits remain visible. The initial combined instruction result and initial open-PR listing
+are truncated. Full run/local backend rereads and a reduced PR-count result are preserved.
+An empty rule search returns `rg` exit 1, then the model confirms the directory contents.
+These are not gate retries or unavailable tools. The clean gate worktree is retained, and its
+`.worktrees/` parent is untracked in the calling checkout. No whole-checkout cleanup or full
+skill conformance is claimed. The earlier high check ran first in the wrong checkout; it is
+not an unqualified clean-worktree control. The old Luna medium FAIL remains recorded.
+
+Usage: this is the second of **2 of 2** authorized fresh person-started contexts, sequentially,
+one task each, zero children, retries, nested tests of 0 permitted, or assistant model CLI
+launches. Eleven native exec wrappers contain 14 shell commands. Input 608,318 includes 555,648
+cached tokens; output 2,182 includes 131 reasoning tokens; total 610,500. Native settings apply
+Sol/medium with provider setting `openai`, CLI 0.167.1; the person preflight confirms ChatGPT
+login. Independent serving identity is unavailable. Recorded quota snapshots are not live
+queries or charge estimates.
+
+Only a new canonical-repository trust table changes global config. Exact removal reconstructs
+the reviewed baseline bytes. The additive collector correction preserves the original review62
+STOP and baselines. No global config or runtime instruction was edited by the assistant.
+Fresh fixture metadata/remote-head reads match before; the two tests change only local ticket
+001's status and expected records. Full case 64, Linear and command-store arms are outside scope.
+Current source and fixture differ from the historical Luna run, so model choice is not isolated.
+
+Raw packet: `/private/tmp/pr100-dependency-local-sol-focused-20261111/`, especially
+`audits/local64/audit-report.md` and `final-audit-20261111/context-ledger.json`. The separate
+preparation probe uses `direct-probe-state`, not the model's gate-state log. Runtime skills,
+VERSION `0.0.47`, README, SPEC and CHANGELOG are unchanged by this documentation update.
