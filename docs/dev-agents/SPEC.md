@@ -1146,7 +1146,8 @@ that differs from it is reported as a mismatch.
 
    Discovered work is filed by the step that found it (Discovered work), which returns each
    ticket's id, why it is out of scope, and whether it blocks. Only the coordinator admits, one at
-   a time. Before dispatch, it posts and verifies `Run: <run config ref>`. Existing initial tickets
+   a time. It validates the ticket's current execution selection before any admission write. Before
+   dispatch, it posts and verifies `Run: <run config ref>`. Existing initial tickets
    get that comment too, without an additional charge. When two returns name tickets for the same
    work, the coordinator keeps the lower id, moves the other to `duplicate` of it, and links every
    ticket either one blocked to the survivor, before admitting it. A failed verification stops

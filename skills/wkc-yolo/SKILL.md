@@ -85,7 +85,7 @@ A ticket parked since its last step, or with an unmet blocker, waits. Otherwise 
 
 | State | Next step |
 |---|---|
-| `ready`, no holder | Post and verify `Run: <ref>` unless its latest `Run:` comment already names it. Then `wkc-implement <id> --run <ref>` |
+| `ready`, no holder | Validate its current selection with routing.md section 2 before writing. Post and verify `Run: <ref>` unless its latest `Run:` comment already names this config. Then `wkc-implement <id> --run <ref>` |
 | `in-progress` with no PR, or an incomplete handoff | `wkc-implement <id> --run <ref>`, which continues its branch |
 | `in-review`, no verdict on the head, or `fixed` | `wkc-code-review <PR> --run <ref>`, a fresh round |
 | `approve` on the head | **Merging** below. A defect this session sees goes on the PR with its evidence, then to a new `wkc-code-review` round on that head; it never reviews, closes the PR, or overrides the verdict |
@@ -140,7 +140,7 @@ and a slot left. **Used slots** are the distinct tickets absent from the initial
 `Run:` comment from a writer naming the config: `named_by_writer` in `wkc-tracker run tickets <ref>`,
 which includes transferred or canceled tickets; Decision comments are not an index. A reused out-of-scope ticket and each split or replacement child cost one;
 a backlog record, and a fix to the same ticket, cost none. Parking, canceling, splitting, or
-transferring refunds none. To admit: post and verify `Run: <ref>` on it, post a `Decision
+transferring refunds none. Before admission writes, validate its current selection with routing.md section 2. Then post and verify `Run: <ref>` on it, post a `Decision
 (wkc-yolo):` naming it and the slot on the ticket that raised it, or on the run PR when no ticket
 did, and move it to `ready`. A failed verification stops admission; on resume, read whether it
 landed before spending again. A landed `Run:` already spends its slot: finish a missing Decision

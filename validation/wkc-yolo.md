@@ -80,7 +80,8 @@ coordinator was `claude-opus-5-5` through batch 2 and `claude-sonnet-5-5` from b
    coordinator's own harness only. A pinned ID with `claude-code` dropped from `headless_workers` stops before any
    write. Native Codex uses explicit `model`, `reasoning_effort`, and `fork_turns: "none"` before the headless start.
    Kiro without a native start and with only `codex` listed creates neither branch nor config. Updated for PR #100
-   notes 11 and 12.
+   notes 11 and 12. Direct control flow: an invalid ticket selection stops before the first `Run:` write,
+   both for an initial ready ticket and an additional admission. Neither path spends an admission slot.
 
 **Model, on the fixture (needs Y25)**
 
@@ -664,3 +665,19 @@ Y28, Y32, Y33, dependency, expiry, or full case 65 PASS. It does not resolve the
 precedence finding, quota/resume behavior, case 83, or other unselected arms. No source instruction,
 fixture authority, or merge was changed by the audits. See the linked report for raw evidence,
 installation limitations, session identities, and exact scope.
+
+## Dated report: 2026-11-10, PR #100 admission selection order
+
+Focused source review at `e4c199f`, GitHub/Linear/local instruction paths. Additional AI test
+sessions: 0 of 6. Selected: Y6's direct control-flow subcheck for an invalid ticket model pair.
+The ready-ticket table posted `Run:` before routing validation; section 3's additional-admission
+path also lacked that check before its writes. This contradicted the SPEC's requirement that
+invalid selections stop before admission. Both write sites now call routing.md section 2 first.
+The validation rules retain one owner in routing.md.
+
+PASS, direct: tracing an initial ready ticket with a malformed `execution_models` value and an
+additional prerequisite with an unsupported harness reaches selection refusal before the Run,
+Decision, and status writes. No admission slot is spent. Existing membership is preserved.
+Metadata, templates, line count, README/SPEC/changelog consistency, and `git diff --check` pass.
+This is an instruction-order correction, not a new model behavior result. The older medium
+native-dispatch and quota/resume findings remain open.
