@@ -5,7 +5,13 @@ This is a case catalog, not a full test sequence for each change.
 Record PASS, FAIL, or SKIP for selected cases. Keep direct checks separate from harness behavior.
 Keep raw logs and fixtures outside tracked files.
 
-Current scope and open items: the [focused dispatch/quota/resume audit](#dated-report-2026-11-10-focused-dispatch-quota-and-resume-recheck-pr-100)
+Current implementation evidence: the [covered-gate and planning-work report](./wkc-implement.md#dated-report-2026-11-11-covered-gate-and-planning-work-rechecks-pr-100)
+passes the Claude Sonnet medium/high covered-subtest skip and Sol/medium planning-change filing
+at `16b43ab`. Luna/medium’s planning omission remains a model-specific recorded failure. The
+person accepted the earlier active-worker quota coverage limit and security-scan range deviation;
+their original result labels remain unchanged.
+
+Current dispatch scope: the [focused dispatch/quota/resume audit](#dated-report-2026-11-10-focused-dispatch-quota-and-resume-recheck-pr-100)
 passes one Codex medium native first-build dispatch and the medium/high Claude changed-pair
 resume subchecks at `909ce12`. The quota-with-an-active-worker trigger remains unexercised.
 The [earlier reconciled audit](#dated-report-2026-11-06-current-evidence-and-native-high-dispatch-pr-100)
@@ -17,7 +23,8 @@ passes selected manual zero/exhausted finish and verify checks. Other arms remai
 The [case 83 investigation](./wkc-implement.md#dated-report-2026-11-06-case-83-recognition-and-filing-pr-100)
 separates the recognized-but-unfiled finding from code inspection and the planning-change arm.
 The [focused case 83 recheck](./wkc-implement.md#dated-report-2026-11-10-case-83-recording-and-duplicate-reuse-pr-100)
-passes recording and duplicate reuse after a supplied unchecked finding. Recognition and planning remain open.
+passes recording and duplicate reuse after a supplied unchecked finding. Independent recognition
+remains open. The latest implementation report separates the Sol planning PASS from the Luna FAIL.
 
 ## Preparation
 
@@ -798,3 +805,30 @@ Documentation maintenance checks pass: 21 local links/anchors, report headings a
 Contents, evidence/ledger matching, historical-report preservation, unchanged runtime/contracts,
 and `git diff --check`. Tracker tests are outside this documentation-only change. The configured
 pre-push scan result is recorded with the PR update.
+
+
+## Dated report: 2026-11-11, current focused implementation disposition (PR #100)
+
+The [implementation report](./wkc-implement.md#dated-report-2026-11-11-covered-gate-and-planning-work-rechecks-pr-100)
+records five fresh person-started roots at unchanged runtime source `16b43ab`: Sonnet medium
+and high PASS the readiness-covered command/subtest skip; initial Luna planning is SKIP because
+of a missed fixture scan-base setup error; corrected-fixture Luna planning FAILs; Sol/medium
+PASSes with the same skill instructions and product data. The original setup and Luna failure
+are preserved. No additional source handoff rule was applied. No model was launched by audit
+or documentation maintenance. Runtime skills, VERSION `0.0.47`, and CHANGELOG remain unchanged.
+
+The selected historical Claude covered-subtest rerun regression now has matching medium/high
+passing checks. Sol’s same-context backlog call files fixture #190 at backlog without a Run
+comment, admission, planner, or SPEC edit and returns its needed planning work. This supports
+Sol/medium for that path, not a full case 83/84 or all-model compatibility claim. Luna’s miss
+remains disclosed. Independent defect recognition and other unselected arms remain separate.
+
+The person explicitly accepted the earlier unexercised active-worker quota case and narrower
+C-review security-scan range: "I'm fine with the quota case and sec-scan." This is a scope
+disposition, not a behavioral PASS or a waiver of other limits. Their original evidence stays
+intact. Real quota recovery remains untested. The real PR #100 still requires separate merge
+approval. Fixture-only seed merge authority does not authorize merging this repository.
+
+Canonical packet: `~/tmp/pr100-handoff/evidence/covered-gates-planning-focused-20261110/`,
+with `final-audit-20261111/final-report.md`, its context ledger, native calls/results, full
+collections, config reviews, and preparation-fault corrections.

@@ -5,15 +5,19 @@ This is a case catalog, not a full test sequence for each change.
 Record PASS, FAIL, or SKIP for selected cases. Keep direct checks separate from harness behavior.
 Keep raw logs and fixtures outside tracked files.
 
-Current evidence: the [dispatch and scope reconciliation](#dated-report-2026-11-06-current-implementation-evidence-pr-100)
-separates focused passes from historical failures and untested arms.
+Current evidence: the [covered-gate and planning-work rechecks](#dated-report-2026-11-11-covered-gate-and-planning-work-rechecks-pr-100)
+pass the Claude Sonnet medium/high covered-subtest skip and Sol/medium planning-change filing
+at `16b43ab`. Luna/medium still misses the planning item on a corrected fixture. No runtime
+instruction was changed for these results. The [earlier reconciliation](#dated-report-2026-11-06-current-implementation-evidence-pr-100)
+separates the other historical failures and untested arms.
 The [case 65 investigation](#dated-report-2026-11-06-case-65-repeat-finish-exception-pr-100)
 records the duplicate-write exception correction. Its [high and medium recheck](#dated-report-2026-11-10-case-65-high-and-medium-recheck-pr-100)
 passes the selected manual subchecks; other arms remain outside scope.
 The [case 83 investigation](#dated-report-2026-11-06-case-83-recognition-and-filing-pr-100)
 separates recognized findings from code inspection and keeps the planning arm independent.
 Its [focused high recheck](#dated-report-2026-11-10-case-83-recording-and-duplicate-reuse-pr-100)
-passes recording and same-session backlog reuse for a supplied unchecked finding. Recognition and planning remain open.
+passes recording and same-session backlog reuse for a supplied unchecked finding. Independent
+defect recognition remains open. The latest report separates the Sol planning PASS from the Luna FAIL.
 
 ## Contents
 
@@ -52,6 +56,7 @@ passes recording and same-session backlog reuse for a supplied unchecked finding
 - Dated report: 2026-11-06, case 83 recognition and filing (PR #100)
 - Dated report: 2026-11-10, case 65 high and medium recheck (PR #100)
 - Dated report: 2026-11-10, case 83 recording and duplicate reuse (PR #100)
+- Dated report: 2026-11-11, covered-gate and planning-work rechecks (PR #100)
 
 ## Preparation
 
@@ -59,6 +64,12 @@ Export a clean candidate tree with `git archive`, because local installation cop
 `wkc-implement`, `wkc-tracker`, and `wkc-backlog` from it into each fixture with
 `npx skills add "<clean-candidate>" -s wkc-implement -s wkc-tracker -s wkc-backlog -a claude-code -y`, and record
 `npx skills --version`.
+
+Validate the configured security-scan base before a model starts. A local clone of a calling
+checkout can omit the real remote default-branch tracking ref. Resolve that ref and the scan
+range in the exact launch checkout. When the fixture adds commits, require a nonempty range
+and positive scanner coverage. Exit 0 with an internal range error or zero scanned commits
+is not a passing scan. Preserve failed preparation evidence instead of replacing its result.
 
 Fixtures that write tickets or pull requests use throwaway repositories, never this one (ROADMAP). Each is a
 one-file bash CLI, `greet`, with `./test.sh` as `test_command`, an approved PRD, SPEC, and ROADMAP, and the installed
@@ -2004,3 +2015,117 @@ does not test independent recognition, the planning-change arm, or new-ticket cr
 behavioral context. Full case 83 remains incomplete. No review, merge, finish, verify, shared
 gate, or additional implementation call was part of this check. Historical failures and their
 original labels remain intact.
+
+
+## Dated report: 2026-11-11, covered-gate and planning-work rechecks (PR #100)
+
+Attempt: `covered-gates-planning-focused-20261110`, with two separately bounded one-context
+supplements. Candidate `16b43ab033b47f1ab0eabc962a105d52e4513d4c`; runtime skill bytes are
+unchanged from `909ce12`. Backend: GitHub. Selected: case 84 readiness-covered command/subtest
+skip on Claude Sonnet medium/high, and case 83 planning-change filing from a routed worker.
+The person started every model context. This report reuses the completed native/collector
+evidence and starts no model, worker, subagent, retry, or other harness.
+
+| Selected invocation | Result | Native identity and evidence |
+|---|---|---|
+| Sonnet/medium verify #87 under run #88 | PASS | `393fee52-33f5-4148-9f59-4dd4e04b5519` at `b5acb8972bb4009bb92352e703d041cd2b82b109`; neither covered command executes. |
+| Sonnet/high verify #87 under run #88 | PASS | `b5686fc9-accc-4394-9da7-b5420f4e89ee` at `14a306a34d27e3f2f551bc126565760ab71a410c`; same skip result at a separate head. |
+| Initial Luna/medium build #182 under run #183 | SKIP, setup blocked | `01a1cbc0-cf4a-76d2-8752-ba1cd9562573`; missing origin/main stops the build before handoff. Local `42b50fd1379d1f5566fde8a1a9c01050c8242a5f` and parked request are preserved. |
+| Corrected-fixture Luna/medium build #184 under run #185 | FAIL, planning filing | `01a1cbd6-26c4-7ae0-89fa-fb04811ac559`; [PR #186](https://github.com/wilsonkichoi/wkc-yolo-fixture-codex-20261103/pull/186) completes at `2f079d7b88159f87abb35b461098b30120e3cc3a`, but no discovery record, backlog call, or item follows. |
+| Unchanged-instruction Sol/medium build #187 under run #188 | PASS, planning filing | `01a1cbf8-30af-70e1-a3e6-b960f32cdc4c`; [PR #189](https://github.com/wilsonkichoi/wkc-yolo-fixture-codex-20261103/pull/189) at `114722e79695e1907e90ac4b80d7070eb351371e`; same-session backlog filing returns [#190](https://github.com/wilsonkichoi/wkc-yolo-fixture-codex-20261103/issues/190). |
+
+### Covered commands, case 84
+
+The fixture is `wilsonkichoi/wkc-yolo-fixture-s2-cloud-20261104`, ticket #87/run #88. The
+driver-created [seed PR #89](https://github.com/wilsonkichoi/wkc-yolo-fixture-s2-cloud-20261104/pull/89)
+merged at `61cce0b9c9d3f47adeb2d6d99da27e57f1e972a8` after explicit fixture merge approval.
+Both later heads change only README.md. None of the seed delivery paths changes again, so
+the own-file-change exception does not apply. Each head has real driver test output in its
+writer-authored readiness comment on [draft run PR #90](https://github.com/wilsonkichoi/wkc-yolo-fixture-s2-cloud-20261104/pull/90).
+No passing gate comment at that head preempts the readiness trigger.
+
+Both roots read full ticket/run/readiness state and inspect the two path diffs. Actual native
+calls show neither `make test` nor `sh tests/test_del.sh` executing anywhere, including wrappers
+or pipelines. The only executed gate is `sh scripts/del-gate.sh`, which passes with exit 0.
+Each invocation posts exactly three writer gate comments. Both covered comments link the
+exact readiness record. Ticket status stays done, with no finish, follow-up, or later step.
+The former Claude covered-subtest failure does not recur at either selected effort. Full case
+84, its other arms, and the wider harness matrix are not certified by this focused result.
+
+High reports an invalid `uv run -I` readback command. Its error remains recorded; the corrected
+read-only lookup succeeds. It is not a gate retry or an unavailable tool/service. Medium uses
+fixed /tmp comment-body paths, and high uses a fixed readback capture. These direct non-routed
+implementation calls do not carry the routed-worker scratch instruction. Scratch-isolation
+or full-skill conformance is not claimed.
+
+### Planning work, case 83
+
+The planning fixtures are in `wilsonkichoi/wkc-yolo-fixture-codex-20261103`. The original
+installation and corrected Luna base are `fcb33ca633417a99681fbc80fd1ff4859b27b6e2`. The Sol
+installation is `1a491962c17dec20b128468a05b5d6e34d685e71`. All 48 skill files and the product
+documents/ticket bodies are byte-identical between the completed Luna and Sol checks. The
+installation difference is AGENTS.md model selection; normal new IDs/paths, run selection
+metadata, and the standard prompt Execution field also differ. Effort remains medium.
+
+Luna reaches a successful help-only handoff on the corrected fixture, with the complete
+discovery/callback instructions and planning gap present in saved tool output. It then ends
+without recording or filing the separate item. No dependency, scan, or service error explains
+its omission. The internal reason is unknown. That selected planning result remains FAIL.
+
+Sol explicitly recognizes the gap, announces `wkc-backlog` use in the same context, reads its
+installed skill, and makes the corresponding tracker calls after handoff. Its durable
+`Discovered:` record copies the approved intent and missing-contract evidence. [Ticket #190](https://github.com/wilsonkichoi/wkc-yolo-fixture-codex-20261103/issues/190)
+is a design-decision item at backlog, unassigned and unblocked, with no Run comment. Run #188
+retains only #187. The final reply returns #190 and its non-blocking scope; the child record
+retains the needed SPEC contract and later ROADMAP planning. No planner starts and no contract
+or code is edited. Fresh installed-helper readbacks verify these outcomes. The help-only PRs
+remain open and unmerged with no review verdict.
+
+The model comparison is one completed sample per model, not a general capability benchmark.
+Sol/medium is the supported selection for this tested planning path. Luna’s failure remains
+disclosed. A proposed handoff reconciliation was deferred and never applied because Sol
+fulfilled the existing contract without new wording. This passes the selected planning-change
+arm on Sol. Independent defect recognition and full case 83 remain outside this result.
+
+### Setup, config, usage, and preservation
+
+The first planning clone omitted origin/main. Gitleaks exited 0 while reporting an invalid
+range and zero scanned commits. Preparation checked only the exit status and wrongly declared
+PASS. That preparation claim is withdrawn. The model correctly stopped before push/handoff,
+so planning filing is SKIP on that first context. The replacement and control use complete
+remote clones and preflight proof of a resolvable base, nonempty range, positive scanner count,
+and no internal errors. Original ticket #182 and its local unpublished work remain unchanged.
+The valid Luna/Sol model scans report two/three commits respectively before their pushes.
+
+The high preparation collector’s HTTP 503 remains preserved. A separate readback verified
+its readiness input; high’s actual before/after collections succeeded. Each Codex after STOP
+is exactly one new trusted-project entry. Exact hash reconstruction verifies those deltas.
+No global config or historical baseline was changed. Complete native/after evidence was saved
+before reporting the config mismatch.
+
+Usage: **five fresh person-started contexts**, original allowance 3 plus one setup replacement
+and one user-requested Sol control. Each has one invocation, with zero model children or nested
+AI tests of 0 allowed. The assistant launches 0 model sessions or model CLI processes. This is
+separate from the earlier seven-context dispatch/quota/resume experiment. Claude medium/high
+reported list-cost estimates total 0.5643755 USD, not verified subscription charges. Codex
+cumulative input/cached-input/output totals are 1,144,385/1,080,704/7,136 for the setup-blocked
+root, 1,314,513/1,238,144/5,177 for Luna FAIL, and 964,212/895,232/4,657 for Sol PASS.
+Cached and reasoning output tokens are not added again. These samples are not a cost benchmark.
+
+Claude request/response fields expose claude-sonnet-5-5 with the selected medium/high API
+effort. Codex native settings match each requested model and medium effort; independent serving
+backend identity is unavailable. Versions are Claude Code 2.1.322 and Codex CLI 0.167.1.
+All original failures, parked requests, fixture heads, completed snapshots, and inventory
+changes are retained in the external audit. The only later created planning ticket is #190.
+No real-repository merge or runtime instruction change occurred.
+
+Raw evidence: `~/tmp/pr100-handoff/evidence/covered-gates-planning-focused-20261110/`.
+The canonical combined report and five-context ledger are in `final-audit-20261111/`.
+Per-phase audits are in `audits/medium`, `audits/high`, `audits/planning`,
+`audits/planning-replacement`, and `audits/planning-sol-medium`. Runtime skills, VERSION
+`0.0.47`, README, SPEC, and CHANGELOG are unchanged by this evidence update.
+
+Documentation checks pass: 28 local links/anchors, Contents, five-context ledger and fixture
+heads, unchanged historical reports/case catalogs, all 48 runtime files, contracts and version,
+and `git diff --check`. Tracker tests are outside this documentation-only update. The configured
+pre-push security scan result is recorded with the PR update.
