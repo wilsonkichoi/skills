@@ -5,7 +5,9 @@ This is a case catalog, not a full test sequence for each change.
 Record PASS, FAIL, or SKIP for selected cases. Keep direct checks separate from harness behavior.
 Keep raw logs and fixtures outside tracked files.
 
-Current evidence: the [scope reconciliation](#dated-report-2026-11-06-current-review-evidence-pr-100)
+Current evidence: the [focused resume review report](#dated-report-2026-11-10-focused-resume-review-evidence-pr-100)
+records Opus/medium selection passes and a separate configured-security-command deviation.
+The [earlier scope reconciliation](#dated-report-2026-11-06-current-review-evidence-pr-100)
 records selected scratch-file passes and preserves medium failures and untested arms.
 
 ## Contents
@@ -35,6 +37,7 @@ records selected scratch-file passes and preserves medium failures and untested 
 - Dated report: 2026-11-06, Review2 scratch-file correction (PR #100)
 - Dated report: 2026-11-06, Sonnet high scratch-file recheck (PR #100)
 - Dated report: 2026-11-06, current review evidence (PR #100)
+- Dated report: 2026-11-10, focused resume review evidence (PR #100)
 
 ## Preparation
 
@@ -1123,3 +1126,58 @@ missing installed dependency. Case 67's high recheck included the same-model war
 do not establish failure of the selected Sonnet medium review configuration. Keep the medium
 failures disclosed and decide their disposition separately. No model or source fix was launched
 by this maintenance session; no limit was accepted for the person.
+
+
+## Dated report: 2026-11-10, focused resume review evidence (PR #100)
+
+Reused attempt: `dispatch-quota-resume-focused-20261110`, tested source
+`909ce12c68ab3266187f04bfed3ea3e60ebb690f`, GitHub backend. The
+[YOLO report](./wkc-yolo.md#dated-report-2026-11-10-focused-dispatch-quota-and-resume-recheck-pr-100)
+and [independent audit comment](https://github.com/wilsonkichoi/skills/pull/100#issuecomment-6788784377)
+record the selected Y22/Y28/Y32/Y33 routing subchecks, fixture heads, controller edits, contexts,
+and usage. This is reuse of the completed person-started experiment. No additional model test,
+review worker, or other harness is launched by this documentation update.
+
+- PASS, selected review routing: B's Sonnet/medium coordinator and C's Sonnet/high coordinator
+  each reread a full edited ticket before starting one fresh native general-purpose reviewer
+  with model opus and effort medium. The preceding Sonnet handoff is real in B and explicitly
+  synthetic in C. The coordinator reads the completed review result and stops in each case.
+- PASS, applied request settings: B worker `acab5e0d40150e5ce` and C worker
+  `a8f00c2c01070bcb1` use `claude-opus-5-5` with `output_config.effort = medium` in every
+  actual API request. Response fields expose Opus. Auxiliary child `pickedEffortModel` says
+  Sonnet; it is not used instead of actual request/response evidence. Verdict effort-unavailable
+  wording remains unchanged. There is no independent serving-backend attestation.
+- PASS, durable result: one writer-authored round-1 approve on each unchanged head,
+  [B PR #181](https://github.com/wilsonkichoi/wkc-yolo-fixture-codex-20261103/pull/181) at
+  `1d75980bf76b15660211cd4df0246279f69270b0` and
+  [C PR #179](https://github.com/wilsonkichoi/wkc-yolo-fixture-codex-20261103/pull/179) at
+  `2f801144cc1e1543bbfcbb30cf6e5fb47bf8c7be`. Fixing rounds stay 0. Neither reviewer changes
+  code or starts a child. Both PRs remain open; neither coordinator merges or runs a later step.
+- PASS, direct checks observed in native logs: exact help stdout comparison, exit 0 and empty
+  stderr, one usage-page diff, local `make test`, and diff checks. B's configured gitleaks scan
+  passes. C's narrower PR-range scan passes, with the separate deviation below.
+- FAIL, incidental security-command fidelity: C's reviewer runs
+  `gitleaks git --redact --log-opts="origin/run/resume-high-focused-20261110..HEAD"`.
+  The configured `security_scan` is
+  `gitleaks git --redact --log-opts="origin/main..HEAD"`. The narrower passing scan does not
+  establish that the configured command ran. Section 3's requirement to run `security_scan`
+  is already explicit. No further instruction fix is justified by this one trace, and no repair
+  session or replacement scan is used to erase it. This is not a full case 43 or 46 result.
+- SKIP, C's GitHub checks: no checks are configured on the fixture branch. The worker preserves
+  that limit in its verdict. Local checks have actual execution evidence.
+
+The full staged allowance is 7 real contexts and 5 coordinator turns, all used. B has one
+coordinator, one build, and one review; C has one coordinator and one review. The same
+coordinator UUID is reused for each experiment's two turns. There are 0 nested tests of 0
+allowed. Contexts and reviewer usage are not added again to the totals in the YOLO report.
+Cumulative reported Opus list-cost estimates are 0.5404478 USD for B and 0.4438396 USD for C;
+these are not verified subscription charges.
+
+Raw evidence is under
+`~/tmp/pr100-handoff/evidence/dispatch-quota-resume-focused-20261110/`, including
+`B/after-phase2`, `C/after-phase2`, and `final-audit-20261110/C-resume-audit.md`.
+Historical archives copied by C's broad UUID matcher are preserved and excluded from context
+attribution. Actual tool-use links and native child folders identify these two reviewers.
+The selected routing checks pass; full review-skill, scratch-file, security, and harness-matrix
+conformance are not certified. The original medium failures and unselected arms remain intact.
+Runtime instructions, VERSION `0.0.47`, and CHANGELOG are unchanged.

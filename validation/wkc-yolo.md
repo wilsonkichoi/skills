@@ -5,9 +5,13 @@ This is a case catalog, not a full test sequence for each change.
 Record PASS, FAIL, or SKIP for selected cases. Keep direct checks separate from harness behavior.
 Keep raw logs and fixtures outside tracked files.
 
-Current scope and open items: the [reconciled audit](#dated-report-2026-11-06-current-evidence-and-native-high-dispatch-pr-100)
-records the Y33 lifecycle pass and a focused native high first-build pass. The medium dispatch
-deviation remains open. Older dated reports retain their results at the time of each attempt.
+Current scope and open items: the [focused dispatch/quota/resume audit](#dated-report-2026-11-10-focused-dispatch-quota-and-resume-recheck-pr-100)
+passes one Codex medium native first-build dispatch and the medium/high Claude changed-pair
+resume subchecks at `909ce12`. The quota-with-an-active-worker trigger remains unexercised.
+The [earlier reconciled audit](#dated-report-2026-11-06-current-evidence-and-native-high-dispatch-pr-100)
+records the separate Y33 lifecycle and native high first-build passes. Older dated reports
+retain their results at the time of each attempt. The current review report records a separate
+[security-scan command deviation](./wkc-code-review.md#dated-report-2026-11-10-focused-resume-review-evidence-pr-100).
 The [case 65 high and medium recheck](#dated-report-2026-11-10-case-65-focused-recheck-pr-100)
 passes selected manual zero/exhausted finish and verify checks. Other arms remain outside scope.
 The [case 83 investigation](./wkc-implement.md#dated-report-2026-11-06-case-83-recognition-and-filing-pr-100)
@@ -681,3 +685,116 @@ Decision, and status writes. No admission slot is spent. Existing membership is 
 Metadata, templates, line count, README/SPEC/changelog consistency, and `git diff --check` pass.
 This is an instruction-order correction, not a new model behavior result. The older medium
 native-dispatch and quota/resume findings remain open.
+
+
+## Dated report: 2026-11-10, focused dispatch, quota, and resume recheck (PR #100)
+
+Attempt: `dispatch-quota-resume-focused-20261110`. Tested source:
+`909ce12c68ab3266187f04bfed3ea3e60ebb690f`. Seed:
+`3c789044136b2db9daaf2a17525d4e503cba40c4`. Backend: GitHub. Selected: Y22/Y28's
+changed-ticket-pair resume subchecks on Claude medium/high, Y28's bounded quota/stop subchecks,
+and Y32/Y33's exposed-native first-build precedence subcheck on Codex medium. The person
+started all sessions sequentially. These results reuse the completed audit's original native
+calls, applied settings, parent/child links, result-read events, tracker readbacks, and exact
+heads. This documentation update starts no model test, worker, subagent, or other harness.
+
+The [independent audit comment](https://github.com/wilsonkichoi/skills/pull/100#issuecomment-6788784377)
+records all identities, raw evidence provenance, usage, and remaining limits. Fixtures are in
+`wilsonkichoi/wkc-yolo-fixture-codex-20261103`:
+
+| Experiment | Tickets / run | Installation and delivery base | Delivery head |
+|---|---|---|---|
+| A, native medium | #172 / #173 | `9c6454683c971ce131dc25b120fc0001c5eb8a43` | [PR #180](https://github.com/wilsonkichoi/wkc-yolo-fixture-codex-20261103/pull/180), `e36d46756ada65f2f590bd02b1de2d124601b3c8` |
+| B, quota and medium resume | #174, #175 / #176 | `e553b8747e1400f04a35f829f4af6d3b1077533f` | [PR #181](https://github.com/wilsonkichoi/wkc-yolo-fixture-codex-20261103/pull/181), `1d75980bf76b15660211cd4df0246279f69270b0` |
+| C, high resume | #177 / #178 | `0096c48afe5b9462e29c7c94a7269a729b1e5f26` | [PR #179](https://github.com/wilsonkichoi/wkc-yolo-fixture-codex-20261103/pull/179), `2f801144cc1e1543bbfcbb30cf6e5fb47bf8c7be` |
+
+### Behavioral results
+
+| Selected subcheck | Result | Observed evidence |
+|---|---|---|
+| A, exposed native precedence at medium | PASS | One actual `spawn_agent` requests `gpt-6.1-sol`, `reasoning_effort: high`, `fork_turns: none`. Child runtime applies Sol/high. Its parent is Sol/medium. The native schema accepts those fields. |
+| A, completion and bounded stop | PASS | Child final at 04:27:11.920 UTC, parent receipt at 04:27:12.201, parent final at 04:27:26.203. The handoff and one-page PR agree. No review follows. |
+| B, synthetic quota and independent harness progress | PASS | One shimmed Codex/Luna medium attempt emits the prepared usage-limit event and starts no model. A writer's Decision pauses Codex with reset 2026-11-17 23:59 -0800. The Claude build runs afterward. No retry or billing/model substitution occurs. |
+| B, orderly stop | PASS | The parent receives the Sonnet build's result at 04:39:40.930 UTC and ends at 04:39:54.192. No started result is unread. |
+| B, quota with a worker already active | SKIP | Quota is read at 04:38:25.742 UTC. The Sonnet build starts at 04:38:38.815. The in-flight premature-end trigger was not exercised. |
+| B, changed pair on same medium coordinator's resume | PASS | Normal resume input, same UUID, full-ticket read result at 04:46:07.708 UTC, then fresh native Opus/medium dispatch at 04:46:15.234. Parent receives the result before stopping. |
+| C, changed pair on same high coordinator's resume | PASS | Normal resume input, same UUID, full-ticket read result at 05:59:33.660 UTC, then fresh native Opus/medium dispatch at 05:59:47.998. All 14 worker API requests match. Parent receives the result at 06:00:50.600 and ends at 06:01:06.234. |
+
+All times above are UTC on November 11, corresponding to November 10 Pacific. C's first turn
+runs Sonnet/high and receives one synthetic Codex review failure. Its seeded Sonnet handoff is
+explicitly synthetic routing history; no model built that PR. After each completed first turn,
+the controller used a fresh installed-tracker read and expected body digest to add only the
+approved ticket's `## Execution` pair: Sonnet/medium then Opus/medium. Status, holder, comments,
+handoff, PR head, run pair, and quota mode/reset were verified unchanged. No prior verdict or
+fixing-round count was reset. The two resumed prompts contain only the normal resume command.
+
+### Contexts, settings, and usage
+
+| Experiment / role | Native identity | Requested and applied settings |
+|---|---|---|
+| A coordinator | `01a1c8d6-c883-72b0-a9ce-4234b44e792d` | Sol/medium in native runtime |
+| A build | `01a1c8da-18db-7ff3-a2eb-251e4b02a0f4` | Sol/high in native runtime, fresh context |
+| B coordinator, two turns | `859959ed-7e39-4c67-b4c3-10870746a771` | Sonnet/medium in API request records |
+| B build | `af4004663eefdaf70` | Sonnet/medium in API request records |
+| B review | `acab5e0d40150e5ce` | Opus/medium in API request records |
+| C coordinator, two turns | `290f53f7-718a-405d-800f-bc548e55881a` | Sonnet/high in API request records |
+| C review | `a8f00c2c01070bcb1` | Opus/medium in API request records |
+
+Applied effort is checked separately from requested selection. Claude API/response fields expose
+`claude-sonnet-5-5` and `claude-opus-5-5`; CLI metadata exposes `firstParty`. Codex runtime
+records expose `gpt-6.1-sol` and provider setting `openai`. Independently resolved serving-backend
+identity is unavailable. The auxiliary Opus child metadata's `pickedEffortModel` says Sonnet;
+actual requests and response model fields consistently show Opus. Original verdict wording is
+preserved, including its effort-unavailable statement.
+
+Usage: **7 of 7 approved real contexts, 5 of 5 coordinator turns**. A uses 2, B uses 3, C uses 2.
+The older resumed-turn ledger has 9 entries. The synthetic quota attempts and C's seeded delivery
+start no model. The coordinator summaries count workers only; they omit their own context.
+Nested AI tests are 0 of 0. This audit/documentation session launches 0 model sessions.
+
+A's cumulative parent/child input totals are 1,294,353 / 931,174, including 1,245,312 / 871,296
+cached input, with 2,700 / 3,765 output. The final A rate snapshot reports 47% five-hour and 54%
+weekly usage. B/C's cumulative CLI list-cost estimate is 2.2518407 USD, not verified subscription
+charges. Phase-two modelUsage already includes phase one and is not counted twice. Detailed
+per-model usage is retained in the external audit.
+
+### Preservation, limits, and current disposition
+
+The final reads confirm all three fixture PRs open and unmerged at the heads above. Tickets
+#172/#175/#177 remain in-review; #174 is ready and unclaimed. All 86 historical ticket inventory
+entries and all 85 pre-A remote heads are unchanged. Full historical bodies were not rehashed.
+Only A/B's delivery branches were added after pre-A. The installed 48-file trees and pinned
+product executable, SPEC, and help test match the source/seed manifest in each stage's calling
+worktrees. No merge, finish, verify, grant, admission, fixing round, or later planning step ran.
+
+A's original after collector stopped on an added global repository-trust entry. Exact baseline
+reconstruction proves that trust-only delta. The original partial folder and baseline remain
+intact; a separate forensic collection and additive reviewed baselines completed the audit.
+C's UUID-text collector copied historical archives referenced in project-trust keys. They are
+preserved and excluded from new context counts; attribution uses actual starts and native links.
+A's exact encrypted worker-prompt text is SKIP; its selection, fresh-context flag, actions, and
+result remain inspectable. No config, fixture, pinned source, or raw evidence was repaired.
+
+The [review evidence](./wkc-code-review.md#dated-report-2026-11-10-focused-resume-review-evidence-pr-100)
+records an incidental FAIL: C's reviewer ran a narrower PR-range gitleaks scan instead of the
+configured command. GitHub checks are SKIP because none are configured. These observations
+limit review-skill conformance and do not change the selected routing/resume PASS.
+
+The selected medium native first-build regression and medium/high edited-pair resume subchecks
+now pass. The historical in-flight quota-stop failure remains unresolved by this run. Real quota
+recovery, outage/token-refresh behavior, authentication cancellation, other step types, and full
+Y28/Y32/Y33 remain untested. Older historical failures remain recorded above. No merge-readiness
+claim or acceptance of remaining limits is made.
+
+Raw packet and final report:
+`~/tmp/pr100-handoff/evidence/dispatch-quota-resume-focused-20261110/`, especially
+`final-audit-20261110/final-report.md`, `final-audit-20261110/context-ledger.json`,
+`final-audit-20261110/C-resume-native-evidence.json`, the per-phase collections, and the A/B/C
+audit directories. Original evidence stays outside the
+tracked report. Runtime skills, VERSION `0.0.47`, and CHANGELOG are unchanged by this update.
+
+
+Documentation maintenance checks pass: 21 local links/anchors, report headings and review
+Contents, evidence/ledger matching, historical-report preservation, unchanged runtime/contracts,
+and `git diff --check`. Tracker tests are outside this documentation-only change. The configured
+pre-push scan result is recorded with the PR update.
