@@ -200,10 +200,12 @@ Ranked. Ranking is importance, not delivery order; the ROADMAP sets the order.
 - **Subscription execution** (maintainer, 2026-10-27, revised 2026-11-03): any supported harness
   coordinates a run when it can start a fresh worker for each step's selection, through its own
   native subagent or a headless CLI that `headless_workers` lists. Workers use the user's existing
-  subscription login. The workflow does not use API billing fallback, authentication changes, or
-  automatic model substitution. Before each headless launch, the coordinator checks that the
-  harness will use a subscription login and no API key. `claude-code` is in the default
-  `headless_workers` on that condition, and a project may remove any harness from the list.
+  login. The workflow does not use billing fallback, authentication changes, or automatic model
+  substitution. Before each headless launch, the coordinator checks the harness's login. A Codex
+  worker must use a subscription login and no API key. A Claude worker uses the Claude provider
+  the user configured, which may be a subscription, an API key, a gateway, Bedrock, or Vertex
+  (maintainer, 2026-11-12). `claude-code` is in the default `headless_workers`, and a project may
+  remove any harness from the list.
   Unsupported settings or coordinators produce a blocked result or a parked ticket. A quota or
   rate-limit error pauses only that harness's steps, so a pair never reviews its own work while
   one harness waits. An authentication error stops all worker dispatch. Workers run with full
@@ -287,6 +289,12 @@ in [ADR-009](./adr/ADR-009-run-budgets-continuations-and-model-routing.md). Thei
 and integration validation remain downstream work.
 
 ## Changes
+
+- 2026-11-12: Maintainer decision: Claude workers use the Claude provider the user configured,
+  including an API key, a gateway, Bedrock, or Vertex, and are no longer limited to a claude.ai
+  subscription. Codex workers keep the subscription-login rule. Replaced "Workers use the user's
+  existing subscription login" and "the coordinator checks that the harness will use a
+  subscription login and no API key" (SPEC Changes, same date; ADR-015).
 
 - 2026-11-03: Maintainer decisions from the PR #100 review. Corrected the record: the 2026-10-27
   and 2026-10-28 entries said `claude -p` was unreliable on the maintainer's subscription. That

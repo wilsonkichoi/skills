@@ -3,6 +3,8 @@
 Date: 2026-11-03. Status: accepted (maintainer, PR #100 review notes 10 to 15).
 Amends [ADR-009](./ADR-009-run-budgets-continuations-and-model-routing.md): the coordinator, the
 harness list, manual routing, the unknown-reviewer park, and the quota stop.
+Amended by [ADR-015](./ADR-015-claude-workers-use-the-configured-provider.md): the `claude -p`
+pre-launch check no longer requires a claude.ai login.
 
 ## Context
 

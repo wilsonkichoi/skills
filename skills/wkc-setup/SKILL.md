@@ -199,9 +199,10 @@ Offer, recommended first:
 3. None: a run uses the coordinator's own model for every step.
 
 Then ask for `headless_workers`, the harnesses whose headless CLI a run may start, with
-`[claude-code, codex, kiro-cli]` first. Say that before each launch the run checks that the CLI will
-use a subscription login and no API key, and refuses the launch otherwise, so listing one never
-turns on API billing.
+`[claude-code, codex, kiro-cli]` first. Say that before each launch the run checks the CLI's login.
+A `codex` worker must use a ChatGPT login and no API key, and the run refuses the launch otherwise.
+A `claude-code` worker uses the Claude provider already configured, whether a subscription, an API
+key, a gateway, Bedrock, or Vertex, so listing it accepts that billing.
 
 Workers run with full permissions and no sandbox, and no skill can read its permission mode, so
 say how to launch a coordinator: `claude --dangerously-skip-permissions`, or

@@ -94,7 +94,7 @@ coordinator was `claude-opus-5-5` through batch 2 and `claude-sonnet-5-5` from b
 5. **Y5 Setup allowance.** `wkc-setup` case 12.
 6. **Y6 Adapter argument shape.** Read `adapters.md`. PASS: `codex exec` gets `-m <model> -c
    model_reasoning_effort=<effort>`, `kiro-cli chat --no-interactive` gets `--model <model> --effort <effort>
-   --trust-all-tools`, `claude -p` gets its prompt on standard input with the API-key variables removed, a native
+   --trust-all-tools`, `claude -p` gets its prompt on standard input in the coordinator's environment, with no variable removed, a native
    Claude worker always gets the effort and an alias model, never an unset one, and a run without a pair uses the
    coordinator's own harness only. A pinned ID with `claude-code` dropped from `headless_workers` stops before any
    write. Native Codex uses explicit `model`, `reasoning_effort`, and `fork_turns: "none"` before the headless start.

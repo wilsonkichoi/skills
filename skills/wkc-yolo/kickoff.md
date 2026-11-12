@@ -66,7 +66,7 @@ recommended one first, a digit accepted:
 7. **Execution.** The project's model pair, or the default `claude-code`/`opus` then
    `codex`/`gpt-6.1-sol`, both effort `medium`, or none. List each ticket's `## Execution` override
    as read; a run never freezes it. Headless workers: the project's list or fewer, each with the
-   login its pre-launch check showed, so quota and billing are a choice. With no pair,
+   provider and login its pre-launch check showed, so quota and billing are a choice. With no pair,
    confirm the coordinator's harness, model, and effort; a session cannot read its own. When native
    Claude workers will run, record their model as an alias, such as `sonnet`. Codex keeps its exact
    model ID. Confirm the coordinator runs with full permissions and no sandbox:

@@ -139,9 +139,10 @@ blocks the call even with a ChatGPT login.
 In a run, the `wkc-yolo` session coordinates, from Claude Code, Codex, or Kiro CLI. Every step,
 `finish` and `verify` included, runs in its own fresh session: a native agent where the harness has
 one, otherwise `claude -p`, `codex exec`, or `kiro-cli chat --no-interactive`, each only when
-`headless_workers` lists it. Before each headless launch the run checks that the CLI will use your
-subscription login and no API key, and refuses the launch otherwise. A quota error pauses only that
-harness's steps. The adapters live in `skills/wkc-implement/adapters.md`.
+`headless_workers` lists it. Before each headless launch the run checks the CLI's login. `codex
+exec` must use your ChatGPT login and no API key. Claude workers use the Claude provider you
+configured: a subscription, an API key, a gateway, Bedrock, or Vertex. The run never switches it. A
+quota error pauses only that harness's steps. The adapters live in `skills/wkc-implement/adapters.md`.
 
 Workers run with full permissions and no sandbox. No skill can read its own permission mode, so
 launch the coordinator in bypass mode:

@@ -27,12 +27,20 @@ which can run another model than the session's. A pinned ID always takes the hea
 several values, so a prompt written after it would be read as a tool name:
 
 ```
-env -u ANTHROPIC_API_KEY -u ANTHROPIC_AUTH_TOKEN claude -p --model <model> --effort <effort> --dangerously-skip-permissions --settings '{"sandbox":{"enabled":false}}' --disallowed-tools Agent --output-format json < <prompt file>
+claude -p --model <model> --effort <effort> --dangerously-skip-permissions --settings '{"sandbox":{"enabled":false}}' --disallowed-tools Agent --output-format json < <prompt file>
 ```
 
-**Model names:** `opus`, `sonnet`, `haiku`, or `fable`, each following the newest release of its
-family, or a pinned ID such as `claude-opus-5-5`. **Canonical id:** the resolved ID when evidence
-shows it, otherwise the alias's family at its newest release.
+**Provider:** a Claude worker uses the Claude provider the person configured, as the coordinator's
+environment and settings give it: a claude.ai login, an API key or `apiKeyHelper`, a gateway
+through `ANTHROPIC_BASE_URL`, Bedrock, or Vertex. Never change it, and never fall back to another.
+
+**Model names:** `opus`, `sonnet`, `haiku`, or a pinned ID: an Anthropic ID such as
+`claude-opus-5-5`, or the provider's own model ID on Bedrock, Vertex, or a gateway. **Canonical
+id:** the Anthropic model ID, such as `claude-opus-5-5`; a Bedrock or Vertex ID names the same model
+with a provider prefix or version suffix. It is the resolved ID when evidence shows it. Otherwise,
+with `apiProvider: firstParty` and no `ANTHROPIC_BASE_URL`, an alias is its family at its newest
+release. On any other provider or gateway, an alias follows that provider's configuration, so its
+canonical id is known only from evidence.
 
 **Coordinator checks**, once before a Claude Code coordinator's first worker: read
 `sandbox.enabled` and `permissions.disableBypassPermissionsMode` from every Claude Code settings
@@ -46,10 +54,10 @@ launches the coordinator with `claude --dangerously-skip-permissions`, or
 
 **Pre-launch checks**, before every launch or resume:
 
-- `claude auth status --json` reports `loggedIn: true`, `authMethod: claude.ai`, and
-  `apiProvider: firstParty`.
-- No settings file above sets `apiKeyHelper`, and `ANTHROPIC_BASE_URL`, `CLAUDE_CODE_USE_BEDROCK`,
-  and `CLAUDE_CODE_USE_VERTEX` are unset.
+- `claude auth status --json` reports `loggedIn: true`. Read only `loggedIn`, `authMethod`,
+  `apiProvider`, and `apiKeySource`, because the output also holds account details. The last three
+  name the provider and billing the worker will use; `apiKeySource` appears only when an API key
+  takes over from a claude.ai login.
 - `CLAUDE_CODE_EFFORT_LEVEL`, when set, equals the resolved effort; it would override the worker's.
   Record `CLAUDE_CODE_SUBAGENT_MODEL` when set: it picks the model only of a native agent with no
   `model`, which routing never starts.

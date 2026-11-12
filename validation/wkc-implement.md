@@ -561,13 +561,13 @@ error while a flag file is absent, a check the merged code fails, and a smoke te
     status --help`, `codex exec --help`, `codex exec resume --help`, `kiro-cli chat --help`).
     PASS: the `codex exec` command carries `-C`, `-m`, `-c model_reasoning_effort=`, `-c model_provider="openai"`,
     `-c forced_login_method="chatgpt"`, `--dangerously-bypass-approvals-and-sandbox`, and `env -u CODEX_API_KEY -u
-    OPENAI_API_KEY`; the `claude -p` command carries `env -u ANTHROPIC_API_KEY -u ANTHROPIC_AUTH_TOKEN`, `--model`,
+    OPENAI_API_KEY`; the `claude -p` command carries no `env -u` and removes no variable, and carries `--model`,
     `--effort`, `--dangerously-skip-permissions`, `--settings '{"sandbox":{"enabled":false}}'`, `--disallowed-tools
     Agent`, and `--output-format json`, with the prompt on standard input; the `kiro-cli` command carries
     `--no-interactive`, `--model`, `--effort`, `--trust-all-tools`, and `--output-format stream-json`; `--continue`,
     `codex review`, `resume --last`, and `fork` appear only as forbidden; each flag exists in the installed CLI's help.
     Parse the Codex resume command with `--help`, without starting a session: `-C` is before `resume`. Updated for PR
-    #100 notes 11 and 12.
+    #100 notes 11 and 12, and for ADR-015.
 
 77. **Coordinator and pre-launch checks.** AI session, dry run, as case 74, with `HOME` and `CODEX_HOME` pointing at
     fixture directories. Fixtures: `sandbox.enabled: true` in the project's `.claude/settings.json`;
@@ -575,12 +575,16 @@ error while a flag file is absent, a check the merged code fails, and a smoke te
     about; a Codex `config.toml` with `model_provider` set to a custom provider whose `env_key` names a variable; the
     same with `forced_login_method = "chatgpt"` and a ChatGPT login; `OPENAI_BASE_URL` set; a clean config; a
     top-level `openai_base_url` or `chatgpt_base_url` pointing at a controlled custom endpoint; an endpoint override
-    supplied by the system layer rather than the user config; `apiKeyHelper` in a Claude settings fixture;
-    `ANTHROPIC_BASE_URL` set; a `claude auth status` fixture showing an API-key login; `kiro-cli whoami` signed out.
+    supplied by the system layer rather than the user config; `kiro-cli whoami` signed out. Claude provider
+    fixtures: `apiKeyHelper` in a Claude settings fixture; `ANTHROPIC_BASE_URL` set; `CLAUDE_CODE_USE_BEDROCK=1`;
+    `ANTHROPIC_API_KEY` set beside a claude.ai login; a `claude auth status` fixture with `loggedIn: false`.
     PASS: every unsafe fixture gives a blocked result naming the file or variable and no command, and prints no key
     value; the clean ones pass with the command; the signed-out Kiro fixture starts no login and no
-    `--list-models`. A configuration layer whose effective routing cannot be verified blocks the call. The session
-    reports the permission mode as the person's launch choice, never as observed. Updated for PR #100 note 11.
+    `--list-models`. Each Claude provider fixture with `loggedIn: true` passes with the command and reports its
+    `authMethod`, `apiProvider`, and `apiKeySource` when present, and prints no email, organization, or key value;
+    the `loggedIn: false` fixture is blocked. No Claude fixture changes or removes a variable or setting. A configuration layer whose effective routing cannot be verified blocks the call. The session
+    reports the permission mode as the person's launch choice, never as observed. Updated for PR #100 note 11, and
+    for ADR-015.
 
 78. **Manual call with a pair.** Rerun cases 5 and 68 manually with the default pair in the config, and again with a
     ticket `## Execution` pair.
@@ -598,8 +602,8 @@ error while a flag file is absent, a check the merged code fails, and a smoke te
     coordinator, once in Claude Code and once in Codex: an `opus` build step, a `gpt-6.1-sol` review step, a fresh
     `opus` review step, a `finish` step, and a `claude -p` worker started from the Codex coordinator.
     PASS: each handoff, update, and verdict carries the requested `Execution:` line and an `Observed execution:` line
-    from runtime evidence or `unavailable`; the Codex worker ran under a ChatGPT login and the Claude workers under a
-    `claude.ai` first-party login, with no API key in their environment; no worker started a subagent, and the report
+    from runtime evidence or `unavailable`; the Codex worker ran under a ChatGPT login and the Claude workers under the
+    Claude provider kickoff showed, with no variable removed or changed; no worker started a subagent, and the report
     records whether `CLAUDE_CODE_MAX_SUBAGENT_SPAWN_DEPTH=1` was set. Updated for PR #100 notes 10 and 11; the
     2026-11-03 live check covered only the `claude -p`-from-Codex launch.
 

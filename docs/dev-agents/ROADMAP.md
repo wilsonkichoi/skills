@@ -59,8 +59,9 @@ Ticket scope and Gate classes, Push check, Security, Failure handling, Grants an
 `security_scan`, `run_config`, `max_additional_tickets`, `max_parallel_workers`, `execution_models`,
 `headless_workers`; Harness adapters; Decisions and open requests; ADR-006, ADR-007, ADR-008,
 [ADR-009](./adr/ADR-009-run-budgets-continuations-and-model-routing.md), ADR-012, ADR-013, and
-ADR-014. Any harness with a complete adapter coordinates a run; workers use subscription logins
-behind each adapter's login check, and no API billing fallback or nested workers are introduced. There is no elapsed-time run budget.
+ADR-014, and ADR-015. Any harness with a complete adapter coordinates a run; workers use their
+configured logins behind each adapter's login check (a subscription login for Codex, the configured
+Claude provider for Claude), and no billing fallback or nested workers are introduced. There is no elapsed-time run budget.
 `max_fix_attempts`, grant expiry, command timeouts, and existing session limits remain. A
 local-backend run end to end is M6's.
 
@@ -108,10 +109,10 @@ Instruction-following checks use only explicitly authorized sessions within the 
   warns when the same harness and model made the preceding step. Under a run, every skill call,
   `finish` and `verify` included, runs in its own fresh session and returns a short result that the
   coordinator checks against the records. Integration validation confirms Claude native-agent,
-  `claude -p`, and explicit-model `codex exec` dispatch with effective subscription provider and
-  login, from a Claude Code coordinator and from a Codex coordinator. A stored ChatGPT login plus
-  an API-key gateway configuration is refused, and so is a `claude -p` launch whose login check
-  shows an API key. All workers count against the same `max_parallel_workers` limit. No worker
+  `claude -p`, and explicit-model `codex exec` dispatch with the effective provider and login,
+  from a Claude Code coordinator and from a Codex coordinator. A stored ChatGPT login plus an
+  API-key gateway configuration is refused. A `claude -p` launch runs on the configured Claude
+  provider, and kickoff shows which one. All workers count against the same `max_parallel_workers` limit. No worker
   delegates. No API fallback or automatic substitution occurs. A ticket cannot change the headless
   list, and removing a harness from the project config during a run stops further dispatch to it.
   A run without a pair runs each role on its own harness in fresh sessions, at the model and effort

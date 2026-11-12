@@ -244,8 +244,10 @@ Opus release are one model.
 start when the adapter has one that accepts the selection, otherwise its headless start, only for
 a harness `headless_workers` lists. The default lists `claude-code`, `codex`, and `kiro-cli`
 (maintainer, 2026-11-03). Before every headless launch or resume, the adapter's login check must
-pass, so a headless CLI never runs on an API key or a gateway. The coordinator never changes or
-switches a login. The list is project config only: a ticket's `## Execution` cannot set it,
+pass. A Codex worker never runs on an API key or a gateway. A Claude worker uses the Claude
+provider the person configured, which may be a subscription, an API key, a gateway, Bedrock, or
+Vertex (maintainer, 2026-11-12; ADR-015). The coordinator never changes or switches a provider or
+login. The list is project config only: a ticket's `## Execution` cannot set it,
 delegated planning never changes it, and a run records it at kickoff and may drop harnesses but
 never add one. Each dispatch uses only a harness that both the run's list and the current project
 config name, so removing a harness from the project withdraws it from the next dispatch.
@@ -415,17 +417,17 @@ effort, permission, and nesting controls were not verified (ADR-012).
 | | `claude-code` | `codex` | `kiro-cli` |
 |---|---|---|---|
 | Native start | From a Claude Code coordinator: an Agent call, not a fork, `general-purpose`, `model` an alias, explicit `effort`. Never an unset model, which can resolve to another model than the session's | From a Codex coordinator: `spawn_agent` with `fork_turns: "none"`, `model`, and `reasoning_effort` | Not used until a Kiro subagent's model and effort can be set explicitly |
-| Headless start | `claude -p --model <model> --effort <effort> --dangerously-skip-permissions --settings '{"sandbox":{"enabled":false}}' --disallowed-tools Agent --output-format json`, from the checkout, with `ANTHROPIC_API_KEY` and `ANTHROPIC_AUTH_TOKEN` removed. The prompt goes on standard input: `--disallowed-tools` takes several values and would read a trailing prompt as a tool name | `env -u CODEX_API_KEY -u OPENAI_API_KEY codex exec -C <checkout> -m <model> -c model_reasoning_effort=<effort> -c model_provider="openai" -c forced_login_method="chatgpt" --dangerously-bypass-approvals-and-sandbox --json -o <last message file> -`, prompt on standard input | `kiro-cli chat --no-interactive --model <model> --effort <effort> --trust-all-tools --output-format stream-json "$(cat <prompt file>)"`, from the checkout |
-| Model names | An alias (`opus`, `sonnet`, `haiku`, `fable`), or a pinned ID on the headless start only | The exact ID `codex exec -m` takes | An ID `kiro-cli chat --list-models` lists |
-| Canonical id | The resolved ID when evidence shows it, otherwise the alias's family at its newest release | The model ID | The vendor model its list entry names |
-| Pre-launch checks | `claude auth status` reports `loggedIn: true`, `authMethod: claude.ai`, and `apiProvider: firstParty`. No `apiKeyHelper` in the visible settings, and `ANTHROPIC_BASE_URL`, `CLAUDE_CODE_USE_BEDROCK`, and `CLAUDE_CODE_USE_VERTEX` unset. The sandbox and bypass settings above. `CLAUDE_CODE_EFFORT_LEVEL`, when set, equals the resolved effort | `codex login status` reports a ChatGPT login. Every effective configuration layer (system and cloud-managed defaults, `~/.codex/config.toml` or `$CODEX_HOME/config.toml`, the selected profile, and trusted project layers) has `model_provider` absent or `openai`, and no provider sets `env_key`, `base_url`, `http_headers`, `env_http_headers`, or bearer-token authentication. No `openai_base_url` or `chatgpt_base_url`, and `OPENAI_BASE_URL` unset. Read key names only, never values | `kiro-cli whoami` reports a login. Never start a login: `--list-models` opens a browser sign-in when signed out |
+| Headless start | `claude -p --model <model> --effort <effort> --dangerously-skip-permissions --settings '{"sandbox":{"enabled":false}}' --disallowed-tools Agent --output-format json`, from the checkout, in the coordinator's environment. The prompt goes on standard input: `--disallowed-tools` takes several values and would read a trailing prompt as a tool name | `env -u CODEX_API_KEY -u OPENAI_API_KEY codex exec -C <checkout> -m <model> -c model_reasoning_effort=<effort> -c model_provider="openai" -c forced_login_method="chatgpt" --dangerously-bypass-approvals-and-sandbox --json -o <last message file> -`, prompt on standard input | `kiro-cli chat --no-interactive --model <model> --effort <effort> --trust-all-tools --output-format stream-json "$(cat <prompt file>)"`, from the checkout |
+| Model names | An alias (`opus`, `sonnet`, `haiku`, `fable`), or a pinned ID on the headless start only: an Anthropic ID, or the provider's own model ID on Bedrock, Vertex, or a gateway | The exact ID `codex exec -m` takes | An ID `kiro-cli chat --list-models` lists |
+| Canonical id | The Anthropic model ID; a Bedrock or Vertex ID names the same model with a provider prefix or version suffix. The resolved ID when evidence shows it. Otherwise, with `apiProvider: firstParty` and no `ANTHROPIC_BASE_URL`, the alias's family at its newest release; on any other provider or gateway, known only from evidence | The model ID | The vendor model its list entry names |
+| Pre-launch checks | `claude auth status --json` reports `loggedIn: true`; its `authMethod`, `apiProvider`, and `apiKeySource` name the configured provider, which the coordinator records and never changes. The sandbox and bypass settings above. `CLAUDE_CODE_EFFORT_LEVEL`, when set, equals the resolved effort | `codex login status` reports a ChatGPT login. Every effective configuration layer (system and cloud-managed defaults, `~/.codex/config.toml` or `$CODEX_HOME/config.toml`, the selected profile, and trusted project layers) has `model_provider` absent or `openai`, and no provider sets `env_key`, `base_url`, `http_headers`, `env_http_headers`, or bearer-token authentication. No `openai_base_url` or `chatgpt_base_url`, and `OPENAI_BASE_URL` unset. Read key names only, never values | `kiro-cli whoami` reports a login. Never start a login: `--list-models` opens a browser sign-in when signed out |
 | Quota signal | An error result naming a usage or rate limit, with its reset time when given | A failed turn or error event naming a usage or rate limit | An error naming exhausted credits or a rate limit |
 | Runtime evidence | The native agent's result; `modelUsage` in the JSON output | `--json` events. `codex-cli` 0.166.0 names no model there, so `Observed execution` is `unavailable` | `stream-json` events, when they name the model |
 | Resume by id | The native agent by its id; `claude -p --resume <id>` with the headless flags | `codex exec -C <checkout> resume <session id>` with the headless flags; `-C` goes before `resume` | `kiro-cli chat --resume-id <id>` with the headless flags |
 
 Never use `claude -p --continue`, `codex review`, `codex exec review`, `resume --last`, or a fork.
 Codex never runs its built-in `codex review`. Any failed pre-launch check blocks that launch, with
-no API-key fallback, no login change, and no other effort. Record `CLAUDE_CODE_SUBAGENT_MODEL` when
+no change of provider or login, and no other effort. Record `CLAUDE_CODE_SUBAGENT_MODEL` when
 set: it picks the model only of a native agent with no `model`, which this section never starts.
 
 Kiro CLI as a pair entry, a no-pair worker beyond the argument shape, and a coordinator are SKIP
@@ -1416,8 +1418,9 @@ and the person's kickoff answers only and lives in the store `run_config` names.
 
 - Credentials stay in `gh auth` and the Linear MCP server. No skill reads, stores, or prints them.
 - No skill changes a harness login. A headless worker runs only for a harness `headless_workers`
-  lists, and only after its adapter's login check shows a subscription login and no API key or
-  gateway (Harness adapters).
+  lists, and only after its adapter's login check passes: a Codex worker on a ChatGPT login with
+  no API key or gateway, a Claude worker on the Claude provider the person configured (Harness
+  adapters).
 - Every record a skill acts on counts only when an account with write access to the repository
   posted it: `Run:`, handoff, update, verdict, Decision, `needs-decision`, `Answer:`, gate, finish,
   and cleanup comments (ADR-013). On GitHub, the base `permission` is `admin` or `write`, including
@@ -1524,6 +1527,11 @@ the previous tag. Each port also updates the README roster, the repository map u
 
 ## Decisions
 
+- A Claude worker uses the Claude provider the person configured: a subscription, an API key or
+  `apiKeyHelper`, a gateway, Bedrock, or Vertex. The coordinator records it at kickoff and never
+  changes it. Codex workers keep the ChatGPT-login rule. Chosen over refusing every Claude provider
+  but a claude.ai login, which blocked adopters whose Claude access is a gateway or a cloud
+  provider (maintainer, 2026-11-12; [ADR-015](./adr/ADR-015-claude-workers-use-the-configured-provider.md)).
 - Under `--run`, each skill call runs in its own fresh session on the selected model, and any
   harness with a complete adapter can be a pair entry, a worker, or a coordinator. Manual calls
   run in the calling session. A quota error pauses one harness. Chosen over a delegated skill
@@ -1684,6 +1692,9 @@ the previous tag. Each port also updates the README roster, the repository map u
 
 ## Open unknowns
 
+- No Claude worker has run on Bedrock, Vertex, a gateway, or an API key (ADR-015). Only `claude auth
+  status --json` was read for each on 2026-11-12. How `modelUsage` names a Bedrock or Vertex model,
+  and the quota error text each provider gives, are unconfirmed.
 - On 2026-11-03, `claude -p` ran on the subscription login from Claude Code and from a `codex
   exec` coordinator (ADR-012). Kiro CLI as a pair entry or coordinator is unvalidated, and its
   account must offer the models a pair names.
@@ -1699,6 +1710,14 @@ the previous tag. Each port also updates the README roster, the repository map u
 - Implementation must confirm which `claude -p` error text marks a usage limit and its reset time.
 
 ## Changes
+
+- 2026-11-12: Maintainer decision: a Claude worker uses the Claude provider the person configured,
+  and the `claude-code` pre-launch check requires only a login and records the provider (ADR-015).
+  Removed the `claude.ai`/`firstParty` requirement, the `apiKeyHelper`, `ANTHROPIC_BASE_URL`,
+  `CLAUDE_CODE_USE_BEDROCK`, and `CLAUDE_CODE_USE_VERTEX` refusals, and the removal of
+  `ANTHROPIC_API_KEY` and `ANTHROPIC_AUTH_TOKEN` from the headless start. Canonical ids cover
+  Bedrock and Vertex model IDs, and an alias on another provider resolves only from evidence
+  (Model selection and dispatch, Harness adapters, Security, Decisions). Codex is unchanged.
 
 - 2026-11-03: Maintainer decisions from the PR #100 review, notes 1 to 23 (PRD Changes, same
   date). Config fields: `wkc-setup` writes every required field and a skill stops on a missing one;

@@ -22,7 +22,7 @@ execution_models:                           # optional; absent means no pair. Us
   - harness: codex
     model: gpt-6.1-sol
     effort: medium
-headless_workers: [claude-code, codex, kiro-cli]  # required; claude-code / codex / kiro-cli. Headless CLIs a wkc-yolo run may start, each only after its subscription-login check passes
+headless_workers: [claude-code, codex, kiro-cli]  # required; claude-code / codex / kiro-cli. Headless CLIs a wkc-yolo run may start, each only after its adapter's login check passes
 ---
 
 # Project development conventions

@@ -113,8 +113,8 @@ counted by `wkc-code-review` from verdicts alone; a new pair or a restart never 
 Run the adapter's coordinator checks once before the run's first worker, and its pre-launch checks
 before every launch or resume (adapters.md). No skill can read its session's permission mode: the
 person launches the coordinator with full permissions, as kickoff confirms, and the report never
-calls the mode observed. Any failed check stops that launch, with no API-key fallback, no login
-change, and no other effort.
+calls the mode observed. Any failed check stops that launch, with no change of provider or login,
+and no other effort.
 
 Start one fresh worker, through the adapter's native start when it accepts the selection, otherwise
 its headless start when the headless workers list it; never another harness's start. It is never a
