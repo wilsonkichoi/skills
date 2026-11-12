@@ -5,7 +5,10 @@ This is a case catalog, not a full test sequence for each change.
 Record PASS, FAIL, or SKIP for selected cases. Keep direct checks separate from harness behavior.
 Keep raw logs and fixtures outside tracked files.
 
-Current evidence: the [Sol medium missing dependency recheck](#dated-report-2026-11-11-sol-medium-missing-dependency-recheck-pr-100)
+Current evidence: the [Sol medium same-model final-report recheck](#dated-report-2026-11-12-sol-medium-same-model-final-report-recheck-pr-100)
+passes the selected manual warning check. Historical failures remain recorded.
+
+Earlier evidence: the [Sol medium missing dependency recheck](#dated-report-2026-11-11-sol-medium-missing-dependency-recheck-pr-100)
 passes the selected routed stop arm with recoverable history. The historical Luna failure
 remains recorded. Review 67 on Sol medium is outside this recheck.
 
@@ -43,6 +46,7 @@ records selected scratch-file passes and preserves medium failures and untested 
 - Dated report: 2026-11-06, current review evidence (PR #100)
 - Dated report: 2026-11-10, focused resume review evidence (PR #100)
 - Dated report: 2026-11-11, Sol medium missing dependency recheck (PR #100)
+- Dated report: 2026-11-12, Sol medium same-model final-report recheck (PR #100)
 
 ## Preparation
 
@@ -1238,3 +1242,47 @@ Raw packet: `/private/tmp/pr100-dependency-local-sol-focused-20261111/`, includi
 `audits/review62/audit-report.md`, native commands/results, exact config reconstruction and the
 combined context ledger in `final-audit-20261111/`. Runtime skills, VERSION `0.0.47`, README,
 SPEC and CHANGELOG are unchanged by this documentation update.
+
+
+## Dated report: 2026-11-12, Sol medium same-model final-report recheck (PR #100)
+
+Attempt `final-three-focused-20261112`. Tested source `4a84b68e0868a3b813973c71d3e6b881e6fb998c`.
+Selected: case 67's manual same-model final-report warning on Codex GPT-6.1-Sol medium, GitHub.
+The person starts context `01a1d1dd-fec6-7783-937c-77a48405a1ef`, the third of three authorized
+contexts. This evidence audit starts no model, worker, subagent or other harness.
+
+**PASS, selected warning check.** The exact user task is `wkc-code-review 5`. Its latest writer
+handoff names codex/gpt-6.1-sol/medium and head `078e709eda27481a1181c19ebff545c96b80c816`.
+The seed is explicitly driver-built, with synthetic routing history; no model implementation is
+claimed. The review context wrote no seed code. Before verdicts are empty. The posted
+[round 1 approve](https://github.com/wilsonkichoi/wkc-yolo-fixture-final-three-20261112/pull/6#issuecomment-6837653307)
+is writer-authored, says `Independent: yes`, and names that exact head. The final reply itself
+says the review was independent but not a second model's review. A warning in an earlier message
+or only the verdict is not used as a substitute. The historical medium omission remains recorded.
+
+All 16 exec wrappers and results are inspected. The complete review skill is injected by the
+harness; review support, tracker and GitHub backend reads are complete. The detached worktree
+contains the exact seed head. Help stdout matches the documented block byte for byte, with exit 0
+and empty stderr. Make test, diff checks and the exact configured gitleaks range pass. The scan
+positively covers one commit. CI is SKIP because no checks are reported. Captures and the verdict
+body use a fresh private scratch directory. Test/scanner TMPDIR stays inside it. The worktree and
+scratch directory are removed successfully, and their absence is independently checked.
+
+Fresh reads confirm PR 6 open/unmerged at the reviewed head and ticket 5 still in-review, held by
+wilsonkichoi. No fix commit, ticket change, discovery, merge, finish or verify occurs. All other
+tickets, run configs, remote heads, 48 runtime files and eight pinned product files are unchanged.
+Two original case67 worktrees remain clean at the fixture base. Expected not-a-PR fallback for
+bare target 5, an empty rule search, and a speculative missing test-file read are preserved. The
+actual acceptance tests are present and run. Full skill/harness conformance is not claimed.
+
+Native settings apply gpt-6.1-sol/medium, provider setting openai, CLI 0.167.2; the before collector
+confirms ChatGPT login. Independent serving identity is unavailable. One task starts and completes.
+Input 820,254 includes 772,992 cached; output 2,663 includes 133 reasoning; total 822,917. No child,
+model retry or nested AI test runs. Usage is not a subscription charge estimate.
+
+Raw packet: `~/tmp/pr100-handoff/evidence/final-three-focused-20261112/`, especially
+`case67/audit-20261112/` and the combined ledger. The additive collector fixes a case42 preparation
+bug without changing this prompt, fixture, source or budget. The
+[combined disposition](./wkc-yolo.md#dated-report-2026-11-12-final-three-focused-reruns-pr-100)
+keeps the separate implementation reporting failure on Sol high visible. Runtime instructions,
+VERSION 0.0.47, README, SPEC and CHANGELOG are unchanged. No real-repository merge is authorized.

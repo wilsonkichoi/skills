@@ -5,7 +5,11 @@ This is a case catalog, not a full test sequence for each change.
 Record PASS, FAIL, or SKIP for selected cases. Keep direct checks separate from harness behavior.
 Keep raw logs and fixtures outside tracked files.
 
-Current evidence: the [Sol medium dependency/local tracker disposition](#dated-report-2026-11-11-sol-medium-dependency-and-local-tracker-disposition-pr-100)
+Current evidence: the [final three focused reruns](#dated-report-2026-11-12-final-three-focused-reruns-pr-100)
+pass the selected manual question and same-model warning checks. New-ticket filing passes, while its
+Sol/high final reply omits required scope/blocking fields. Runtime instructions are unchanged.
+
+Earlier evidence: the [Sol medium dependency/local tracker disposition](#dated-report-2026-11-11-sol-medium-dependency-and-local-tracker-disposition-pr-100)
 records both selected passes on unchanged runtime instructions. Full cases and historical
 model-specific failures remain separate.
 
@@ -872,3 +876,56 @@ No further runtime fix or real-repository merge is authorized by these passes.
 Raw packet: `/private/tmp/pr100-dependency-local-sol-focused-20261111/`; the combined report,
 two-context ledger and publication evidence are in `final-audit-20261111/`. Runtime files,
 VERSION `0.0.47`, README, SPEC and CHANGELOG stay unchanged.
+
+
+## Dated report: 2026-11-12, final three focused reruns (PR #100)
+
+Attempt `final-three-focused-20261112`. Tested source `4a84b68e0868a3b813973c71d3e6b881e6fb998c`.
+All 48 runtime files remain fixed throughout. The private fixture is
+wilsonkichoi/wkc-yolo-fixture-final-three-20261112, base `2e235176e298d380b0054e6499fb14cbdf00362a`.
+Product files come from pinned seed `b74bc679a5434b6d2fb87c723fb2a81de7efffd7`.
+These are three step checks. No coordinator model comparison or new YOLO lifecycle run occurs.
+
+| Selected check | Result | Evidence |
+|---|---|---|
+| Implement83, supplied finding to new ticket, Sol high | Filing PASS; selected arm FAIL on final reporting | Ticket1's writer Discovered record and new backlog ticket8 preserve unchecked evidence and non-blocking scope. The final reply omits why it is out of scope and whether it blocks. |
+| Implement42, manual real gap/question ending, Sol medium | PASS | One numbered final question/recommendation, no later paragraph, no Decision/needs-decision record, ticket3 unchanged. |
+| Review67, manual same-model final warning, Sol medium | PASS | Writer approve on PR6 at 078e709; the final reply explicitly states the same-model limitation. |
+
+The [implementation report](./wkc-implement.md#dated-report-2026-11-12-manual-question-and-new-ticket-filing-rechecks-pr-100)
+and [review report](./wkc-code-review.md#dated-report-2026-11-12-sol-medium-same-model-final-report-recheck-pr-100)
+record exact native evidence, heads and remaining limits. Case83's required report fields were
+explicit and received. Its records contain those facts, but the final reply does not. No new
+runtime ambiguity is established, and the omission is not reclassified as a creation failure.
+
+The person starts **3 of 3** fresh contexts sequentially, one task each: case83
+`01a1d1c8-b461-7ef3-82f5-cb20d9bee876`, case42 `01a1d1d5-634c-7221-923a-0ac24f57aa7d`,
+and case67 `01a1d1dd-fec6-7783-937c-77a48405a1ef`. Native settings apply Sol/high, medium and
+medium, provider setting openai, CLI 0.167.2. Independent serving identity is unavailable.
+No child, worker, model retry, nested AI test or audit-assistant harness launch occurs. No fourth
+context is authorized. Aggregate input 2,126,272 includes 1,974,144 cached; output 8,794 includes
+1,618 reasoning; total 2,135,066. Cumulative usage is not doubled. Recorded quota snapshots are
+not live queries or charge estimates.
+
+Case42's first after collector crashes on a malformed temporary candidate while removing approved
+trust entries. The actual config parses correctly. An additive syntax-before-parse correction,
+exact byte reconstruction and expanded rejection checks pass. Original baselines, script and
+partial evidence remain intact. Corrected collection uses new paths and starts no model. No
+global config is edited. Other incidental truncation/read/cleanup observations stay in the audits.
+They do not erase the selected results or establish full instruction-loading conformance.
+
+PR6 remains open with its approve; PR7 remains open and unreviewed. Neither fixture PR merges.
+Discovery8 stays backlog outside run2; ticket3 stays ready with its language question unanswered.
+All main/run heads, product contracts and installed runtime bytes remain unchanged. The real
+skills PR remains unmerged and still needs the person's approval.
+
+These current medium passes do not erase the historical medium failures. The final report omission on Sol high
+ also prevents attributing all failures to weaker models. Historical source,
+fixture and CLI differ, so no model-only cause or driver-efficiency comparison is established.
+Independent recognition, full cases 42/67/83, other harnesses/backends and the broader matrix are
+outside scope. Earlier accepted quota/security limits retain their labels. Preserve the case83
+reporting failure for the merge decision rather than launching an automatic retry.
+
+Raw packet: `~/tmp/pr100-handoff/evidence/final-three-focused-20261112/`; per-case audits are in
+`audit-20261112/`, with the combined report and ledger in `final-audit-20261112/`. Runtime skills,
+VERSION 0.0.47, README, SPEC and CHANGELOG are unchanged by this documentation-only disposition.

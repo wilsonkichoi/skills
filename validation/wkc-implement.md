@@ -5,7 +5,11 @@ This is a case catalog, not a full test sequence for each change.
 Record PASS, FAIL, or SKIP for selected cases. Keep direct checks separate from harness behavior.
 Keep raw logs and fixtures outside tracked files.
 
-Current evidence: the [Sol medium local tracker recheck](#dated-report-2026-11-11-sol-medium-local-tracker-recheck-pr-100)
+Current evidence: the [manual question and new-ticket filing rechecks](#dated-report-2026-11-12-manual-question-and-new-ticket-filing-rechecks-pr-100)
+pass the selected manual question and new-ticket filing behavior. The new-ticket arm fails its final-report
+fields on Sol high. Historical results remain recorded.
+
+Earlier evidence: the [Sol medium local tracker recheck](#dated-report-2026-11-11-sol-medium-local-tracker-recheck-pr-100)
 passes the selected local-tracker finish arm. Historical Luna failures and other arms remain
 recorded. Runtime instructions are unchanged.
 
@@ -62,6 +66,7 @@ defect recognition remains open. The latest report separates the Sol planning PA
 - Dated report: 2026-11-10, case 83 recording and duplicate reuse (PR #100)
 - Dated report: 2026-11-11, covered-gate and planning-work rechecks (PR #100)
 - Dated report: 2026-11-11, Sol medium local tracker recheck (PR #100)
+- Dated report: 2026-11-12, manual question and new-ticket filing rechecks (PR #100)
 
 ## Preparation
 
@@ -2192,3 +2197,64 @@ Raw packet: `/private/tmp/pr100-dependency-local-sol-focused-20261111/`, especia
 `audits/local64/audit-report.md` and `final-audit-20261111/context-ledger.json`. The separate
 preparation probe uses `direct-probe-state`, not the model's gate-state log. Runtime skills,
 VERSION `0.0.47`, README, SPEC and CHANGELOG are unchanged by this documentation update.
+
+
+## Dated report: 2026-11-12, manual question and new-ticket filing rechecks (PR #100)
+
+Attempt `final-three-focused-20261112`. Tested source `4a84b68e0868a3b813973c71d3e6b881e6fb998c`;
+all 48 runtime files remain identical to the preceding tested source. Selected: case 42's manual
+real-gap/question-ending arm on Sol medium, and case 83's new-ticket filing after a supplied
+unchecked finding on Sol high. Backend: GitHub. The person starts one fresh context per check.
+The [combined disposition](./wkc-yolo.md#dated-report-2026-11-12-final-three-focused-reruns-pr-100)
+records the three-context packet, including its separate review check. This report starts no model.
+
+**Case 42: PASS, selected arm.** Context `01a1d1d5-634c-7221-923a-0ac24f57aa7d` calls
+`wkc-implement 3`, names wkc-yolo and run config 4, and passes no `--run` argument. The language
+list is unresolved in the ticket and approved documents. The final numbered item asks the person
+which languages to support and recommends retaining English while adding only selected languages.
+The gap explanation and skill citation precede that item. No text follows it. Ticket 3 stays
+ready/unassigned, with no Decision, needs-decision record, branch, build or delivery PR. All ticket
+bodies/comments, run configs and remote heads are unchanged. The other case 42 arm is outside scope.
+
+**Case 83: filing PASS; selected arm FAIL on final reporting.** Context
+`01a1d1c8-b461-7ef3-82f5-cb20d9bee876` records the unchecked finding in a writer's
+[Discovered comment on ticket 1](https://github.com/wilsonkichoi/wkc-yolo-fixture-final-three-20261112/issues/1#issuecomment-6837219467).
+It announces and follows the installed wkc-backlog dependency in the same context. The fresh fixture
+has no matching item. New [ticket 8](https://github.com/wilsonkichoi/wkc-yolo-fixture-final-three-20261112/issues/8)
+is backlog, unassigned, without blockers or admission. Its Observed, Reproduce, Because and Verified
+lines are copied verbatim and link the original comment. Both records give the separate deletion
+repair outcome and non-blocking status. `Verified: no` is truthful: no deletion reproduction runs.
+Run 2 still contains only ticket 1. No duplicate or planning edit appears.
+
+The final reply returns ticket 8 but omits why the repair is outside ticket 1's scope and whether
+it blocks ticket 1. Being outside run 2 does not state either fact. Those fields are explicit in
+run.md and were received. Earlier comments and progress messages do not replace the final report.
+This is a reporting failure on Sol high. The create operation succeeded. No additional instruction
+ambiguity or runtime fix is established. Keep the failure visible for the merge decision.
+
+[PR 7](https://github.com/wilsonkichoi/wkc-yolo-fixture-final-three-20261112/pull/7) is open and
+unmerged at `e491d60e441020ff90a55e4649a10b10342b6d23`, based on run/c83-new-ticket-20261112.
+Only docs/usage/help-new-discovery.md changes. The six acceptance checks, byte-exact help output,
+make test and exact configured gitleaks scan pass. The scan positively covers one commit. Ticket 1
+is in-review with the matching writer handoff; no review occurs. Runtime, product code, SPEC,
+other tickets, main and run heads stay fixed. Both case83 worktrees are clean.
+
+Native settings apply gpt-6.1-sol/high and medium respectively, provider setting openai, CLI 0.167.2;
+person-run preflight confirms ChatGPT login. Independent serving identity is unavailable. Case83
+has 17 exec wrappers and one task; case42 has five wrappers and one task. No worker, child, model
+retry or nested AI test starts. The manual skill is also received whole through the harness injection.
+Initial combined result truncation, empty rules searches, speculative file reads and case83's rejected
+scratch cleanup followed by successful owned-file cleanup are preserved in the audits. Required
+selected instructions are received; no complete skill/harness conformance is claimed.
+
+Case42's original after collector crashes while parsing a malformed temporary trust-removal
+candidate. The actual config is valid and differs only by approved canonical repository-trust
+entries. An additive collector validates candidate syntax before parsing. Exact byte reconstruction
+and expanded negative checks pass. The original script, baseline and partial collection remain.
+The corrected collection uses a new folder and starts no model. No global config is edited.
+
+Raw packet: `~/tmp/pr100-handoff/evidence/final-three-focused-20261112/`, especially the per-case
+`audit-20261112/` reports and `final-audit-20261112/context-ledger.json`. These passes do not erase
+historical failures or establish independent defect recognition. New-ticket creation is now exercised;
+the earlier supplied-finding duplicate-reuse check remains separate. Full cases and other backends
+are not certified. Runtime skills, VERSION 0.0.47, README, SPEC and CHANGELOG are unchanged.
