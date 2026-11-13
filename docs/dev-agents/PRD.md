@@ -201,10 +201,9 @@ Ranked. Ranking is importance, not delivery order; the ROADMAP sets the order.
   coordinates a run when it can start a fresh worker for each step's selection, through its own
   native subagent or a headless CLI that `headless_workers` lists. Workers use the user's existing
   login. The workflow does not use billing fallback, authentication changes, or automatic model
-  substitution. Before each headless launch, the coordinator checks the harness's login. A Codex
-  worker must use a subscription login and no API key. A Claude worker uses the Claude provider
-  the user configured, which may be a subscription, an API key, a gateway, Bedrock, or Vertex
-  (maintainer, 2026-11-12). `claude-code` is in the default `headless_workers`, and a project may
+  substitution. Before each headless launch, the coordinator checks that the harness has a login.
+  Each worker uses the provider and login the user configured for its harness, which may be a
+  subscription, an API key, a gateway, or a cloud provider (maintainer, 2026-11-12). `claude-code` is in the default `headless_workers`, and a project may
   remove any harness from the list.
   Unsupported settings or coordinators produce a blocked result or a parked ticket. A quota or
   rate-limit error pauses only that harness's steps, so a pair never reviews its own work while
@@ -290,9 +289,9 @@ and integration validation remain downstream work.
 
 ## Changes
 
-- 2026-11-12: Maintainer decision: Claude workers use the Claude provider the user configured,
-  including an API key, a gateway, Bedrock, or Vertex, and are no longer limited to a claude.ai
-  subscription. Codex workers keep the subscription-login rule. Replaced "Workers use the user's
+- 2026-11-12: Maintainer decision: Claude and Codex workers use the provider and login the user
+  configured, including an API key, a gateway, or a cloud provider, and are no longer limited to a
+  subscription. Replaced "Workers use the user's
   existing subscription login" and "the coordinator checks that the harness will use a
   subscription login and no API key" (SPEC Changes, same date; ADR-015).
 

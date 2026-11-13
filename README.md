@@ -132,16 +132,16 @@ ticket, and an edit applies to the next build or review. The pair applies to `wk
 manual `wkc-implement` or `wkc-code-review` call always runs in the session that calls it, whatever
 pair is set, and a manual review warns when the same harness and model made the step before.
 
-Pairs must name different models, including known alias resolutions. Codex dispatch checks effective
-provider configuration and endpoint overrides before launch or resume. An unverified custom endpoint
-blocks the call even with a ChatGPT login.
+Pairs must name different models, including known alias resolutions.
 
 In a run, the `wkc-yolo` session coordinates, from Claude Code, Codex, or Kiro CLI. Every step,
 `finish` and `verify` included, runs in its own fresh session: a native agent where the harness has
 one, otherwise `claude -p`, `codex exec`, or `kiro-cli chat --no-interactive`, each only when
-`headless_workers` lists it. Before each headless launch the run checks the CLI's login. `codex
-exec` must use your ChatGPT login and no API key. Claude workers use the Claude provider you
-configured: a subscription, an API key, a gateway, Bedrock, or Vertex. The run never switches it. A
+`headless_workers` lists it. Before each headless launch the run checks that the CLI has a login.
+Each worker uses the provider and login you configured for its harness. For Claude that may be a
+subscription, an API key, a gateway, Bedrock, or Vertex. For Codex it may be a ChatGPT login, an API
+key, a custom `model_provider`, or an endpoint override. Kickoff shows which one, and the run never
+switches it. A
 quota error pauses only that harness's steps. The adapters live in `skills/wkc-implement/adapters.md`.
 
 Workers run with full permissions and no sandbox. No skill can read its own permission mode, so

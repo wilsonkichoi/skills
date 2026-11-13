@@ -75,29 +75,37 @@ and `reasoning_effort` set explicitly. The person launches a Codex coordinator w
 **Headless start**, with the prompt on standard input:
 
 ```
-env -u CODEX_API_KEY -u OPENAI_API_KEY codex exec -C <checkout> -m <model> -c model_reasoning_effort=<effort> -c model_provider="openai" -c forced_login_method="chatgpt" --dangerously-bypass-approvals-and-sandbox --json -o <last message file> - < <prompt file>
+codex exec -C <checkout> -m <model> -c model_reasoning_effort=<effort> --dangerously-bypass-approvals-and-sandbox --json -o <last message file> - < <prompt file>
 ```
 
-**Model names:** the exact ID `codex exec -m` takes. **Canonical id:** that ID.
+**Provider:** a Codex worker uses the provider and login the person configured, as the
+coordinator's environment and Codex configuration give it: a ChatGPT login, an API key, a custom
+`model_provider`, or an endpoint override such as `OPENAI_BASE_URL`. Never change it, and never fall
+back to another.
+
+**Model names:** the exact ID `codex exec -m` takes. **Canonical id:** the OpenAI model ID, such as
+`gpt-6.1-sol`. Through a custom provider, an ID that names an OpenAI model with a provider prefix is
+that model; any other name, such as a deployment name, has no known canonical id.
 
 **Pre-launch checks**, before every launch or resume, in the worker's checkout:
 
-- `codex login status` reports a ChatGPT login.
-- Every effective configuration layer: system and cloud-managed defaults when present
-  (`/etc/codex/config.toml` on Unix), `~/.codex/config.toml` or `$CODEX_HOME/config.toml`, the
-  selected profile, and trusted project layers from the project root to the worker's directory.
-  `model_provider` is absent or `openai`, and no provider for it sets `env_key`, `base_url`,
-  `http_headers`, `env_http_headers`, or bearer-token authentication. Reject unverified endpoint
-  overrides, including top-level `openai_base_url` and `chatgpt_base_url`; forcing
-  `model_provider` does not clear them. `OPENAI_BASE_URL` is unset. When effective routing cannot
-  be verified, block the launch.
+- Some credential is configured: `codex login status` reports a login, `CODEX_API_KEY` or
+  `OPENAI_API_KEY` is set, or the effective `model_provider` is a custom provider. `codex login
+  status` does not report the variables. Read only its login method, never the key fragment it may
+  print.
+- Read, by name only, what routes the worker: the effective `model_provider` across every
+  configuration layer (system and cloud-managed defaults when present, `/etc/codex/config.toml` on
+  Unix, `~/.codex/config.toml` or `$CODEX_HOME/config.toml`, the selected profile, and trusted
+  project layers from the project root to the worker's directory), and whether `openai_base_url`,
+  `chatgpt_base_url`, or `OPENAI_BASE_URL` is set. Together with the login method, these name the
+  provider and billing the worker will use.
 
 **Quota:** a failed turn or error event naming a usage or rate limit. **Evidence:** the `--json`
 events; `codex-cli` 0.166.0 names no model there, so `Observed execution` is `unavailable`.
 **Resume:** `-C` goes before `resume`, which does not accept it:
 
 ```
-env -u CODEX_API_KEY -u OPENAI_API_KEY codex exec -C <checkout> resume <session id> -m <model> -c model_reasoning_effort=<effort> -c model_provider="openai" -c forced_login_method="chatgpt" --dangerously-bypass-approvals-and-sandbox --json -o <last message file> - < <prompt file>
+codex exec -C <checkout> resume <session id> -m <model> -c model_reasoning_effort=<effort> --dangerously-bypass-approvals-and-sandbox --json -o <last message file> - < <prompt file>
 ```
 
 ## kiro-cli

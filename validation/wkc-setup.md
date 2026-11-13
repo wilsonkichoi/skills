@@ -48,8 +48,8 @@ rest of setup.
    PASS: Section F says the pair is for `wkc-yolo` runs and a manual call runs in its own session; it offers the
    default pair first, another pair, and none; it says a missing `effort` is `medium`, that a pinned Claude ID runs
    through `claude -p`, that a pair entry may be `claude-code`, `codex`, or `kiro-cli`, that each headless launch
-   checks the CLI's login, that `codex` must use a ChatGPT login and no API key, and that `claude-code` uses the
-   configured Claude provider, whether a subscription, an API key, a gateway, Bedrock, or Vertex; it gives the `claude --dangerously-skip-permissions`,
+   checks that the CLI has a login, and that each worker uses the provider already configured for its harness, so
+   listing a harness accepts that billing; it gives the `claude --dangerously-skip-permissions`,
    `~/.claude/settings.json` `bypassPermissions`, Codex, and Kiro CLI launches, and that project settings cannot turn
    bypass mode on. The template parses `execution_models` as two maps, `claude-code`/`opus`/`medium` then
    `codex`/`gpt-6.1-sol`/`medium`, and `headless_workers` as `[claude-code, codex, kiro-cli]`; the multi-question rule
