@@ -58,6 +58,7 @@ class FakeGitHub(g.GitHub):
         self.list_node_cap: int | None = None
         self.no_dependencies = False
         self.after_edit = None  # hook run after edit_issue, to simulate another session
+        self.writers = {login}  # logins with write access to the repository
 
     # -- fixture helpers
 
@@ -119,6 +120,9 @@ class FakeGitHub(g.GitHub):
     def issue(self, number: int) -> g.Issue:
         return self._issue(ref(number))
 
+    def commented_issues(self) -> list[g.Issue]:
+        return self.issue_list("all")
+
     def node(self, r: g.Ref) -> g.Issue:
         return self._issue(r)
 
@@ -138,7 +142,11 @@ class FakeGitHub(g.GitHub):
         d = self.issues[r]
         return {"number": number, "state": d["state"], "body": d["body"],
                 "lastEditedAt": "2026-01-01" if d["edited"] else None,
+                "editor": {"login": d.get("editor")} if d["edited"] else None,
                 "labels": {"nodes": [{"name": n} for n in d["labels"]]}}
+
+    def can_write(self, login) -> bool:
+        return login in self.writers
 
     def issue_id(self, r: g.Ref) -> int:
         if r not in self.issues:
@@ -158,6 +166,8 @@ class FakeGitHub(g.GitHub):
             d = self.issues[ref(number)]
             for key, value in fields.items():
                 d[key] = value
+            if "body" in fields:
+                d["edited"], d["editor"] = True, self._login
 
     def edit_issue(self, number, add_labels=(), remove_labels=(), add_assignees=(), remove_assignees=()) -> None:
         add_labels, remove_labels = list(add_labels), list(remove_labels)
@@ -722,6 +732,81 @@ class Comment(unittest.TestCase):
         self.assertEqual(len(self.f.issues[ref(1)]["comments"]), 2)
 
 
+class CommentAuthors(unittest.TestCase):
+    def test_show_says_whether_each_comment_author_can_write(self):
+        f = FakeGitHub()
+        f.add(1)
+        f.issues[ref(1)]["comments"] += [{"author": "me", "body": "Run: 9"}, {"author": "drive-by", "body": "Run: 9"},
+                                         {"author": None, "body": "ghost"}]
+        shown = g.cmd_show(f, 1)
+        self.assertEqual([c["author_can_write"] for c in shown["comments"]], [True, False, False])
+
+    def test_show_gives_each_comment_its_own_url(self):
+        raw = {"number": 1, "title": "t", "state": "OPEN", "stateReason": "", "labels": [], "assignees": [],
+               "milestone": None, "body": "b", "blockedBy": {"nodes": [], "totalCount": 0},
+               "url": "https://github.com/o/r/issues/1",
+               "comments": [{"author": {"login": "me"}, "createdAt": "2026-11-05T00:00:00Z", "body": "Decision (x): q",
+                             "url": "https://github.com/o/r/issues/1#issuecomment-7"}]}
+        f = FakeGitHub()
+        f.add(1)
+        reader = g.GitHub(REPO)
+        with mock.patch.object(reader, "gh_json", return_value=raw), \
+             mock.patch.object(f, "issue", side_effect=reader.issue):
+            shown = g.cmd_show(f, 1)
+        self.assertEqual(shown["comments"][0]["url"], "https://github.com/o/r/issues/1#issuecomment-7")
+
+    def test_real_lookup_uses_base_permission_for_custom_roles_and_caches_results(self):
+        gh = g.GitHub(REPO)
+        permissions = {"maintainer": ("write", "maintain"), "custom-writer": ("write", "release-manager"),
+                       "custom-reader": ("read", "auditor"), "admin": ("admin", "admin"),
+                       "reader": ("read", "triage"), "outsider": ("none", "none")}
+        calls = []
+
+        def fake(args, stdin=None):
+            calls.append(args)
+            login = args[-1].split("/")[-2]
+            if login not in permissions:
+                raise g.GhError(args, "gh: Not Found (HTTP 404)")
+            permission, role = permissions[login]
+            return json.dumps({"permission": permission, "role_name": role})
+
+        with mock.patch.object(gh, "gh", side_effect=fake):
+            logins = ("maintainer", "custom-writer", "custom-reader", "admin", "reader", "outsider",
+                      "missing", "custom-writer", None)
+            self.assertEqual([gh.can_write(x) for x in logins],
+                             [True, True, False, True, False, False, False, True, False])
+        self.assertEqual(len(calls), 7)
+
+    def test_permission_lookup_errors_stop_record_reads_without_writes(self):
+        errors = ("gh: Bad credentials (HTTP 401)", "gh: API rate limit exceeded (HTTP 403)",
+                  "gh: Too Many Requests (HTTP 429)", "gh: Internal Server Error (HTTP 500)",
+                  "error connecting to api.github.com")
+        for detail in errors:
+            for argv in (["show", "1"], ["run", "tickets", "9"], ["verdicts", "7"]):
+                with self.subTest(detail=detail, argv=argv):
+                    f = FakeGitHub()
+                    f.add(1)
+                    f.issues[ref(1)]["comments"] = [{"author": "me", "body": "Run: 9"}]
+                    pr = {"number": 7, "url": "u", "state": "OPEN", "head": "a" * 40,
+                          "comments": [{"author": "me", "body": "wkc-code-review round 1: approve, ok"}]}
+                    output = io.StringIO()
+                    with mock.patch.object(f, "can_write", side_effect=lambda login: g.GitHub.can_write(f, login)), \
+                         mock.patch.object(f, "gh", side_effect=g.GhError(["api"], detail)), \
+                         mock.patch.object(f, "pull_request", return_value=pr), redirect_stdout(output):
+                        code = g.main(argv, gh=f)
+                    result = json.loads(output.getvalue())
+                    self.assertEqual((code, result["ok"], result.get("error")), (4, False, "read_failed"))
+                    self.assertIn(detail, result["message"])
+                    self.assertEqual(f.writes, [])
+
+    def test_missing_or_unknown_base_permission_is_a_failed_read(self):
+        for payload in (None, [], {}, {"permission": []}, {"permission": "unknown", "role_name": "write"}):
+            with self.subTest(payload=payload):
+                gh = g.GitHub(REPO)
+                with mock.patch.object(gh, "gh_json", return_value=payload):
+                    self.assertEqual(code_of(lambda: gh.can_write("me")), g.EXIT_READ_FAILED)
+
+
 class Links(unittest.TestCase):
     def setUp(self):
         f = self.f = FakeGitHub()
@@ -813,6 +898,47 @@ class RunConfigs(unittest.TestCase):
         for n in (1, 2, 99):
             self.assertEqual(code_of(lambda: g.cmd_run_show(self.f, n)), g.EXIT_REFUSED)
 
+    def config(self, by: str = "me") -> int:
+        text = f"# Run config: M4\nStarted: 2026-11-03T10:00-08:00. By: {by}.\n- Run PR: not opened\n"
+        return g.cmd_run_create(self.f, "run/m4", text)["reference"]
+
+    def test_run_edit_by_its_owner_reads_back_and_stays_accepted(self):
+        n = self.config()
+        shown = g.cmd_run_show(self.f, n)
+        new = shown["text"].replace("not opened", "https://x/pr/7")
+        g.cmd_run_edit(self.f, n, new, shown["text_sha256"])
+        again = g.cmd_run_show(self.f, n)
+        self.assertEqual((again["text"], again["last_editor"], again["by"]), (new, "me", "me"))
+
+    def test_run_edit_refuses_another_login_a_stale_read_and_a_changed_owner(self):
+        n = self.config(by="someone")
+        sha = g.cmd_run_show(self.f, n)["text_sha256"]
+        text = self.f.issues[ref(n)]["body"]
+        writes = len(self.f.writes)
+        self.assertEqual(code_of(lambda: g.cmd_run_edit(self.f, n, text + "x\n", sha)), g.EXIT_REFUSED)
+        self.assertEqual(len(self.f.writes), writes)
+        mine = self.config()
+        sha = g.cmd_run_show(self.f, mine)["text_sha256"]
+        body = self.f.issues[ref(mine)]["body"]
+        writes = len(self.f.writes)
+        self.assertEqual(code_of(lambda: g.cmd_run_edit(self.f, mine, body + "x\n", "0" * 64)), g.EXIT_REFUSED)
+        self.assertEqual(code_of(lambda: g.cmd_run_edit(self.f, mine, body.replace("By: me", "By: other"), sha)),
+                         g.EXIT_REFUSED)
+        self.assertEqual(len(self.f.writes), writes)
+
+    def test_show_refuses_an_edit_by_anyone_but_the_owner(self):
+        n = self.config()
+        d = self.f.issues[ref(n)]
+        d["edited"], d["editor"] = True, "intruder"
+        self.assertEqual(code_of(lambda: g.cmd_run_show(self.f, n)), g.EXIT_REFUSED)
+
+    def test_run_edit_refuses_a_closed_config(self):
+        n = self.config()
+        g.cmd_run_close(self.f, n)
+        shown = g.cmd_run_show(self.f, n)
+        self.assertEqual(code_of(lambda: g.cmd_run_edit(self.f, n, shown["text"] + "x\n", shown["text_sha256"])),
+                         g.EXIT_REFUSED)
+
     def test_run_close_refuses_a_ticket(self):
         self.f.add(2)
         self.assertEqual(code_of(lambda: g.cmd_run_close(self.f, 2)), g.EXIT_REFUSED)
@@ -824,6 +950,52 @@ class RunConfigs(unittest.TestCase):
                      lambda: g.cmd_assign(self.f, 1, None, []), lambda: g.cmd_edit(self.f, 1, title="x")):
             self.assertEqual(code_of(call), g.EXIT_REFUSED)
         self.assertEqual(self.f.writes, [])
+
+
+class RunTickets(unittest.TestCase):
+    """`run tickets <ref>`: every ticket a `Run:` comment names, with each author's write access."""
+
+    def say(self, f, n, *comments):
+        f.issues[ref(n)]["comments"] += [{"author": a, "body": b} for a, b in comments]
+
+    def test_names_every_ticket_in_any_status_with_who_wrote_each_run_comment(self):
+        f = FakeGitHub()
+        for n, status in ((1, "in-progress"), (2, "done"), (3, "ready"), (4, "cancel"), (5, "ready"), (7, "ready")):
+            f.add(n, status=status)
+        f.add(6, labels=[g.RUN_LABEL])
+        self.say(f, 1, ("me", "Run: 10\n"), ("drive-by", "Run: 99"))
+        self.say(f, 2, ("me", "Run: #10"))
+        self.say(f, 3, ("drive-by", "Run: 10"))
+        self.say(f, 4, ("me", "Run: 10"), ("me", "Run: 12"))
+        self.say(f, 5, ("me", "Run: 11"))
+        self.say(f, 6, ("me", "Run: 10"))
+        self.say(f, 7, ("me", "As agreed, Run: 10 covers this"), ("me", "Decision (wkc-yolo): x\nRun: 10"))
+        out = g.cmd_run_tickets(f, "10")
+        got = {t["number"]: (t["status"], t["member"], t["named_by_writer"]) for t in out["tickets"]}
+        self.assertEqual(got, {1: ("in-progress", True, True), 2: ("done", True, True),
+                               3: ("ready", False, False), 4: ("cancel", False, True)})
+        first = out["tickets"][0]["run_comments"]
+        self.assertEqual([(c["author"], c["author_can_write"], c["names"]) for c in first],
+                         [("me", True, "10"), ("drive-by", False, "99")])
+        self.assertEqual(f.writes, [])
+
+    def test_a_later_non_writer_run_comment_changes_no_membership(self):
+        f = FakeGitHub()
+        f.add(1, status="in-review")
+        self.say(f, 1, ("me", "Run: 10"), ("drive-by", "Run: 11"))
+        self.assertTrue(g.cmd_run_tickets(f, "10")["tickets"][0]["member"])
+        self.assertEqual(g.cmd_run_tickets(f, "11")["tickets"][0]["member"], False)
+
+    def test_other_references_match_as_exact_text(self):
+        f = FakeGitHub()
+        f.add(1)
+        f.add(2)
+        self.say(f, 1, ("me", "Run: WKC_RUN_M4_20261026T0900"))
+        self.say(f, 2, ("me", "Run: WKC_RUN_M4_20261026T0901"))
+        self.assertEqual([t["number"] for t in g.cmd_run_tickets(f, "WKC_RUN_M4_20261026T0900")["tickets"]], [1])
+
+    def test_an_empty_reference_is_refused(self):
+        self.assertEqual(code_of(lambda: g.cmd_run_tickets(FakeGitHub(), "  ")), g.EXIT_REFUSED)
 
 
 class Parsing(unittest.TestCase):
@@ -901,6 +1073,32 @@ class RealGitHub(unittest.TestCase):
         with mock.patch.object(gh, "graphql", return_value=page([node(1)], False, 3)):
             self.assertEqual(code_of(lambda: gh.blockers(ref(9))), g.EXIT_READ_FAILED)
 
+    def test_commented_issues_page_through_issues_and_comments_and_fail_short(self):
+        def comments(bodies, more, total):
+            return {"totalCount": total, "pageInfo": {"hasNextPage": more, "endCursor": "c"},
+                    "nodes": [{"body": b, "createdAt": "t", "url": "u", "author": {"login": "me"}} for b in bodies]}
+
+        def issue(n, page):
+            return {"number": n, "title": "", "url": "", "state": "OPEN", "stateReason": None,
+                    "labels": {"nodes": []}, "assignees": {"nodes": []}, "milestone": None, "comments": page}
+
+        def issues(nodes, more, total):
+            return {"repository": {"issues": {"totalCount": total, "pageInfo": {"hasNextPage": more, "endCursor": "i"},
+                                              "nodes": nodes}}}
+
+        rest = {"repository": {"issue": {"comments": comments(["Run: 10"], False, 2)}}}
+        gh = g.GitHub(REPO)
+        replies = [issues([issue(1, comments(["a"], True, 2))], True, 2), rest,
+                   issues([issue(2, comments([], False, 0))], False, 2)]
+        with mock.patch.object(gh, "graphql", side_effect=replies) as stub:
+            got = gh.commented_issues()
+        self.assertEqual([(i.ref.number, [c["body"] for c in i.comments]) for i in got], [(1, ["a", "Run: 10"]), (2, [])])
+        self.assertEqual(stub.call_args_list[1].kwargs["n"], 1)
+        for short in ([issues([issue(1, comments(["a"], False, 2))], False, 1)],
+                      [issues([issue(1, comments([], False, 0))], False, 2)]):
+            with mock.patch.object(gh, "graphql", side_effect=short):
+                self.assertEqual(code_of(gh.commented_issues), g.EXIT_READ_FAILED)
+
     def test_text_goes_on_stdin_never_into_arguments(self):
         calls = []
 
@@ -958,6 +1156,8 @@ class Cli(unittest.TestCase):
         self.assertEqual((code, out["ok"], out["verb"], out["total"]), (0, True, "milestone show", 0))
         code, out = self.run_cli(["milestone", "show", "m1"], f)
         self.assertEqual((code, out["ok"], out["error"]), (1, False, "refused"))
+        code, out = self.run_cli(["run", "tickets", "#10"], f)
+        self.assertEqual((code, out["verb"], out["reference"], out["tickets"]), (0, "run tickets", "#10", []))
 
     def test_file_bodies_keep_their_line_endings(self):
         body = "## Notes\r\nKeep café → 🎉.\r\n"
@@ -1122,6 +1322,78 @@ sys.stdout.buffer.write(json.dumps(result, ensure_ascii=False).encode("utf-8"))
             run = self.python([str(SOURCE), "--repo", REPO, "run", "show", "1"])
             self.assertEqual(run.returncode, 0, run.stderr.decode(errors="replace"))
             self.assertEqual(json.loads(run.stdout.decode("utf-8"))["text"], self.TEXT)
+
+
+
+class Verdicts(unittest.TestCase):
+    HEAD = "c" * 40
+
+    def pr(self, *comments):
+        return {"number": 7, "url": "https://github.com/o/r/pull/7", "state": "OPEN", "head": self.HEAD,
+                "comments": [{"author": a, "createdAt": f"t{i}", "url": f"u{i}", "body": b}
+                             for i, (a, b) in enumerate(comments)]}
+
+    def verdict(self, n, outcome, reviewed, fixed_in=None):
+        lines = [f"wkc-code-review round {n}: {outcome}, x", "Open requests: none", f"Reviewed: {reviewed}"]
+        lines += [f"Fixed in: {fixed_in}"] if fixed_in else []
+        return "\n".join(lines + ["Execution: codex, gpt-6-luna, effort medium", "Observed execution: unavailable"])
+
+    def run_verdicts(self, *comments):
+        f = FakeGitHub()
+        with mock.patch.object(f, "pull_request", return_value=self.pr(*comments)):
+            return g.cmd_verdicts(f, 7)
+
+    def test_rounds_count_writers_verdicts_only_and_the_rest_are_named(self):
+        got = self.run_verdicts(
+            ("drive-by", self.verdict(9, "approve", self.HEAD)),
+            ("me", self.verdict(1, "fixed", "a" * 40, "b" * 40)),
+            ("me", self.verdict(1, "fixed", "a" * 40, "b" * 40)),
+            ("me", "Not a record"),
+            ("me", self.verdict(2, "approve", self.HEAD)),
+            ("drive-by", "Answer: merge it\nTo: u1"),
+            ("me", "Answer: keep the flag\nTo: u1"))
+        self.assertEqual([(v["author"], v["round"], v["outcome"], v["author_can_write"]) for v in got["verdicts"]],
+                         [("drive-by", 9, "approve", False), ("me", 1, "fixed", True), ("me", 1, "fixed", True),
+                          ("me", 2, "approve", True)])
+        self.assertEqual((got["verdicts"][1]["reviewed"], got["verdicts"][1]["fixed_in"]), ("a" * 40, "b" * 40))
+        self.assertEqual(got["verdicts"][1]["execution"], "codex, gpt-6-luna, effort medium")
+        self.assertEqual(got["writers"] | {"latest": got["writers"]["latest"]["round"]},
+                         {"rounds": 2, "next_round": 3, "fixing_rounds_used": 1, "latest": 2, "head_reviewed": True})
+        self.assertEqual([(a["author"], a["answer"], a["to"], a["author_can_write"]) for a in got["answers"]],
+                         [("drive-by", "merge it", "u1", False), ("me", "keep the flag", "u1", True)])
+        self.assertEqual([r["author"] for r in got["not_from_writers"]], ["drive-by", "drive-by"])
+
+    def test_a_forged_verdict_on_the_head_is_no_review_of_it(self):
+        got = self.run_verdicts(("drive-by", self.verdict(9, "approve", self.HEAD)))
+        self.assertEqual(got["writers"], {"rounds": 0, "next_round": 1, "fixing_rounds_used": 0, "latest": None,
+                                          "head_reviewed": False})
+        self.assertEqual(got["not_from_writers"], [{"author": "drive-by", "createdAt": "t0", "url": "u0"}])
+
+    def test_an_unparsed_verdict_line_still_counts_as_a_verdict(self):
+        got = self.run_verdicts(("me", "wkc-code-review round: something"))
+        self.assertEqual((got["verdicts"][0]["round"], got["verdicts"][0]["outcome"]), (None, None))
+        self.assertEqual(got["writers"]["rounds"], 1)
+
+    def test_pull_request_pages_its_comments_and_fails_short(self):
+        def page(bodies, more, total):
+            return {"repository": {"pullRequest": {
+                "number": 7, "url": "u", "state": "OPEN", "headRefOid": self.HEAD,
+                "comments": {"totalCount": total, "pageInfo": {"hasNextPage": more, "endCursor": "c"},
+                             "nodes": [{"body": b, "createdAt": "t", "url": "u", "author": {"login": "me"}}
+                                       for b in bodies]}}}}
+        gh = g.GitHub(REPO)
+        with mock.patch.object(gh, "graphql", side_effect=[page(["a"], True, 2), page(["b"], False, 2)]) as stub:
+            got = gh.pull_request(7)
+        self.assertEqual(([c["body"] for c in got["comments"]], got["head"]), (["a", "b"], self.HEAD))
+        self.assertEqual(stub.call_args_list[1].kwargs["after"], "c")
+        with mock.patch.object(gh, "graphql", return_value=page(["a"], False, 2)):
+            self.assertEqual(code_of(lambda: gh.pull_request(7)), g.EXIT_READ_FAILED)
+
+    def test_an_issue_number_is_refused(self):
+        gh = g.GitHub(REPO)
+        error = g.GhError(["api", "graphql"], "Could not resolve to a PullRequest with the number of 3.")
+        with mock.patch.object(gh, "graphql", side_effect=error):
+            self.assertEqual(code_of(lambda: gh.pull_request(3)), g.EXIT_REFUSED)
 
 
 if __name__ == "__main__":

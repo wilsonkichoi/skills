@@ -53,6 +53,9 @@ stops with exit 4 and suggests the `local` backend.
 | `milestone show <name>` | `milestone show <title>` |
 | `run create <text>` (store `tracker`) | `run create --run-branch <branch> --body-file <file>` |
 | `run show <ref>`, `run close <ref>` | `run show <n>`, `run close <n>` |
+| `run edit <ref> <text>` | `run edit <n> --body-file <file> --expected-sha256 <text_sha256 from run show>` |
+| `run tickets <ref>` (any store) | `run tickets <ref>` |
+| `verdicts <PR>` (any backend) | `verdicts <n>`, with `--repo` the pull request's repository |
 
 ## Input
 
@@ -104,22 +107,44 @@ read or a claim that lost its tie-break.
 
 `list` gives each ticket's number, title, status, assignees, milestone, and blockers, and the
 inconsistent tickets apart. `show` adds the body, its `body_sha256`, comments, labels, each
-blocker's verdict, and a duplicate's chain. `edit` returns the new `body_sha256`. `next` gives
+blocker's verdict, and a duplicate's chain. Each comment carries its `author`, its own `url`, and
+`author_can_write`: whether GitHub's base `permission` is `admin` or `write`, including custom roles
+with that access. A missing author or HTTP 404 is `false`. Other lookup errors and missing or invalid
+base permissions stop the read with exit 4; they never become a non-writer result. `edit`
+returns the new `body_sha256`. `next` gives
 `frontier`, `held` with each unmet blocker's status, holder, and reason, `inconsistent`,
 `open_counts`, `cycles`, and `blocker_graph`. The graph includes transitive blockers and
 unreadable references. Cycles use issue numbers within this repository and full refs
 when they cross repositories. An empty frontier is explained from these.
 `milestone show` gives `total`, `counts` for every status, and `open_or_unclean`. Whether that
 means `wkc-plan close` is the caller's call: the script never closes a milestone it shows.
-`run show` gives the config's `text` and its `state`. A closed run config stays readable with
-`run show`, so `run close` verifies the `CLOSED` state. The script never reads a run config's
+`run show` gives the config's `text`, its `text_sha256`, its `state`, its `by` login from the
+`Started:` line, and its `last_editor`. It refuses a config edited by anyone but that `By:` login.
+`run edit` replaces the text only for the `By:` login, only on an open config, only from the
+`text_sha256` it last read, and never changes the `By:` login. A closed run config stays readable
+with `run show`, so `run close` verifies the `CLOSED` state. The script never reads a run config's
 comments: on a public repository anyone can comment.
+`run tickets` gives `reference` and `tickets`: each ticket a `Run:` comment names, with the `list`
+fields, its `url`, `member`, `named_by_writer`, and `run_comments`, each with `author`,
+`author_can_write`, `names`, `createdAt`, and `url`. It reads every issue in every state with every
+comment, so it costs a page per 50 issues; use it for an admission count or a report, not per ticket.
+`verdicts` gives the pull request's `number`, `url`, `state`, and `head` (`headRefOid`); `verdicts` and
+`answers`, each with `author`, `createdAt`, `url`, and `author_can_write`, a verdict also with `round`,
+`outcome`, `reviewed`, `fixed_in`, `execution`, and `observed_execution` (null when absent), an answer
+with `answer` and `to`; `writers` with `rounds` (writers' verdicts, one per round number and
+`Reviewed` sha), `next_round`, `fixing_rounds_used`, `latest`, and `head_reviewed`; and
+`not_from_writers`, each other verdict or answer with its `author`, `createdAt`, and `url`.
 
 ## What the script holds to
 
 - Lists read every issue unfiltered, never through `--label`, `--milestone`, or `--search`, and
   raise the limit until a page comes back short. Run configs, labeled `wkc-run`, never appear in a
   list, the frontier, or a count, and a ticket verb refuses one.
+- `run tickets` reads every issue, open and closed, and every comment on each, and checks each count
+  against its total; a short read exits 4. A `#10`, `10`, or issue URL reference matches as that
+  issue; any other reference matches as exact text.
+- `verdicts` reads every comment on the pull request and checks the count against its total; a
+  short read exits 4. An issue number, or none, is refused.
 - Ticket verbs refuse pull request numbers before writing. `gh issue view` can return a pull
   request, so the script checks its URL before treating it as a ticket.
 - A milestone is matched by exact title against every milestone, closed ones included, read in full.

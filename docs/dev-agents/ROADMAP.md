@@ -45,8 +45,9 @@ verifies the combined branch at the current commit and ends with one run PR for 
 and merge. Production work follows that merge. Delegated planning may change technical plans and
 tickets within product intent and safeguards. Additional execution beyond the approved initial scope
 has a configurable allowance of five tickets by default. Requested changes continue on the same
-branch and PR with completed work preserved. Project and ticket model selections also work in manual
-calls. The default model pair is the latest Opus (`opus`) then `gpt-6.1-sol`, both at `medium`
+branch, PR, and run config with completed work preserved. Each step of a run runs in its own fresh
+session on the selected model, in any harness with an adapter; manual calls run in the calling
+session. The default model pair is the latest Opus (`opus`) then `gpt-6.1-sol`, both at `medium`
 effort: Opus builds, and each independent review uses the other model from the preceding build,
 update, or review step, starting with Sol, then a fresh latest-Opus context. A
 configured secret scan blocks unsafe pushes by either provider in every mode.
@@ -55,11 +56,11 @@ Scope: PRD goals 1 and 3, model-selection and subscription constraints, and its 
 SPEC Config fields, Ticket execution overrides, Lifecycle, Review verdict, Unattended calls,
 Delegated run authority, `wkc-yolo` run, run config/stores, run branch, continuation ownership,
 Ticket scope and Gate classes, Push check, Security, Failure handling, Grants and Cleanup;
-`push_check`, `run_config`, `max_additional_tickets`, `execution_models`, `headless_workers`; ADR-006, ADR-007, ADR-008,
-and [ADR-009](./adr/ADR-009-run-budgets-continuations-and-model-routing.md). By default Claude Code coordinates
-native Claude agents and subscription-authenticated `codex exec` workers. `claude -p` runs only
-when a project lists `claude-code` in `headless_workers`; no API billing fallback or nested
-workers are introduced. There is no elapsed-time run budget.
+`security_scan`, `run_config`, `max_additional_tickets`, `max_parallel_workers`, `execution_models`,
+`headless_workers`; Harness adapters; Decisions and open requests; ADR-006, ADR-007, ADR-008,
+[ADR-009](./adr/ADR-009-run-budgets-continuations-and-model-routing.md), ADR-012, ADR-013, and
+ADR-014, and ADR-015. Any harness with a complete adapter coordinates a run; workers use their
+configured provider and login behind each adapter's login check, and no billing fallback or nested workers are introduced. There is no elapsed-time run budget.
 `max_fix_attempts`, grant expiry, command timeouts, and existing session limits remain. A
 local-backend run end to end is M6's.
 
@@ -69,16 +70,17 @@ cross-harness rules. Model routing is a separate implementation deliverable with
 manual users can use it without YOLO.
 
 Exit check: use focused fixtures in a throwaway GitHub repository. Direct checks cover mechanical
-admission records, config validation, continuation relationships, PR heads, and selected settings.
+admission records, config validation, config edits and grant entries, PR heads, and selected settings.
 Instruction-following checks use only explicitly authorized sessions within the recorded limits.
 
 - A milestone with two independent tickets and one dependent ticket completes all three on its run
   branch. The run PR is ready at a verified head and remains unmerged. The run merges nothing into
   `main`. Restart resumes claimed work without duplicate claims. Every decision is recorded as a
-  `Decision (wkc-yolo):` comment.
+  `Decision (<skill>):` comment.
 - The initial snapshot includes approved dependent tickets and excludes work the person left out
-  or moved to release tickets. Those initial tickets spend no additional allowance. With an absent
-  `max_additional_tickets`, five distinct added admissions are allowed. The next stays at `backlog`.
+  or moved to release tickets. Those initial tickets spend no additional allowance. With `max_additional_tickets`
+  at its setup default of 5, five distinct added admissions are allowed; a config missing the
+  field stops and names `wkc-setup`. The next stays at `backlog`.
   Zero allows initial work only. Invalid limits stop before admission. A prerequisite, readiness
   repair, reused out-of-scope ticket, or new split child spends one slot on admission. Resume and
   duplicate discoveries spend no extra slot. Canceling an admitted ticket does not refund it. Two
@@ -101,32 +103,31 @@ Instruction-following checks use only explicitly authorized sessions within the 
   Later model edits affect the next dispatch without reapproval and preserve fixing-round usage.
   The final review-only round still follows the last allowed fixing round. Reviewers use fresh contexts and no
   implementation conversation.
-- Configured manual implementation and review calls honor their model selections while preserving
-  one requested step and approval questions. With no routing configuration, existing manual
-  behavior remains in the invoking harness. An unsupported coordinator or setting gives a blocked result or
-  concrete manual handoff. A manual question from a non-interactive worker reaches the person and
-  stops its dependent step. Resuming after the answer rereads the live pair and uses a fresh
-  worker if the selected model or effort changed. Integration validation confirms Claude native-agent
-  dispatch and explicit-model `codex exec` dispatch with effective subscription provider and login. A stored
-  ChatGPT login plus an API-key gateway configuration is refused. Both workers count against the same
-  limits. No worker delegates. No API fallback or automatic substitution occurs. With the
-  default `headless_workers`, no `claude -p` starts and a pinned Claude ID is blocked; listing
-  `claude-code` allows both and a Codex coordinator, and a ticket cannot change the list.
-  Removing `claude-code` from the project config during a run stops further `claude -p` dispatch. A run
-  without a pair runs each role on its own harness in fresh sessions, at the model and effort the
-  person confirmed at kickoff, recorded on its `Execution:` lines. Kickoff asks the person to
-  confirm the coordinator's full-permission mode and reports it as confirmed, not observed. A quota,
-  rate-limit, or authentication error stops all dispatch without retries. Claude bypass mode
-  with its Bash sandbox still enabled does not pass the no-sandbox check.
+- Manual implementation and review calls run in the calling session whatever pair is configured,
+  write their `Execution:` lines with the session's own model or `unknown`, and a manual review
+  warns when the same harness and model made the preceding step. Under a run, every skill call,
+  `finish` and `verify` included, runs in its own fresh session and returns a short result that the
+  coordinator checks against the records. Integration validation confirms Claude native-agent,
+  `claude -p`, and explicit-model `codex exec` dispatch with the effective provider and login,
+  from a Claude Code coordinator and from a Codex coordinator. Each worker runs on the provider
+  and login configured for its harness, and kickoff shows which one. All workers count against the same `max_parallel_workers` limit. No worker
+  delegates. No API fallback or automatic substitution occurs. A ticket cannot change the headless
+  list, and removing a harness from the project config during a run stops further dispatch to it.
+  A run without a pair runs each role on its own harness in fresh sessions, at the model and effort
+  the person confirmed at kickoff, recorded on its `Execution:` lines. Kickoff asks the person to
+  confirm the coordinator's full-permission mode and reports it as confirmed, not observed. A quota
+  or rate-limit error pauses only that harness, and steps on the other harness continue; an
+  authentication error stops all dispatch without retries. Claude bypass mode with its Bash
+  sandbox still enabled does not pass the no-sandbox check.
 - Requested changes preserve the run branch, PR, completed tickets, and evidence. The PR becomes
   draft before correction work changes its result. Reused unfinished or new correction tickets
   follow implementation, independent review, merge, and finish. A routine restart preserves its
-  config and remaining allowance. Explicit human renewal creates an immutable continuation linked
-  to its predecessor and the same branch and PR. Earlier-phase tickets remain same-run work.
-  Earlier configs remain readable while the run is open. New scope and grants require recorded
-  approval. Expired grants and consumed PR fixing rounds remain spent. Readiness includes all
-  phases and is rechecked at the new head. Terminal outcome records prove delivery without a
-  deleted config. A closed, unmerged run remains a separate supersession case.
+  config and remaining allowance and asks nothing. The person's confirmed changes edit the same
+  config with a `Changes:` line and a Decision comment; correction tickets join its initial IDs. A
+  grant entry never changes, and a changed grant is a new entry. New scope and grants require
+  recorded approval. Expired grants and consumed PR fixing rounds remain spent. Readiness covers
+  every required ticket and is rechecked at the new head. Terminal outcome records prove delivery
+  without a retired config. A closed, unmerged run remains a separate supersession case.
 - A production-affecting step never runs. An approved move creates a release ticket and permits
   readiness when the remaining checks pass. Without that move the ticket stays open and the PR
   stays draft. A new release ticket receives manual implementation, review, merge, and finish.
@@ -137,7 +138,8 @@ Instruction-following checks use only explicitly authorized sessions within the 
 - A planted fake credential blocks each provider's push, confirmed by an unchanged remote head.
   The fixed push passes. Push protection is reported as `enabled` with sufficient access and
   `unverifiable` when access cannot establish it. An untrusted issue comment cannot change
-  documents, model selections, grants, or authority. Existing manual planning approval questions
+  documents, model selections, grants, or authority, and a verdict, `Run:`, or `Answer:` comment
+  from an account without write access changes nothing. Existing manual planning approval questions
   remain in force.
 
 The runbook selects changed behavior and affected regressions before testing. Parallel or
@@ -158,6 +160,12 @@ Depends on: M2, because it changes `wkc-implement`; M4, because it covers `wkc-y
 Exit check: on a local-tracker fixture with a GitHub remote, each `wkc-tracker` write is one `chore: wkc-tracker <verb> <id>` commit holding only that ticket's file, with other staged and unstaged changes unchanged and nothing pushed. `wkc-implement` branches before it claims, so the claim and handoff commits are on the ticket's branch and not on the default branch, and it stops on an unpushed `issues_dir` commit on the default branch. After the merge, a rerun makes its post-merge writes on `<type>/<id>-finish` from the merged default branch, and the ticket file on the default branch reads `done` once that branch lands. With no remote, the post-merge writes are commits on the local default branch. A `wkc-yolo` run of two local tickets runs them one at a time and reaches `done` on the run branch before readiness. It pushes the ticket-file commits and opens a draft run PR before verification. Verification and cleanup evidence, an intermittent check's `Discovered:` item included, are read back from PR comments, with the checked HEAD unchanged, and that item's ticket is filed only after the run PR. A later ticket-file or code commit invalidates that evidence. Both tickets reach the default branch only after the person merges the run PR. Ticket files are checked with a YAML parser and `git log`, not from the report. The `wkc-tracker` and `wkc-implement` runbooks cover these cases.
 
 ## Changes
+
+- 2026-11-03: M4 follows the PR #100 review (PRD and SPEC Changes, same date): one config per run
+  replaces continuation configs, each run step runs in its own session through harness adapters,
+  manual calls run in the calling session, and `push_check` is renamed `security_scan`. Replaced
+  "Project and ticket model selections also work in manual calls" and "By default Claude Code
+  coordinates". No milestone moved.
 
 - 2026-10-28: The maintainer approved the ROADMAP with the PRD and SPEC, as merged in #82, so
   the opening note cites the SPEC as approved. Replaced "previously approved 2026-10-26" and "The

@@ -7,6 +7,8 @@ Amends [ADR-003](./ADR-003-review-and-fix-rounds.md),
 [ADR-007](./ADR-007-run-branch-and-run-config.md), and
 [ADR-008](./ADR-008-run-completes-its-tickets.md).
 
+Amended by [ADR-012](./ADR-012-step-sessions-and-harness-adapters.md) (step sessions, harness adapters, manual calls in their own session, the quota pause), [ADR-013](./ADR-013-one-run-config-per-run.md) (one config per run replaces immutable phase configs and continuations), [ADR-014](./ADR-014-decisions-and-open-requests.md) (manual calls decide first; `needs-decision`), and [ADR-015](./ADR-015-workers-use-the-configured-provider.md) (workers use the configured provider).
+
 ## Context
 
 The maintainer expects research, design, planning, and kickoff approval to keep unexpected work

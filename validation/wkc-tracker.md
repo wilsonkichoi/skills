@@ -657,6 +657,44 @@ and `close` and logs each call.
 `run create` and `run close` by a model, and the Linear and local `tracker` stores, are covered when `wkc-yolo` (#74)
 calls them.
 
+**A52 one config per run, edited in place, from PR #100 (note 17, ADR-013).** Direct. On a throwaway repository,
+with a config for run branch `run/m-20261029T1000` whose `Started:` line says `By: <the tester's login>`:
+
+1. `tracker` on GitHub: `github.py run create` gives one issue titled `Run config: run/m-20261029T1000`. `run edit`
+   with the `text_sha256` from `run show` replaces the text, and `run show` then returns it, with `last_editor` the
+   tester. An edit from a stale `text_sha256`, one that changes `By:`, and one run under another login are refused
+   with nothing written. Editing the issue body by hand as another account makes `run show` refuse.
+2. `github-variable`: the name is `WKC_RUN_M_20261029T1000`, with no `_PHASE_<n>` suffix. A `run create` whose name
+   already exists is refused and the variable's `updated_at` is unchanged. `run edit` replaces the value, and `run
+   show` still returns it.
+3. `local`: the file is `runs/run-m-20261029T1000.md`; an existing file is refused; `run edit` rewrites it whole.
+4. `command`: the fixture command's `edit <ref>` replaces the text from standard input; a non-zero exit is a failure.
+
+**A53 comment authors, from PR #100 (note 4).** Direct. On the GitHub fixture, comment on a ticket as the tester and,
+from a second account without write access, comment again. `github.py show <n>`.
+PASS: each comment carries `author` and its own `url` (`#issuecomment-<id>`), and `author_can_write` is `true` for
+the tester and `false` for the second account. Direct stubs also check custom roles with base `permission: write`,
+HTTP 404 and missing authors as `false`, and authentication, rate-limit, server, network, or malformed permission
+responses as exit 4 `read_failed` with no writes. `make test-tracker` covers these lookup subchecks.
+
+**A54 `run tickets`, from PR #100 (Y26).** Direct. On the GitHub fixture, with run config `<ref>`: a run ticket
+with the tester's `Run: <ref>` and a second account's `Run: <other>`; a closed run ticket; a ticket outside the run
+with only the second account's `Run: <ref>`; and a ticket with no `Run:` comment. `github.py run tickets <ref>`,
+then again with `#<ref>`.
+PASS: both list the same three tickets and no run config or pull request; the run tickets have `member: true`, the
+outside one `member: false` and `named_by_writer: false`; each `Run:` comment carries `author`, `author_can_write`,
+and the reference it names, the second account's `false`. Local and Linear: the same fixture shape read as their
+backend files say, every commenter able to write.
+
+**A55 `verdicts`, from PR #100 (code-review 68).** Direct. On the GitHub fixture, a pull request with a second
+account's `wkc-code-review round 9: approve` naming the head, then the tester's round 1 `fixed` and round 2 `approve`
+on the new head, and an `Answer:` from each account. `github.py verdicts <n>`, then `verdicts <issue number>`.
+PASS: every verdict and answer carries `author`, `url`, and `author_can_write`, the second account's `false`; each
+verdict's `round`, `outcome`, and `Reviewed` sha read as posted; `writers` gives `rounds: 2`, `next_round: 3`,
+`fixing_rounds_used: 1`, the round 2 verdict as `latest`, and `head_reviewed: true`; `not_from_writers` names the
+second account's two comments; the issue number is refused. Before the tester's verdicts, `next_round` is 1 and
+`head_reviewed` is `false`. `make test-tracker` covers paging, a short read, and the duplicate-round rule.
+
 **A51 `github.py` contract tests, from #94.** Direct. `make test-tracker`.
 PASS: every test passes. The tests run each verb against an in-memory GitHub and cover status mapping, unfiltered
 lists that raise the limit on a full page, the `wkc-run` exclusion, exact milestone titles against closed and
@@ -669,6 +707,8 @@ each `assign` form and its tie-break, half-landed and silently dropped writes,
 failed writes that are not retried, earlier identical comments that cannot verify dropped or failed writes,
 successful repeated comments, post-write read failures returning exit 3, concurrent closure,
 run configs refused as edge targets, pull request targets refused before any ticket write,
+`run tickets` membership from writers only across statuses, issue and text references, and paged
+issues and comments that fail on a short count,
 cycles through complete lists, duplicates and other repositories,
 and text kept off the command line and kept UTF-8 under a Latin-1 locale, text that is not UTF-8
 refused as JSON before any write, exact CRLF input bodies,
@@ -1571,6 +1611,38 @@ here.
 Versions 0.0.9 to 0.0.41 below were development steps on the `feat/tracker` branch. They shipped
 together as 0.0.8, so an entry's version names a branch state, and its skill ref names the exact
 commit it tested.
+
+### 2026-11-05T22:55:50-08:00 PR #100 step 5 validation
+
+Candidate `582ec14` on `feat/74-wkc-yolo`, backend GitHub; the step 5 batches and their evidence
+are in the `validation/wkc-yolo.md` report of 2026-11-05.
+
+```
+TRACKER VALIDATION
+backend: github                  harness: claude-code
+date: 2026-11-05                 skill ref: 582ec14 (A51); e864ac3, d8093ed, fc09f32 (A53 to A55)
+scope: A51, A53, A54, A55; cases PR #100 added or changed
+
+PASS  4
+FAIL  0
+SKIP  2
+
+skipped:
+  A52  not run as its own case; run edit ran inside wkc-yolo cases Y23 and Y31
+  A54  local and Linear arms; no session was spent on them
+
+VERDICT: RED for the selected scope: A54's local and Linear arms were skipped
+```
+
+- A51: `make test-tracker`, 116 tests OK at `582ec14` (batch Q driver). 105 at `c028642`, 110 at
+  `d8093ed`, 111 at `fc09f32`, 116 at `e864ac3`.
+- A53: on the public trust fixture, the tester's comment `author_can_write: true` and the second
+  account's `false`; `fc09f32` added each comment's `url` and the PASS list now checks it.
+- A54: `github.py run tickets 10`, `#10`, `4`, and `99` on the trust fixture listed the run's
+  tickets and the outside one with `member: false` and `named_by_writer: false`.
+- A55: `github.py verdicts` on trust fixture PR #31: authors, URLs, `author_can_write`, writer
+  rounds, `next_round`, `fixing_rounds_used`, `latest`, `head_reviewed`, `not_from_writers`; the
+  issue number refused.
 
 ### 2026-10-29T12:23:31-07:00 PR #95 review round 13
 
@@ -5155,3 +5227,41 @@ through to `.body`, and indexing a string errors with `Cannot index string with 
 `github.md` prescribes no such construct. Its only mention of either operator instructs the reader
 not to use them, in the note that the frontier's `error()` must never be patched with `?` or
 `// []`. The shared status prelude uses neither. No fix needed.
+
+## Dated report: 2026-11-10, PR #100 writer-permission source review
+
+Attempt: focused source review of PR #100 at `ca7484d`. Selected: GitHub A53 permission
+lookup subchecks and propagation through A54 `run tickets` and A55 `verdicts`, plus static
+checks of implement 85, code-review 68, and YOLO Y26's manual permission commands. Harness:
+this Codex session. Additional AI test sessions: 0 of 6. No service fixture or model run was needed.
+
+Two verified defects were fixed. A custom role with base `permission: write` had been rejected
+because its `role_name` was not one of the built-in names. A permission API authentication,
+rate-limit, server, or network failure had returned success with `author_can_write: false`,
+which could hide a valid handoff, membership, or verdict. The lookup now uses base permission
+and propagates those failures as exit 4 `read_failed`, with no writes. Missing authors and
+HTTP 404 retain the no-writer result. Malformed base permissions also stop the read.
+
+The [GitHub collaborator API contract](https://docs.github.com/en/rest/collaborators/collaborators#get-repository-permissions-for-a-user)
+defines `permission` as the base access and `role_name` as the assigned role, including custom
+names. Manual PR-comment checks, the SPEC, README, and existing 0.0.47 changelog entry agree
+with the fix. No version increment is needed inside the existing PR.
+
+Before the fix, the existing 116 tests passed. The initial regression run produced 18 failing
+subchecks across the custom writer, invalid permission, and five failure modes through all
+three record readers. After the fix, `make test-tracker` passes all 118 tests. A53's focused
+lookup subchecks pass directly. These are controlled API stubs, not a live multi-account
+service check or full A53/A54/A55 model coverage.
+
+The source review also found kickoff's alias instruction applied to all native harnesses.
+The SPEC and Codex adapter require an exact Codex model ID. Kickoff and YOLO Y24 now scope
+aliases to native Claude workers. Static consistency passes. The existing native-first,
+fresh-ticket-read, and worker-completion instructions are explicit; no further conflict was
+established there. The alias correction is not proven to explain the older medium dispatch
+failure. Medium dispatch, quota/resume behavior, and other unselected model arms remain open.
+
+Native-first precedence, fresh ticket reads, worker completion tracking, grants, fixtures, and
+historical results remain unchanged. The checked changes are permission handling and the native
+Claude alias scope. Direct checks pass for metadata and opening fields, supporting Contents,
+unchanged fenced templates, the four manual permission commands, and `git diff --check`.
+VERSION remains 0.0.47, with the existing changelog entry updated for the whole PR.

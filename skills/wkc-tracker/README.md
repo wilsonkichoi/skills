@@ -78,6 +78,8 @@ filed by hand in the web UI is a real ticket immediately, with no import step.
 /wkc-tracker run create <text>
 /wkc-tracker run show <ref>
 /wkc-tracker run close <ref>
+/wkc-tracker run tickets <ref>
+/wkc-tracker verdicts <PR>
 ```
 
 **`list`** shows tickets with their id, title, status, assignee, and blockers. Both arguments are
@@ -160,22 +162,31 @@ markdown both are worked out from the tickets, so a milestone with no tickets do
 To ensure a milestone literally named `list`, or one starting with `show ` or `close `, quote it:
 `/wkc-tracker milestone "list"`.
 
-**`run create`, `run show`, and `run close`** store a `wkc-yolo` run config: the limits a person
-approved for one unattended run. They are not ticket verbs, and a run config never shows up as a
-ticket. `wkc-yolo` writes one with `run create`, which returns a reference; every skill in the run
-reads it with `run show <ref>`; `run close` retires it when the run is over. Nothing edits one.
+**`run create`, `run show`, `run edit`, and `run close`** store a `wkc-yolo` run config: the limits
+a person approved for one unattended run, for its whole life. They are not ticket verbs, and a run
+config never shows up as a ticket. `wkc-yolo` writes one with `run create`, which returns a
+reference; every skill in the run reads it with `run show <ref>`; `run edit` replaces it when the
+run PR opens or the person confirms a change; `run close` retires it when the run is over.
+**`run tickets <ref>`** finds every ticket that a `Run:` comment names for that config, closed ones
+included, with who wrote each comment and whether they can write. `wkc-yolo` uses it to count
+admissions and to report `Run:` comments from people without write access.
+
+**`verdicts <PR>`** reads one GitHub pull request's `wkc-code-review` verdicts and `Answer:` comments,
+with who wrote each and whether they can write, and counts review rounds from writers' verdicts only.
+`wkc-code-review`, `wkc-implement`, and `wkc-yolo` use it, so a verdict from someone without write
+access never counts as a review.
 
 `run_config` in the config picks the store, and you pick it by who should see it:
 
 - `tracker`, the default: an issue labeled `wkc-run` on GitHub or Linear, or a file in
   `issues_dir/runs/` locally. On a public repository the issue is public. `run show` refuses a
-  GitHub issue whose body was edited; Linear and local cannot tell.
+  GitHub issue edited by anyone but the login on its `By:` line; Linear and local cannot tell.
 - `github-variable`: a repository variable, readable only by collaborators and not shown publicly.
-  `run show` refuses one updated after it was created. Every Actions workflow in the repository can
-  read it, and GitHub does not mask it in logs.
+  GitHub records no editor, so a collaborator who can write variables can change one unseen. Every
+  Actions workflow in the repository can read it, and GitHub does not mask it in logs.
 - `command <cmd>`: your own store. `<cmd> put` takes the text on standard input and prints a
-  reference, `<cmd> get <ref>` prints it or exits non-zero to refuse, and `<cmd> close <ref>`
-  retires it. Your command decides who may read it and what counts as an edit.
+  reference, `<cmd> get <ref>` prints it or exits non-zero to refuse, `<cmd> edit <ref>` replaces
+  it from standard input, and `<cmd> close <ref>` retires it. Your command decides who may read it and what counts as an edit.
 
 A run config holds limits only, never credentials or security posture.
 
@@ -294,7 +305,7 @@ says, and what it did about it.
 - Reopen a terminal ticket. Terminal is terminal. `edit` and `unlink` work on one without
   changing its status.
 - Delete a ticket, or edit or delete a comment.
-- Edit a run config.
+- Edit a run config except through `run edit`.
 - Guess. If a Linear workflow is missing a status it needs, it stops and says so instead of
   picking a similar one. If two sessions take the same free ticket at once, a fixed rule decides
   which one keeps it, and the other steps back and says so.

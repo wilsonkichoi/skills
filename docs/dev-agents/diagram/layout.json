@@ -11,7 +11,8 @@
     "code-review": { "x": 3360, "y": 0 },
     "workflow-diagram": { "x": 480, "y": 440 },
     "help": { "x": 960, "y": 440 },
-    "skills-release": { "x": 1440, "y": 440 }
+    "skills-release": { "x": 1440, "y": 440 },
+    "yolo": { "x": 2880, "y": 440 }
   },
   "edges": {
     "setup-research": {
@@ -106,6 +107,33 @@
         [120, -90, 150, -120, 1200, -120],
         [2490, -120, 2520, -90, 2520, 0]
       ]
+    },
+    "yolo-tracker": {
+      "start": [2880, 520],
+      "segments": [
+        [2650, 520, 2420, 500, 2420, 380],
+        [2420, 320, 2420, 220, 2420, 160]
+      ],
+      "labelOffset": [-90, 0]
+    },
+    "yolo-implement": {
+      "start": [2940, 440],
+      "segments": [[2940, 380, 2940, 220, 2940, 160]],
+      "labelOffset": [90, 0]
+    },
+    "yolo-code-review": {
+      "start": [3120, 520],
+      "segments": [[3450, 520, 3580, 400, 3580, 160]],
+      "labelOffset": [-30, -18]
+    },
+    "yolo-backlog": {
+      "start": [3000, 600],
+      "segments": [
+        [3000, 650, 2970, 680, 2900, 680],
+        [2300, 680, 2100, 680, 2100, 620],
+        [2100, 500, 2100, 260, 2100, 160]
+      ],
+      "labelOffset": [0, 20]
     }
   },
   "regions": [
@@ -114,6 +142,7 @@
     { "lane": "coordination", "x": 2376, "y": -52, "width": 288, "height": 236 },
     { "lane": "implementation", "x": 2856, "y": -52, "width": 768, "height": 236 },
     { "lane": "documentation", "x": 456, "y": 388, "width": 768, "height": 236 },
-    { "lane": "independent", "x": 1416, "y": 388, "width": 288, "height": 236 }
+    { "lane": "independent", "x": 1416, "y": 388, "width": 288, "height": 236 },
+    { "lane": "coordination", "x": 2856, "y": 388, "width": 288, "height": 236 }
   ]
 }

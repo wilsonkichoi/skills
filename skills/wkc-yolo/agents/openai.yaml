@@ -1,0 +1,5 @@
+interface:
+  display_name: "wkc-yolo"
+  short_description: "Run a ticket, a wave, or a milestone unattended after one round of questions, on its own run branch, ending in one run pull request that a person reviews and merges"
+policy:
+  allow_implicit_invocation: false

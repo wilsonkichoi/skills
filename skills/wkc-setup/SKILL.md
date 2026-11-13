@@ -134,7 +134,7 @@ so later skills read the right files. Defaults are `docs/dev-agents/PRD.md`, `do
 or `CLAUDE.md` for a deliberately Claude-Code-only project. A project with a convention keeps it:
 point `context_file` at the file every harness ultimately reaches, and never invert that.
 
-**Section D: Test command, review limits, and push check.** Confirm the command inferred in step 1,
+**Section D: Test command, review limits, and security scan.** Confirm the command inferred in step 1,
 or ask for it. It is what later skills run before handing work back. A project with no tests leaves
 `test_command` out. Then ask for `max_fix_attempts`: how many review rounds may change code on one
 pull request, for fixes or improvements, an integer, 0 or more, with `5` recommended.
@@ -145,54 +145,69 @@ start to test a change, an integer, 0 or more, with `6` recommended. An attempt 
 `wkc-implement` or one review round by `wkc-code-review`, and each has its own allowance. Say it is
 a ceiling, not a target: direct checks come first, and `0` means no AI test sessions.
 
-Then ask for `push_check`: a shell command that scans the commits about to be pushed for secrets,
+Then ask for `max_additional_tickets`: how many tickets a `wkc-yolo` run may admit beyond the
+initial tickets the person approves at kickoff, such as a prerequisite it discovers or a readiness
+repair, an integer, 0 or more, with `5` recommended. Say initial tickets never count against it, and
+`0` runs all of them but admits nothing new. A run may lower it, never raise it.
+
+Then ask for `max_parallel_workers`: how many fresh sessions a `wkc-yolo` run may keep running at
+once, builds, reviews, and every other step counted together, an integer, 1 or more, with `5`
+recommended. A run may lower it, never raise it, and the local backend always runs one.
+
+Then ask for `security_scan`: a shell command that scans the commits about to be pushed for secrets,
 where exit 0 passes and anything else blocks the push. Offer, recommended first:
 
 1. `gitleaks git --redact --log-opts="origin/<default branch>..HEAD"`, with the repository's
    default branch filled in. Check `command -v gitleaks`; when it is missing, say every push fails
    until it is installed.
 2. The project's own command.
-3. None: `push_check` stays out of the config.
+3. None: `security_scan` stays out of the config.
 
 Say that once it is set, `wkc-implement` and `wkc-code-review` run it before every push and never
-skip it. With none, a manual push only warns, and a `wkc-yolo` run cannot push.
+skip it. With none, a manual push only warns, and a `wkc-yolo` run cannot push. When the config has
+the old `push_check` key and no `security_scan`, offer to rename it, keeping its value; the skills
+still read the old name for one release, with a warning.
 
 **Section E: Run configs.** Where `wkc-yolo` stores each run's config: the limits a person approves
-for one unattended run, such as its scope, budget, and run branch. It holds no credentials. Every
-skill in the run reads it, from any machine. Offer, recommended first:
+for one unattended run, such as its scope, initial tickets, additional-ticket allowance, and
+run branch. It holds no credentials. Every skill in the run reads it, from any machine. Offer, recommended first:
 
 1. `tracker`: an issue labeled `wkc-run`, or a file in `issues_dir/runs/` on the local backend. On a
    public GitHub repository, say the issue is public, so anyone can read the run's limits. On
-   Linear or local, say an edit to it goes undetected.
+   Linear or local, say an edit to it goes undetected, so it holds no grants.
 2. `github-variable`, on GitHub only: a repository variable that only collaborators read. Say every
-   Actions workflow in the repository can read it, and GitHub does not mask it in logs.
+   Actions workflow in the repository can read it, GitHub does not mask it in logs, and a
+   collaborator who can write variables can change it unseen.
 3. `command <cmd>`: the project's own store, with its own permissions. `<cmd> put` takes the config
    on standard input and prints a reference, `<cmd> get <ref>` prints it or exits non-zero to
-   refuse, and `<cmd> close <ref>` retires it.
+   refuse, `<cmd> edit <ref>` replaces it from standard input, and `<cmd> close <ref>` retires it.
 
 Read the repository's visibility with `gh repo view <OWNER/REPO> --json visibility`, for the
 repository Section A resolved, before giving the GitHub warnings.
 
-**Section F: Execution models.** `execution_models` is one ordered pair: the first model builds,
-and each review uses the other model from the step before. A ticket's `## Execution` replaces it
-for that ticket. Offer, recommended first:
+**Section F: Execution models.** `execution_models` is one ordered pair for `wkc-yolo` runs: the
+first model builds, and each review uses the other model from the step before. A ticket's
+`## Execution` replaces it for that ticket. A manual call always runs in the session that calls it.
+Offer, recommended first:
 
 1. `claude-code`, `opus`, effort `medium`, then `codex`, `gpt-6.1-sol`, effort `medium`. `opus`
    follows the newest Opus.
-2. Another pair of two different models. Each entry is `harness` (`claude-code` or `codex`),
-   `model`, and `effort` (`medium` when left out). A `claude-code` model is `opus`, `sonnet`,
-   `haiku`, or `fable`; a pinned ID works only through `claude -p`.
-3. None: each skill runs in the session that calls it.
+2. Another pair of two different models. Each entry is `harness` (`claude-code`, `codex`, or
+   `kiro-cli`), `model`, and `effort` (`medium` when left out). A `claude-code` model is `opus`,
+   `sonnet`, `haiku`, or `fable`, or a pinned ID, which runs through `claude -p`; a `kiro-cli` model
+   is an ID `kiro-cli chat --list-models` lists.
+3. None: a run uses the coordinator's own model for every step.
 
-Then ask for `headless_workers`, the harnesses whose headless CLI a coordinator may start, with
-`[codex, kiro-cli]` first. Say that listing `claude-code` lets `claude -p` run with whatever login
-it finds, API billing included, and allows a pinned Claude ID and a Codex coordinator.
+Then ask for `headless_workers`, the harnesses whose headless CLI a run may start, with
+`[claude-code, codex, kiro-cli]` first. Say that before each launch the run checks that the CLI has
+a login, and that each worker uses the provider already configured for its harness, whether a
+subscription, an API key, a gateway, or a cloud provider. Listing a harness accepts that billing.
 
 Workers run with full permissions and no sandbox, and no skill can read its permission mode, so
 say how to launch a coordinator: `claude --dangerously-skip-permissions`, or
 `permissions.defaultMode: "bypassPermissions"` in `~/.claude/settings.json`; a project's settings
-files cannot turn bypass mode on. For Codex, `codex --dangerously-bypass-approvals-and-sandbox`; for
-a `wkc-yolo` run without a pair in Kiro CLI, `kiro-cli chat --trust-all-tools`.
+files cannot turn bypass mode on. For Codex, `codex --dangerously-bypass-approvals-and-sandbox`;
+for Kiro CLI, `kiro-cli chat --trust-all-tools`.
 
 ## 3. Scaffold
 
@@ -213,11 +228,12 @@ existing code. Their paths are recorded in the config; `wkc-research`, `wkc-arch
 `wkc-plan` write them when the work needs them.
 
 **Template:** write `docs/dev-agents/config.md` from
-[config-template.md](./config-template.md), dropping the fields that do not apply. Every value comes
+[config-template.md](./config-template.md). Write every required field, and drop only the
+optional fields that do not apply. Every value comes
 from the interview or from step 1. Never guess a path into configuration.
 
-**Existing projects:** an existing `config.md` keeps the choices the project already made. Add the
-fields it is missing and report what changed; do not rewrite the body.
+**Existing projects:** an existing `config.md` keeps the choices the project already made. Add every
+required field it is missing, asking for each as its section does, offer the optional ones, and report what changed; do not rewrite the body.
 
 **Ownership rule:** the project owns `AGENTS.md` and `CLAUDE.md`. `wkc-setup` adds at most the step 4
 reference line and never moves, consolidates, or rewrites what is already there. `rules_dir`

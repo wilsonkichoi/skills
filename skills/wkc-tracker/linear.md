@@ -65,7 +65,7 @@ Read `warnings` in every `save_issue` result: a success can carry a refusal. Ver
 | Verb | Linear |
 |---|---|
 | `list` | `list_issues` with `state` and `project` |
-| `show` | `get_issue` with `includeRelations: true`, plus `list_comments`. Name the project milestone, and a duplicate's `duplicateOf` |
+| `show` | `get_issue` with `includeRelations: true`, plus `list_comments`. Name the project milestone, and a duplicate's `duplicateOf`. Name each comment's author; every commenter is a workspace member, so each counts as able to write |
 | `comment` | `save_comment`, then find the exact body with `list_comments`. Before retrying, check whether the first attempt landed |
 | `move` | `get_issue`, refuse a move out of Done, Canceled, or Duplicate, then `save_issue` with the status name, then `get_issue`. Moving to `backlog` or `ready` also sets `assignee: null`. For `duplicate`, follow its own section below instead |
 
@@ -216,7 +216,19 @@ with the title `Run config: <Run branch>`, the label, the text as its descriptio
 milestone, or assignee. Its identifier is the reference.
 
 `run show <id>`: `get_issue`. Refuse when it is missing or lacks the label. Compare the text by
-meaning, as **Reading rules** says. The tools cannot show whether a description was edited, so an
-edit goes undetected; `wkc-setup` says so when it asks for `run_config`.
+meaning, as **Reading rules** says. The tools cannot show whether a description was edited, or
+by whom, so an edit goes undetected; `wkc-setup` says so when it asks for `run_config`.
+
+`run edit <id> <text>`: `get_issue` first, as `run show` does, then `save_issue` with the new text as
+its description, and read it back.
 
 `run close <id>`: move it to `Done`. It stays readable with `run show`.
+
+`run tickets <ref>`: `list_issues` once for each status in `list_issue_statuses`, terminal ones with
+`includeArchived: true`, following `hasNextPage`, then `list_comments` on each issue that is not a
+run config. A comment whose first line is `Run: <x>` is a `Run:` comment, and every commenter counts
+as able to write, as `show` says. Report each issue one names `<ref>` on, with its `Run:` comments,
+`member` when the latest one names `<ref>`, and `named_by_writer`.
+
+`verdicts <PR>`: pull requests are on GitHub, so run `github.py verdicts <n>` from this directory with
+`--repo` set to the pull request's repository, as [github.md](./github.md) says.

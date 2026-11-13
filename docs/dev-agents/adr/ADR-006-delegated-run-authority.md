@@ -5,6 +5,8 @@ a run merges only into its own run branch, `merge_gate` is gone, and the run rec
 Amended by [ADR-008](./ADR-008-run-completes-its-tickets.md): moving a requirement out of a
 ticket's definition of done, and a run's non-production grants, are never delegated.
 
+Note (2026-11-03): the `push_check` config key is renamed `security_scan`, with `push_check` read as a deprecated alias for one release. Its behaviour is unchanged.
+
 ## Context
 
 The maintainer asked for `wkc-yolo` runs with near-full engineering autonomy: change the SPEC,

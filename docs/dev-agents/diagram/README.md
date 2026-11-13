@@ -8,14 +8,15 @@ Narrow layouts keep the full-width bottom sheet.
 The default zoom is 70%, or smaller when needed to fit. Selection centers the card in available space at the current zoom.
 Closing slides the panel away without changing card positions or zoom.
 Tinted boxes group Configuration, Planning, Coordination, Implementation, Documentation, and Independent cards. Purple, blue, green, rose, amber, and gray distinguish those regions in both themes.
-The map contains all eleven shipped definitions in this repository: `wkc-setup`, `wkc-research`, `wkc-architect`,
-`wkc-plan`, `wkc-backlog`, `wkc-tracker`, `wkc-implement`, `wkc-code-review`, `wkc-workflow-diagram`, `wkc-help`, and internal `wkc-skills-release`.
+The map contains all twelve shipped definitions in this repository: `wkc-setup`, `wkc-research`, `wkc-architect`,
+`wkc-plan`, `wkc-backlog`, `wkc-tracker`, `wkc-yolo`, `wkc-implement`, `wkc-code-review`, `wkc-workflow-diagram`, `wkc-help`, and internal `wkc-skills-release`.
 Planned skills are excluded.
 Every card is a skill. External systems, outputs, and results appear in the owning skill's details.
 The four system cards and their six action arrows are removed at the user's direction.
 
 The map exists to show how the skills connect in a development workflow, so a person knows which one to run next.
 The main flow runs left to right in one row: setup, research, architect, plan, backlog, tracker, implement, code-review.
+`wkc-yolo` sits in the Coordination lane in the lower row, under `wkc-implement`, because it calls the skills in the main row.
 Documentation and Independent cards sit in a lower row, out of the main flow, at the user's direction.
 Card order (Previous/Next) and lane chip order follow the same flow.
 
@@ -47,6 +48,7 @@ The arrows do not claim automatic skill invocation. Help's installer operations 
 | wkc-backlog | [skills/wkc-backlog/SKILL.md](../../../skills/wkc-backlog/SKILL.md) | One milestone or one change; tickets from the SPEC templates; every ticket read and write through `wkc-tracker` verbs; invokes `wkc-architect` for a SPEC change and `wkc-plan` for a ROADMAP change, except under `wkc-yolo`; callers are people, `wkc-plan`, `wkc-yolo`, and a model acting on a person's request |
 | wkc-implement | [skills/wkc-implement/SKILL.md](../../../skills/wkc-implement/SKILL.md) | One ticket from `ready` to an open pull request at `in-review`, and after the merge to `done` through `wkc-implement finish <id>`, which names `wkc-plan close <milestone>` when the milestone has nothing open; every ticket read and write through `wkc-tracker` verbs; out-of-scope work to `wkc-backlog`; never merges; callers are people, `wkc-yolo`, and a model acting on a person's request |
 | wkc-code-review | [skills/wkc-code-review/SKILL.md](../../../skills/wkc-code-review/SKILL.md) | One review round on one pull request: a verdict comment of `approve`, `fixed`, or `stopped`, and one fix commit in a `fixed` round, up to `max_fix_attempts`; ticket reads and comments through `wkc-tracker` verbs; out-of-scope work to `wkc-backlog`; never moves the ticket or merges; callers are people, `wkc-yolo`, and a model acting on a person's request |
+| wkc-yolo | [skills/wkc-yolo/SKILL.md](../../../skills/wkc-yolo/SKILL.md) | Runs a ticket, a wave, or a milestone unattended on a run branch after one round of questions, ending in one run pull request that a person merges; every ticket and run config read and write through `wkc-tracker`; calls `wkc-implement`, `wkc-code-review`, and `wkc-backlog` with `--run <ref>`; callers are people only; commands `wkc-yolo <milestone>` and `resume <run config ref>` |
 
 | Edge | Kind | Source evidence |
 | --- | --- | --- |
@@ -66,6 +68,10 @@ The arrows do not claim automatic skill invocation. Help's installer operations 
 | architect → tracker: Lists tickets | Call, dashed | Architect's Dependencies and section 4: on a contract change with a configured tracker, list open tickets through the `wkc-tracker` `list` verb |
 | backlog → architect: SPEC change | Call, dashed | Backlog's Dependencies name `wkc-architect`; section 1 invokes it for a change it classifies as a SPEC change and drafts nothing that depends on it. Architect's When to use it names `wkc-backlog` as a caller. Only for that class of change, and never under `wkc-yolo` |
 | backlog → plan: ROADMAP change | Call, dashed | Backlog's Dependencies name `wkc-plan`; section 1 invokes it for a change that adds, moves, or drops milestone scope and drafts nothing that depends on it. Plan's When to use it names `wkc-backlog` as a caller. Only for that class of change, and never under `wkc-yolo` |
+| yolo → tracker: Run configs and ticket state | Call, solid | Yolo's Dependencies name `wkc-tracker` "for every ticket and run config read and write"; section 2 rereads each ticket with `wkc-tracker show`, reads the config with `run show`, and posts `Run:` and `Parked (wkc-yolo):` comments. Every run uses it |
+| yolo → implement: Builds, updates, finishes, verifies | Call, solid | Yolo's Dependencies name `wkc-implement` "called with `--run <ref>`"; section 2 calls `wkc-implement <id> --run <ref>`, asks for the pre-merge update, and runs `wkc-implement finish <id> --run <ref>`; section 4 runs `wkc-implement verify <id> --run <ref>`. Implement's When to use it names `wkc-yolo` as a caller. Every run uses it |
+| yolo → code-review: Runs review rounds | Call, solid | Yolo's Dependencies name `wkc-code-review`; section 2 runs `wkc-code-review <PR> --run <ref>` for an `in-review` ticket with no verdict on its head, or a `fixed` one, and again after a head change. Code-review's When to use it names `wkc-yolo` as a caller. Every run uses it |
+| yolo → backlog: Discovered work and planning changes | Call, dashed | Yolo's Dependencies name `wkc-backlog`; section 3 sends each discovered item to `wkc-backlog <item and evidence> --run <ref>` and runs planning changes through it. Backlog's section 7 is "Calls from wkc-yolo". Only when a ticket raises an item, a planning change, or a readiness repair |
 
 Setup and diagram file outputs are described in their own cards. Setup's label creation and tracker's GitHub Issues operations use
 [docs/dev-agents/config.md](../config.md) as backend evidence. Help's card describes the installer; the release card describes tags and GitHub Releases.
@@ -115,6 +121,9 @@ Do not edit diagram.html directly. Keep temporary artifacts in the ignored `.cac
 | Desktop tracker details | [Image](screenshots/desktop-light-tracker-details.png) | [Image](screenshots/desktop-dark-tracker-details.png) |
 | Tablet tracker details | [Image](screenshots/tablet-light-tracker-details.png) | [Image](screenshots/tablet-dark-tracker-details.png) |
 | Phone tracker details | [Image](screenshots/phone-light-tracker-details.png) | [Image](screenshots/phone-dark-tracker-details.png) |
+| Desktop yolo details | [Image](screenshots/desktop-light-yolo-details.png) | [Image](screenshots/desktop-dark-yolo-details.png) |
+| Tablet yolo details | [Image](screenshots/tablet-light-yolo-details.png) | [Image](screenshots/tablet-dark-yolo-details.png) |
+| Phone yolo details | [Image](screenshots/phone-light-yolo-details.png) | [Image](screenshots/phone-dark-yolo-details.png) |
 
 The current details screenshots select `wkc-plan`; the help screenshots select `wkc-help`; the tracker screenshots select `wkc-tracker`.
 The dated results below describe earlier versions of the map.
@@ -126,6 +135,15 @@ Desktop light overview and phone dark details screenshots were visually inspecte
 The phone sheet scrolls independently; commands below the fold remain reachable.
 
 ## Implementation verification
+
+### wkc-yolo card, 2026-10-29
+
+Added the `wkc-yolo` card and its four call edges from `skills/wkc-yolo/SKILL.md`; existing content, coordinates, and routes are unchanged.
+The card sits at (2880, 440) in a second Coordination region. Its routes cross the tracker row's lower routes in a few places; the backlog route runs through a lower corridor.
+- `check` and `build` passed with `--documentation-base https://github.com/wilsonkichoi/skills/blob/main/`, exit 0, no warnings.
+- Google Chrome headless, driven over the DevTools protocol, loaded `diagram.html` from `file://` at 1440 × 900, 768 × 1024, and 390 × 844 in both themes with no page exceptions. All overview and details screenshots were regenerated, plus the new yolo details set. The desktop light overview and desktop dark yolo details were inspected by eye.
+- SKIP: networking-disabled load, keyboard navigation, focus return, command copying, and touch gestures; none were exercised.
+- Conflicts: the `backlog → architect` and `backlog → plan` edge rows and the `wkc-backlog` ownership row say "never under `wkc-yolo`" and "except under `wkc-yolo`". `skills/wkc-backlog/SKILL.md` section 7 now invokes both under `Planning: delegated`. Suggested wording: "except under `wkc-yolo` with `Planning: none`". The existing text is kept.
 
 ### wkc-plan close, 2026-10-24
 

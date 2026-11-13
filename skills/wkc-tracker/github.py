@@ -214,8 +214,63 @@ NODE_QUERY = (
 RUN_QUERY = (
     "query($owner: String!, $name: String!, $n: Int!) {"
     " repository(owner: $owner, name: $name) { issue(number: $n) {"
-    " number state body lastEditedAt labels(first: 100) { nodes { name } } } } }"
+    " number state body lastEditedAt editor { login } labels(first: 100) { nodes { name } } } } }"
 )
+
+COMMENT_PAGE = "totalCount pageInfo { hasNextPage endCursor } nodes { body createdAt url author { login } }"
+
+COMMENTED_ISSUES_QUERY = (
+    "query($owner: String!, $name: String!, $after: String) {"
+    " repository(owner: $owner, name: $name) {"
+    " issues(first: 50, after: $after, states: [OPEN, CLOSED], orderBy: {field: CREATED_AT, direction: ASC}) {"
+    " totalCount pageInfo { hasNextPage endCursor } nodes {"
+    " number title url state stateReason(enableDuplicate: true)"
+    " labels(first: 100) { nodes { name } } assignees(first: 100) { nodes { login } }"
+    " milestone { number title } comments(first: 100) {" + COMMENT_PAGE + "} } } } }"
+)
+
+PR_COMMENTS_QUERY = (
+    "query($owner: String!, $name: String!, $n: Int!, $after: String) {"
+    " repository(owner: $owner, name: $name) { pullRequest(number: $n) {"
+    " number url state headRefOid comments(first: 100, after: $after) {" + COMMENT_PAGE + "} } } }"
+)
+
+ISSUE_COMMENTS_QUERY = (
+    "query($owner: String!, $name: String!, $n: Int!, $after: String) {"
+    " repository(owner: $owner, name: $name) { issue(number: $n) {"
+    " comments(first: 100, after: $after) {" + COMMENT_PAGE + "} } } }"
+)
+
+# A `Run:` comment's first line, `Run: <run config ref>`.
+RUN_LINE = re.compile(r"Run:[ \t]*(\S(?:.*\S)?)[ \t]*")
+
+# The kickoff login on a run config's first line: `Started: <time>. By: <login>.`
+RUN_OWNER = re.compile(r"^Started:.*?\bBy:\s*([A-Za-z0-9](?:[A-Za-z0-9-]*[A-Za-z0-9])?)", re.M)
+
+# A wkc-code-review verdict's first line: `wkc-code-review round <n>: <outcome>, <what>`.
+VERDICT_LINE = re.compile(r"wkc-code-review round\b[ \t]*(\d+)?:?[ \t]*(approve|fixed|stopped|needs-decision)?\b")
+VERDICT_FIELDS = {"Reviewed": "reviewed", "Fixed in": "fixed_in", "Execution": "execution",
+                  "Observed execution": "observed_execution"}
+
+
+def run_owner(text: str | None) -> str | None:
+    match = RUN_OWNER.search(text or "")
+    return match.group(1) if match else None
+
+
+def run_named(body: str | None) -> str | None:
+    """The reference a `Run:` comment names, from its first line, or None for any other comment."""
+    lines = (body or "").strip().splitlines()
+    match = RUN_LINE.fullmatch(lines[0]) if lines else None
+    return match.group(1) if match else None
+
+
+def same_run_ref(named: str, ref: str, repo: str) -> bool:
+    """Issue references match as issues (`10`, `#10`, a URL); any other reference matches as text."""
+    try:
+        return parse_ref(named, repo) == parse_ref(ref, repo)
+    except TrackerError:
+        return named.strip() == ref.strip()
 
 
 def split_repo(repo: str) -> tuple[str, str]:
@@ -245,7 +300,8 @@ def issue_from_gh(raw: dict[str, Any], repo: str) -> Issue:
         body=raw.get("body"),
         url=raw.get("url", ""),
         comments=[
-            {"author": (c.get("author") or {}).get("login"), "createdAt": c.get("createdAt"), "body": c.get("body")}
+            {"author": (c.get("author") or {}).get("login"), "createdAt": c.get("createdAt"), "url": c.get("url"),
+             "body": c.get("body")}
             for c in raw["comments"]
         ]
         if "comments" in raw
@@ -288,6 +344,7 @@ class GitHub:
     def __init__(self, repo: str) -> None:
         self.repo = repo
         self._login: str | None = None
+        self._writers: dict[str, bool] = {}
         self.write_attempted = False
 
     # -- plumbing
@@ -343,6 +400,64 @@ class GitHub:
             if len(rows) < limit:
                 return [issue_from_gh(row, self.repo) for row in rows]
             limit *= 4
+
+    def commented_issues(self) -> list[Issue]:
+        """Every issue in any state with every comment. Each page count is checked
+        against its total, so the result is never a truncated read."""
+        owner, name = split_repo(self.repo)
+        issues: list[Issue] = []
+        after = None
+        while True:
+            page = self.graphql(COMMENTED_ISSUES_QUERY, owner=owner, name=name, after=after)["repository"]["issues"]
+            for node in page["nodes"]:
+                comments = node["comments"]
+                rows = list(comments["nodes"])
+                cursor = comments["pageInfo"]["endCursor"]
+                more = comments["pageInfo"]["hasNextPage"]
+                while more:
+                    rest = self.graphql(ISSUE_COMMENTS_QUERY, owner=owner, name=name, n=node["number"],
+                                        after=cursor)["repository"]["issue"]["comments"]
+                    rows += rest["nodes"]
+                    cursor, more = rest["pageInfo"]["endCursor"], rest["pageInfo"]["hasNextPage"]
+                if len(rows) != comments["totalCount"]:
+                    read_failed(f"#{node['number']} returned {len(rows)} of {comments['totalCount']} comments")
+                issues.append(Issue(
+                    ref=Ref(self.repo, node["number"]), title=node.get("title", ""), state=node["state"],
+                    state_reason=node.get("stateReason") or "",
+                    labels=[label["name"] for label in node["labels"]["nodes"]],
+                    assignees=[person["login"] for person in node["assignees"]["nodes"]],
+                    milestone=_milestone(node.get("milestone")), url=node.get("url", ""),
+                    comments=[{"author": (c.get("author") or {}).get("login"), "createdAt": c.get("createdAt"),
+                               "url": c.get("url"), "body": c.get("body")} for c in rows],
+                ))
+            if not page["pageInfo"]["hasNextPage"]:
+                if len(issues) != page["totalCount"]:
+                    read_failed(f"the issue read returned {len(issues)} of {page['totalCount']} issues")
+                return issues
+            after = page["pageInfo"]["endCursor"]
+
+    def pull_request(self, number: int) -> dict[str, Any]:
+        """One pull request with every comment, the count checked against its total."""
+        owner, name = split_repo(self.repo)
+        try:
+            pr = self.graphql(PR_COMMENTS_QUERY, owner=owner, name=name, n=number)["repository"]["pullRequest"]
+        except GhError as error:
+            if "Could not resolve to a PullRequest" in error.detail:
+                refuse(f"{self.repo}#{number} is not a pull request", gh=error.detail)
+            raise
+        comments = pr["comments"]
+        rows = list(comments["nodes"])
+        cursor, more = comments["pageInfo"]["endCursor"], comments["pageInfo"]["hasNextPage"]
+        while more:
+            rest = self.graphql(PR_COMMENTS_QUERY, owner=owner, name=name, n=number,
+                                after=cursor)["repository"]["pullRequest"]["comments"]
+            rows += rest["nodes"]
+            cursor, more = rest["pageInfo"]["endCursor"], rest["pageInfo"]["hasNextPage"]
+        if len(rows) != comments["totalCount"]:
+            read_failed(f"pull request #{number} returned {len(rows)} of {comments['totalCount']} comments")
+        return {"number": pr["number"], "url": pr["url"], "state": pr["state"], "head": pr["headRefOid"],
+                "comments": [{"author": (c.get("author") or {}).get("login"), "createdAt": c.get("createdAt"),
+                              "url": c.get("url"), "body": c.get("body")} for c in rows]}
 
     def issue(self, number: int) -> Issue:
         try:
@@ -412,6 +527,26 @@ class GitHub:
 
     def issue_id(self, ref: Ref) -> int:
         return self.gh_json(["api", f"repos/{ref.repo}/issues/{ref.number}"])["id"]
+
+    def can_write(self, login: str | None) -> bool:
+        """Whether `login` has base write access, including through a custom role.
+        A missing author or HTTP 404 is no; other lookup failures stop the read."""
+        if not login:
+            return False
+        cache = self._writers
+        if login not in cache:
+            try:
+                data = self.gh_json(["api", f"repos/{self.repo}/collaborators/{login}/permission"])
+            except GhError as error:
+                if "(HTTP 404)" not in error.detail:
+                    raise
+                cache[login] = False
+            else:
+                permission = data.get("permission") if isinstance(data, dict) else None
+                if permission not in ("admin", "write", "read", "none"):
+                    read_failed(f"permission lookup for {login} returned an invalid base permission")
+                cache[login] = permission in ("admin", "write")
+        return cache[login]
 
     # -- writes
 
@@ -623,7 +758,7 @@ def cmd_show(gh: GitHub, number: int) -> dict[str, Any]:
         "labels": issue.labels,
         "body": issue.body,
         "body_sha256": body_digest(issue.body or ""),
-        "comments": issue.comments,
+        "comments": [c | {"author_can_write": gh.can_write(c.get("author"))} for c in issue.comments or []],
         "blockers": [blocker_verdict(gh, b) for b in gh.blockers(issue.ref)],
     }
     if issue.status == "duplicate":
@@ -1108,9 +1243,36 @@ def cmd_run_show(gh: GitHub, number: int) -> dict[str, Any]:
         refuse(f"#{number} does not exist")
     if RUN_LABEL not in [label["name"] for label in node["labels"]["nodes"]]:
         refuse(f"#{number} is not a run config: it lacks the {RUN_LABEL} label")
-    if node["lastEditedAt"] is not None:
-        refuse(f"run config #{number} was edited after it was written", lastEditedAt=node["lastEditedAt"])
-    return {"reference": number, "state": node["state"], "text": node["body"]}
+    owner = run_owner(node["body"])
+    editor = (node.get("editor") or {}).get("login") if node["lastEditedAt"] is not None else None
+    if node["lastEditedAt"] is not None and (owner is None or editor != owner):
+        refuse(f"run config #{number} was edited by {editor or 'an unknown account'}, not its By: login "
+               f"{owner or '(none)'}", lastEditedAt=node["lastEditedAt"], editor=editor, by=owner)
+    return {"reference": number, "state": node["state"], "text": node["body"],
+            "text_sha256": body_digest(node["body"] or ""), "by": owner, "last_editor": editor}
+
+
+def cmd_run_edit(gh: GitHub, number: int, text: str, expected_sha256: str) -> dict[str, Any]:
+    """Replace a run config's text. Only its By: login edits it, from the text it last read."""
+    if not text.strip():
+        refuse("run edit needs the new config text")
+    shown = cmd_run_show(gh, number)
+    if shown["state"] != "OPEN":
+        refuse(f"run config #{number} is closed")
+    if shown["text_sha256"] != expected_sha256:
+        refuse(f"run config #{number} changed since it was read; read it again", text_sha256=shown["text_sha256"])
+    if run_owner(text) != shown["by"]:
+        refuse("run edit cannot change the config's By: login", by=shown["by"], given=run_owner(text))
+    if gh.login() != shown["by"]:
+        refuse(f"only {shown['by'] or 'the By: login'} may edit run config #{number}; this session is {gh.login()}")
+    try:
+        gh.update_issue(number, {"body": text})
+    except GhError as error:
+        unverified(f"the run config edit failed; it may still have landed. Read #{number} first", gh=error.detail)
+    after = cmd_run_show(gh, number)
+    if after["text"] != text:
+        unverified(f"run config #{number} does not read back as the text given", reference=number)
+    return {"reference": number, "edited": True, "text_sha256": after["text_sha256"]}
 
 
 def cmd_run_close(gh: GitHub, number: int) -> dict[str, Any]:
@@ -1123,6 +1285,72 @@ def cmd_run_close(gh: GitHub, number: int) -> dict[str, Any]:
     if shown["state"] != "CLOSED":
         unverified(f"run config #{number} does not read back closed")
     return {"reference": number, "closed": True}
+
+
+def cmd_run_tickets(gh: GitHub, ref: str) -> dict[str, Any]:
+    """Every ticket with a `Run:` comment naming `ref`, in any status, from anyone."""
+    if not ref.strip():
+        refuse("run tickets needs the run config reference")
+    found = []
+    for issue in gh.commented_issues():
+        if issue.is_run_config:
+            continue
+        runs = [c | {"names": run_named(c.get("body")), "author_can_write": gh.can_write(c.get("author"))}
+                for c in issue.comments or [] if run_named(c.get("body")) is not None]
+        naming = [c for c in runs if same_run_ref(c["names"], ref, gh.repo)]
+        if not naming:
+            continue
+        by_writers = [c for c in runs if c["author_can_write"]]
+        found.append(issue.summary() | {
+            "url": issue.url,
+            "member": bool(by_writers) and same_run_ref(by_writers[-1]["names"], ref, gh.repo),
+            "named_by_writer": any(c["author_can_write"] for c in naming),
+            "run_comments": [{key: c.get(key) for key in ("author", "author_can_write", "names", "createdAt", "url")}
+                             for c in runs],
+        })
+    return {"reference": ref, "tickets": sorted(found, key=lambda t: t["number"])}
+
+
+def parse_verdict(body: str | None) -> dict[str, Any] | None:
+    """A verdict's round, outcome, and record lines, or None when the first line is not a verdict's."""
+    lines = (body or "").strip().splitlines()
+    if not lines or not lines[0].startswith("wkc-code-review round"):
+        return None
+    match = VERDICT_LINE.match(lines[0])
+    found = {"round": int(match.group(1)) if match and match.group(1) else None,
+             "outcome": match.group(2) if match else None} | {key: None for key in VERDICT_FIELDS.values()}
+    for line in lines[1:]:
+        label, sep, value = line.partition(":")
+        if sep and label.strip() in VERDICT_FIELDS:
+            found[VERDICT_FIELDS[label.strip()]] = value.strip() or None
+    return found
+
+
+def cmd_verdicts(gh: GitHub, number: int) -> dict[str, Any]:
+    """A pull request's review verdicts and answers, each marked by its author's write access, and
+    the round counts from writers' verdicts only."""
+    pr = gh.pull_request(number)
+    verdicts, answers = [], []
+    for c in pr["comments"]:
+        record = {key: c.get(key) for key in ("author", "createdAt", "url")} | {
+            "author_can_write": gh.can_write(c.get("author"))}
+        parsed = parse_verdict(c.get("body"))
+        first = (c.get("body") or "").strip().splitlines()[:1]
+        if parsed is not None:
+            verdicts.append(record | parsed)
+        elif first and first[0].startswith("Answer:"):
+            to = re.search(r"^To:[ \t]*(\S.*?)[ \t]*$", c.get("body") or "", re.M)
+            answers.append(record | {"answer": first[0][len("Answer:"):].strip(), "to": to.group(1) if to else None})
+    by_writers = [v for v in verdicts if v["author_can_write"]]
+    rounds = {(v["round"], v["reviewed"]) for v in by_writers}
+    fixed = {(v["round"], v["reviewed"]) for v in by_writers if v["outcome"] == "fixed"}
+    return {"number": pr["number"], "url": pr["url"], "state": pr["state"], "head": pr["head"],
+            "verdicts": verdicts, "answers": answers,
+            "writers": {"rounds": len(rounds), "next_round": len(rounds) + 1, "fixing_rounds_used": len(fixed),
+                        "latest": by_writers[-1] if by_writers else None,
+                        "head_reviewed": any(v["reviewed"] == pr["head"] for v in by_writers)},
+            "not_from_writers": [{key: r[key] for key in ("author", "createdAt", "url")}
+                                 for r in verdicts + answers if not r["author_can_write"]]}
 
 
 # ---------------------------------------------------------------- CLI
@@ -1216,7 +1444,13 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--run-branch", required=True)
     p.add_argument("--body-file", required=True)
     run.add_parser("show").add_argument("number", type=number_arg)
+    p = run.add_parser("edit")
+    p.add_argument("number", type=number_arg)
+    p.add_argument("--body-file", required=True)
+    p.add_argument("--expected-sha256", required=True)
     run.add_parser("close").add_argument("number", type=number_arg)
+    run.add_parser("tickets").add_argument("ref")
+    verbs.add_parser("verdicts").add_argument("number", type=number_arg)
     return parser
 
 
@@ -1247,6 +1481,8 @@ def dispatch(gh: GitHub, args: argparse.Namespace) -> dict[str, Any]:
         return cmd_link(gh, args.number, args.blocker)
     if verb == "unlink":
         return cmd_unlink(gh, args.number, args.blocker)
+    if verb == "verdicts":
+        return cmd_verdicts(gh, args.number)
     if verb == "milestone":
         if args.action == "list":
             return cmd_milestone_list(gh)
@@ -1254,6 +1490,10 @@ def dispatch(gh: GitHub, args: argparse.Namespace) -> dict[str, Any]:
         return handler[args.action](gh, args.title)
     if args.action == "create":
         return cmd_run_create(gh, args.run_branch, read_text(args.body_file))
+    if args.action == "edit":
+        return cmd_run_edit(gh, args.number, read_text(args.body_file), args.expected_sha256)
+    if args.action == "tickets":
+        return cmd_run_tickets(gh, args.ref)
     return {"show": cmd_run_show, "close": cmd_run_close}[args.action](gh, args.number)
 
 
